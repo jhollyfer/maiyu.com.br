@@ -133,6 +133,17 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Define border utilities */
+@layer utilities {
+  .border-border {
+    border-color: hsl(var(--border));
+  }
+  
+  .outline-ring\/50 {
+    outline-color: hsl(var(--ring) / 0.5);
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50 selection:bg-primary/20 selection:text-primary transition-colors duration-200;
