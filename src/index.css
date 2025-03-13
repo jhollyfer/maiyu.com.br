@@ -82,7 +82,7 @@
 
   /* Light mode specific styles */
   .light body {
-    @apply bg-white text-maiyu-black;
+    @apply bg-gray-50 text-maiyu-black;
   }
 
   /* Dark mode specific styles */
@@ -101,7 +101,7 @@
   }
   
   .light .glass-card {
-    @apply bg-black/5 border-black/10;
+    @apply bg-white/90 border-gray-200;
   }
   
   .text-gradient {

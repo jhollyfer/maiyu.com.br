@@ -28,7 +28,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className={`min-h-screen overflow-hidden ${theme}`}>
+    <div className={`min-h-screen ${theme}`}>
       <Navbar />
       <main>
         <Hero />
