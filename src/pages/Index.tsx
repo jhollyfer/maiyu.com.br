@@ -28,7 +28,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className={`min-h-screen ${theme}`}>
+    <div className={`min-h-screen transition-colors duration-300 ${theme}`}>
       <Navbar />
       <main>
         <Hero />
