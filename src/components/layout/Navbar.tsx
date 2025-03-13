@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
-import ThemeToggle from '../ui/ThemeToggle';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -71,7 +70,6 @@ const Navbar = () => {
             ))}
           </ul>
           
-          <ThemeToggle />
           <LanguageSwitcher />
           
           <button 
@@ -83,7 +81,6 @@ const Navbar = () => {
         </nav>
         
         <div className="md:hidden flex items-center space-x-4">
-          <ThemeToggle />
           <LanguageSwitcher />
           
           <button 

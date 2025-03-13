@@ -3,11 +3,9 @@ import React from 'react';
 import TeamCard from '../ui/TeamCard';
 import AnimatedCard from '../ui/AnimatedCard';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useTheme } from '@/contexts/ThemeContext';
 
 const Team = () => {
   const { t } = useLanguage();
-  const { theme } = useTheme();
 
   const teamMembers = [
     {
@@ -40,13 +38,13 @@ const Team = () => {
       
       <div className="container mx-auto px-6 relative z-10">
         <AnimatedCard className="text-center mb-16 max-w-3xl mx-auto">
-          <span className={`inline-block py-1 px-4 rounded-full text-xs font-medium ${theme === 'dark' ? 'bg-white/5 border border-white/10 text-maiyu-green' : 'bg-maiyu-purple/10 border border-maiyu-purple/20 text-maiyu-purple'} mb-6`}>
+          <span className="inline-block py-1 px-4 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-maiyu-green mb-6">
             {t('team.title')}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             {t('team.heading')} <span className="text-gradient">{t('team.headingGradient')}</span>
           </h2>
-          <p className={`${theme === 'dark' ? 'text-white/70' : 'text-gray-600'} text-lg`}>
+          <p className="text-white/70 text-lg">
             {t('team.description')}
           </p>
         </AnimatedCard>

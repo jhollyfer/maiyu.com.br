@@ -6,19 +6,12 @@
   text-align: center;
 }
 
-.dark .logo {
-  filter: brightness(0.9);
-}
-
-.light .logo {
-  filter: brightness(1);
-}
-
 .logo {
   height: 6em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
+  filter: brightness(0.9);
 }
 
 .logo:hover {
@@ -48,10 +41,6 @@
   padding: 2em;
 }
 
-.dark .read-the-docs {
+.read-the-docs {
   color: #888;
-}
-
-.light .read-the-docs {
-  color: #555;
 }

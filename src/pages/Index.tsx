@@ -7,11 +7,8 @@ import Services from '@/components/sections/Services';
 import Projects from '@/components/sections/Projects';
 import Team from '@/components/sections/Team';
 import Contact from '@/components/sections/Contact';
-import { useTheme } from '@/contexts/ThemeContext';
 
 const Index = () => {
-  const { theme } = useTheme();
-  
   // Smooth scroll handling for hash links
   useEffect(() => {
     // If there's a hash in the URL, scroll to it after the page loads
@@ -28,7 +25,7 @@ const Index = () => {
   }, []);
   
   return (
-    <div className={`min-h-screen transition-colors duration-300 ${theme}`}>
+    <div className="min-h-screen dark">
       <Navbar />
       <main>
         <Hero />
