@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -154,6 +153,11 @@
     &::selection {
       color: hsl(var(--primary));
     }
+  }
+  
+  /* Define font-raleway utility */
+  .font-raleway {
+    font-family: 'Raleway', sans-serif;
   }
 }
 
