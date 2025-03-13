@@ -27,14 +27,23 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     // Update the DOM and save preference when theme changes
-    document.documentElement.classList.remove('light', 'dark');
-    document.documentElement.classList.add(theme);
+    const root = document.documentElement;
+    
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    
     localStorage.setItem('theme', theme);
     
     // Update meta theme-color for browser UI
     const metaThemeColor = document.querySelector('meta[name="theme-color"]');
     if (metaThemeColor) {
-      metaThemeColor.setAttribute('content', theme === 'dark' ? '#0F0F11' : '#f9fafb');
+      metaThemeColor.setAttribute(
+        'content', 
+        theme === 'dark' ? 'hsl(229 41% 4%)' : 'hsl(229 57% 100%)'
+      );
     }
   }, [theme]);
 
