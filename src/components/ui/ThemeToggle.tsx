@@ -11,14 +11,14 @@ const ThemeToggle = () => {
   
   return (
     <div className="flex items-center gap-2">
-      <Sun className={`w-4 h-4 ${theme === 'light' ? 'text-primary' : 'text-foreground/70'}`} />
+      <Sun className={`size-4 ${theme === 'light' ? 'text-primary' : 'text-foreground/70'}`} />
       <Switch 
         checked={theme === 'dark'}
         onCheckedChange={toggleTheme}
         aria-label={t('nav.toggleTheme')}
         className={`${theme === 'light' ? 'bg-secondary data-[state=checked]:bg-primary' : ''}`}
       />
-      <Moon className={`w-4 h-4 ${theme === 'dark' ? 'text-accent' : 'text-muted-foreground'}`} />
+      <Moon className={`size-4 ${theme === 'dark' ? 'text-accent' : 'text-muted-foreground'}`} />
     </div>
   );
 };
