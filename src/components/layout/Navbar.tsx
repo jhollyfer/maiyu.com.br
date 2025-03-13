@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSwitcher from '../ui/LanguageSwitcher';
+import ThemeToggle from '../ui/ThemeToggle';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
@@ -55,8 +56,8 @@ const Navbar = () => {
           <span className="text-gradient">Maiyu.</span>
         </Link>
         
-        <nav className="hidden md:flex items-center space-x-8">
-          <ul className="flex space-x-8">
+        <nav className="hidden md:flex items-center space-x-6">
+          <ul className="flex space-x-6">
             {navLinks.map((link) => (
               <li key={link.name}>
                 <button
@@ -70,6 +71,7 @@ const Navbar = () => {
             ))}
           </ul>
           
+          <ThemeToggle />
           <LanguageSwitcher />
           
           <button 
@@ -81,6 +83,7 @@ const Navbar = () => {
         </nav>
         
         <div className="md:hidden flex items-center space-x-4">
+          <ThemeToggle />
           <LanguageSwitcher />
           
           <button 

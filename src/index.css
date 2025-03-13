@@ -69,7 +69,7 @@
 
 @layer base {
   * {
-    @apply border-border selection:bg-maiyu-purple/20 selection:text-maiyu-purple;
+    @apply border-border selection:bg-maiyu-purple/20 selection:text-maiyu-purple transition-colors duration-200;
   }
   
   html {
@@ -77,17 +77,43 @@
   }
   
   body {
-    @apply bg-maiyu-dark text-white antialiased overflow-x-hidden;
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
+  }
+
+  /* Light mode specific styles */
+  .light body {
+    @apply bg-white text-maiyu-black;
+  }
+
+  /* Dark mode specific styles */
+  .dark body {
+    @apply bg-maiyu-dark text-white;
   }
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-md border border-white/10 shadow-xl;
+    @apply backdrop-blur-md border shadow-xl;
+  }
+  
+  .dark .glass-card {
+    @apply bg-white/5 border-white/10;
+  }
+  
+  .light .glass-card {
+    @apply bg-black/5 border-black/10;
   }
   
   .text-gradient {
-    @apply bg-gradient-to-r from-maiyu-purple via-maiyu-pink to-maiyu-blue bg-clip-text text-transparent;
+    @apply bg-clip-text text-transparent;
+  }
+  
+  .dark .text-gradient {
+    @apply bg-gradient-to-r from-maiyu-purple via-maiyu-pink to-maiyu-blue;
+  }
+  
+  .light .text-gradient {
+    @apply bg-gradient-to-r from-maiyu-purple to-maiyu-blue;
   }
   
   .section-padding {
