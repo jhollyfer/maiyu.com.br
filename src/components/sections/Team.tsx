@@ -34,7 +34,7 @@ const Team = () => {
     <section id="team" className="section-padding overflow-hidden relative">
       {/* Background elements */}
       <div className="absolute top-1/4 right-0 w-1/3 h-1/3 bg-maiyu-purple/5 rounded-full filter blur-3xl z-0"></div>
-      <div className="absolute bottom-1/4 left-0 w-1/3 h-1/3 bg-maiyu-blue/5 rounded-full filter blur-3xl z-0"></div>
+      <div className="absolute bottom-1/4 left-0 w-1/3 h-1/3 bg-maiyu-green/5 rounded-full filter blur-3xl z-0"></div>
       
       <div className="container mx-auto px-6 relative z-10">
         <AnimatedCard className="text-center mb-16 max-w-3xl mx-auto">
@@ -44,7 +44,7 @@ const Team = () => {
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
             {t('team.heading')} <span className="text-gradient">{t('team.headingGradient')}</span>
           </h2>
-          <p className="text-white/70 text-lg">
+          <p className="text-white/70 dark:text-white/70 light:text-gray-600 text-lg">
             {t('team.description')}
           </p>
         </AnimatedCard>

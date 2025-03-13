@@ -19,6 +19,9 @@ const Footer = () => {
             <p className="text-white/60 mb-6">
               {t('footer.tagline')}
             </p>
+            <p className="text-maiyu-green font-medium text-sm mb-6">
+              {t('footer.amazon')}
+            </p>
             <div className="flex space-x-4">
               <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors duration-300 text-white/60 hover:text-white">
                 <Github size={18} />
@@ -46,6 +49,9 @@ const Footer = () => {
               </li>
               <li>
                 <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.design')}</a>
+              </li>
+              <li>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.sustainable')}</a>
               </li>
             </ul>
           </div>
@@ -78,7 +84,7 @@ const Footer = () => {
                 1234 Innovation Drive
               </li>
               <li className="text-white/60">
-                San Francisco, CA 94107
+                Manaus, Amazonas, Brazil
               </li>
               <li>
                 <a href="mailto:hello@maiyu.dev" className="text-maiyu-green hover:text-maiyu-green/80 transition-colors duration-300">hello@maiyu.dev</a>

@@ -82,7 +82,7 @@
 
   /* Light mode specific styles */
   .light body {
-    @apply bg-gray-50 text-maiyu-black;
+    @apply bg-gray-50 text-gray-800;
   }
 
   /* Dark mode specific styles */
@@ -101,7 +101,7 @@
   }
   
   .light .glass-card {
-    @apply bg-white/90 border-gray-200;
+    @apply bg-white/90 border-gray-100 shadow-lg;
   }
   
   .text-gradient {
@@ -150,5 +150,26 @@
   
   .animate-delay-1000 {
     animation-delay: 1000ms;
+  }
+
+  /* Light theme specific utilities */
+  .light .card-shadow {
+    @apply shadow-lg shadow-gray-200/50;
+  }
+
+  .light .service-card {
+    @apply bg-white border-gray-100 shadow-md shadow-gray-100/50;
+  }
+
+  .light .project-card {
+    @apply bg-white border-gray-100 shadow-md shadow-gray-100/50;
+  }
+
+  .light .team-card {
+    @apply bg-white border-gray-100 shadow-md shadow-gray-100/50;
+  }
+
+  .light .light-footer {
+    @apply bg-white border-t border-gray-100;
   }
 }

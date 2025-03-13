@@ -10,6 +10,12 @@ const Projects = () => {
 
   const projects = [
     {
+      title: t('projects.amazon.title'),
+      description: t('projects.amazon.description'),
+      tech: ['Python', 'TensorFlow', 'React', 'AWS'],
+      image: 'https://images.unsplash.com/photo-1516026672322-bc52d61a55d5?auto=format&fit=crop&q=80&w=1000&ixlib=rb-4.0.3',
+    },
+    {
       title: t('projects.fintech.title'),
       description: t('projects.fintech.description'),
       tech: ['React', 'TypeScript', 'Node.js', 'MongoDB'],
@@ -44,7 +50,7 @@ const Projects = () => {
           </p>
         </AnimatedCard>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {projects.map((project, index) => (
             <AnimatedCard key={index} delay={index * 150}>
               <ProjectCard

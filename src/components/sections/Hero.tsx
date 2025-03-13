@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, TreePine } from 'lucide-react';
 import ScrollIndicator from '../ui/ScrollIndicator';
 import { useLanguage } from '@/contexts/LanguageContext';
 
@@ -23,7 +23,7 @@ const Hero = () => {
     >
       {/* Background elements */}
       <div className="absolute top-0 right-0 w-2/3 h-2/3 bg-maiyu-purple/10 rounded-full filter blur-3xl z-0 animate-float"></div>
-      <div className="absolute bottom-0 left-0 w-2/3 h-2/3 bg-maiyu-blue/10 rounded-full filter blur-3xl z-0 animate-float"></div>
+      <div className="absolute bottom-0 left-0 w-2/3 h-2/3 bg-maiyu-green/10 rounded-full filter blur-3xl z-0 animate-float"></div>
       
       {/* Main content */}
       <div className="container mx-auto px-6 relative z-10">
@@ -38,9 +38,14 @@ const Hero = () => {
             {t('hero.title')} <span className="text-gradient">{t('hero.titleGradient')}</span>
           </h1>
           
-          <p className={`text-xl text-white/70 mb-12 max-w-3xl mx-auto transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
+          <p className={`text-xl text-white/70 mb-6 max-w-3xl mx-auto transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
             {t('hero.description')}
           </p>
+          
+          <div className={`flex items-center justify-center gap-2 mb-8 transition-all duration-1000 delay-450 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
+            <TreePine className="text-maiyu-green h-5 w-5" />
+            <span className="text-maiyu-green font-medium">{t('hero.amazon')}</span>
+          </div>
           
           <div className={`flex flex-col sm:flex-row justify-center gap-4 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
             <a 

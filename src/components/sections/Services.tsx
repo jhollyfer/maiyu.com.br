@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Code, Smartphone, Server, Database, Palette } from 'lucide-react';
+import { Code, Smartphone, Server, Database, Palette, Leaf } from 'lucide-react';
 import ServiceCard from '../ui/ServiceCard';
 import AnimatedCard from '../ui/AnimatedCard';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -34,13 +34,18 @@ const Services = () => {
       description: t('services.design.description'),
       icon: Palette,
     },
+    {
+      title: t('services.sustainable.title'),
+      description: t('services.sustainable.description'),
+      icon: Leaf,
+    },
   ];
 
   return (
     <section id="services" className="section-padding overflow-hidden relative">
       {/* Background elements */}
       <div className="absolute top-1/3 left-0 w-1/2 h-1/2 bg-maiyu-purple/5 rounded-full filter blur-3xl z-0"></div>
-      <div className="absolute bottom-1/3 right-0 w-1/2 h-1/2 bg-maiyu-blue/5 rounded-full filter blur-3xl z-0"></div>
+      <div className="absolute bottom-1/3 right-0 w-1/2 h-1/2 bg-maiyu-green/5 rounded-full filter blur-3xl z-0"></div>
       
       <div className="container mx-auto px-6 relative z-10">
         <AnimatedCard className="text-center mb-16 max-w-3xl mx-auto">

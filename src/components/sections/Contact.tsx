@@ -2,9 +2,11 @@
 import React, { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import AnimatedCard from '../ui/AnimatedCard';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Contact = () => {
   const { toast } = useToast();
+  const { t } = useLanguage();
   
   const [formData, setFormData] = useState({
     name: '',
@@ -47,24 +49,24 @@ const Contact = () => {
       <div className="container mx-auto px-6 relative z-10">
         <AnimatedCard className="text-center mb-16 max-w-3xl mx-auto">
           <span className="inline-block py-1 px-4 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-maiyu-green mb-6">
-            Get in Touch
+            {t('contact.title')}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Ready to <span className="text-gradient">Transform</span> Your Ideas?
+            {t('contact.subtitle')}
           </h2>
           <p className="text-white/70 text-lg">
-            Contact us today to discuss your project and discover how we can help bring your vision to life.
+            {t('projects.description')}
           </p>
         </AnimatedCard>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <AnimatedCard>
             <div className="glass-card p-8 rounded-xl">
-              <h3 className="text-2xl font-bold mb-6">Send Us a Message</h3>
+              <h3 className="text-2xl font-bold mb-6">{t('contact.send')}</h3>
               <form onSubmit={handleSubmit}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                   <div>
-                    <label htmlFor="name" className="block text-white/70 mb-2 text-sm">Your Name</label>
+                    <label htmlFor="name" className="block text-white/70 mb-2 text-sm">{t('contact.name')}</label>
                     <input
                       type="text"
                       id="name"
@@ -76,7 +78,7 @@ const Contact = () => {
                     />
                   </div>
                   <div>
-                    <label htmlFor="email" className="block text-white/70 mb-2 text-sm">Your Email</label>
+                    <label htmlFor="email" className="block text-white/70 mb-2 text-sm">{t('contact.email')}</label>
                     <input
                       type="email"
                       id="email"
@@ -89,7 +91,7 @@ const Contact = () => {
                   </div>
                 </div>
                 <div className="mb-6">
-                  <label htmlFor="company" className="block text-white/70 mb-2 text-sm">Company (Optional)</label>
+                  <label htmlFor="company" className="block text-white/70 mb-2 text-sm">{t('contact.company')}</label>
                   <input
                     type="text"
                     id="company"
@@ -100,7 +102,7 @@ const Contact = () => {
                   />
                 </div>
                 <div className="mb-6">
-                  <label htmlFor="message" className="block text-white/70 mb-2 text-sm">Your Message</label>
+                  <label htmlFor="message" className="block text-white/70 mb-2 text-sm">{t('contact.message')}</label>
                   <textarea
                     id="message"
                     name="message"
@@ -115,7 +117,7 @@ const Contact = () => {
                   type="submit"
                   className="w-full py-3.5 rounded-lg bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20"
                 >
-                  Send Message
+                  {t('contact.send')}
                 </button>
               </form>
             </div>
@@ -123,17 +125,17 @@ const Contact = () => {
           
           <AnimatedCard delay={200}>
             <div className="lg:pl-10">
-              <h3 className="text-2xl font-bold mb-8">Contact Information</h3>
+              <h3 className="text-2xl font-bold mb-8">{t('contact.title')}</h3>
               
               <div className="space-y-8">
                 <div>
-                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">Our Office</h4>
+                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">{t('contact.address')}</h4>
                   <p className="text-white/70">1234 Innovation Drive</p>
-                  <p className="text-white/70">San Francisco, CA 94107</p>
+                  <p className="text-white/70">Manaus, Amazonas, Brazil</p>
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">Email Us</h4>
+                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">{t('contact.emailUs')}</h4>
                   <p>
                     <a href="mailto:hello@maiyu.dev" className="text-white/70 hover:text-white transition-colors duration-300">
                       hello@maiyu.dev
@@ -147,16 +149,16 @@ const Contact = () => {
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">Call Us</h4>
+                  <h4 className="text-lg font-semibold text-maiyu-green mb-2">{t('contact.phone')}</h4>
                   <p>
                     <a href="tel:+15551234567" className="text-white/70 hover:text-white transition-colors duration-300">
-                      +1 (555) 123-4567
+                      +55 (92) 1234-5678
                     </a>
                   </p>
                 </div>
                 
                 <div>
-                  <h4 className="text-lg font-semibold text-maiyu-green mb-4">Follow Us</h4>
+                  <h4 className="text-lg font-semibold text-maiyu-green mb-4">{t('footer.amazon')}</h4>
                   <div className="flex space-x-4">
                     <a
                       href="#"
