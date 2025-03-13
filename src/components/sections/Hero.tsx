@@ -2,9 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import ScrollIndicator from '../ui/ScrollIndicator';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Hero = () => {
   const [isVisible, setIsVisible] = useState(false);
+  const { t } = useLanguage();
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -28,16 +30,16 @@ const Hero = () => {
         <div className="max-w-4xl mx-auto text-center">
           <div className={`transition-all duration-1000 delay-200 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
             <span className="inline-block py-1 px-4 rounded-full text-xs font-medium bg-white/5 border border-white/10 text-maiyu-green mb-6">
-              Innovative Software Solutions
+              {t('hero.tagline')}
             </span>
           </div>
           
           <h1 className={`text-4xl md:text-5xl lg:text-7xl font-extrabold mb-6 transition-all duration-1000 delay-300 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
-            Transforming Ideas Into <span className="text-gradient">Digital Experiences</span>
+            {t('hero.title')} <span className="text-gradient">{t('hero.titleGradient')}</span>
           </h1>
           
           <p className={`text-xl text-white/70 mb-12 max-w-3xl mx-auto transition-all duration-1000 delay-400 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
-            We create custom software solutions that enhance your business operations, improve customer experiences, and drive growth in the digital landscape.
+            {t('hero.description')}
           </p>
           
           <div className={`flex flex-col sm:flex-row justify-center gap-4 transition-all duration-1000 delay-500 ${isVisible ? 'opacity-100' : 'opacity-0 translate-y-8'}`}>
@@ -45,21 +47,21 @@ const Hero = () => {
               href="#contact" 
               className="inline-flex items-center justify-center py-3.5 px-8 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
             >
-              Start Your Project
+              {t('hero.startProject')}
               <ArrowRight size={18} className="ml-2" />
             </a>
             <a 
               href="#services" 
               className="inline-flex items-center justify-center py-3.5 px-8 rounded-full bg-white/5 border border-white/10 text-white font-medium transition-all duration-300 hover:bg-white/10"
             >
-              Our Services
+              {t('hero.ourServices')}
             </a>
           </div>
         </div>
         
         {/* Featured tech logos */}
         <div className={`mt-24 md:mt-32 transition-all duration-1000 delay-700 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
-          <p className="text-white/40 text-sm text-center mb-8">Trusted by innovative companies</p>
+          <p className="text-white/40 text-sm text-center mb-8">{t('hero.trustedBy')}</p>
           <div className="flex flex-wrap justify-center gap-8 md:gap-16">
             <div className="w-20 h-12 flex items-center justify-center opacity-50 hover:opacity-80 transition-opacity duration-300">
               <svg viewBox="0 0 248 31" className="w-full h-auto">

@@ -3,18 +3,21 @@ import React, { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-
-const navLinks = [
-  { name: 'Home', href: '#home' },
-  { name: 'Services', href: '#services' },
-  { name: 'Projects', href: '#projects' },
-  { name: 'Team', href: '#team' },
-  { name: 'Contact', href: '#contact' },
-];
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSwitcher from '../ui/LanguageSwitcher';
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t } = useLanguage();
+  
+  const navLinks = [
+    { name: t('nav.home'), href: '#home' },
+    { name: t('nav.services'), href: '#services' },
+    { name: t('nav.projects'), href: '#projects' },
+    { name: t('nav.team'), href: '#team' },
+    { name: t('nav.contact'), href: '#contact' },
+  ];
   
   useEffect(() => {
     const handleScroll = () => {
@@ -52,7 +55,7 @@ const Navbar = () => {
           <span className="text-gradient">Maiyu.</span>
         </Link>
         
-        <nav className="hidden md:block">
+        <nav className="hidden md:flex items-center space-x-8">
           <ul className="flex space-x-8">
             {navLinks.map((link) => (
               <li key={link.name}>
@@ -66,21 +69,27 @@ const Navbar = () => {
               </li>
             ))}
           </ul>
+          
+          <LanguageSwitcher />
+          
+          <button 
+            onClick={() => scrollToSection('#contact')}
+            className="inline-flex items-center py-2.5 px-6 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
+          >
+            {t('nav.getInTouch')}
+          </button>
         </nav>
         
-        <button 
-          onClick={() => scrollToSection('#contact')}
-          className="hidden md:inline-flex items-center py-2.5 px-6 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
-        >
-          Get in Touch
-        </button>
-        
-        <button 
-          className="md:hidden text-white z-20"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-        >
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        <div className="md:hidden flex items-center space-x-4">
+          <LanguageSwitcher />
+          
+          <button 
+            className="text-white z-20"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          >
+            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
         
         {/* Mobile menu */}
         <div 
@@ -106,7 +115,7 @@ const Navbar = () => {
                   onClick={() => scrollToSection('#contact')}
                   className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium"
                 >
-                  Get in Touch
+                  {t('nav.getInTouch')}
                 </button>
               </li>
             </ul>

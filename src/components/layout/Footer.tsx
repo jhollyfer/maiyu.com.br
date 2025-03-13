@@ -2,8 +2,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Github, Linkedin, Twitter } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
+  const { t } = useLanguage();
   const currentYear = new Date().getFullYear();
   
   return (
@@ -15,7 +17,7 @@ const Footer = () => {
               <span className="text-gradient">Maiyu.</span>
             </Link>
             <p className="text-white/60 mb-6">
-              Transforming ideas into exceptional digital experiences with precision and creativity.
+              {t('footer.tagline')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="p-2 rounded-full bg-white/5 hover:bg-white/10 transition-colors duration-300 text-white/60 hover:text-white">
@@ -31,43 +33,43 @@ const Footer = () => {
           </div>
           
           <div>
-            <h3 className="text-lg font-bold mb-6">Services</h3>
+            <h3 className="text-lg font-bold mb-6">{t('footer.services')}</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Web Development</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.web')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Mobile Applications</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.mobile')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Custom Software</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.software')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">UI/UX Design</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.design')}</a>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-bold mb-6">Company</h3>
+            <h3 className="text-lg font-bold mb-6">{t('footer.company')}</h3>
             <ul className="space-y-3">
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">About Us</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.about')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Careers</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.careers')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Blog</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.blog')}</a>
               </li>
               <li>
-                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">Privacy Policy</a>
+                <a href="#" className="text-white/60 hover:text-white transition-colors duration-300">{t('footer.privacy')}</a>
               </li>
             </ul>
           </div>
           
           <div>
-            <h3 className="text-lg font-bold mb-6">Contact</h3>
+            <h3 className="text-lg font-bold mb-6">{t('footer.contact')}</h3>
             <ul className="space-y-3">
               <li className="text-white/60">
                 Maiyu Development Inc.
@@ -87,12 +89,12 @@ const Footer = () => {
         
         <div className="py-8 border-t border-white/10 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-white/60 text-sm">
-            © {currentYear} Maiyu Development. All rights reserved.
+            © {currentYear} Maiyu Development. {t('footer.rights')}
           </p>
           <div className="flex space-x-6">
-            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">Terms of Service</a>
-            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">Privacy Policy</a>
-            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">Cookies</a>
+            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">{t('footer.terms')}</a>
+            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">{t('footer.privacy')}</a>
+            <a href="#" className="text-white/60 hover:text-white text-sm transition-colors duration-300">{t('footer.cookies')}</a>
           </div>
         </div>
       </div>
