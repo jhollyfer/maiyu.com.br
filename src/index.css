@@ -1,8 +1,10 @@
-@import "tailwindcss";
 
-@plugin "tailwindcss-animate";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @custom-variant dark (&:is(.dark *));
+@custom-variant selection (&::selection);
 
 :root {
   --background: hsl(229 57% 100%);
@@ -41,6 +43,15 @@
   --sidebar-border: hsl(220 13% 91%); /* Mesmo que --border */
   --sidebar-ring: hsl(229 100% 62%); /* Mesmo que --ring */
   --sidebar: hsl(0 0% 99%); /* Mesmo que --card para consistência */
+  
+  /* Maiyu specific colors */
+  --maiyu-black: #272221;
+  --maiyu-white: #FFFFFF;
+  --maiyu-purple: #A480F5;
+  --maiyu-green: #88FF9A;
+  --maiyu-blue: #77EED7;
+  --maiyu-pink: #FB80C1;
+  --maiyu-dark: #0F0F11;
 }
 
 .dark {
@@ -119,11 +130,165 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Custom utilities for Tailwind */
+@layer utilities {
+  /* Border utilities */
+  .border-border {
+    border-color: var(--border);
+  }
+  
+  .outline-ring\/50 {
+    outline-color: rgb(var(--ring) / 0.5);
+  }
+  
+  /* Text selection utilities */
+  .selection\:bg-primary\/20 {
+    &::selection {
+      background-color: rgb(var(--primary) / 0.2);
+    }
+  }
+  
+  .selection\:text-primary {
+    &::selection {
+      color: var(--primary);
+    }
+  }
+  
+  /* Font utility */
+  .font-raleway {
+    font-family: 'Raleway', sans-serif;
+  }
+  
+  /* Background and foreground utilities */
+  .bg-background {
+    background-color: var(--background);
+  }
+  
+  .text-foreground {
+    color: var(--foreground);
+  }
+}
+
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border outline-ring/50 transition-colors duration-200;
+    &::selection {
+      background-color: rgb(var(--primary) / 0.2);
+      color: var(--primary);
+    }
   }
+  
+  html {
+    @apply font-raleway scroll-smooth;
+  }
+  
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
   }
+}
+
+@layer utilities {
+  /* Card styling */
+  .glass-card {
+    @apply backdrop-blur-md border shadow-xl;
+  }
+  
+  .dark .glass-card {
+    @apply bg-white/5 border-white/10;
+  }
+  
+  :root .glass-card {
+    @apply bg-white/90 border-secondary/50 shadow-lg;
+  }
+  
+  /* Text gradient */
+  .text-gradient {
+    @apply bg-clip-text text-transparent;
+  }
+  
+  .dark .text-gradient {
+    @apply bg-gradient-to-r from-primary via-accent to-secondary;
+  }
+  
+  :root .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent;
+  }
+  
+  /* Layout and animation utilities */
+  .section-padding {
+    @apply py-20 md:py-28;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-300 hover:scale-105;
+  }
+  
+  .animate-delay-100 {
+    animation-delay: 100ms;
+  }
+  
+  .animate-delay-200 {
+    animation-delay: 200ms;
+  }
+  
+  .animate-delay-300 {
+    animation-delay: 300ms;
+  }
+  
+  .animate-delay-400 {
+    animation-delay: 400ms;
+  }
+  
+  .animate-delay-500 {
+    animation-delay: 500ms;
+  }
+  
+  .animate-delay-700 {
+    animation-delay: 700ms;
+  }
+  
+  .animate-delay-1000 {
+    animation-delay: 1000ms;
+  }
+
+  /* Light theme specific utilities */
+  :root .card-shadow {
+    @apply shadow-lg shadow-secondary/30;
+  }
+
+  :root .service-card {
+    @apply bg-card border-secondary/30 shadow-md;
+  }
+
+  :root .project-card {
+    @apply bg-card border-secondary/30 shadow-md;
+  }
+
+  :root .team-card {
+    @apply bg-card border-secondary/30 shadow-md;
+  }
+
+  :root .light-footer {
+    @apply bg-card border-t border-secondary/30;
+  }
+}
+
+/* Animate scroll down indicator */
+@keyframes scroll-down {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  75% {
+    transform: translateY(6px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-scroll-down {
+  animation: scroll-down 1.5s infinite;
 }
