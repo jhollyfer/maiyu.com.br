@@ -137,7 +137,7 @@ const Contact = () => {
                 </div>
                 <button
                   type="submit"
-                  className="w-full py-3.5 rounded-lg bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20"
+                  className="w-full py-3.5 rounded-lg bg-maiyu-purple text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20"
                 >
                   {t("contact.send")}
                 </button>

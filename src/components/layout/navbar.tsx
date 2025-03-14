@@ -70,7 +70,7 @@ const Navbar = () => {
 
           <button
             onClick={() => scrollToSection("#contact")}
-            className="inline-flex items-center py-2.5 px-6 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
+            className="inline-flex items-center py-2.5 px-6 rounded-full bg-maiyu-purple text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
           >
             {t("nav.getInTouch")}
           </button>
