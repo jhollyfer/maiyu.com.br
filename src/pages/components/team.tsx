@@ -7,29 +7,31 @@ const Team = () => {
 
   const teamMembers = [
     {
-      name: t("team.alex.name"),
-      role: t("team.alex.role"),
-      image:
-        "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
+      name: t("team.jhollyfer.name"),
+      role: t("team.jhollyfer.role"),
+      image: "/jhollyfer.png",
+      // image:
+      //   "https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
     },
     {
-      name: t("team.sophia.name"),
-      role: t("team.sophia.role"),
-      image:
-        "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
+      name: t("team.lenny.name"),
+      role: t("team.lenny.role"),
+      image: "/lenny.png",
+      // image:
+      //   "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
     },
-    {
-      name: t("team.james.name"),
-      role: t("team.james.role"),
-      image:
-        "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
-    },
-    {
-      name: t("team.olivia.name"),
-      role: t("team.olivia.role"),
-      image:
-        "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
-    },
+    // {
+    //   name: t("team.james.name"),
+    //   role: t("team.james.role"),
+    //   image:
+    //     "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
+    // },
+    // {
+    //   name: t("team.olivia.name"),
+    //   role: t("team.olivia.role"),
+    //   image:
+    //     "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=800&ixlib=rb-4.0.3",
+    // },
   ];
 
   return (
@@ -50,7 +52,10 @@ const Team = () => {
           <p className="text-white/70 text-lg">{t("team.description")}</p>
         </AnimatedCard>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div
+          // className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+          className="grid grid-cols-1 sm:grid-cols-2 gap-8"
+        >
           {teamMembers.map((member, index) => (
             <AnimatedCard key={index} delay={index * 150}>
               <TeamCard
