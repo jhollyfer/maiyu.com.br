@@ -128,14 +128,18 @@ const Footer = () => {
             <h3 className="text-lg font-bold mb-6">{t("footer.contact")}</h3>
             <ul className="space-y-3">
               <li className="text-white/60">Maiyu Development Inc.</li>
-              <li className="text-white/60">1234 Innovation Drive</li>
-              <li className="text-white/60">Manaus, Amazonas, Brazil</li>
+              <li className="text-white/60">
+                Rua Gildo Sampaio, 140, CM Filadélfia
+              </li>
+              <li className="text-white/60">
+                Benjamin Constant, Amazonas, Brazil
+              </li>
               <li>
                 <a
-                  href="mailto:hello@maiyu.dev"
+                  href="mailto:contato@maiyu.com"
                   className="text-maiyu-green hover:text-maiyu-green/80 transition-colors duration-300"
                 >
-                  hello@maiyu.dev
+                  contato@maiyu.com
                 </a>
               </li>
             </ul>

@@ -154,8 +154,12 @@ const Contact = () => {
                   <h4 className="text-lg font-semibold text-maiyu-green mb-2">
                     {t("contact.address")}
                   </h4>
-                  <p className="text-white/70">1234 Innovation Drive</p>
-                  <p className="text-white/70">Manaus, Amazonas, Brazil</p>
+                  <p className="text-white/70">
+                    Rua Gildo Sampaio, 140, CM Filadélfia.
+                  </p>
+                  <p className="text-white/70">
+                    Benjamin Constant, Amazonas, Brazil
+                  </p>
                 </div>
 
                 <div>
@@ -164,10 +168,10 @@ const Contact = () => {
                   </h4>
                   <p>
                     <a
-                      href="mailto:hello@maiyu.dev"
+                      href="mailto:contato@maiyu.com"
                       className="text-white/70 hover:text-white transition-colors duration-300"
                     >
-                      hello@maiyu.dev
+                      contato@maiyu.com
                     </a>
                   </p>
                   <p>
@@ -175,7 +179,7 @@ const Contact = () => {
                       href="mailto:support@maiyu.dev"
                       className="text-white/70 hover:text-white transition-colors duration-300"
                     >
-                      support@maiyu.dev
+                      suporte@maiyu.com
                     </a>
                   </p>
                 </div>
@@ -189,7 +193,15 @@ const Contact = () => {
                       href="tel:+15551234567"
                       className="text-white/70 hover:text-white transition-colors duration-300"
                     >
-                      +55 (92) 1234-5678
+                      +55 (97) 9 8431-7149
+                    </a>
+                  </p>
+                  <p>
+                    <a
+                      href="tel:+15551234567"
+                      className="text-white/70 hover:text-white transition-colors duration-300"
+                    >
+                      +55 (92) 9 8633-1746
                     </a>
                   </p>
                 </div>

@@ -91,9 +91,9 @@ const translations: Translations = {
       "Our talented team of professionals is dedicated to delivering outstanding results for our clients throughout the Amazon region.",
 
     "team.jhollyfer.name": "Jhollyfer Rodrigues",
-    "team.jhollyfer.role": "CEO & Founder",
+    "team.jhollyfer.role": "CTO & Founder",
     "team.lenny.name": "Lenny Alberto",
-    "team.lenny.role": "Lead Designer (UI/UX)",
+    "team.lenny.role": "CEO & UI/UX Designer",
     // 'team.james.name': 'James Wilson',
     // 'team.james.role': 'CTO',
     // 'team.olivia.name': 'Olivia Chen',
@@ -203,9 +203,9 @@ const translations: Translations = {
       "Nossa talentosa equipe de profissionais é dedicada a entregar resultados excepcionais para nossos clientes em toda a região amazônica.",
 
     "team.jhollyfer.name": "Jhollyfer Rodrigues",
-    "team.jhollyfer.role": "CEO & Fundador",
+    "team.jhollyfer.role": "CTO e Fundador",
     "team.lenny.name": "Lenny Alberto",
-    "team.lenny.role": "Designer Chefe (UI/UX)",
+    "team.lenny.role": "CEO e Designer UI/UX",
     // "team.james.name": "James Wilson",
     // "team.james.role": "CTO",
     // "team.olivia.name": "Olivia Chen",

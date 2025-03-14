@@ -87,7 +87,7 @@ const Hero = () => {
         </div>
 
         {/* Featured tech logos */}
-        <div
+        {/* <div
           className={`mt-24 md:mt-32 transition-all duration-1000 delay-700 ${
             isVisible ? "opacity-100" : "opacity-0"
           }`}
@@ -129,7 +129,7 @@ const Hero = () => {
               </svg>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
 
       <ScrollIndicator />
