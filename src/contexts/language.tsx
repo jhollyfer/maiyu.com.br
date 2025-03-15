@@ -28,7 +28,7 @@ const translations: Translations = {
     "nav.getInTouch": "Get in Touch",
     "nav.toggleTheme": "Toggle Theme",
 
-    "hero.tagline": "Innovative Software Solutions for the Amazon Region",
+    "hero.tagline": "Innovative Software Solutions for Emerging Amazon Regions",
     "hero.title": "Turning Ideas into",
     "hero.titleGradient": "Digital Reality",
     "hero.description":
@@ -37,7 +37,7 @@ const translations: Translations = {
     "hero.ourServices": "Our Services",
     "hero.trustedBy": "TRUSTED BY INNOVATIVE COMPANIES",
     "hero.scrollDown": "Scroll Down",
-    "hero.amazon": "Pioneering Tech in the Amazon",
+    "hero.amazon": "Technology Pioneers in the ARS region",
 
     "services.title": "Our Services",
     "services.heading": "What We",
@@ -129,7 +129,7 @@ const translations: Translations = {
     "footer.rights": "All rights reserved",
     "footer.terms": "Terms of Service",
     "footer.cookies": "Cookie Policy",
-    "footer.amazon": "First tech company focused on the Amazon region",
+    "footer.amazon": "The Amazon at the next level",
   },
   "pt-BR": {
     "nav.home": "Início",
@@ -140,7 +140,8 @@ const translations: Translations = {
     "nav.getInTouch": "Fale Conosco",
     "nav.toggleTheme": "Alternar Tema",
 
-    "hero.tagline": "Soluções de Software Inovadoras para a Região Amazônica",
+    "hero.tagline":
+      "Soluções de Software Inovadoras para a Regiões Emergentes da Amazônia",
     "hero.title": "Transformando Ideias em",
     "hero.titleGradient": "Realidade Digital",
     "hero.description":
@@ -149,7 +150,7 @@ const translations: Translations = {
     "hero.ourServices": "Nossos Serviços",
     "hero.trustedBy": "CONFIADO POR EMPRESAS INOVADORAS",
     "hero.scrollDown": "Rolar para Baixo",
-    "hero.amazon": "Pioneiros em Tecnologia na Amazônia",
+    "hero.amazon": "Pioneiros em Tecnologia na região do ARS",
 
     "services.title": "Nossos Serviços",
     "services.heading": "O Que Fazemos",
@@ -241,8 +242,7 @@ const translations: Translations = {
     "footer.rights": "Todos os direitos reservados",
     "footer.terms": "Termos de Serviço",
     "footer.cookies": "Política de Cookies",
-    "footer.amazon":
-      "Primeira empresa de tecnologia focada na região amazônica",
+    "footer.amazon": "A amazônia no proximo nível",
   },
 };
 
