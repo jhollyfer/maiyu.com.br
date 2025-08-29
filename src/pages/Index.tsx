@@ -92,6 +92,11 @@ const Index = () => {
       role: t("team.geison.role"),
       image: "/geison.png",
     },
+    {
+      name: t("team.matheus.name"),
+      role: t("team.matheus.role"),
+      image: "/matheus.png",
+    },
   ];
 
   return (

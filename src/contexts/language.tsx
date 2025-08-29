@@ -98,6 +98,8 @@ const translations: Translations = {
     "team.anderson.role": "Systems Analyst",
     "team.geison.name": "Geison Brando",
     "team.geison.role": "Tech Leader",
+    "team.matheus.name": "Matheus Silva",
+    "team.matheus.role": "Software Engineer",
 
     "contact.title": "Get in Touch",
     "contact.subtitle": "Start a Conversation",
@@ -211,6 +213,8 @@ const translations: Translations = {
     "team.anderson.role": "Analista de Sistemas",
     "team.geison.name": "Geison Brando",
     "team.geison.role": "Líder Técnico",
+    "team.matheus.name": "Matheus Silva",
+    "team.matheus.role": "Analista de Sistemas",
 
     "contact.title": "Fale Conosco",
     "contact.subtitle": "Inicie uma Conversa",
