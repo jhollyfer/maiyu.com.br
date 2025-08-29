@@ -96,6 +96,8 @@ const translations: Translations = {
     "team.lenny.role": "CEO & UI/UX Designer",
     "team.anderson.name": "Anderson Ferreira",
     "team.anderson.role": "Systems Analyst",
+    "team.geison.name": "Geison Brando",
+    "team.geison.role": "Tech Leader",
 
     "contact.title": "Get in Touch",
     "contact.subtitle": "Start a Conversation",
@@ -207,6 +209,8 @@ const translations: Translations = {
     "team.lenny.role": "CEO e Designer UI/UX",
     "team.anderson.name": "Anderson Ferreira",
     "team.anderson.role": "Analista de Sistemas",
+    "team.geison.name": "Geison Brando",
+    "team.geison.role": "Líder Técnico",
 
     "contact.title": "Fale Conosco",
     "contact.subtitle": "Inicie uma Conversa",
