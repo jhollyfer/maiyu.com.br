@@ -255,7 +255,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [language, setLanguageState] = useState<Language>("en");
+  const [language, setLanguageState] = useState<Language>("pt-BR");
 
   useEffect(() => {
     // Get language from localStorage or use browser language (defaulting to 'en')
