@@ -74,13 +74,13 @@ const Index = () => {
       name: t("team.jhollyfer.name"),
       role: t("team.jhollyfer.role"),
       // icon: "👨‍💻",
-      image: "/public/jhollyfer.png",
+      image: "/jhollyfer.png",
     },
     {
       name: t("team.lenny.name"),
       role: t("team.lenny.role"),
       // icon: "🎨",
-      image: "/public/lenny.png",
+      image: "/lenny.png",
     },
   ];
 
