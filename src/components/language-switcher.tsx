@@ -14,9 +14,9 @@ const LanguageSwitcher = () => {
       variant="ghost"
       size="sm"
       onClick={toggleLanguage}
-      className="gap-2"
+      className="gap-2 text-white/80 hover:text-white hover:bg-white/10"
     >
-      <GlobeIcon className="size-4 text-primary" />{" "}
+      <GlobeIcon className="size-4" />
       {language === "en" ? "PT" : "EN"}
     </Button>
   );

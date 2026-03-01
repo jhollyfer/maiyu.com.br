@@ -111,14 +111,27 @@
 }
 
 
+@theme inline {
+  --color-maiyu-dark: #111827;
+  --color-maiyu-purple: #7c3aed;
+  --color-maiyu-blue: #3b82f6;
+  --color-maiyu-green: oklch(0.723 0.219 149.579);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  html{
-    @apply scroll-smooth
+  html {
+    @apply scroll-smooth;
   }
   body {
     @apply bg-background text-foreground;
+  }
+  .text-gradient {
+    background: linear-gradient(135deg, var(--color-maiyu-purple), var(--color-maiyu-blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
