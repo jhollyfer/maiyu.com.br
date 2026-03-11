@@ -112,7 +112,7 @@ const Footer = () => {
             <span className="text-white/20 font-body text-xs">{t("footer.privacy")}</span>
 
             <button
-              onClick={scrollToTop}
+              onClick={() => scrollToTop()}
               className="flex items-center gap-2 text-white/35 hover:text-maiyu-amber font-body text-xs tracking-wider uppercase transition-colors duration-200 group"
             >
               <span>{t("footer.backToTop")}</span>

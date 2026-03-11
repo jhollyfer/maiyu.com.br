@@ -74,7 +74,7 @@ const translations: Translations = {
     "team.lenny.name": "Lenny Alberto",
     "team.lenny.role": "CEO & UI/UX Designer",
     "team.geison.name": "Geison Brando",
-    "team.geison.role": "Tech Leader",
+    "team.geison.role": "System Analyst",
     "team.matheus.name": "Matheus Silva",
     "team.matheus.role": "System Analyst",
 
@@ -168,7 +168,7 @@ const translations: Translations = {
     "team.lenny.name": "Lenny Alberto",
     "team.lenny.role": "CEO e Designer UI/UX",
     "team.geison.name": "Geison Brando",
-    "team.geison.role": "Lider Tecnico",
+    "team.geison.role": "Analista de Sistemas",
     "team.matheus.name": "Matheus Silva",
     "team.matheus.role": "Analista de Sistemas",
 
@@ -188,8 +188,7 @@ const translations: Translations = {
     "contact.success": "Mensagem enviada! Retornaremos em breve.",
 
     // Footer
-    "footer.tagline":
-      "Construindo solucoes digitais da Amazonia para o mundo.",
+    "footer.tagline": "Construindo solucoes digitais da Amazonia para o mundo.",
     "footer.services": "Servicos",
     "footer.web": "Desenvolvimento Web",
     "footer.mobile": "Aplicativos Mobile",
@@ -206,7 +205,7 @@ const translations: Translations = {
 };
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
-  undefined
+  undefined,
 );
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({
