@@ -15,6 +15,9 @@ const contactSchema = z.object({
 
 type ContactForm = z.infer<typeof contactSchema>;
 
+const inputClass =
+  "w-full bg-white/[0.04] border border-white/10 px-4 py-3 text-sm text-foreground placeholder:text-white/25 focus:outline-none focus:border-maiyu-amber focus:bg-white/[0.06] transition-all duration-200 font-body";
+
 export function ContactSection() {
   const { t } = useLanguage();
 
@@ -34,26 +37,34 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-24 px-6 bg-maiyu-dark">
+    <section id="contact" className="py-28 px-6" style={{ backgroundColor: "#0d2318" }}>
       <div className="container mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+
+          {/* Form column */}
           <AnimateInView>
-            <p className="text-maiyu-green text-sm font-medium tracking-widest uppercase mb-3">
-              {t("contact.label")}
-            </p>
-            <h2 className="text-3xl lg:text-4xl font-bold mb-10">
+            <div className="flex items-center gap-3 mb-5">
+              <span className="w-6 h-px bg-maiyu-amber inline-block" />
+              <p className="text-maiyu-amber font-body text-[10px] font-medium tracking-[0.3em] uppercase">
+                {t("contact.label")}
+              </p>
+            </div>
+            <h2 className="font-heading text-3xl lg:text-4xl font-bold mb-10 text-foreground">
               {t("contact.heading")}
             </h2>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               <div>
                 <input
                   {...register("name")}
                   placeholder={t("contact.name")}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-maiyu-purple transition-colors"
+                  className={inputClass}
+                  style={{ borderRadius: "1px" }}
                 />
                 {errors.name && (
-                  <p className="text-red-400 text-xs mt-1">{t("contact.required")}</p>
+                  <p className="text-red-400 font-body text-xs mt-1.5">
+                    {t("contact.required")}
+                  </p>
                 )}
               </div>
 
@@ -62,10 +73,13 @@ export function ContactSection() {
                   {...register("email")}
                   type="email"
                   placeholder={t("contact.email")}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-maiyu-purple transition-colors"
+                  className={inputClass}
+                  style={{ borderRadius: "1px" }}
                 />
                 {errors.email && (
-                  <p className="text-red-400 text-xs mt-1">{t("contact.invalidEmail")}</p>
+                  <p className="text-red-400 font-body text-xs mt-1.5">
+                    {t("contact.invalidEmail")}
+                  </p>
                 )}
               </div>
 
@@ -73,7 +87,8 @@ export function ContactSection() {
                 <input
                   {...register("company")}
                   placeholder={t("contact.company")}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-maiyu-purple transition-colors"
+                  className={inputClass}
+                  style={{ borderRadius: "1px" }}
                 />
               </div>
 
@@ -82,66 +97,69 @@ export function ContactSection() {
                   {...register("message")}
                   rows={5}
                   placeholder={t("contact.message")}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-sm text-white placeholder:text-white/30 focus:outline-none focus:border-maiyu-purple transition-colors resize-none"
+                  className={`${inputClass} resize-none`}
+                  style={{ borderRadius: "1px" }}
                 />
                 {errors.message && (
-                  <p className="text-red-400 text-xs mt-1">{t("contact.required")}</p>
+                  <p className="text-red-400 font-body text-xs mt-1.5">
+                    {t("contact.required")}
+                  </p>
                 )}
               </div>
 
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="py-3 px-8 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium transition-all duration-300 hover:scale-105 disabled:opacity-50 disabled:hover:scale-100"
+                className="py-3.5 px-8 bg-maiyu-amber text-maiyu-dark font-body text-sm font-bold tracking-wider uppercase transition-all duration-200 hover:brightness-110 disabled:opacity-50 disabled:hover:brightness-100"
+                style={{ borderRadius: "1px" }}
               >
                 {isSubmitting ? "..." : t("contact.send")}
               </button>
             </form>
           </AnimateInView>
 
+          {/* Info column */}
           <AnimateInView delay={0.2}>
-            <div className="space-y-8 lg:pt-16">
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-white/5">
-                  <MapPin size={20} className="text-maiyu-green" />
+            <div className="space-y-8 lg:pt-20">
+              {[
+                {
+                  icon: MapPin,
+                  label: t("contact.address"),
+                  lines: [
+                    "Rua Gildo Sampaio, 140, CM Filadelfia",
+                    "Benjamin Constant, Amazonas, Brasil",
+                  ],
+                },
+                {
+                  icon: Mail,
+                  label: t("contact.emailUs"),
+                  lines: ["contato@maiyu.com", "suporte@maiyu.com"],
+                },
+                {
+                  icon: Phone,
+                  label: t("contact.phone"),
+                  lines: ["+55 (97) 9 8431-7149", "+55 (92) 9 8633-1746"],
+                },
+              ].map(({ icon: Icon, label, lines }) => (
+                <div key={label} className="flex items-start gap-4">
+                  <div
+                    className="p-2.5 border border-white/8 shrink-0"
+                    style={{ borderRadius: "1px" }}
+                  >
+                    <Icon size={16} className="text-maiyu-amber" />
+                  </div>
+                  <div>
+                    <h3 className="font-heading font-bold text-sm text-foreground mb-1.5">
+                      {label}
+                    </h3>
+                    {lines.map((line, i) => (
+                      <p key={i} className="text-white/40 font-body text-xs leading-[1.8]">
+                        {line}
+                      </p>
+                    ))}
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold mb-1">{t("contact.address")}</h3>
-                  <p className="text-white/50 text-sm leading-relaxed">
-                    Rua Gildo Sampaio, 140, CM Filadelfia
-                    <br />
-                    Benjamin Constant, Amazonas, Brasil
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-white/5">
-                  <Mail size={20} className="text-maiyu-green" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">{t("contact.emailUs")}</h3>
-                  <p className="text-white/50 text-sm">
-                    contato@maiyu.com
-                    <br />
-                    suporte@maiyu.com
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-4">
-                <div className="p-3 rounded-lg bg-white/5">
-                  <Phone size={20} className="text-maiyu-green" />
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-1">{t("contact.phone")}</h3>
-                  <p className="text-white/50 text-sm">
-                    +55 (97) 9 8431-7149
-                    <br />
-                    +55 (92) 9 8633-1746
-                  </p>
-                </div>
-              </div>
+              ))}
             </div>
           </AnimateInView>
         </div>

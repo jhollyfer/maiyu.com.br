@@ -20,47 +20,65 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      const offset = window.scrollY;
-      setScrolled(offset > 50);
+      setScrolled(window.scrollY > 50);
     };
-
     window.addEventListener("scroll", handleScroll);
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToSection = (sectionId: string) => {
+  const scrollToSection = (sectionId: string, duration = 1400) => {
     setMobileMenuOpen(false);
-    const element = document.getElementById(sectionId.replace("#", ""));
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
-    }
+    const target = document.getElementById(sectionId.replace("#", ""));
+    if (!target) return;
+
+    const start = window.scrollY;
+    const end = target.getBoundingClientRect().top + start;
+    const startTime = performance.now();
+
+    // Ease in-out cubic
+    const ease = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      window.scrollTo(0, start + (end - start) * ease(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
   };
 
   return (
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-6",
-        scrolled && "bg-maiyu-dark/70 backdrop-blur-lg py-4 shadow-lg"
+        scrolled &&
+          "py-4 shadow-lg border-b border-white/5"
       )}
+      style={
+        scrolled
+          ? { backgroundColor: "rgba(8,15,11,0.85)", backdropFilter: "blur(16px)" }
+          : undefined
+      }
     >
       <div className="container mx-auto px-6 flex items-center justify-between">
-        <Link to="/" className="text-2xl font-extrabold relative z-20">
+        {/* Logo */}
+        <Link to="/" className="text-2xl font-heading font-black relative z-20">
           <span className="text-gradient">Maiyu.</span>
         </Link>
 
+        {/* Desktop nav */}
         <nav className="hidden md:flex items-center space-x-6">
           <ul className="flex space-x-6">
             {navLinks.map((link) => (
               <li key={link.name}>
                 <button
                   onClick={() => scrollToSection(link.href)}
-                  className="text-white/80 hover:text-white font-medium relative overflow-hidden group py-2 transition-colors duration-300"
+                  className="text-white/60 hover:text-white font-body text-xs tracking-wider uppercase relative overflow-hidden group py-2 transition-colors duration-300"
                 >
                   {link.name}
-                  <span className="absolute bottom-0 left-0 w-full h-0.5 bg-maiyu-green origin-left transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300"></span>
+                  <span className="absolute bottom-0 left-0 w-full h-px bg-maiyu-amber origin-left transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 </button>
               </li>
             ))}
@@ -70,15 +88,15 @@ const Navbar = () => {
 
           <button
             onClick={() => scrollToSection("#contact")}
-            className="inline-flex items-center py-2.5 px-6 rounded-full bg-maiyu-purple text-white font-medium transition-all duration-300 hover:shadow-lg hover:shadow-maiyu-purple/20 hover:scale-105"
+            className="inline-flex items-center py-2 px-5 bg-maiyu-amber text-maiyu-dark font-body text-xs font-bold tracking-wider uppercase transition-all duration-200 hover:brightness-110"
           >
             {t("nav.getInTouch")}
           </button>
         </nav>
 
+        {/* Mobile controls */}
         <div className="md:hidden flex items-center space-x-4">
           <LanguageSwitcher />
-
           <button
             className="text-white z-20"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -90,9 +108,10 @@ const Navbar = () => {
         {/* Mobile menu */}
         <div
           className={cn(
-            "fixed inset-0 z-10 bg-maiyu-dark/95 backdrop-blur-lg flex flex-col justify-center transition-transform duration-300 ease-in-out",
+            "fixed inset-0 z-10 flex flex-col justify-center transition-transform duration-300 ease-in-out border-r border-white/5",
             mobileMenuOpen ? "translate-x-0" : "translate-x-full"
           )}
+          style={{ backgroundColor: "#080f0b" }}
         >
           <nav className="container px-6">
             <ul className="flex flex-col space-y-6 items-center">
@@ -100,7 +119,7 @@ const Navbar = () => {
                 <li key={link.name} className="w-full">
                   <button
                     onClick={() => scrollToSection(link.href)}
-                    className="text-white/80 hover:text-white font-medium text-xl block w-full text-center py-3"
+                    className="text-white/60 hover:text-white font-body text-xs tracking-[0.25em] uppercase block w-full text-center py-3 transition-colors duration-300"
                   >
                     {link.name}
                   </button>
@@ -109,7 +128,7 @@ const Navbar = () => {
               <li className="pt-4 w-full">
                 <button
                   onClick={() => scrollToSection("#contact")}
-                  className="w-full py-3.5 px-6 rounded-full bg-gradient-to-r from-maiyu-purple to-maiyu-blue text-white font-medium"
+                  className="w-full py-3.5 px-6 bg-maiyu-amber text-maiyu-dark font-body text-sm font-bold tracking-wider uppercase"
                 >
                   {t("nav.getInTouch")}
                 </button>

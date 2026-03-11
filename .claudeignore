@@ -1,0 +1,24 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+
+# Lock files (grandes, pouco úteis para contexto)
+bun.lock
+package-lock.json
+
+# Logs
+*.log
+logs/
+
+# Editor
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Git
+.git/

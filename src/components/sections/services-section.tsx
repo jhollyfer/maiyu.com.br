@@ -1,6 +1,9 @@
 import { useLanguage } from "@/contexts/language";
-import { StaggerContainer, staggerItemVariants } from "@/components/motion/animate-in-view";
-import { AnimateInView } from "@/components/motion/animate-in-view";
+import {
+  StaggerContainer,
+  staggerItemVariants,
+  AnimateInView,
+} from "@/components/motion/animate-in-view";
 import { Globe, Smartphone, Server, Database, Palette, Leaf } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -19,41 +22,63 @@ export function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="py-24 px-6 bg-white/[0.02]">
+    <section id="services" className="py-28 px-6" style={{ backgroundColor: "#080f0b" }}>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
+
+          {/* Section label — editorial left column */}
           <div className="lg:col-span-4">
             <AnimateInView>
-              <p className="text-maiyu-green text-sm font-medium tracking-widest uppercase mb-3">
-                {t("services.label")}
-              </p>
-              <h2 className="text-3xl lg:text-4xl font-bold leading-tight">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="w-6 h-px bg-maiyu-green inline-block" />
+                <p className="text-maiyu-green font-body text-[10px] font-medium tracking-[0.3em] uppercase">
+                  {t("services.label")}
+                </p>
+              </div>
+              <h2 className="font-heading text-3xl lg:text-4xl font-bold leading-tight text-foreground">
                 {t("services.heading")}
               </h2>
             </AnimateInView>
           </div>
 
-          <StaggerContainer className="lg:col-span-8 space-y-0 divide-y divide-white/10">
+          {/* Services list */}
+          <StaggerContainer className="lg:col-span-8 divide-y divide-white/6">
             {services.map((service, index) => {
               const Icon = service.icon;
               return (
                 <motion.div
                   key={service.key}
                   variants={staggerItemVariants}
-                  className="group flex items-start gap-6 py-6 first:pt-0 last:pb-0 transition-colors duration-300 hover:bg-white/[0.02] -mx-4 px-4 rounded-lg"
+                  className="group relative flex items-start gap-6 py-7 first:pt-0 last:pb-0 transition-all duration-300"
                 >
-                  <span className="text-white/30 font-mono text-sm mt-1 shrink-0 w-8">
+                  {/* Large number watermark */}
+                  <span
+                    className="absolute right-0 top-1/2 -translate-y-1/2 font-heading font-black text-white pointer-events-none select-none leading-none"
+                    style={{
+                      fontSize: "clamp(48px, 5vw, 80px)",
+                      opacity: 0.04,
+                    }}
+                  >
                     {String(index + 1).padStart(2, "0")}
                   </span>
+
+                  {/* Small index */}
+                  <span className="text-white/20 font-body text-xs mt-1.5 shrink-0 w-6 tracking-wider">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  {/* Icon */}
                   <Icon
-                    size={22}
-                    className="text-maiyu-purple shrink-0 mt-1 group-hover:text-maiyu-blue transition-colors duration-300"
+                    size={18}
+                    className="text-maiyu-amber shrink-0 mt-1.5 transition-colors duration-300 group-hover:text-maiyu-green"
                   />
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1 group-hover:text-maiyu-green transition-colors duration-300">
+
+                  {/* Content */}
+                  <div className="relative z-10">
+                    <h3 className="font-heading text-base font-bold mb-1.5 text-foreground group-hover:text-maiyu-amber transition-colors duration-300">
                       {t(`services.${service.key}.title`)}
                     </h3>
-                    <p className="text-white/50 text-sm leading-relaxed">
+                    <p className="text-white/45 font-body text-xs leading-[1.8]">
                       {t(`services.${service.key}.description`)}
                     </p>
                   </div>

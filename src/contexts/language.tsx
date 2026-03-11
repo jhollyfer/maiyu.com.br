@@ -107,6 +107,7 @@ const translations: Translations = {
     "footer.terms": "Terms of Service",
     "footer.privacy": "Privacy Policy",
     "footer.cookies": "Cookies",
+    "footer.backToTop": "Back to top",
   },
   "pt-BR": {
     // Nav
@@ -200,6 +201,7 @@ const translations: Translations = {
     "footer.terms": "Termos de Servico",
     "footer.privacy": "Politica de Privacidade",
     "footer.cookies": "Cookies",
+    "footer.backToTop": "Voltar ao topo",
   },
 };
 
