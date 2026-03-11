@@ -40,14 +40,25 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Maiyu brand — Amazonian Editorial palette */
-  --color-maiyu-dark: #080f0b;
-  --color-maiyu-forest: #0d2318;
-  --color-maiyu-purple: #d4920c; /* amber — main accent, replaces generic purple */
-  --color-maiyu-blue: #2d6a4f; /* jade — replaces generic blue */
-  --color-maiyu-green: #52b788; /* sage — secondary green */
-  --color-maiyu-amber: #d4920c;
-  --color-maiyu-cream: #f0ede5;
+  /* ─── Maiyu brand palette ─────────────────────────────────────── */
+  /* Base */
+  --color-maiyu-black:   #272221; /* darkest bg */
+  --color-maiyu-dark:    #272221; /* alias kept for compat */
+  --color-maiyu-surface: #403937; /* alternate section bg */
+  --color-maiyu-forest:  #403937; /* alias kept for compat */
+  --color-maiyu-cream:   #FAFAFA;
+
+  /* Product */
+  --color-maiyu-purple: #A480F5; /* primary accent */
+  --color-maiyu-amber:  #A480F5; /* alias → all legacy text-maiyu-amber → purple */
+  --color-maiyu-green:  #88FF9A; /* secondary */
+  --color-maiyu-blue:   #77EED7; /* tertiary / teal */
+  --color-maiyu-pink:   #FB80C1; /* highlight */
+
+  /* Gradients */
+  --gradient-brand:  linear-gradient(135deg, #A480F5, #77EED7);
+  --gradient-blue:   linear-gradient(135deg, #31E1F7, #3168F7);
+  --gradient-green:  linear-gradient(135deg, #77EED7, #88FF9A);
 
   /* Custom fonts */
   --font-heading: "Fraunces", Georgia, serif;
@@ -56,72 +67,77 @@
 
 :root {
   --radius: 0.25rem;
-  --background: oklch(0.97 0.01 80);
-  --foreground: oklch(0.12 0.025 155);
-  --card: oklch(0.94 0.008 80);
-  --card-foreground: oklch(0.12 0.025 155);
-  --popover: oklch(0.97 0.01 80);
-  --popover-foreground: oklch(0.12 0.025 155);
-  --primary: oklch(0.65 0.15 72);
-  --primary-foreground: oklch(0.08 0.018 155);
-  --secondary: oklch(0.92 0.008 80);
-  --secondary-foreground: oklch(0.2 0.02 155);
-  --muted: oklch(0.92 0.008 80);
-  --muted-foreground: oklch(0.5 0.012 80);
-  --accent: oklch(0.92 0.008 80);
-  --accent-foreground: oklch(0.2 0.02 155);
+
+  /* Light mode — base/white surface */
+  --background: #FAFAFA;
+  --foreground: oklch(0.14 0.01 30);
+  --card: #FFFFFF;
+  --card-foreground: oklch(0.14 0.01 30);
+  --popover: #FFFFFF;
+  --popover-foreground: oklch(0.14 0.01 30);
+  --primary: oklch(0.67 0.2 295);          /* #A480F5 purple */
+  --primary-foreground: #FFFFFF;
+  --secondary: oklch(0.94 0.005 30);
+  --secondary-foreground: oklch(0.2 0.01 30);
+  --muted: oklch(0.94 0.005 30);
+  --muted-foreground: oklch(0.52 0.008 30);
+  --accent: oklch(0.94 0.005 30);
+  --accent-foreground: oklch(0.2 0.01 30);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.88 0.008 80);
-  --input: oklch(0.88 0.008 80);
-  --ring: oklch(0.65 0.15 72);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.94 0.008 80);
-  --sidebar-foreground: oklch(0.12 0.025 155);
-  --sidebar-primary: oklch(0.65 0.15 72);
-  --sidebar-primary-foreground: oklch(0.08 0.018 155);
-  --sidebar-accent: oklch(0.92 0.008 80);
-  --sidebar-accent-foreground: oklch(0.2 0.02 155);
-  --sidebar-border: oklch(0.88 0.008 80);
-  --sidebar-ring: oklch(0.65 0.15 72);
+  --border: oklch(0.88 0.005 30);
+  --input: oklch(0.88 0.005 30);
+  --ring: oklch(0.67 0.2 295);             /* purple focus ring */
+  --chart-1: #A480F5;
+  --chart-2: #88FF9A;
+  --chart-3: #77EED7;
+  --chart-4: #FB80C1;
+  --chart-5: #3168F7;
+  --sidebar: #FAFAFA;
+  --sidebar-foreground: oklch(0.14 0.01 30);
+  --sidebar-primary: oklch(0.67 0.2 295);
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: oklch(0.94 0.005 30);
+  --sidebar-accent-foreground: oklch(0.2 0.01 30);
+  --sidebar-border: oklch(0.88 0.005 30);
+  --sidebar-ring: oklch(0.67 0.2 295);
 }
 
 .dark {
-  /* Deep forest — main background */
-  --background: oklch(0.08 0.016 155);
-  --foreground: oklch(0.93 0.012 80);
-  --card: oklch(0.12 0.02 155);
-  --card-foreground: oklch(0.93 0.012 80);
-  --popover: oklch(0.12 0.02 155);
-  --popover-foreground: oklch(0.93 0.012 80);
-  --primary: oklch(0.65 0.15 72);
-  --primary-foreground: oklch(0.08 0.018 155);
-  --secondary: oklch(0.18 0.02 155);
-  --secondary-foreground: oklch(0.93 0.012 80);
-  --muted: oklch(0.18 0.02 155);
-  --muted-foreground: oklch(0.62 0.012 80);
-  --accent: oklch(0.18 0.02 155);
-  --accent-foreground: oklch(0.93 0.012 80);
+  /* ─── Base surfaces ──────────────────────────────── */
+  --background: oklch(0.155 0.009 30);     /* #272221 — main bg */
+  --foreground: oklch(0.97 0.002 30);      /* #FAFAFA — body text */
+  --card: oklch(0.26 0.01 30);             /* #403937 — card surface */
+  --card-foreground: oklch(0.97 0.002 30);
+  --popover: oklch(0.26 0.01 30);
+  --popover-foreground: oklch(0.97 0.002 30);
+
+  /* ─── Brand primary → purple ─────────────────────── */
+  --primary: oklch(0.67 0.2 295);          /* #A480F5 */
+  --primary-foreground: oklch(0.155 0.009 30);
+
+  --secondary: oklch(0.3 0.01 30);
+  --secondary-foreground: oklch(0.97 0.002 30);
+  --muted: oklch(0.3 0.01 30);
+  --muted-foreground: oklch(0.62 0.008 30);
+  --accent: oklch(0.3 0.01 30);
+  --accent-foreground: oklch(0.97 0.002 30);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
-  --ring: oklch(0.65 0.15 72);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.12 0.02 155);
-  --sidebar-foreground: oklch(0.93 0.012 80);
-  --sidebar-primary: oklch(0.65 0.15 72);
-  --sidebar-primary-foreground: oklch(0.08 0.018 155);
-  --sidebar-accent: oklch(0.18 0.02 155);
-  --sidebar-accent-foreground: oklch(0.93 0.012 80);
+  --ring: oklch(0.67 0.2 295);             /* purple ring */
+  --chart-1: #A480F5;
+  --chart-2: #88FF9A;
+  --chart-3: #77EED7;
+  --chart-4: #FB80C1;
+  --chart-5: #3168F7;
+  --sidebar: oklch(0.26 0.01 30);
+  --sidebar-foreground: oklch(0.97 0.002 30);
+  --sidebar-primary: oklch(0.67 0.2 295);
+  --sidebar-primary-foreground: oklch(0.155 0.009 30);
+  --sidebar-accent: oklch(0.3 0.01 30);
+  --sidebar-accent-foreground: oklch(0.97 0.002 30);
   --sidebar-border: oklch(1 0 0 / 8%);
-  --sidebar-ring: oklch(0.65 0.15 72);
+  --sidebar-ring: oklch(0.67 0.2 295);
 }
 
 @layer base {
@@ -145,11 +161,16 @@
     font-family: "Fraunces", Georgia, serif;
   }
 
-  /* Amber-to-sage gradient — the Amazonian signature */
+  /* Brand gradient — purple → teal (signature Maiyu.) */
   .text-gradient {
-    background: linear-gradient(135deg, #d4920c, #52b788);
+    background: var(--gradient-brand);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+
+  /* Gradient helpers */
+  .bg-gradient-brand { background: var(--gradient-brand); }
+  .bg-gradient-blue  { background: var(--gradient-blue);  }
+  .bg-gradient-green { background: var(--gradient-green); }
 }

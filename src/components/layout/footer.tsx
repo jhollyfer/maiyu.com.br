@@ -25,7 +25,7 @@ const Footer = () => {
   return (
     <footer
       className="pt-20 border-t border-white/8"
-      style={{ backgroundColor: "#080f0b" }}
+      style={{ backgroundColor: "#272221" }}
     >
       <div className="container mx-auto px-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">

@@ -4,15 +4,33 @@ import { AnimateInView } from "@/components/motion/animate-in-view";
 export function HeroSection() {
   const { t } = useLanguage();
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  const scrollTo = (id: string, duration = 1400) => {
+    const target = document.getElementById(id);
+    if (!target) return;
+
+    const start = window.scrollY;
+    const end = target.getBoundingClientRect().top + start;
+    const startTime = performance.now();
+
+    // Ease in-out cubic — mesma curva do navbar
+    const ease = (t: number) =>
+      t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2;
+
+    const step = (now: number) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      window.scrollTo(0, start + (end - start) * ease(progress));
+      if (progress < 1) requestAnimationFrame(step);
+    };
+
+    requestAnimationFrame(step);
   };
 
   return (
     <section
       id="home"
       className="relative min-h-screen flex items-center overflow-hidden"
-      style={{ backgroundColor: "#080f0b" }}
+      style={{ backgroundColor: "#272221" }}
     >
       {/* Subtle horizontal grid lines — industrial texture */}
       <div
@@ -128,7 +146,7 @@ export function HeroSection() {
                 </div>
                 <div>
                   <div
-                    className="font-heading font-black text-maiyu-green"
+                    className="font-heading font-black text-maiyu-amber"
                     style={{ fontSize: "2rem" }}
                   >
                     AM

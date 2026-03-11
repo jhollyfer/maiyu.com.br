@@ -58,7 +58,7 @@ const Navbar = () => {
       )}
       style={
         scrolled
-          ? { backgroundColor: "rgba(8,15,11,0.85)", backdropFilter: "blur(16px)" }
+          ? { backgroundColor: "rgba(39,34,33,0.88)", backdropFilter: "blur(18px)" }
           : undefined
       }
     >
@@ -111,7 +111,7 @@ const Navbar = () => {
             "fixed inset-0 z-10 flex flex-col justify-center transition-transform duration-300 ease-in-out border-r border-white/5",
             mobileMenuOpen ? "translate-x-0" : "translate-x-full"
           )}
-          style={{ backgroundColor: "#080f0b" }}
+          style={{ backgroundColor: "#272221" }}
         >
           <nav className="container px-6">
             <ul className="flex flex-col space-y-6 items-center">

@@ -27,13 +27,13 @@ export function ProjectsSection() {
   const { t } = useLanguage();
 
   return (
-    <section id="projects" className="py-28 px-6" style={{ backgroundColor: "#0d2318" }}>
+    <section id="projects" className="py-28 px-6" style={{ backgroundColor: "#403937" }}>
       <div className="container mx-auto">
         {/* Header */}
         <AnimateInView className="mb-20">
           <div className="flex items-center gap-3 mb-5">
-            <span className="w-6 h-px bg-maiyu-green inline-block" />
-            <p className="text-maiyu-green font-body text-[10px] font-medium tracking-[0.3em] uppercase">
+            <span className="w-6 h-px bg-maiyu-amber inline-block" />
+            <p className="text-maiyu-amber font-body text-[10px] font-medium tracking-[0.3em] uppercase">
               {t("projects.label")}
             </p>
           </div>
@@ -65,7 +65,7 @@ export function ProjectsSection() {
                       <div
                         className="relative flex items-center px-4 border-b border-white/8"
                         style={{
-                          backgroundColor: "#1a2820",
+                          backgroundColor: "#332c2b",
                           height: "38px",
                         }}
                       >

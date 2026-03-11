@@ -22,7 +22,7 @@ export function ServicesSection() {
   ];
 
   return (
-    <section id="services" className="py-28 px-6" style={{ backgroundColor: "#080f0b" }}>
+    <section id="services" className="py-28 px-6" style={{ backgroundColor: "#272221" }}>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16">
 
@@ -30,8 +30,8 @@ export function ServicesSection() {
           <div className="lg:col-span-4">
             <AnimateInView>
               <div className="flex items-center gap-3 mb-6">
-                <span className="w-6 h-px bg-maiyu-green inline-block" />
-                <p className="text-maiyu-green font-body text-[10px] font-medium tracking-[0.3em] uppercase">
+                <span className="w-6 h-px bg-maiyu-amber inline-block" />
+                <p className="text-maiyu-amber font-body text-[10px] font-medium tracking-[0.3em] uppercase">
                   {t("services.label")}
                 </p>
               </div>
@@ -70,7 +70,7 @@ export function ServicesSection() {
                   {/* Icon */}
                   <Icon
                     size={18}
-                    className="text-maiyu-amber shrink-0 mt-1.5 transition-colors duration-300 group-hover:text-maiyu-green"
+                    className="text-maiyu-amber shrink-0 mt-1.5 transition-colors duration-300 group-hover:text-maiyu-amber"
                   />
 
                   {/* Content */}

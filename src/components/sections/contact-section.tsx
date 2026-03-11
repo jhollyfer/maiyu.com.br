@@ -37,7 +37,7 @@ export function ContactSection() {
   };
 
   return (
-    <section id="contact" className="py-28 px-6" style={{ backgroundColor: "#0d2318" }}>
+    <section id="contact" className="py-28 px-6" style={{ backgroundColor: "#403937" }}>
       <div className="container mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
 

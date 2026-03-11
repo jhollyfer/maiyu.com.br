@@ -17,12 +17,12 @@ export function TeamSection() {
   const { t } = useLanguage();
 
   return (
-    <section id="team" className="py-28 px-6" style={{ backgroundColor: "#080f0b" }}>
+    <section id="team" className="py-28 px-6" style={{ backgroundColor: "#272221" }}>
       <div className="container mx-auto">
         <AnimateInView className="mb-16">
           <div className="flex items-center gap-3 mb-4">
-            <span className="w-6 h-px bg-maiyu-green inline-block" />
-            <p className="text-maiyu-green font-body text-[10px] font-medium tracking-[0.3em] uppercase">
+            <span className="w-6 h-px bg-maiyu-amber inline-block" />
+            <p className="text-maiyu-amber font-body text-[10px] font-medium tracking-[0.3em] uppercase">
               {t("team.heading")}
             </p>
           </div>
