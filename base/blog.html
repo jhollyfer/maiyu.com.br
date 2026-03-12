@@ -1,0 +1,474 @@
+<!doctype html>
+
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Maiyu | Insights on Design &amp; Innovation</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#ec5b13",
+              "brand-deep": "#1e0f24",
+              "brand-muted": "#40204b",
+              "brand-accent": "#bd8dce",
+              "background-light": "#f8f6f6",
+              "background-dark": "#221610",
+            },
+            fontFamily: {
+              display: ["Public Sans", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Public Sans", sans-serif;
+      }
+      .material-symbols-outlined {
+        font-variation-settings:
+          "FILL" 0,
+          "wght" 400,
+          "GRAD" 0,
+          "opsz" 24;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100"
+  >
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      <!-- Navigation Bar -->
+      <header
+        class="sticky top-0 z-50 w-full border-b border-brand-muted bg-brand-deep px-4 md:px-20 lg:px-40 py-3"
+      >
+        <div class="mx-auto flex max-w-[1200px] items-center justify-between">
+          <div class="flex items-center gap-8">
+            <div class="flex items-center gap-3 text-white">
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary"
+              >
+                <span class="material-symbols-outlined text-white"
+                  >auto_awesome</span
+                >
+              </div>
+              <h2 class="text-xl font-bold tracking-tight">Maiyu</h2>
+            </div>
+            <nav class="hidden md:flex items-center gap-8">
+              <a
+                class="text-sm font-medium text-slate-200 hover:text-primary transition-colors"
+                href="#"
+                >Articles</a
+              >
+              <a
+                class="text-sm font-medium text-slate-200 hover:text-primary transition-colors"
+                href="#"
+                >Categories</a
+              >
+              <a
+                class="text-sm font-medium text-slate-200 hover:text-primary transition-colors"
+                href="#"
+                >Authors</a
+              >
+              <a
+                class="text-sm font-medium text-slate-200 hover:text-primary transition-colors"
+                href="#"
+                >About</a
+              >
+            </nav>
+          </div>
+          <div class="flex items-center gap-4">
+            <label class="relative hidden sm:block">
+              <span
+                class="absolute inset-y-0 left-0 flex items-center pl-3 text-brand-accent"
+              >
+                <span class="material-symbols-outlined text-lg">search</span>
+              </span>
+              <input
+                class="h-10 w-48 lg:w-64 rounded-xl border-none bg-brand-muted pl-10 pr-4 text-sm text-white placeholder-brand-accent focus:ring-2 focus:ring-primary"
+                placeholder="Search articles..."
+                type="text"
+              />
+            </label>
+            <div class="flex gap-2">
+              <button
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-muted text-white hover:bg-primary/20 transition-colors"
+              >
+                <span class="material-symbols-outlined">notifications</span>
+              </button>
+              <button
+                class="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-muted text-white hover:bg-primary/20 transition-colors"
+              >
+                <span class="material-symbols-outlined">account_circle</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+      <main class="mx-auto w-full max-w-[1200px] px-4 py-8 md:px-10">
+        <!-- Hero / Featured Section -->
+        <section class="mb-12">
+          <div
+            class="group relative overflow-hidden rounded-3xl bg-brand-deep min-h-[450px] flex flex-col justify-end"
+          >
+            <div
+              class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
+              data-alt="Retro computer and futuristic digital aesthetic background"
+              style="
+                background-image:
+                  linear-gradient(
+                    180deg,
+                    rgba(30, 15, 36, 0) 0%,
+                    rgba(30, 15, 36, 0.9) 100%
+                  ),
+                  url(&quot;https://lh3.googleusercontent.com/aida-public/AB6AXuChAIb-bVeygz_--3Dp3D-p61O4uz4HiRggsPbbqVJRMPzagnn-Aucnk_YAzYryUFxAsS-XmAie2drRCH2SBEzkO5O7yEjfQfENcGOWnc6k9KW0RAqG5ZHDbUQxjhQB0NuEYWx6MPvMR-EstKRErOzQY5HxlexX9A4CdxgzgebOaMk-RwMlLcYdHq4vo2X0J2Ale22j0jdjJawD_ZTToiSiUd5x6osrdXPmyfOOqud8OrdHcqRg6fPtMfabadWBYPQq4o21WhLymAY&quot;);
+              "
+            ></div>
+            <div class="relative p-8 md:p-12 max-w-3xl">
+              <span
+                class="inline-block rounded-full bg-primary px-3 py-1 text-xs font-bold uppercase tracking-wider text-white mb-4"
+                >Featured Article</span
+              >
+              <h1
+                class="text-3xl md:text-5xl font-extrabold leading-tight text-white mb-6"
+              >
+                Exploring the Future of Digital Design and Innovation
+              </h1>
+              <div class="flex items-center gap-4 text-brand-accent">
+                <div
+                  class="h-10 w-10 rounded-full border-2 border-primary overflow-hidden"
+                >
+                  <img
+                    alt="Author"
+                    class="h-full w-full object-cover"
+                    data-alt="Portrait of Sarah Jenkins, technology author"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDxfSwKe_Nu3dY3jNDtpq5SjOZM9n77ynyexZaD9Qlb4KO0UGzskiUAyR4l4eYkbPzhkE9O3TAk8OrQrJ_c8xMtMvYJI7kTyIrLEwhqSsghRF5MYN3jrmmLh91iThH6vGbj4gOSvkEEvAUVcrT8TH5oBK2VbR3VjwX-t6nsdAhCxZjbEJzfuhD5-u7gsTLLI9CeB75qRL_t4q4bBq5HEoyoLeLMjONH7SscqM9NWbXWLl_Hm6QN9GDpRrJh9lUG1yQclB8-4SySzjc"
+                  />
+                </div>
+                <div>
+                  <p class="text-sm font-semibold text-white">Sarah Jenkins</p>
+                  <p class="text-xs">Senior Design Lead • 5 min read</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Category Filter Bar -->
+        <section class="mb-10 flex flex-wrap items-center gap-3">
+          <button
+            class="flex h-10 items-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold text-white shadow-lg shadow-primary/20"
+          >
+            <span class="material-symbols-outlined text-lg">grid_view</span>
+            All Posts
+          </button>
+          <button
+            class="flex h-10 items-center gap-2 rounded-xl bg-brand-muted px-5 text-sm font-medium text-white hover:bg-brand-muted/80 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">memory</span>
+            Tech
+          </button>
+          <button
+            class="flex h-10 items-center gap-2 rounded-xl bg-brand-muted px-5 text-sm font-medium text-white hover:bg-brand-muted/80 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">palette</span>
+            Design
+          </button>
+          <button
+            class="flex h-10 items-center gap-2 rounded-xl bg-brand-muted px-5 text-sm font-medium text-white hover:bg-brand-muted/80 transition-colors"
+          >
+            <span class="material-symbols-outlined text-lg">campaign</span>
+            Marketing
+          </button>
+        </section>
+        <!-- Featured Secondary Article -->
+        <section class="mb-12">
+          <div
+            class="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-2xl bg-brand-deep shadow-2xl"
+          >
+            <div class="lg:col-span-7 h-64 lg:h-auto overflow-hidden">
+              <img
+                class="h-full w-full object-cover"
+                data-alt="Modern geometric design software interface screenshot"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDB0i68V69E2e0FkNjQO-mAM00Ueh__kkm7Peh5Uin5452L5hFyHbP-7Lvkvb1pKLjW3c5uFCKlY22UTmV-XlkKc_XE6xndApFLuia-QPC_i5De0hBi4M3evEuTQad-F1CcJ08CEPjvbBT1F84z5_oR-cnBw0ucgghP6uQj0eVlHlN0YaeSa_-HqlDBJk5okIQVkkVPLyciVfz2lzI3FCDK5ZqI2Q7JkJIZIC57XjoLCdyCN8zi7EaPvAgZF1lC4umXzJ0DbnLtt6c"
+              />
+            </div>
+            <div class="lg:col-span-5 flex flex-col justify-center p-8 md:p-12">
+              <p
+                class="mb-2 text-xs font-bold uppercase tracking-widest text-primary"
+              >
+                Case Study
+              </p>
+              <h2 class="mb-4 text-2xl font-bold leading-tight text-white">
+                How Maiyu is Shaping the Next Generation of Tech Marketing
+              </h2>
+              <p class="mb-6 text-brand-accent">
+                Discover the intersection of creativity and data-driven
+                strategies in our latest deep dive into performance aesthetics.
+              </p>
+              <div class="mt-auto flex items-center justify-between">
+                <span class="text-xs text-brand-accent/70"
+                  >8 min read • Jan 24, 2024</span
+                >
+                <button
+                  class="flex items-center gap-2 text-sm font-bold text-primary hover:text-white transition-colors"
+                >
+                  READ STORY
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Recent Articles Grid -->
+        <section class="mb-16">
+          <div class="flex items-center justify-between mb-8">
+            <h3 class="text-2xl font-bold dark:text-white">Recent Articles</h3>
+            <a class="text-sm font-bold text-primary hover:underline" href="#"
+              >View All</a
+            >
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Article Card 1 -->
+            <div
+              class="flex flex-col rounded-2xl bg-white dark:bg-brand-deep shadow-md border border-slate-200 dark:border-brand-muted overflow-hidden group"
+            >
+              <div class="relative h-48 overflow-hidden">
+                <img
+                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  data-alt="Team collaborating in a modern tech office"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDPqAMqRN1xEbhy3KniUJbJOg39ifkLg5-726tnlH0u9zmXfOn8zTmRqAt56WHRTyxf5exYJfMjltUdlhaYnZG9GyHM68wjfNfxvGo1B8m-K_oHqpRkk45IOQP_F1JDB8LfdoW9dYiOw-9jVq49gwJ88jagynR9lEF_BrU-L5WePy49VRCGULRXZQtafZgeqp4U-91iqwqYjbZYkJTPMjz5S9jr3bm5gJ0MI6D7jjQrgcwE9k6sPNtFiyjz_fBFhLbyhw5WkVA2p34"
+                />
+                <span
+                  class="absolute top-4 left-4 rounded-lg bg-brand-deep/80 px-2 py-1 text-[10px] font-bold uppercase text-white backdrop-blur-md"
+                  >Marketing</span
+                >
+              </div>
+              <div class="flex flex-1 flex-col p-6">
+                <h4
+                  class="mb-3 text-lg font-bold leading-snug dark:text-white group-hover:text-primary transition-colors"
+                >
+                  The Evolution of Dark Mode in Modern Web Applications
+                </h4>
+                <p
+                  class="mb-6 text-sm text-slate-600 dark:text-brand-accent/80 line-clamp-3"
+                >
+                  A deep dive into the psychological benefits and technical
+                  challenges of implementing dark themes for global audiences.
+                </p>
+                <div class="mt-auto flex items-center gap-3">
+                  <img
+                    class="h-8 w-8 rounded-full border border-primary/30"
+                    data-alt="Mark Thompson author profile"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDc4Htsi6R1hmJ6l-Bre8JhuP8_ljraYi-WrqqShDl6YY6axtIH1Xk9JRIk2Ud_nUzxF0Ze5yCi2SEkAmGfuaxCWxfZDm6iu9WvbMN99DqY9YTblnBJSc0-oBJeh6H81YkpAZCyHucw5bXx_DjwGtEnCqmSdr9UtZQNY7Ea-C-RS-btchvpcE0N_xNCsIa1NJY19yCIfPa7TxdSHG5P1oz-HaIaK01TtiuA0Yu3WnReABWhq9iEhcHhi30Swq39XM0wUEfSopWZ-J8"
+                  />
+                  <div class="text-[11px]">
+                    <p class="font-bold dark:text-white">Mark Thompson</p>
+                    <p class="text-slate-500 dark:text-brand-accent/60">
+                      Feb 12 • 4 min read
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Article Card 2 -->
+            <div
+              class="flex flex-col rounded-2xl bg-white dark:bg-brand-deep shadow-md border border-slate-200 dark:border-brand-muted overflow-hidden group"
+            >
+              <div class="relative h-48 overflow-hidden">
+                <img
+                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  data-alt="Abstract purple and orange 3D art shapes"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8BvwvLMJVSma-8MlmspW2hKcyQBEL64MK17frR-lhy57g5evEtbQ91UdEneCVIsKLwIRNk4nv3nuZGppav7DxE2gXGsVyRULW4bj9ER4Bcz0uRur6sfdmnv5WN5z7OsaIvK2nsnyY5pCoc65ROqQg51lhji4otOxnHY7Yqon_U2d9r38ZRQfJpMtFHDLRSFlr7yJzR13S7MpJoTc6FYepjp0HcW5e_PMsHRFMVXM3YXS09mf7DZ_bLTzMN2h3nmH3UNjKQHJ---o"
+                />
+                <span
+                  class="absolute top-4 left-4 rounded-lg bg-brand-deep/80 px-2 py-1 text-[10px] font-bold uppercase text-white backdrop-blur-md"
+                  >Design</span
+                >
+              </div>
+              <div class="flex flex-1 flex-col p-6">
+                <h4
+                  class="mb-3 text-lg font-bold leading-snug dark:text-white group-hover:text-primary transition-colors"
+                >
+                  10 Principles of High-Conversion Landing Pages
+                </h4>
+                <p
+                  class="mb-6 text-sm text-slate-600 dark:text-brand-accent/80 line-clamp-3"
+                >
+                  Learn how the world's most successful tech companies structure
+                  their top-of-funnel experiences for maximum impact.
+                </p>
+                <div class="mt-auto flex items-center gap-3">
+                  <img
+                    class="h-8 w-8 rounded-full border border-primary/30"
+                    data-alt="Elena Rodriguez author profile"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAhLpj1OXKAICPN8UKjFtBAruoJUQ3BGy9lUiM23vayw16wMPjjpEKJ6gT_isKyQpo6DllAQBoyA4_1bZJFTY9P40NdYyRSRLTxnRHQ5wjDe0e_FYe9W_llYIszAglpoykcKyRNTV0nynqjGLmCQ0kRu6sFoTFlGezWtTgsOv3DYLgU7AwTDuISjm65jsRu2mNg2qralJL_IyH5bMOtti_3AE2dW_2KoyrJbYzB7FYDiSTpO5B04ybpf3gCrBU9Cw9hsBR4F8CWBPY"
+                  />
+                  <div class="text-[11px]">
+                    <p class="font-bold dark:text-white">Elena Rodriguez</p>
+                    <p class="text-slate-500 dark:text-brand-accent/60">
+                      Feb 08 • 12 min read
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- Article Card 3 -->
+            <div
+              class="flex flex-col rounded-2xl bg-white dark:bg-brand-deep shadow-md border border-slate-200 dark:border-brand-muted overflow-hidden group"
+            >
+              <div class="relative h-48 overflow-hidden">
+                <img
+                  class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  data-alt="Data analytics dashboard displayed on a tablet"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCojBiZ6ClfedLLQe0K1SaZsl21GNz2FEAbS_EKXBFND_g4gB3fzD0O1zQ3ibRqjpEtMZEMy-nTueHqVkkHlEZQwzFDjhQgtyJCyzdGbz111dSQLjQzEVyxAm1JwW_js6h79EAY6WH6_iOoWbZnqUM4nsrFsqnPbOGHFW7K35LHrGJfHtaGVP6JhS-xoXq85_MJm9t0G0f3-FT6TfOVm27M72ozq3Ulc__3lLHi0dc33dsUscmXrZ8AwVkdot-TAAMDgieN5J69tJk"
+                />
+                <span
+                  class="absolute top-4 left-4 rounded-lg bg-brand-deep/80 px-2 py-1 text-[10px] font-bold uppercase text-white backdrop-blur-md"
+                  >Tech</span
+                >
+              </div>
+              <div class="flex flex-1 flex-col p-6">
+                <h4
+                  class="mb-3 text-lg font-bold leading-snug dark:text-white group-hover:text-primary transition-colors"
+                >
+                  Micro-Interactions: The Secret to User Loyalty
+                </h4>
+                <p
+                  class="mb-6 text-sm text-slate-600 dark:text-brand-accent/80 line-clamp-3"
+                >
+                  Small details make the difference. Discover how subtle
+                  animations can drastically improve user retention and brand
+                  affinity.
+                </p>
+                <div class="mt-auto flex items-center gap-3">
+                  <img
+                    class="h-8 w-8 rounded-full border border-primary/30"
+                    data-alt="James Wilson author profile"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOCmjCIwUiZlphcf3jqXj83hVAeKQQ5_2uGKHLo-_Lq7GA-2CzzIc60eeK_8SlK7WRkMbUg0sD7JatmRvZs22-IV4oewwCwD31SvHGQmPydCGNEGZ_fT42JWQFvwE8X6_M9bB_8TfHbHhwLW1--ML3oznAf83t1hnyWgrsKa6fZBKUQWMbJiObXrsb0D5VTozPgyBmUkocHLKVXF2NhohX13ivknjmwd5JivDNtglgdIJB7qYMpXwPCYOjmJcA_gpnR-_Tv-zNBPg"
+                  />
+                  <div class="text-[11px]">
+                    <p class="font-bold dark:text-white">James Wilson</p>
+                    <p class="text-slate-500 dark:text-brand-accent/60">
+                      Jan 30 • 6 min read
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Newsletter Section -->
+        <section class="mb-16">
+          <div
+            class="rounded-3xl bg-primary p-8 md:p-16 text-center text-white"
+          >
+            <h2 class="text-3xl font-extrabold mb-4">
+              Stay ahead of the curve
+            </h2>
+            <p class="mb-8 max-w-lg mx-auto text-white/90">
+              Join 15,000+ designers and marketers getting our weekly insights
+              on the future of tech and design innovation.
+            </p>
+            <form class="flex flex-col sm:flex-row max-w-md mx-auto gap-3">
+              <input
+                class="flex-1 rounded-xl border-none px-6 py-4 text-slate-900 focus:ring-2 focus:ring-brand-deep"
+                placeholder="Your email address"
+                type="email"
+              />
+              <button
+                class="bg-brand-deep px-8 py-4 rounded-xl font-bold hover:bg-brand-muted transition-colors"
+              >
+                Subscribe
+              </button>
+            </form>
+          </div>
+        </section>
+      </main>
+      <!-- Footer -->
+      <footer
+        class="bg-brand-deep py-12 px-4 md:px-20 text-brand-accent border-t border-brand-muted"
+      >
+        <div
+          class="mx-auto max-w-[1200px] grid grid-cols-1 md:grid-cols-4 gap-12"
+        >
+          <div class="col-span-1 md:col-span-2">
+            <div class="flex items-center gap-3 text-white mb-6">
+              <div
+                class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary"
+              >
+                <span class="material-symbols-outlined text-white"
+                  >auto_awesome</span
+                >
+              </div>
+              <h2 class="text-xl font-bold tracking-tight">Maiyu</h2>
+            </div>
+            <p class="max-w-xs mb-6">
+              Leading the digital frontier through thoughtful design, robust
+              engineering, and creative storytelling.
+            </p>
+            <div class="flex gap-4">
+              <a
+                class="h-10 w-10 flex items-center justify-center rounded-full bg-brand-muted text-white hover:bg-primary transition-colors"
+                href="#"
+              >
+                <span class="material-symbols-outlined">share</span>
+              </a>
+              <a
+                class="h-10 w-10 flex items-center justify-center rounded-full bg-brand-muted text-white hover:bg-primary transition-colors"
+                href="#"
+              >
+                <span class="material-symbols-outlined">mail</span>
+              </a>
+            </div>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-6">Resources</h4>
+            <ul class="space-y-4 text-sm">
+              <li><a class="hover:text-primary" href="#">Articles</a></li>
+              <li><a class="hover:text-primary" href="#">Case Studies</a></li>
+              <li><a class="hover:text-primary" href="#">Style Guide</a></li>
+              <li><a class="hover:text-primary" href="#">Design Assets</a></li>
+            </ul>
+          </div>
+          <div>
+            <h4 class="text-white font-bold mb-6">Company</h4>
+            <ul class="space-y-4 text-sm">
+              <li><a class="hover:text-primary" href="#">About Us</a></li>
+              <li><a class="hover:text-primary" href="#">Careers</a></li>
+              <li><a class="hover:text-primary" href="#">Contact</a></li>
+              <li><a class="hover:text-primary" href="#">Privacy</a></li>
+            </ul>
+          </div>
+        </div>
+        <div
+          class="mx-auto max-w-[1200px] mt-12 pt-8 border-t border-brand-muted text-center text-xs"
+        >
+          © 2024 Maiyu Media. All rights reserved. Designed for the future.
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

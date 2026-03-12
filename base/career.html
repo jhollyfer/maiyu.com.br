@@ -1,0 +1,522 @@
+<!doctype html>
+
+<html class="light" lang="pt-br">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Maiyu | Trabalhe Conosco</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#ec5b13",
+              "background-light": "#f8f6f6",
+              "background-dark": "#221610",
+              "brand-purple": "#1e0f24",
+              "brand-purple-light": "#40204b",
+              "brand-accent": "#e6a1ff",
+            },
+            fontFamily: {
+              display: ["Public Sans", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .hero-gradient {
+        background: linear-gradient(135deg, #1e0f24 0%, #40204b 100%);
+      }
+    </style>
+  </head>
+  <body
+    class="font-display bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100"
+  >
+    <div class="relative flex min-h-screen w-full flex-col overflow-x-hidden">
+      <!-- Navigation Bar -->
+      <header
+        class="flex items-center justify-between whitespace-nowrap border-b border-solid border-slate-200 dark:border-slate-800 bg-white dark:bg-background-dark px-6 md:px-20 py-4 sticky top-0 z-50"
+      >
+        <div class="flex items-center gap-3">
+          <div
+            class="size-8 bg-primary rounded-lg flex items-center justify-center text-white"
+          >
+            <span class="material-symbols-outlined">rocket_launch</span>
+          </div>
+          <h2
+            class="text-slate-900 dark:text-white text-xl font-bold leading-tight tracking-tight"
+          >
+            Maiyu
+          </h2>
+        </div>
+        <div class="hidden md:flex flex-1 justify-end gap-10 items-center">
+          <nav class="flex items-center gap-8">
+            <a
+              class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+              href="#"
+              >Sobre Nós</a
+            >
+            <a
+              class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+              href="#"
+              >Vagas</a
+            >
+            <a
+              class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+              href="#"
+              >Benefícios</a
+            >
+            <a
+              class="text-slate-600 dark:text-slate-300 text-sm font-medium hover:text-primary transition-colors"
+              href="#"
+              >Contato</a
+            >
+          </nav>
+          <button
+            class="flex min-w-[100px] cursor-pointer items-center justify-center rounded-xl h-10 px-6 bg-primary text-white text-sm font-bold transition-transform hover:scale-105 active:scale-95"
+          >
+            Entrar
+          </button>
+        </div>
+        <div class="md:hidden">
+          <span class="material-symbols-outlined text-slate-900 dark:text-white"
+            >menu</span
+          >
+        </div>
+      </header>
+      <main class="flex-1">
+        <!-- Hero Section -->
+        <section
+          class="hero-gradient py-16 md:py-24 px-6 md:px-20 relative overflow-hidden"
+        >
+          <!-- Abstract decorative element -->
+          <div
+            class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none"
+          >
+            <svg
+              class="w-full h-full"
+              viewbox="0 0 200 200"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M44.7,-76.4C58.1,-69.2,69.5,-57.4,77.3,-43.6C85.1,-29.8,89.2,-14.9,88.4,-0.4C87.7,14,82.1,28.1,73.8,40.9C65.5,53.7,54.5,65.3,41.2,72.7C27.9,80.1,14,83.4,-0.6,84.4C-15.1,85.4,-30.2,84.1,-43.8,77.2C-57.3,70.3,-69.4,57.7,-76.7,43.2C-84,28.7,-86.6,12.3,-84.8,-3.3C-83.1,-18.9,-77,-33.8,-67.7,-46.3C-58.4,-58.8,-45.9,-68.9,-32.3,-76C-18.8,-83.1,-9.4,-87.2,2.6,-91.7C14.7,-96.2,29.3,-101.1,44.7,-76.4Z"
+                fill="#e6a1ff"
+                transform="translate(100 100)"
+              ></path>
+            </svg>
+          </div>
+          <div
+            class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center"
+          >
+            <div class="flex flex-col gap-6">
+              <span
+                class="inline-block px-4 py-1 rounded-full bg-brand-accent/20 text-brand-accent text-xs font-bold uppercase tracking-widest w-fit"
+                >Recrutamento Aberto</span
+              >
+              <h1
+                class="text-white text-4xl md:text-6xl font-black leading-tight tracking-tight"
+              >
+                Faça parte do nosso time!
+              </h1>
+              <p
+                class="text-slate-300 text-lg md:text-xl font-normal leading-relaxed max-w-xl"
+              >
+                Trabalhe na Maiyu e ajude a construir o futuro da tecnologia com
+                um time apaixonado e inovador. Estamos em busca de talentos que
+                queiram impactar o mundo.
+              </p>
+              <div class="flex items-center gap-4 mt-4">
+                <div class="flex -space-x-3">
+                  <img
+                    class="w-10 h-10 rounded-full border-2 border-brand-purple object-cover"
+                    data-alt="Portrait of a smiling employee"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNh_0l6-fgJWo-PWJ8ireLK5Sj1qKC3b-u5rdKu_gBHDQF_eJylrlfI6NUfWGb5riqeNif3PJZW-nZO7d8haw1uRaSWjkk5IFAoGucbmslvn1GUqn6BPcTqWJ1I1GNsjr7PVct3dVCjqnorpf4nI3Kunj6jIF7zeCNQqi6GZQdwbqPOrgFRgARVpdnYdtH1pJ6PL6GgKta4o5xV5oQrFt9XClpDRpoJqraFkdDWJJgLEeCU5wmKiETw86fNyNn7kL0-w4k9YAt-v4"
+                  />
+                  <img
+                    class="w-10 h-10 rounded-full border-2 border-brand-purple object-cover"
+                    data-alt="Portrait of a developer"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuBPRjkJUEVVHSnMflzJYhFM9s3bGwjiul-tH0DBMYH0GyG7KlzCYQzIIijhH_LNvB7DdXZa0XLAXfLJ3Sbq7UZ1KGbqxoAEztoOASZq39tFzy6sZV8sjtzZjYevB7V4SofQGdbkMRlioZcYfFm-2Nx7kE4cQ_SPjl6FcXE8zpC0nFXQ5exPupgO9ifdx8e2PKtW8MegV0ZzRLt1_JvL9uAfuIDspdT1l-Vo0T2RhEYnsyyYwffqYY-PTtRttGDKUUxjY6YWtFuayME"
+                  />
+                  <img
+                    class="w-10 h-10 rounded-full border-2 border-brand-purple object-cover"
+                    data-alt="Portrait of a product manager"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCgXNjDKCgN_Xyc8FzROObqMWG4JG5eJVws-98Xu7YwZzhnQPdv-5lRLcuy3eL7d_A2BcPxB5VgsMhdmHQtULB1MeEONE9dyZgZ1v8bHCFNgluRj_ODFKdCQhQ--J3Ki3E8N4HAVudI9usOvlRURY0i_TK8J3AmlD22ExfnKB1KBwIpmd9uGfaLUaEcMWQIc6-tRj6uBX7igu65MUxqI15_0G5KQXlCy2h8hDNMPegfoR7252y49aJ06j4TfFRsNDdnEjDbIiv2saQ"
+                  />
+                  <div
+                    class="w-10 h-10 rounded-full border-2 border-brand-purple bg-primary flex items-center justify-center text-[10px] font-bold text-white"
+                  >
+                    +24
+                  </div>
+                </div>
+                <span class="text-slate-400 text-sm"
+                  >Junte-se a mais de 50 colaboradores remotos</span
+                >
+              </div>
+            </div>
+            <!-- Application Form Card -->
+            <div
+              class="bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-2xl border border-white/10"
+            >
+              <h3
+                class="text-slate-900 dark:text-white text-2xl font-bold mb-6"
+              >
+                Candidatura Rápida
+              </h3>
+              <form class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="flex flex-col gap-2">
+                    <label
+                      class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                      >Nome Completo</label
+                    >
+                    <input
+                      class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-primary focus:border-primary"
+                      placeholder="Seu nome"
+                      type="text"
+                    />
+                  </div>
+                  <div class="flex flex-col gap-2">
+                    <label
+                      class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                      >E-mail Profissional</label
+                    >
+                    <input
+                      class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-primary focus:border-primary"
+                      placeholder="email@exemplo.com"
+                      type="email"
+                    />
+                  </div>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label
+                    class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                    >Vaga de Interesse</label
+                  >
+                  <select
+                    class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-primary focus:border-primary"
+                  >
+                    <option>Selecione uma vaga</option>
+                    <option>Desenvolvedor Front-end Senior</option>
+                    <option>Product Designer</option>
+                    <option>QA Engineer</option>
+                    <option>Desenvolvedor Back-end (Node.js)</option>
+                  </select>
+                </div>
+                <div class="flex flex-col gap-2">
+                  <label
+                    class="text-sm font-medium text-slate-600 dark:text-slate-400"
+                    >LinkedIn ou Portfólio</label
+                  >
+                  <input
+                    class="w-full bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 focus:ring-primary focus:border-primary"
+                    placeholder="https://linkedin.com/in/voce"
+                    type="url"
+                  />
+                </div>
+                <div class="pt-4">
+                  <button
+                    class="w-full bg-primary hover:bg-primary/90 text-white font-bold py-4 rounded-xl shadow-lg transition-all transform hover:-translate-y-1"
+                    type="submit"
+                  >
+                    Enviar Candidatura
+                  </button>
+                  <p class="text-center text-xs text-slate-500 mt-4">
+                    Ao enviar, você concorda com nossos termos de privacidade.
+                  </p>
+                </div>
+              </form>
+            </div>
+          </div>
+        </section>
+        <!-- Benefits Section -->
+        <section
+          class="py-20 px-6 md:px-20 bg-background-light dark:bg-background-dark"
+        >
+          <div class="max-w-7xl mx-auto">
+            <div
+              class="flex flex-col md:flex-row justify-between items-end gap-6 mb-16"
+            >
+              <div class="max-w-2xl">
+                <h2
+                  class="text-slate-900 dark:text-white text-3xl md:text-4xl font-black mb-4"
+                >
+                  Por que trabalhar na Maiyu?
+                </h2>
+                <p class="text-slate-600 dark:text-slate-400 text-lg">
+                  Oferecemos um ambiente dinâmico com foco no bem-estar e
+                  crescimento constante. Nossa cultura é baseada na confiança e
+                  autonomia.
+                </p>
+              </div>
+              <div class="hidden md:block">
+                <span
+                  class="material-symbols-outlined text-primary text-6xl opacity-20"
+                  >diversity_3</span
+                >
+              </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <!-- Benefit 1 -->
+              <div
+                class="group p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all shadow-sm hover:shadow-xl"
+              >
+                <div
+                  class="size-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined">home_work</span>
+                </div>
+                <h3
+                  class="text-slate-900 dark:text-white text-xl font-bold mb-3"
+                >
+                  100% Remoto
+                </h3>
+                <p
+                  class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"
+                >
+                  Liberdade geográfica para trabalhar de onde quiser, com
+                  auxílio home-office mensal para seu setup.
+                </p>
+              </div>
+              <!-- Benefit 2 -->
+              <div
+                class="group p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all shadow-sm hover:shadow-xl"
+              >
+                <div
+                  class="size-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined">schedule</span>
+                </div>
+                <h3
+                  class="text-slate-900 dark:text-white text-xl font-bold mb-3"
+                >
+                  Horário Flexível
+                </h3>
+                <p
+                  class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"
+                >
+                  Focamos em entregas, não em horas sentadas. Organize seu dia
+                  para ter mais qualidade de vida.
+                </p>
+              </div>
+              <!-- Benefit 3 -->
+              <div
+                class="group p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all shadow-sm hover:shadow-xl"
+              >
+                <div
+                  class="size-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined"
+                    >health_and_safety</span
+                  >
+                </div>
+                <h3
+                  class="text-slate-900 dark:text-white text-xl font-bold mb-3"
+                >
+                  Saúde Premium
+                </h3>
+                <p
+                  class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"
+                >
+                  Plano de saúde e odontológico Bradesco Top para você e
+                  dependentes, sem coparticipação.
+                </p>
+              </div>
+              <!-- Benefit 4 -->
+              <div
+                class="group p-8 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-primary/50 transition-all shadow-sm hover:shadow-xl"
+              >
+                <div
+                  class="size-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform"
+                >
+                  <span class="material-symbols-outlined">school</span>
+                </div>
+                <h3
+                  class="text-slate-900 dark:text-white text-xl font-bold mb-3"
+                >
+                  Educação Contínua
+                </h3>
+                <p
+                  class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed"
+                >
+                  Orçamento anual para cursos, eventos e livros. Queremos que
+                  você evolua junto conosco.
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+        <!-- Vacancies Section -->
+        <section class="py-20 px-6 md:px-20 bg-slate-100 dark:bg-slate-900/50">
+          <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-12">
+              <h2
+                class="text-slate-900 dark:text-white text-3xl font-black mb-4"
+              >
+                Vagas em Destaque
+              </h2>
+              <p class="text-slate-600 dark:text-slate-400">
+                Encontre a oportunidade ideal para o seu momento de carreira.
+              </p>
+            </div>
+            <div class="space-y-4">
+              <!-- Job Item -->
+              <div
+                class="flex flex-col md:flex-row md:items-center justify-between p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div class="flex flex-col gap-1">
+                  <h4
+                    class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                  >
+                    Senior Front-end Engineer
+                  </h4>
+                  <div class="flex gap-4 text-sm text-slate-500">
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >public</span
+                      >
+                      Remoto</span
+                    >
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >work</span
+                      >
+                      Full-time</span
+                    >
+                  </div>
+                </div>
+                <div class="mt-4 md:mt-0">
+                  <button
+                    class="px-6 py-2 rounded-lg border border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+              <!-- Job Item -->
+              <div
+                class="flex flex-col md:flex-row md:items-center justify-between p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div class="flex flex-col gap-1">
+                  <h4
+                    class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                  >
+                    Product Designer (UI/UX)
+                  </h4>
+                  <div class="flex gap-4 text-sm text-slate-500">
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >public</span
+                      >
+                      Remoto</span
+                    >
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >work</span
+                      >
+                      Full-time</span
+                    >
+                  </div>
+                </div>
+                <div class="mt-4 md:mt-0">
+                  <button
+                    class="px-6 py-2 rounded-lg border border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+              <!-- Job Item -->
+              <div
+                class="flex flex-col md:flex-row md:items-center justify-between p-6 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all cursor-pointer group"
+              >
+                <div class="flex flex-col gap-1">
+                  <h4
+                    class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-primary transition-colors"
+                  >
+                    Data Analyst
+                  </h4>
+                  <div class="flex gap-4 text-sm text-slate-500">
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >public</span
+                      >
+                      Remoto</span
+                    >
+                    <span class="flex items-center gap-1"
+                      ><span class="material-symbols-outlined text-sm"
+                        >work</span
+                      >
+                      Full-time</span
+                    >
+                  </div>
+                </div>
+                <div class="mt-4 md:mt-0">
+                  <button
+                    class="px-6 py-2 rounded-lg border border-primary text-primary font-bold hover:bg-primary hover:text-white transition-all"
+                  >
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+      <!-- Footer -->
+      <footer
+        class="bg-slate-900 dark:bg-background-dark text-slate-300 py-12 px-6 md:px-20 border-t border-slate-800"
+      >
+        <div
+          class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8"
+        >
+          <div class="flex items-center gap-3">
+            <div
+              class="size-6 bg-primary rounded-md flex items-center justify-center text-white"
+            >
+              <span class="material-symbols-outlined text-xs"
+                >rocket_launch</span
+              >
+            </div>
+            <span class="text-white font-bold text-lg">Maiyu</span>
+          </div>
+          <div class="flex gap-8 text-sm">
+            <a class="hover:text-primary transition-colors" href="#"
+              >Privacidade</a
+            >
+            <a class="hover:text-primary transition-colors" href="#">Termos</a>
+            <a class="hover:text-primary transition-colors" href="#"
+              >LinkedIn</a
+            >
+            <a class="hover:text-primary transition-colors" href="#"
+              >Instagram</a
+            >
+          </div>
+          <p class="text-slate-500 text-xs">
+            © 2024 Maiyu Technologies. Todos os direitos reservados.
+          </p>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

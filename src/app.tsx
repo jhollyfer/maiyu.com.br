@@ -5,7 +5,12 @@ import { LanguageProvider } from "./contexts/language";
 import { ThemeProvider } from "./contexts/theme";
 import { Layout } from "./components/layout/layout";
 import { Toaster } from "sonner";
-import Index from "./pages/Index";
+import Home from "./pages/Home";
+import Blog from "./pages/Blog";
+import BlogArticle from "./pages/BlogArticle";
+import Career from "./pages/Career";
+import Contact from "./pages/Contact";
+import Portfolio from "./pages/Portfolio";
 import { NotFound } from "./pages/not-found";
 
 const queryClient = new QueryClient();
@@ -19,7 +24,12 @@ export function App() {
             <BrowserRouter>
               <Layout>
                 <Routes>
-                  <Route path="/" element={<Index />} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/blog/:slug" element={<BlogArticle />} />
+                  <Route path="/career" element={<Career />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/portfolio" element={<Portfolio />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

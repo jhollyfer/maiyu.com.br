@@ -1,0 +1,477 @@
+<!doctype html>
+
+<html class="light" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Maiyu | Design That Drives Growth</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@300;400;500;600;700;800;900&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#b4ff39", // Neon Green/Yellow accent
+              "background-light": "#f8f6f6",
+              "background-dark": "#1a0b1e", // Deep Purple
+              "surface-dark": "#2d1333",
+              "accent-purple": "#40204b",
+            },
+            fontFamily: {
+              display: ["Public Sans", "sans-serif"],
+            },
+            borderRadius: {
+              DEFAULT: "0.25rem",
+              lg: "0.5rem",
+              xl: "0.75rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      body {
+        font-family: "Public Sans", sans-serif;
+      }
+      .glass-purple {
+        background: rgba(64, 32, 75, 0.4);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(180, 255, 57, 0.1);
+      }
+      .neon-glow {
+        box-shadow: 0 0 20px rgba(180, 255, 57, 0.3);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-background-light dark:bg-background-dark font-display text-slate-900 dark:text-slate-100"
+  >
+    <!-- Navigation -->
+    <nav
+      class="sticky top-0 z-50 w-full border-b border-accent-purple/30 bg-background-dark/80 backdrop-blur-md"
+    >
+      <div
+        class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between"
+      >
+        <div class="flex items-center gap-3">
+          <div class="bg-primary p-1.5 rounded-lg">
+            <span
+              class="material-symbols-outlined text-background-dark font-bold"
+              >rocket_launch</span
+            >
+          </div>
+          <h2 class="text-white text-2xl font-black tracking-tighter">MAIYU</h2>
+        </div>
+        <div class="hidden md:flex items-center gap-10">
+          <a
+            class="text-slate-300 hover:text-primary transition-colors text-sm font-semibold uppercase tracking-widest"
+            href="#"
+            >Services</a
+          >
+          <a
+            class="text-slate-300 hover:text-primary transition-colors text-sm font-semibold uppercase tracking-widest"
+            href="#"
+            >Portfolio</a
+          >
+          <a
+            class="text-slate-300 hover:text-primary transition-colors text-sm font-semibold uppercase tracking-widest"
+            href="#"
+            >Process</a
+          >
+          <a
+            class="text-slate-300 hover:text-primary transition-colors text-sm font-semibold uppercase tracking-widest"
+            href="#"
+            >Testimonials</a
+          >
+        </div>
+        <div class="flex items-center gap-4">
+          <button
+            class="bg-primary text-background-dark px-6 py-2.5 rounded-full font-bold text-sm hover:scale-105 transition-transform neon-glow"
+          >
+            Get Started
+          </button>
+        </div>
+      </div>
+    </nav>
+    <!-- Hero Section -->
+    <section
+      class="relative min-h-[90vh] flex items-center overflow-hidden bg-background-dark"
+    >
+      <div
+        class="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-primary/10 to-transparent opacity-50"
+      ></div>
+      <div
+        class="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10 py-20"
+      >
+        <div class="flex flex-col gap-8">
+          <div
+            class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent-purple/50 border border-primary/20 w-fit"
+          >
+            <span class="relative flex h-2 w-2">
+              <span
+                class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"
+              ></span>
+              <span
+                class="relative inline-flex rounded-full h-2 w-2 bg-primary"
+              ></span>
+            </span>
+            <span
+              class="text-primary text-xs font-bold uppercase tracking-widest"
+              >Now accepting new projects</span
+            >
+          </div>
+          <h1
+            class="text-white text-5xl md:text-7xl font-black leading-[1.1] tracking-tight"
+          >
+            Design that <br /><span class="text-primary">drives growth.</span>
+          </h1>
+          <p class="text-slate-400 text-lg md:text-xl max-w-lg leading-relaxed">
+            We build high-performance digital products with a focus on deep
+            purple aesthetics and neon precision. Elevate your brand with
+            Maiyu's expert design team.
+          </p>
+          <div class="flex flex-wrap gap-4 pt-4">
+            <button
+              class="bg-primary text-background-dark px-8 py-4 rounded-xl font-bold text-lg hover:brightness-110 transition-all flex items-center gap-2"
+            >
+              Start a Project
+              <span class="material-symbols-outlined">arrow_forward</span>
+            </button>
+            <button
+              class="bg-accent-purple text-white border border-slate-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-accent-purple/80 transition-all"
+            >
+              View Work
+            </button>
+          </div>
+        </div>
+        <div class="relative">
+          <div
+            class="absolute -inset-4 bg-primary/20 blur-3xl rounded-full"
+          ></div>
+          <div
+            class="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl"
+          >
+            <img
+              class="w-full h-full object-cover"
+              data-alt="High fidelity dashboard UI with neon green charts and purple background"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBx9V9Cw_a9kExcrZftlBrOZ8poL3ALjS-CG3S1DhU60B0IKvStrpPB6V5JdphmtGCLOW0iSbgI21HGysfc92ziE6LcP7dEnajpv_SxZWopZncX1DPpaPT6a01Hv7eEnQJ0MZWsediKkliDcjNelHzY9IJQtE-KHbx7c9YMsJhmMSFRSd8_3qF1lo_z0NIBlZ1zPoXRVvMjg2RyTIKsU2FtrBPmFeanH0b-cjK1kYcb_hVlyCz0-B-WkFKzULk84FhupbwYj69gFM"
+            />
+          </div>
+          <!-- Floating Card -->
+          <div
+            class="absolute -bottom-6 -left-6 glass-purple p-6 rounded-2xl hidden md:block"
+          >
+            <div class="flex items-center gap-4">
+              <div class="flex -space-x-3">
+                <img
+                  class="h-10 w-10 rounded-full border-2 border-background-dark"
+                  data-alt="Client avatar"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCPnglnxBs2yUOzAbrSy3u_k4Ikuy9kHgG9CZqxr1wGMv-tI2y0doJ2yRh8r298WP4AVOFJNdEZ1pcx1aO7eh1lCbIOIk5KAjjvNdvE1MCnh8keGAcjvnAKM539VcgWZvXUn5jStynH9QFXj2PmnChCLWRj6bZBzd5Ji8kcDwI0HKgQlhbaQ84VkCJ628dBt3Ht03QBIkbpNhvzk98nWbBU9llvTWvy1HwHvNSwdWpVqb2qQG2GGHzr_anzIAPi72Lg4I1zctWXZxo"
+                />
+                <img
+                  class="h-10 w-10 rounded-full border-2 border-background-dark"
+                  data-alt="Client avatar"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDV_CiDxyr34rkgvBne1d6pDXKZEyuzhJ-WR2nDUTxQ6fgeqAYS0mbZgZLKrHA1CbuTHxLAL6pihQTEvMl_IVsY4JzW2SJmyiHH_WwUbJXPn2bev1DyWlVHbiH7-hnmbpIwy74n8I-LIs84WMS4IZBm1y_ckTzkeTPxGUKu1U4KgCZrmQEFuiBRBlIaM6_0MXIE-Tqui6pRBWTKlfSbaOrIfLGyclEG9NRCvit_9rmmPvTkb_4jWmzvcX0avBPBTU7-ndR9CLxvpR0"
+                />
+                <img
+                  class="h-10 w-10 rounded-full border-2 border-background-dark"
+                  data-alt="Client avatar"
+                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAqhUqC7aducFOrLXTqvJojQBiXVLG_t5HL4V-Oql-rAyDeMfy7LAQnYFiwpNdHbnHwx8AhS6_Fez9c5LBoR3ItKdCz0j1Z4qUNhdMCmRhDXkLkhNqBehebuTHMsr_Ot1e4zrKElQTF-Y7n6xDW9yA7EDut1nU29u2OEyHhfoNzEkkZ1c_8BpCz67fnDMFPZ6dtX41D_JLdXLzcDHk_jFPwBERgrh96q1wXo6mrBPxzI-DHdjOzC9Ld2PXowPDF3gAzaNDzHKAnKCs"
+                />
+              </div>
+              <div>
+                <p class="text-white text-sm font-bold">500+ Reviews</p>
+                <p class="text-primary text-xs">★★★★★</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Stats Bar -->
+    <section class="bg-surface-dark py-12 border-y border-white/5">
+      <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div
+          class="flex flex-col items-center md:items-start border-r border-white/5 last:border-0"
+        >
+          <p
+            class="text-slate-400 text-sm font-medium uppercase tracking-widest mb-1"
+          >
+            Projects Completed
+          </p>
+          <h3 class="text-primary text-4xl font-black">150+</h3>
+        </div>
+        <div
+          class="flex flex-col items-center md:items-start border-r border-white/5 last:border-0"
+        >
+          <p
+            class="text-slate-400 text-sm font-medium uppercase tracking-widest mb-1"
+          >
+            Client Satisfaction
+          </p>
+          <h3 class="text-primary text-4xl font-black">99%</h3>
+        </div>
+        <div class="flex flex-col items-center md:items-start last:border-0">
+          <p
+            class="text-slate-400 text-sm font-medium uppercase tracking-widest mb-1"
+          >
+            Awards Won
+          </p>
+          <h3 class="text-primary text-4xl font-black">24+</h3>
+        </div>
+      </div>
+    </section>
+    <!-- Services Section -->
+    <section class="py-24 bg-background-light dark:bg-background-dark">
+      <div class="max-w-7xl mx-auto px-6">
+        <div
+          class="flex flex-col md:flex-row justify-between items-end gap-6 mb-16"
+        >
+          <div class="max-w-2xl">
+            <h2
+              class="text-primary text-sm font-bold uppercase tracking-[0.3em] mb-4"
+            >
+              What we do
+            </h2>
+            <h3
+              class="text-4xl md:text-5xl font-black text-slate-900 dark:text-white leading-tight"
+            >
+              Premium Design Solutions <br />for Modern Businesses.
+            </h3>
+          </div>
+          <p class="text-slate-600 dark:text-slate-400 text-lg max-w-sm mb-2">
+            Tailored digital experiences crafted for companies that demand
+            excellence and visual distinction.
+          </p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <!-- UI/UX -->
+          <div
+            class="group p-8 rounded-3xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all"
+          >
+            <div
+              class="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-background-dark transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl">draw</span>
+            </div>
+            <h4 class="text-2xl font-bold mb-4 dark:text-white">
+              UI/UX Design
+            </h4>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              Intuitive interfaces with neon accents that guide users
+              effortlessly through complex digital journeys.
+            </p>
+            <a
+              class="text-primary font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform"
+              href="#"
+            >
+              Learn More
+              <span class="material-symbols-outlined">arrow_right_alt</span>
+            </a>
+          </div>
+          <!-- Brand Identity -->
+          <div
+            class="group p-8 rounded-3xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all"
+          >
+            <div
+              class="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-background-dark transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl"
+                >auto_awesome</span
+              >
+            </div>
+            <h4 class="text-2xl font-bold mb-4 dark:text-white">
+              Brand Identity
+            </h4>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              Bold typography and deep purple palettes that make your brand
+              unmistakable in a crowded market.
+            </p>
+            <a
+              class="text-primary font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform"
+              href="#"
+            >
+              Learn More
+              <span class="material-symbols-outlined">arrow_right_alt</span>
+            </a>
+          </div>
+          <!-- App Dev -->
+          <div
+            class="group p-8 rounded-3xl bg-white dark:bg-surface-dark border border-slate-200 dark:border-white/5 hover:border-primary/50 transition-all"
+          >
+            <div
+              class="bg-primary/10 text-primary w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-background-dark transition-colors"
+            >
+              <span class="material-symbols-outlined text-3xl">code</span>
+            </div>
+            <h4 class="text-2xl font-bold mb-4 dark:text-white">
+              App Development
+            </h4>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed mb-6">
+              Scalable code with professional precision, ensuring your custom
+              app performs as beautifully as it looks.
+            </p>
+            <a
+              class="text-primary font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform"
+              href="#"
+            >
+              Learn More
+              <span class="material-symbols-outlined">arrow_right_alt</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Featured Portfolio -->
+    <section class="py-24 bg-background-dark overflow-hidden">
+      <div class="max-w-7xl mx-auto px-6">
+        <h2 class="text-white text-4xl font-black mb-12">Selected Work</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div class="group cursor-pointer">
+            <div
+              class="relative overflow-hidden rounded-3xl mb-6 bg-accent-purple"
+            >
+              <img
+                class="w-full aspect-[16/10] object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+                data-alt="Modern neon interface for a fintech mobile application"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7scIFrCmLKBTYaTvDLsBIwqw33sNVzntxr-j-YLnCWdZm_JwfNqsrFh5T0hdD2iP3y90mCZfO3pFB97dpxVcrm75z_VSr5iAYBlFyJwyGASbtIcy9witTik1gXMvgsGEUGOBfMeOTWsG_O6cHd2_eWZydSKH0QL9CH35q05eLLFQoH6-tWLFRI-yej4Cqf7_PabiFvT33wPm2-wKeMklBcgNGpVPdFhrFZemUZmN82t2IklFcc-8-HarM3cmIOKfDznFwNffnsNs"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-background-dark/80 to-transparent flex items-end p-8"
+              >
+                <div>
+                  <h4 class="text-white text-2xl font-bold mb-2">Lumina App</h4>
+                  <p class="text-primary font-medium">UI/UX &amp; Branding</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="group cursor-pointer">
+            <div
+              class="relative overflow-hidden rounded-3xl mb-6 bg-accent-purple"
+            >
+              <img
+                class="w-full aspect-[16/10] object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
+                data-alt="Abstract purple and green digital art for a brand campaign"
+                src="https://lh3.googleusercontent.com/aida-public/AB6AXuDE8ynzkELpNlnld_TA8IPmMWzzosZKUKQPsTonTqxbgl3SSEcUKMd1USm4dtDLorkgMx-vrjogz78mgXGmXtC7UDxHAxfTR08-9MTh0Xrrg2gP6cc3oC_SmdmIK2SiQyjwcMSphtu2mJMblYcl4o8muy3PZ4G2kVHI3rwzRW70oGSLZPlNyYwwKJpPINvQkHOxuk7zBhcEpsADJDszIcHBKqsBpkeYnhfB8LERuVm6gmRMn1h9dq_Zxz2j3Mkj_raWJfHu-2ZSvDU"
+              />
+              <div
+                class="absolute inset-0 bg-gradient-to-t from-background-dark/80 to-transparent flex items-end p-8"
+              >
+                <div>
+                  <h4 class="text-white text-2xl font-bold mb-2">
+                    Vortex Identity
+                  </h4>
+                  <p class="text-primary font-medium">Brand Strategy</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Social Proof / CTA Section -->
+    <section class="py-24 bg-primary">
+      <div class="max-w-5xl mx-auto px-6 text-center">
+        <h2
+          class="text-background-dark text-4xl md:text-6xl font-black mb-8 leading-tight"
+        >
+          Ready to transform your <br />digital presence?
+        </h2>
+        <p
+          class="text-background-dark/80 text-xl font-medium mb-12 max-w-2xl mx-auto"
+        >
+          Join 150+ brands that have elevated their experience with our
+          signature neon-purple aesthetic.
+        </p>
+        <div
+          class="flex flex-col sm:flex-row items-center justify-center gap-6"
+        >
+          <button
+            class="w-full sm:w-auto bg-background-dark text-white px-10 py-5 rounded-2xl font-black text-xl hover:scale-105 transition-transform flex items-center justify-center gap-3"
+          >
+            Let's Talk Project
+            <span class="material-symbols-outlined">chat_bubble</span>
+          </button>
+          <button
+            class="w-full sm:w-auto border-2 border-background-dark text-background-dark px-10 py-5 rounded-2xl font-black text-xl hover:bg-background-dark hover:text-primary transition-all"
+          >
+            Book a Call
+          </button>
+        </div>
+        <!-- Trust badges -->
+        <div
+          class="mt-20 flex flex-wrap justify-center gap-12 opacity-40 grayscale contrast-125"
+        >
+          <span
+            class="text-background-dark font-black text-2xl italic tracking-tighter"
+            >TECHCORE</span
+          >
+          <span
+            class="text-background-dark font-black text-2xl italic tracking-tighter"
+            >SOLARIS</span
+          >
+          <span
+            class="text-background-dark font-black text-2xl italic tracking-tighter"
+            >NEXUS</span
+          >
+          <span
+            class="text-background-dark font-black text-2xl italic tracking-tighter"
+            >VELOCITY</span
+          >
+        </div>
+      </div>
+    </section>
+    <!-- Footer -->
+    <footer class="bg-background-dark py-12 border-t border-white/5">
+      <div
+        class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8"
+      >
+        <div class="flex items-center gap-3">
+          <div class="bg-primary/20 p-1 rounded-lg">
+            <span class="material-symbols-outlined text-primary font-bold"
+              >rocket_launch</span
+            >
+          </div>
+          <h2 class="text-white text-xl font-black tracking-tighter uppercase">
+            MAIYU
+          </h2>
+        </div>
+        <p class="text-slate-500 text-sm">
+          © 2024 Maiyu Design Studio. All rights reserved.
+        </p>
+        <div class="flex gap-6">
+          <a
+            class="text-slate-400 hover:text-primary transition-colors"
+            href="#"
+            ><span class="material-symbols-outlined">public</span></a
+          >
+          <a
+            class="text-slate-400 hover:text-primary transition-colors"
+            href="#"
+            ><span class="material-symbols-outlined">alternate_email</span></a
+          >
+          <a
+            class="text-slate-400 hover:text-primary transition-colors"
+            href="#"
+            ><span class="material-symbols-outlined">share</span></a
+          >
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>
