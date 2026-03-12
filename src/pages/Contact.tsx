@@ -208,7 +208,7 @@ const Contact = () => {
                   <h4 className="text-lg font-bold text-foreground mb-1">{info.title}</h4>
                   <p className="text-muted-foreground mb-2">{info.subtitle}</p>
                   {info.values.map((val) => (
-                    val.href ? (
+                    "href" in val && val.href ? (
                       <a key={val.text} className="text-maiyu-purple font-bold hover:underline block" href={val.href}>
                         {val.text}
                       </a>
