@@ -184,7 +184,7 @@ const Career = () => {
       </section>
 
       {/* Benefits Section */}
-      <section className="py-20 px-6 bg-background">
+      <section className="py-24 px-6 bg-background">
         <div className="max-w-7xl mx-auto">
           <AnimateInView variant="fadeUp">
             <div className="max-w-2xl mb-16">
@@ -220,7 +220,7 @@ const Career = () => {
       </section>
 
       {/* Job Listings */}
-      <section className="py-20 px-6 bg-secondary/50">
+      <section className="py-24 px-6 bg-secondary/50">
         <div className="max-w-5xl mx-auto">
           <AnimateInView variant="fadeUp">
             <div className="text-center mb-12">

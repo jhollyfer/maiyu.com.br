@@ -40,10 +40,10 @@ const Portfolio = () => {
     <div className="bg-background min-h-screen">
       {/* Hero Section */}
       <section className="relative w-full bg-background text-foreground overflow-x-hidden pt-20">
-        <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32 max-w-4xl">
+        <div className="max-w-7xl mx-auto px-6 py-20 lg:py-32">
           <AnimateInView variant="fadeUp">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-maiyu-purple/10 border border-maiyu-purple/20 text-maiyu-purple text-xs font-bold uppercase tracking-widest mb-6">
-              <span className="relative flex h-2 w-2">
+              <span className="relative flex h-2 w-2" aria-hidden="true">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-maiyu-purple opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-maiyu-purple" />
               </span>
@@ -69,7 +69,7 @@ const Portfolio = () => {
         <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-12">
           {projects.map((project) => (
             <motion.div key={project.title} variants={staggerItemVariants} className="group flex flex-col gap-6">
-              <a href={project.url} target="_blank" rel="noopener noreferrer" className="block">
+              <a href={project.url} target="_blank" rel="noopener noreferrer" className="block cursor-pointer">
                 <div className="relative aspect-[16/10] overflow-hidden rounded-2xl bg-card">
                   <div
                     className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"

@@ -18,7 +18,7 @@ const Home = () => {
           <div className="flex flex-col gap-8">
             <AnimateInView variant="fadeUp">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-maiyu-purple/10 border border-maiyu-purple/20 w-fit">
-                <span className="relative flex h-2 w-2">
+                <span className="relative flex h-2 w-2" aria-hidden="true">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-maiyu-purple opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-maiyu-purple" />
                 </span>
@@ -44,13 +44,13 @@ const Home = () => {
             <AnimateInView variant="fadeUp" delay={0.3}>
               <div className="flex flex-wrap gap-4 pt-4">
                 <Link to="/portfolio">
-                  <Button className="bg-maiyu-purple text-white px-8 py-6 rounded-xl font-bold text-lg hover:brightness-110 transition-all flex items-center gap-2">
+                  <Button className="bg-maiyu-purple text-white px-8 py-6 rounded-xl font-bold text-lg hover:brightness-110 transition-[filter] flex items-center gap-2">
                     {t("home.startProject")}
                     <ArrowRight size={20} />
                   </Button>
                 </Link>
                 <Link to="/contact">
-                  <Button variant="outline" className="border-border text-foreground px-8 py-6 rounded-xl font-bold text-lg hover:bg-muted transition-all">
+                  <Button variant="outline" className="border-border text-foreground px-8 py-6 rounded-xl font-bold text-lg hover:bg-muted transition-colors">
                     {t("home.viewWork")}
                   </Button>
                 </Link>
@@ -144,7 +144,7 @@ const Home = () => {
               { icon: Leaf, title: t("home.serviceImpact"), desc: t("home.serviceImpactDesc") },
             ].map((service) => (
               <motion.div key={service.title} variants={staggerItemVariants}>
-                <Card className="group p-8 rounded-3xl bg-card border-border hover:border-maiyu-purple/50 transition-all h-full">
+                <Card className="group p-8 rounded-2xl bg-card border-border hover:border-maiyu-purple/50 transition-colors h-full">
                   <CardContent className="p-0">
                     <div className="bg-maiyu-purple/10 text-maiyu-purple w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-maiyu-purple group-hover:text-white transition-colors">
                       <service.icon size={28} />
@@ -227,7 +227,7 @@ const Home = () => {
                 </Button>
               </Link>
               <Link to="/portfolio">
-                <Button variant="outline" className="w-full sm:w-auto border-2 border-maiyu-black text-maiyu-black px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-maiyu-black hover:text-maiyu-purple transition-all">
+                <Button variant="outline" className="w-full sm:w-auto border-2 border-maiyu-black text-maiyu-black px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-maiyu-black hover:text-maiyu-purple transition-colors">
                   {t("home.ctaButton2")}
                 </Button>
               </Link>

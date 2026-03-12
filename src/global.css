@@ -23,6 +23,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -84,6 +85,7 @@
   --accent: oklch(0.94 0.005 30);
   --accent-foreground: oklch(0.2 0.01 30);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: #FFFFFF;
   --border: oklch(0.88 0.005 30);
   --input: oklch(0.88 0.005 30);
   --ring: oklch(0.67 0.2 295);             /* purple focus ring */
@@ -103,6 +105,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   /* ─── Base surfaces ──────────────────────────────── */
   --background: oklch(0.155 0.009 30);     /* #272221 — main bg */
   --foreground: oklch(0.97 0.002 30);      /* #FAFAFA — body text */
@@ -122,6 +125,7 @@
   --accent: oklch(0.3 0.01 30);
   --accent-foreground: oklch(0.97 0.002 30);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.97 0.002 30);
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 12%);
   --ring: oklch(0.67 0.2 295);             /* purple ring */

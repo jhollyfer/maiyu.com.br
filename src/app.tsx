@@ -2,7 +2,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { LanguageProvider } from "./contexts/language";
-import { ThemeProvider } from "./contexts/theme";
+import { ThemeProvider, useTheme } from "./contexts/theme";
 import { Layout } from "./components/layout/layout";
 import { Toaster } from "sonner";
 import Home from "./pages/Home";
@@ -15,10 +15,18 @@ import { NotFound } from "./pages/not-found";
 
 const queryClient = new QueryClient();
 
+function ThemedToaster() {
+  const { theme } = useTheme();
+  const resolved = theme === "system"
+    ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+    : theme;
+  return <Toaster theme={resolved} position="bottom-right" />;
+}
+
 export function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="dark">
+      <ThemeProvider defaultTheme="system">
         <TooltipProvider>
           <LanguageProvider>
             <BrowserRouter>
@@ -34,7 +42,7 @@ export function App() {
                 </Routes>
               </Layout>
             </BrowserRouter>
-            <Toaster theme="dark" position="bottom-right" />
+            <ThemedToaster />
           </LanguageProvider>
         </TooltipProvider>
       </ThemeProvider>

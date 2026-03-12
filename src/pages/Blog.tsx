@@ -86,7 +86,7 @@ const Blog = () => {
               <div
                 className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                 style={{
-                  backgroundImage: `linear-gradient(180deg, rgba(39,34,33,0) 0%, rgba(39,34,33,0.9) 100%), url("${featuredArticle.image}")`,
+                  backgroundImage: `linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--background) 90%, transparent) 100%), url("${featuredArticle.image}")`,
                 }}
               />
               <div className="relative p-8 md:p-12 max-w-3xl">
@@ -179,7 +179,7 @@ const Blog = () => {
           {filteredArticles.map((article) => (
             <motion.div key={article.slug} variants={staggerItemVariants}>
               <Link to={`/blog/${article.slug}`}>
-                <Card className="flex flex-col rounded-2xl bg-card border-border overflow-hidden group h-full">
+                <Card className="flex flex-col rounded-2xl bg-card border-border overflow-hidden group h-full cursor-pointer">
                   <div className="relative h-48 overflow-hidden">
                     <img
                       className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
@@ -232,7 +232,7 @@ const Blog = () => {
                 placeholder={t("blog.emailPlaceholder")}
                 type="email"
               />
-              <Button className="bg-maiyu-black text-white px-8 py-4 rounded-xl font-bold hover:bg-maiyu-surface transition-colors">
+              <Button className="bg-foreground text-background px-8 py-4 rounded-xl font-bold hover:bg-foreground/90 transition-colors">
                 {t("blog.subscribe")}
               </Button>
             </form>

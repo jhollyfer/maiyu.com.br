@@ -101,7 +101,7 @@ const BlogArticle = () => {
   return (
     <div className="bg-background min-h-screen pt-20">
       {/* Breadcrumb */}
-      <section className="max-w-4xl mx-auto px-4 pt-12 pb-8">
+      <section className="max-w-4xl mx-auto px-6 pt-12 pb-8">
         <AnimateInView variant="fadeUp">
           <Breadcrumb>
             <BreadcrumbList>
@@ -159,7 +159,7 @@ const BlogArticle = () => {
       </section>
 
       {/* Featured Image */}
-      <div className="max-w-6xl mx-auto px-4 mb-16">
+      <div className="max-w-6xl mx-auto px-6 mb-16">
         <AnimateInView variant="fadeUp">
           <div className="aspect-[16/9] w-full rounded-3xl overflow-hidden bg-card shadow-2xl">
             <img
@@ -172,9 +172,9 @@ const BlogArticle = () => {
       </div>
 
       {/* Content Section */}
-      <article className="max-w-3xl mx-auto px-4 pb-20">
+      <article className="max-w-3xl mx-auto px-6 pb-20">
         <AnimateInView variant="fadeUp">
-          <div className="prose prose-lg prose-invert dark:prose-invert max-w-none">
+          <div className="prose prose-lg dark:prose-invert max-w-none">
             <p className="text-lg leading-loose mb-8 text-muted-foreground">
               {t("blogArticle.introText")}
             </p>

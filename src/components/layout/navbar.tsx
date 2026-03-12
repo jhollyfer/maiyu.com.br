@@ -39,7 +39,7 @@ const Navbar = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 py-6",
+        "fixed top-0 left-0 right-0 z-50 transition-[padding,background-color,box-shadow] duration-300 py-6",
         scrolled &&
           "py-4 shadow-lg border-b border-border bg-background/88 backdrop-blur-[18px]"
       )}
@@ -97,6 +97,7 @@ const Navbar = () => {
           <button
             className="text-foreground z-20"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
           >
             {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
