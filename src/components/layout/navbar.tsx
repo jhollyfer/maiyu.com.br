@@ -78,7 +78,7 @@ const Navbar = () => {
 
           <Link
             to="/contact"
-            className="inline-flex items-center py-2 px-5 bg-maiyu-amber text-maiyu-dark font-body text-xs font-bold tracking-wider uppercase transition-all duration-200 hover:brightness-110"
+            className="inline-flex items-center py-2 px-5 bg-maiyu-amber text-background font-body text-xs font-bold tracking-wider uppercase transition-all duration-200 hover:brightness-110"
           >
             {t("nav.getInTouch")}
           </Link>
@@ -127,7 +127,7 @@ const Navbar = () => {
                 <Link
                   to="/contact"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-full py-3.5 px-6 bg-maiyu-amber text-maiyu-dark font-body text-sm font-bold tracking-wider uppercase block text-center"
+                  className="w-full py-3.5 px-6 bg-maiyu-amber text-background font-body text-sm font-bold tracking-wider uppercase block text-center"
                 >
                   {t("nav.getInTouch")}
                 </Link>

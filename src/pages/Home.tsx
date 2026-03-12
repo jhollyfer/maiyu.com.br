@@ -210,24 +210,24 @@ const Home = () => {
       <section className="py-24 bg-maiyu-purple">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <AnimateInView variant="fadeUp">
-            <h2 className="text-maiyu-black text-4xl md:text-6xl font-extrabold mb-8 leading-tight">
+            <h2 className="text-foreground text-4xl md:text-6xl font-extrabold mb-8 leading-tight">
               {t("home.ctaTitle")}
             </h2>
           </AnimateInView>
           <AnimateInView variant="fadeUp" delay={0.1}>
-            <p className="text-maiyu-black/80 text-xl font-medium mb-12 max-w-2xl mx-auto">
+            <p className="text-foreground/80 text-xl font-medium mb-12 max-w-2xl mx-auto">
               {t("home.ctaDescription")}
             </p>
           </AnimateInView>
           <AnimateInView variant="fadeUp" delay={0.2}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
               <Link to="/contact">
-                <Button className="w-full sm:w-auto bg-maiyu-black text-white px-10 py-6 rounded-2xl font-extrabold text-xl hover:scale-105 transition-transform">
+                <Button className="w-full sm:w-auto bg-foreground text-background px-10 py-6 rounded-2xl font-extrabold text-xl hover:scale-105 transition-transform">
                   {t("home.ctaButton1")}
                 </Button>
               </Link>
               <Link to="/portfolio">
-                <Button variant="outline" className="w-full sm:w-auto border-2 border-maiyu-black text-maiyu-black px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-maiyu-black hover:text-maiyu-purple transition-colors">
+                <Button variant="outline" className="w-full sm:w-auto border-2 border-foreground text-foreground px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-foreground hover:text-background transition-colors">
                   {t("home.ctaButton2")}
                 </Button>
               </Link>

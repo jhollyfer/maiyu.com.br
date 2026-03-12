@@ -222,13 +222,13 @@ const Blog = () => {
       <section className="max-w-7xl mx-auto px-6 pb-16">
         <AnimateInView variant="fadeUp">
           <div className="rounded-3xl bg-maiyu-purple p-8 md:p-16 text-center">
-            <h2 className="text-3xl font-extrabold mb-4 text-maiyu-black">{t("blog.newsletterTitle")}</h2>
-            <p className="mb-8 max-w-lg mx-auto text-maiyu-black/80">
+            <h2 className="text-3xl font-extrabold mb-4 text-foreground">{t("blog.newsletterTitle")}</h2>
+            <p className="mb-8 max-w-lg mx-auto text-foreground/80">
               {t("blog.newsletterDesc")}
             </p>
             <form className="flex flex-col sm:flex-row max-w-md mx-auto gap-3" onSubmit={(e) => e.preventDefault()}>
               <Input
-                className="flex-1 rounded-xl border-none px-6 py-4 text-maiyu-black bg-white focus:ring-2 focus:ring-maiyu-black"
+                className="flex-1 rounded-xl border-none px-6 py-4 text-foreground bg-background focus:ring-2 focus:ring-ring"
                 placeholder={t("blog.emailPlaceholder")}
                 type="email"
               />
