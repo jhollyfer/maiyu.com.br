@@ -60,22 +60,8 @@ const Blog = () => {
               to={`/blog/${featuredArticle.slug}`}
               className="group block"
             >
-              <div className="relative overflow-hidden rounded-[2.5rem] aspect-[16/9] md:aspect-[21/10] bg-canvas-sand dark:bg-canvas-moss">
-                <img
-                  src={featuredArticle.image}
-                  alt={featuredArticle.title[language]}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
-
-                <div className="absolute top-6 md:top-8 left-6 md:left-8">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-md px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase font-medium text-foreground">
-                    <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
-                    {t("blog.featured")}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+              {(() => {
+                const featuredMeta = (
                   <div className="max-w-3xl">
                     <p className="font-mono text-micro text-foreground/70 mb-4 tabular-nums uppercase tracking-[0.15em]">
                       {featuredArticle.date} · {t(`blog.category.${featuredArticle.category}`)}
@@ -103,8 +89,32 @@ const Blog = () => {
                       </div>
                     </div>
                   </div>
-                </div>
-              </div>
+                );
+                return (
+                  <>
+                    <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] md:aspect-[21/10] bg-canvas-sand dark:bg-canvas-moss">
+                      <img
+                        src={featuredArticle.image}
+                        alt={featuredArticle.title[language]}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                      />
+                      <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
+
+                      <div className="absolute top-5 md:top-8 left-5 md:left-8">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-md px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase font-medium text-foreground">
+                          <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
+                          {t("blog.featured")}
+                        </span>
+                      </div>
+
+                      <div className="hidden md:block absolute bottom-0 left-0 right-0 p-12">
+                        {featuredMeta}
+                      </div>
+                    </div>
+                    <div className="md:hidden mt-6 px-1">{featuredMeta}</div>
+                  </>
+                );
+              })()}
             </Link>
           </AnimateInView>
         </div>

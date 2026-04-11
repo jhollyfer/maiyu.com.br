@@ -203,14 +203,14 @@ const Contact = () => {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-[#0B0F0B]/95 via-[#0B0F0B]/30 to-transparent" />
 
-              <div className="absolute bottom-0 left-0 right-0 p-8 md:p-10">
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10">
                 <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/60 mb-5">
                   — A word from the team
                 </p>
-                <blockquote className="font-display text-h3 font-400 leading-[1.15] tracking-[-0.02em] text-[color:var(--color-canvas-cream)] italic">
+                <blockquote className="font-display text-h4 md:text-h3 font-400 leading-[1.2] md:leading-[1.15] tracking-[-0.02em] text-[color:var(--color-canvas-cream)] italic">
                   &ldquo;{t("contactPage.testimonial")}&rdquo;
                 </blockquote>
-                <div className="mt-8 flex items-center gap-3">
+                <div className="mt-6 md:mt-8 flex flex-wrap items-center gap-3">
                   <div className="flex -space-x-2">
                     <img
                       src="/jhollyfer.png"

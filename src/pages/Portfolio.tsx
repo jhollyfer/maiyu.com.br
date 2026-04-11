@@ -57,46 +57,56 @@ const Portfolio = () => {
               rel="noopener noreferrer"
               className="group block"
             >
-              <div className="relative overflow-hidden rounded-[2.5rem] aspect-[16/9] md:aspect-[21/9] bg-canvas-sand dark:bg-canvas-moss">
-                <img
-                  src={featuredProject.image}
-                  alt={featuredProject.title}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
+              {(() => {
+                const featuredMeta = (
+                  <>
+                    <p className="font-mono text-micro text-foreground/70 mb-3 tabular-nums">
+                      {featuredProject.year} ·{" "}
+                      {featuredProject.client[language]}
+                    </p>
+                    <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground">
+                      {featuredProject.title}
+                    </h2>
+                    <p className="font-sans text-body text-foreground/75 mt-4 max-w-xl">
+                      {featuredProject.summary[language]}
+                    </p>
+                  </>
+                );
+                return (
+                  <>
+                    <div className="relative overflow-hidden rounded-[2.5rem] aspect-[4/3] md:aspect-[21/9] bg-canvas-sand dark:bg-canvas-moss">
+                      <img
+                        src={featuredProject.image}
+                        alt={featuredProject.title}
+                        className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                      />
+                      <div className="hidden md:block absolute inset-0 bg-gradient-to-t from-background/80 via-background/20 to-transparent" />
 
-                <div className="absolute top-6 md:top-8 left-6 md:left-8">
-                  <span className="inline-flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-md px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase font-medium text-foreground">
-                    <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
-                    {t("portfolio.featuredLabel")}
-                  </span>
-                </div>
-
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
-                  <div className="grid grid-cols-12 gap-6 md:gap-8 items-end">
-                    <div className="col-span-12 md:col-span-8">
-                      <p className="font-mono text-micro text-foreground/70 mb-3 tabular-nums">
-                        {featuredProject.year} ·{" "}
-                        {featuredProject.client[language]}
-                      </p>
-                      <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground">
-                        {featuredProject.title}
-                      </h2>
-                      <p className="font-sans text-body text-foreground/75 mt-4 max-w-xl">
-                        {featuredProject.summary[language]}
-                      </p>
-                    </div>
-                    <div className="hidden md:flex md:col-span-4 justify-end">
-                      <span className="inline-flex items-center gap-1.5 pl-5 pr-1 py-1 rounded-full bg-background/90 backdrop-blur-md text-foreground text-[12px] font-medium tracking-[0.06em] font-sans transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-[color:var(--color-amber)] group-hover:text-[color:var(--color-canvas-night)]">
-                        {t("portfolio.visitSite")}
-                        <span className="ml-1 flex size-7 items-center justify-center rounded-full bg-foreground/10 group-hover:bg-[color:var(--color-canvas-night)]/15 transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
-                          <ArrowUpRight size={12} strokeWidth={1.6} />
+                      <div className="absolute top-5 md:top-8 left-5 md:left-8">
+                        <span className="inline-flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-md px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase font-medium text-foreground">
+                          <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
+                          {t("portfolio.featuredLabel")}
                         </span>
-                      </span>
+                      </div>
+
+                      <div className="hidden md:block absolute bottom-0 left-0 right-0 p-12">
+                        <div className="grid grid-cols-12 gap-8 items-end">
+                          <div className="col-span-8">{featuredMeta}</div>
+                          <div className="flex col-span-4 justify-end">
+                            <span className="inline-flex items-center gap-1.5 pl-5 pr-1 py-1 rounded-full bg-background/90 backdrop-blur-md text-foreground text-[12px] font-medium tracking-[0.06em] font-sans transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:bg-[color:var(--color-amber)] group-hover:text-[color:var(--color-canvas-night)]">
+                              {t("portfolio.visitSite")}
+                              <span className="ml-1 flex size-7 items-center justify-center rounded-full bg-foreground/10 group-hover:bg-[color:var(--color-canvas-night)]/15 transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
+                                <ArrowUpRight size={12} strokeWidth={1.6} />
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              </div>
+                    <div className="md:hidden mt-6 px-1">{featuredMeta}</div>
+                  </>
+                );
+              })()}
             </a>
           </AnimateInView>
 

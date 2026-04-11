@@ -1,30 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Dark warm background -->
-  <rect width="32" height="32" rx="7" fill="#272221"/>
+  <!-- Forest background — brand primary -->
+  <rect width="32" height="32" rx="7" fill="#2D5A3D"/>
 
-  <!-- Subtle inner border -->
-  <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" fill="none" stroke="#ffffff" stroke-opacity="0.07"/>
+  <!-- Bezel inner border — echoes .bezel-shell -->
+  <rect x="1.5" y="1.5" width="29" height="29" rx="5.5" fill="none" stroke="#F6F1E7" stroke-opacity="0.14"/>
 
-  <!-- Gradient definition: purple → teal (brand gradient) -->
-  <defs>
-    <linearGradient id="brand" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#A480F5"/>
-      <stop offset="100%" stop-color="#77EED7"/>
-    </linearGradient>
-  </defs>
-
-  <!-- M lettermark — serif, brand gradient -->
+  <!-- M lettermark — Fraunces serif, cream -->
   <text
     x="15"
     y="23"
-    font-family="Georgia, 'Times New Roman', serif"
+    font-family="Fraunces, Georgia, 'Times New Roman', serif"
     font-size="20"
     font-weight="700"
-    fill="url(#brand)"
+    fill="#F6F1E7"
     text-anchor="middle"
     letter-spacing="-0.5"
   >M</text>
 
-  <!-- Period dot — purple accent -->
-  <circle cx="22.5" cy="23" r="1.8" fill="#A480F5"/>
+  <!-- Period dot — amber accent -->
+  <circle cx="22.5" cy="23" r="1.8" fill="#D88A2B"/>
 </svg>

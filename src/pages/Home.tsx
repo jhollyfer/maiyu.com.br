@@ -140,7 +140,7 @@ const Home = () => {
           className="relative max-w-7xl mx-auto px-6 md:px-10 mt-20 md:mt-28"
         >
           <div className="bezel-shell">
-            <div className="bezel-core relative overflow-hidden aspect-[21/9] md:aspect-[21/8]">
+            <div className="bezel-core relative overflow-hidden aspect-[3/2] md:aspect-[21/8]">
               <img
                 src="/images/adacaibs.webp"
                 alt="Maiyu craft"
@@ -148,7 +148,7 @@ const Home = () => {
                 loading="eager"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
-              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 flex items-end justify-between gap-4">
+              <div className="hidden md:flex absolute bottom-0 left-0 right-0 p-6 md:p-10 items-end justify-between gap-4">
                 <div className="flex items-center gap-3">
                   <div className="flex -space-x-2">
                     <img
@@ -176,6 +176,29 @@ const Home = () => {
                 </span>
               </div>
             </div>
+          </div>
+          {/* Mobile-only team row — surfaces below the image */}
+          <div className="md:hidden mt-5 flex items-center gap-3 px-2">
+            <div className="flex -space-x-2">
+              <img
+                src="/jhollyfer.png"
+                alt="Jhollyfer"
+                className="size-9 rounded-full ring-2 ring-background object-cover"
+              />
+              <img
+                src="/lenny.png"
+                alt="Lenny"
+                className="size-9 rounded-full ring-2 ring-background object-cover"
+              />
+              <img
+                src="/matheus.png"
+                alt="Matheus"
+                className="size-9 rounded-full ring-2 ring-background object-cover"
+              />
+            </div>
+            <p className="font-sans text-small text-foreground/80">
+              {t("career.teamCount")}
+            </p>
           </div>
         </AnimateInView>
       </section>
