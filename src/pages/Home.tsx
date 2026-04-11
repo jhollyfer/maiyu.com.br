@@ -1,235 +1,476 @@
+import {
+  AnimateInView,
+  StaggerContainer,
+  staggerItemVariants,
+} from "@/components/motion/animate-in-view";
 import { useLanguage } from "@/contexts/language";
-import { AnimateInView, StaggerContainer, staggerItemVariants } from "@/components/motion/animate-in-view";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Globe, Smartphone, Server, Database, Palette, Leaf, ArrowRight, Star } from "lucide-react";
-import { Link } from "react-router-dom";
+import { projects } from "@/data/projects";
 import { motion } from "framer-motion";
+import {
+  ArrowUpRight,
+  Database,
+  Globe,
+  Leaf,
+  Palette,
+  Server,
+  Smartphone,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Home = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+
+  const services = [
+    {
+      icon: Globe,
+      title: t("home.serviceWeb"),
+      desc: t("home.serviceWebDesc"),
+      num: "01",
+    },
+    {
+      icon: Smartphone,
+      title: t("home.serviceMobile"),
+      desc: t("home.serviceMobileDesc"),
+      num: "02",
+    },
+    {
+      icon: Server,
+      title: t("home.serviceBackend"),
+      desc: t("home.serviceBackendDesc"),
+      num: "03",
+    },
+    {
+      icon: Database,
+      title: t("home.serviceDatabase"),
+      desc: t("home.serviceDatabaseDesc"),
+      num: "04",
+    },
+    {
+      icon: Palette,
+      title: t("home.serviceDesign"),
+      desc: t("home.serviceDesignDesc"),
+      num: "05",
+    },
+    {
+      icon: Leaf,
+      title: t("home.serviceImpact"),
+      desc: t("home.serviceImpactDesc"),
+      num: "06",
+    },
+  ];
+
+  const selectedWork = projects.slice(0, 3);
 
   return (
-    <div>
-      {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-background">
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-maiyu-purple/10 to-transparent opacity-50" />
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-12 items-center relative z-10 py-20">
-          <div className="flex flex-col gap-8">
-            <AnimateInView variant="fadeUp">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-maiyu-purple/10 border border-maiyu-purple/20 w-fit">
-                <span className="relative flex h-2 w-2" aria-hidden="true">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-maiyu-purple opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-maiyu-purple" />
+    <div className="bg-background relative">
+      {/* ═══════════════════════════════════════════════════════
+         HERO — editorial asymmetric split
+      ═══════════════════════════════════════════════════════ */}
+      <section className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28">
+        <div className="absolute inset-0 bg-gradient-paper pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-6 md:gap-8 items-end">
+          {/* Eyebrow meta — left column, offset */}
+          <AnimateInView
+            variant="fadeUp"
+            className="col-span-12 md:col-span-3 md:pt-6"
+          >
+            <div className="flex md:flex-col gap-3 md:gap-5 items-start">
+              <div className="inline-flex items-center gap-2">
+                <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color:var(--color-amber)] opacity-60" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[color:var(--color-amber)]" />
                 </span>
-                <span className="text-maiyu-purple text-xs font-bold uppercase tracking-widest">
-                  {t("home.badge")}
-                </span>
+                <span className="eyebrow">{t("home.eyebrow")}</span>
               </div>
-            </AnimateInView>
-
-            <AnimateInView variant="fadeUp" delay={0.1}>
-              <h1 className="text-foreground text-5xl md:text-7xl font-extrabold leading-[1.1] tracking-tight">
-                {t("home.heroTitle1")} <br />
-                <span className="text-maiyu-purple">{t("home.heroTitle2")}</span>
-              </h1>
-            </AnimateInView>
-
-            <AnimateInView variant="fadeUp" delay={0.2}>
-              <p className="text-muted-foreground text-lg md:text-xl max-w-lg leading-relaxed">
-                {t("home.heroDescription")}
+              <div className="hairline hidden md:block" />
+              <p className="eyebrow max-w-[18ch] leading-relaxed">
+                {t("home.badge")}
               </p>
-            </AnimateInView>
+            </div>
+          </AnimateInView>
 
-            <AnimateInView variant="fadeUp" delay={0.3}>
-              <div className="flex flex-wrap gap-4 pt-4">
-                <Link to="/portfolio">
-                  <Button className="bg-maiyu-purple text-white px-8 py-6 rounded-xl font-bold text-lg hover:brightness-110 transition-[filter] flex items-center gap-2">
-                    {t("home.startProject")}
-                    <ArrowRight size={20} />
-                  </Button>
-                </Link>
-                <Link to="/contact">
-                  <Button variant="outline" className="border-border text-foreground px-8 py-6 rounded-xl font-bold text-lg hover:bg-muted transition-colors">
-                    {t("home.viewWork")}
-                  </Button>
-                </Link>
-              </div>
+          {/* Display headline — 9-col span */}
+          <div className="col-span-12 md:col-span-9">
+            <AnimateInView variant="fadeUp" delay={0.1}>
+              <h1 className="font-display font-400 text-display-xl leading-[0.92] tracking-[-0.035em] text-foreground">
+                <span className="block">{t("home.heroTitle1")}</span>
+                <span className="block italic font-300 text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)]">
+                  {t("home.heroTitle2")}
+                </span>
+                <span className="block">{t("home.heroTitle3")}</span>
+              </h1>
             </AnimateInView>
           </div>
 
-          <AnimateInView variant="fadeIn" delay={0.3}>
-            <div className="relative hidden lg:block">
-              <div className="absolute -inset-4 bg-maiyu-purple/20 blur-3xl rounded-full" />
-              <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-border shadow-2xl bg-card">
-                <img
-                  className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBx9V9Cw_a9kExcrZftlBrOZ8poL3ALjS-CG3S1DhU60B0IKvStrpPB6V5JdphmtGCLOW0iSbgI21HGysfc92ziE6LcP7dEnajpv_SxZWopZncX1DPpaPT6a01Hv7eEnQJ0MZWsediKkliDcjNelHzY9IJQtE-KHbx7c9YMsJhmMSFRSd8_3qF1lo_z0NIBlZ1zPoXRVvMjg2RyTIKsU2FtrBPmFeanH0b-cjK1kYcb_hVlyCz0-B-WkFKzULk84FhupbwYj69gFM"
-                  alt="Dashboard UI"
-                />
-              </div>
-              {/* Floating review card */}
-              <div className="absolute -bottom-6 -left-6 bg-card/80 backdrop-blur-md border border-border p-6 rounded-2xl">
-                <div className="flex items-center gap-4">
-                  <div className="flex -space-x-3">
-                    <img src="/jhollyfer.png" alt="Jhollyfer" className="h-10 w-10 rounded-full border-2 border-background object-cover" />
-                    <img src="/lenny.png" alt="Lenny" className="h-10 w-10 rounded-full border-2 border-background object-cover" />
-                    <img src="/geison.png" alt="Geison" className="h-10 w-10 rounded-full border-2 border-background object-cover" />
+          {/* Description + CTA — breaks grid, lower-right */}
+          <AnimateInView
+            variant="fadeUp"
+            delay={0.25}
+            className="col-span-12 md:col-span-5 md:col-start-8 mt-12 md:mt-16"
+          >
+            <p className="font-sans text-body-lg text-foreground/75 leading-[1.65] max-w-lg mb-8">
+              {t("home.heroDescription")}
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link
+                to="/contact"
+                className="group inline-flex items-center gap-1 pl-6 pr-1.5 py-1.5 rounded-full bg-foreground text-background font-sans text-[13px] font-medium tracking-[0.02em] transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[color:var(--color-forest)] hover:text-[color:var(--color-canvas-cream)] dark:hover:bg-[color:var(--color-forest-bright)] active:scale-[0.97]"
+              >
+                <span className="py-2">{t("home.startProject")}</span>
+                <span className="ml-2 flex size-9 items-center justify-center rounded-full bg-background/15 group-hover:bg-background/25 transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                  <ArrowUpRight size={14} strokeWidth={1.6} />
+                </span>
+              </Link>
+              <Link
+                to="/portfolio"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-foreground/20 text-foreground font-sans text-[13px] font-medium tracking-[0.02em] transition-[color,border-color,background-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-foreground/40 hover:bg-foreground/[0.04]"
+              >
+                {t("home.viewWork")}
+              </Link>
+            </div>
+          </AnimateInView>
+        </div>
+
+        {/* Full-bleed photo band breaking below hero text */}
+        <AnimateInView
+          variant="scaleIn"
+          delay={0.3}
+          duration={1.2}
+          className="relative max-w-7xl mx-auto px-6 md:px-10 mt-20 md:mt-28"
+        >
+          <div className="bezel-shell">
+            <div className="bezel-core relative overflow-hidden aspect-[21/9] md:aspect-[21/8]">
+              <img
+                src="/images/adacaibs.webp"
+                alt="Maiyu craft"
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="eager"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 md:p-10 flex items-end justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex -space-x-2">
+                    <img
+                      src="/jhollyfer.png"
+                      alt="Jhollyfer"
+                      className="size-9 rounded-full ring-2 ring-background object-cover"
+                    />
+                    <img
+                      src="/lenny.png"
+                      alt="Lenny"
+                      className="size-9 rounded-full ring-2 ring-background object-cover"
+                    />
+                    <img
+                      src="/matheus.png"
+                      alt="Matheus"
+                      className="size-9 rounded-full ring-2 ring-background object-cover"
+                    />
                   </div>
-                  <div>
-                    <p className="text-foreground text-sm font-bold">Maiyu Team</p>
-                    <div className="flex text-maiyu-purple">
-                      {[...Array(5)].map((_, i) => (
-                        <Star key={i} size={12} fill="currentColor" />
-                      ))}
-                    </div>
-                  </div>
+                  <p className="font-sans text-small text-foreground/90">
+                    {t("career.teamCount")}
+                  </p>
                 </div>
+                <span className="eyebrow hidden md:inline-block">
+                  Benjamin Constant · AM · BR
+                </span>
               </div>
             </div>
+          </div>
+        </AnimateInView>
+      </section>
+
+      {/* ═══════════════════════════════════════════════════════
+         STATS — woven into prose, not cards
+      ═══════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 border-t border-foreground/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-8">
+          <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-3">
+            <p className="eyebrow">{t("home.statsLabel")}</p>
+          </AnimateInView>
+          <AnimateInView
+            variant="fadeUp"
+            delay={0.1}
+            className="col-span-12 md:col-span-9"
+          >
+            <p className="font-display text-h2 leading-[1.15] text-foreground/85 max-w-4xl">
+              {t("home.statsProse")
+                .split(/(\{team\}|\{count\}|\{location\})/)
+                .map((part, i) => {
+                  if (part === "{team}")
+                    return (
+                      <span
+                        key={i}
+                        className="text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)] italic"
+                      >
+                        {t("home.statsTeam")}
+                      </span>
+                    );
+                  if (part === "{count}")
+                    return (
+                      <span
+                        key={i}
+                        className="text-[color:var(--color-amber)] tabular-nums"
+                      >
+                        {t("home.statsCount")}
+                      </span>
+                    );
+                  if (part === "{location}")
+                    return (
+                      <span
+                        key={i}
+                        className="underline decoration-2 decoration-[color:var(--color-amber)]/60 underline-offset-[6px]"
+                      >
+                        {t("home.statsLocation")}
+                      </span>
+                    );
+                  return <span key={i}>{part}</span>;
+                })}
+            </p>
           </AnimateInView>
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="bg-card py-12 border-y border-border">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-          {[
-            { label: t("home.statsProducts"), value: "3+" },
-            { label: t("home.statsEngineers"), value: "4" },
-            { label: t("home.statsRegion"), value: "AM" },
-          ].map((stat) => (
-            <AnimateInView key={stat.label} variant="fadeUp">
-              <div className="flex flex-col items-center md:items-start">
-                <p className="text-muted-foreground text-sm font-medium uppercase tracking-widest mb-1">
-                  {stat.label}
-                </p>
-                <h3 className="text-maiyu-purple text-4xl font-extrabold">{stat.value}</h3>
-              </div>
+      {/* ═══════════════════════════════════════════════════════
+         SERVICES — forest narrative block (cream-on-forest)
+      ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-24 md:py-32 bg-canvas-forest dark:bg-canvas-night text-[color:var(--color-canvas-cream)] overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(216,138,43,0.08),_transparent_55%)] pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10">
+          {/* Section header */}
+          <div className="grid grid-cols-12 gap-8 mb-16 md:mb-24">
+            <AnimateInView
+              variant="fadeUp"
+              className="col-span-12 md:col-span-3"
+            >
+              <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/55">
+                — {t("home.servicesLabel")}
+              </p>
             </AnimateInView>
-          ))}
-        </div>
-      </section>
-
-      {/* Services Section */}
-      <section className="py-24 bg-background">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-end gap-6 mb-16">
-            <div className="max-w-2xl">
-              <AnimateInView variant="fadeUp">
-                <h2 className="text-maiyu-purple text-sm font-bold uppercase tracking-[0.3em] mb-4">
-                  {t("home.servicesLabel")}
-                </h2>
-              </AnimateInView>
-              <AnimateInView variant="fadeUp" delay={0.1}>
-                <h3 className="text-4xl md:text-5xl font-extrabold text-foreground leading-tight">
-                  {t("home.servicesHeading")}
-                </h3>
-              </AnimateInView>
-            </div>
-            <AnimateInView variant="fadeUp" delay={0.2}>
-              <p className="text-muted-foreground text-lg max-w-sm mb-2">
+            <AnimateInView
+              variant="fadeUp"
+              delay={0.1}
+              className="col-span-12 md:col-span-9"
+            >
+              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-[color:var(--color-canvas-cream)] max-w-4xl">
+                {t("home.servicesHeading")}
+              </h2>
+              <p className="font-sans text-body-lg text-[color:var(--color-canvas-cream)]/70 mt-6 max-w-xl leading-relaxed">
                 {t("home.servicesSubheading")}
               </p>
             </AnimateInView>
           </div>
 
-          <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[
-              { icon: Globe, title: t("home.serviceWeb"), desc: t("home.serviceWebDesc") },
-              { icon: Smartphone, title: t("home.serviceMobile"), desc: t("home.serviceMobileDesc") },
-              { icon: Server, title: t("home.serviceBackend"), desc: t("home.serviceBackendDesc") },
-              { icon: Database, title: t("home.serviceDatabase"), desc: t("home.serviceDatabaseDesc") },
-              { icon: Palette, title: t("home.serviceDesign"), desc: t("home.serviceDesignDesc") },
-              { icon: Leaf, title: t("home.serviceImpact"), desc: t("home.serviceImpactDesc") },
-            ].map((service) => (
-              <motion.div key={service.title} variants={staggerItemVariants}>
-                <Card className="group p-8 rounded-2xl bg-card border-border hover:border-maiyu-purple/50 transition-colors h-full">
-                  <CardContent className="p-0">
-                    <div className="bg-maiyu-purple/10 text-maiyu-purple w-14 h-14 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-maiyu-purple group-hover:text-white transition-colors">
-                      <service.icon size={28} />
-                    </div>
-                    <h4 className="text-2xl font-bold mb-4 text-foreground">{service.title}</h4>
-                    <p className="text-muted-foreground leading-relaxed mb-6">{service.desc}</p>
-                    <span className="text-maiyu-purple font-bold flex items-center gap-2 group-hover:translate-x-2 transition-transform">
-                      {t("home.learnMore")}
-                      <ArrowRight size={16} />
-                    </span>
-                  </CardContent>
-                </Card>
+          {/* Alternating rows — editorial list, not card grid */}
+          <StaggerContainer className="flex flex-col">
+            {services.map((service, i) => (
+              <motion.div
+                key={service.title}
+                variants={staggerItemVariants}
+                className={`group grid grid-cols-12 gap-4 md:gap-8 py-8 md:py-10 border-t border-[color:var(--color-canvas-cream)]/[0.1] ${
+                  i === services.length - 1 ? "border-b" : ""
+                }`}
+              >
+                <div className="col-span-2 md:col-span-1">
+                  <span className="font-mono text-small text-[color:var(--color-amber)] tabular-nums">
+                    {service.num}
+                  </span>
+                </div>
+                <div className="col-span-10 md:col-span-4">
+                  <div className="flex items-center gap-3">
+                    <service.icon
+                      size={18}
+                      strokeWidth={1.4}
+                      className="text-[color:var(--color-amber)] transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-[-8deg]"
+                    />
+                    <h3 className="font-display text-h3 font-400 tracking-[-0.02em] text-[color:var(--color-canvas-cream)]">
+                      {service.title}
+                    </h3>
+                  </div>
+                </div>
+                <div className="col-span-12 md:col-span-6 md:col-start-7">
+                  <p className="font-sans text-body text-[color:var(--color-canvas-cream)]/70 leading-relaxed max-w-md">
+                    {service.desc}
+                  </p>
+                </div>
+                <div className="col-span-12 md:col-span-1 flex md:justify-end">
+                  <ArrowUpRight
+                    size={18}
+                    strokeWidth={1.2}
+                    className="text-[color:var(--color-canvas-cream)]/40 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-1 group-hover:-translate-y-1"
+                  />
+                </div>
               </motion.div>
             ))}
           </StaggerContainer>
         </div>
       </section>
 
-      {/* Featured Portfolio */}
-      <section className="py-24 bg-background overflow-hidden">
-        <div className="max-w-7xl mx-auto px-6">
-          <AnimateInView variant="fadeUp">
-            <h2 className="text-foreground text-4xl font-extrabold mb-12">{t("home.selectedWork")}</h2>
-          </AnimateInView>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {[
-              {
-                title: "ADACAIBS",
-                category: "React · AdonisJS · PostgreSQL",
-                img: "/images/adacaibs.webp",
-                url: "https://adacaibs.com.br",
-              },
-              {
-                title: "MatisCraft",
-                category: "React · Fastify · Prisma",
-                img: "/images/matis.webp",
-                url: "https://matis.maiyu.com.br",
-              },
-            ].map((project) => (
-              <AnimateInView key={project.title} variant="fadeUp">
-                <a href={project.url} target="_blank" rel="noopener noreferrer" className="group cursor-pointer block">
-                  <div className="relative overflow-hidden rounded-3xl mb-6 bg-card">
+      {/* ═══════════════════════════════════════════════════════
+         SELECTED WORK — asymmetric 1-wide + 2 stacked
+      ═══════════════════════════════════════════════════════ */}
+      <section className="py-24 md:py-32 bg-canvas-bone dark:bg-canvas-moss">
+        <div className="max-w-7xl mx-auto px-6 md:px-10">
+          <div className="grid grid-cols-12 gap-8 mb-16">
+            <AnimateInView
+              variant="fadeUp"
+              className="col-span-12 md:col-span-3"
+            >
+              <p className="eyebrow">— {t("home.selectedWork")}</p>
+            </AnimateInView>
+            <AnimateInView
+              variant="fadeUp"
+              delay={0.1}
+              className="col-span-12 md:col-span-9"
+            >
+              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground max-w-3xl">
+                {t("home.selectedWorkDesc")}
+              </h2>
+            </AnimateInView>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
+            {/* Featured big */}
+            <AnimateInView
+              variant="fadeUp"
+              className="md:col-span-8 md:row-span-2"
+            >
+              <a
+                href={selectedWork[0].url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group block"
+              >
+                <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] bg-canvas-sand dark:bg-canvas-moss">
+                  <img
+                    src={selectedWork[0].image}
+                    alt={selectedWork[0].title}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-background/65 via-background/5 to-transparent" />
+                  <div className="absolute top-6 left-6">
+                    <span className="inline-flex items-center gap-2 rounded-full bg-background/85 backdrop-blur-md px-3 py-1 text-[10px] tracking-[0.2em] uppercase font-medium text-foreground">
+                      <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
+                      {selectedWork[0].year}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-6 flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="font-display text-h2 font-400 tracking-[-0.02em] text-foreground group-hover:text-[color:var(--color-forest)] dark:group-hover:text-[color:var(--color-forest-bright)] transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
+                      {selectedWork[0].title}
+                    </h3>
+                    <p className="font-sans text-body text-foreground/70 mt-2 max-w-md">
+                      {selectedWork[0].summary[language]}
+                    </p>
+                  </div>
+                  <ArrowUpRight
+                    size={20}
+                    strokeWidth={1.3}
+                    className="text-muted-foreground mt-2 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-1 group-hover:-translate-y-1"
+                  />
+                </div>
+              </a>
+            </AnimateInView>
+
+            {/* Two stacked */}
+            {selectedWork.slice(1).map((project, i) => (
+              <AnimateInView
+                key={project.slug}
+                variant="fadeUp"
+                delay={0.1 + i * 0.1}
+                className="md:col-span-4"
+              >
+                <a
+                  href={project.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group block"
+                >
+                  <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-canvas-sand dark:bg-canvas-moss">
                     <img
-                      className="w-full aspect-[16/10] object-cover group-hover:scale-110 transition-transform duration-700 opacity-80 group-hover:opacity-100"
-                      src={project.img}
+                      src={project.image}
                       alt={project.title}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent flex items-end p-8">
-                      <div>
-                        <h4 className="text-foreground text-2xl font-bold mb-2">{project.title}</h4>
-                        <p className="text-maiyu-purple font-medium">{project.category}</p>
-                      </div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
+                  </div>
+                  <div className="mt-4 flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-mono text-micro text-muted-foreground tabular-nums">
+                        {project.year}
+                      </p>
+                      <h4 className="font-display text-h3 font-400 tracking-[-0.02em] text-foreground mt-1 group-hover:text-[color:var(--color-forest)] dark:group-hover:text-[color:var(--color-forest-bright)] transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
+                        {project.title}
+                      </h4>
                     </div>
+                    <ArrowUpRight
+                      size={16}
+                      strokeWidth={1.3}
+                      className="text-muted-foreground mt-2 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
                   </div>
                 </a>
               </AnimateInView>
             ))}
           </div>
+
+          <AnimateInView variant="fadeUp" delay={0.2} className="mt-16">
+            <Link
+              to="/portfolio"
+              className="group inline-flex items-center gap-2 font-sans text-body text-foreground hover:text-[color:var(--color-forest)] dark:hover:text-[color:var(--color-forest-bright)] transition-colors duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+            >
+              <span className="border-b border-current pb-0.5">
+                {t("portfolio.loadMore")}
+              </span>
+              <ArrowUpRight
+                size={15}
+                strokeWidth={1.4}
+                className="transition-transform duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
+          </AnimateInView>
         </div>
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-maiyu-purple">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <AnimateInView variant="fadeUp">
-            <h2 className="text-foreground text-4xl md:text-6xl font-extrabold mb-8 leading-tight">
-              {t("home.ctaTitle")}
-            </h2>
-          </AnimateInView>
-          <AnimateInView variant="fadeUp" delay={0.1}>
-            <p className="text-foreground/80 text-xl font-medium mb-12 max-w-2xl mx-auto">
-              {t("home.ctaDescription")}
+      {/* ═══════════════════════════════════════════════════════
+         CTA — full-bleed forest section
+      ═══════════════════════════════════════════════════════ */}
+      <section className="relative py-28 md:py-40 bg-canvas-forest dark:bg-canvas-night text-[color:var(--color-canvas-cream)] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-paper opacity-40 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-[60%] h-full bg-[radial-gradient(ellipse_at_right,_rgba(216,138,43,0.12),_transparent_60%)] pointer-events-none" />
+
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-8">
+          <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-3">
+            <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/60">
+              — {t("home.ctaDescription")}
             </p>
           </AnimateInView>
-          <AnimateInView variant="fadeUp" delay={0.2}>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
-              <Link to="/contact">
-                <Button className="w-full sm:w-auto bg-foreground text-background px-10 py-6 rounded-2xl font-extrabold text-xl hover:scale-105 transition-transform">
-                  {t("home.ctaButton1")}
-                </Button>
+
+          <AnimateInView
+            variant="fadeUp"
+            delay={0.12}
+            className="col-span-12 md:col-span-9"
+          >
+            <h2 className="font-display text-display font-400 leading-[0.95] tracking-[-0.03em] text-[color:var(--color-canvas-cream)] max-w-5xl">
+              {t("home.ctaTitle")}
+            </h2>
+
+            <div className="mt-12 md:mt-16 flex flex-wrap items-center gap-4">
+              <Link
+                to="/contact"
+                className="group inline-flex items-center gap-1 pl-7 pr-1.5 py-1.5 rounded-full bg-[color:var(--color-amber)] text-[color:var(--color-canvas-night)] font-sans text-[14px] font-medium tracking-[0.02em] transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[color:var(--color-amber-warm)] active:scale-[0.97]"
+              >
+                <span className="py-2.5">{t("home.ctaButton1")}</span>
+                <span className="ml-2 flex size-10 items-center justify-center rounded-full bg-[color:var(--color-canvas-night)]/15 group-hover:bg-[color:var(--color-canvas-night)]/25 transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
+                  <ArrowUpRight size={15} strokeWidth={1.6} />
+                </span>
               </Link>
-              <Link to="/portfolio">
-                <Button variant="outline" className="w-full sm:w-auto border-2 border-foreground text-foreground px-10 py-6 rounded-2xl font-extrabold text-xl hover:bg-foreground hover:text-background transition-colors">
-                  {t("home.ctaButton2")}
-                </Button>
+              <Link
+                to="/portfolio"
+                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[color:var(--color-canvas-cream)]/25 text-[color:var(--color-canvas-cream)] font-sans text-[14px] font-medium tracking-[0.02em] transition-[color,border-color,background-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-[color:var(--color-canvas-cream)]/50 hover:bg-[color:var(--color-canvas-cream)]/[0.04]"
+              >
+                {t("home.ctaButton2")}
               </Link>
             </div>
           </AnimateInView>

@@ -1,243 +1,253 @@
 import { useLanguage } from "@/contexts/language";
-import { AnimateInView, StaggerContainer, staggerItemVariants } from "@/components/motion/animate-in-view";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import {
+  AnimateInView,
+  StaggerContainer,
+  staggerItemVariants,
+} from "@/components/motion/animate-in-view";
 import { Input } from "@/components/ui/input";
-import { ArrowRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const categories = ["all", "tech", "design", "marketing"] as const;
-type Category = (typeof categories)[number];
-
-const articles = [
-  {
-    slug: "dark-mode-web-applications",
-    title: "The Evolution of Dark Mode in Modern Web Applications",
-    excerpt: "A deep dive into the psychological benefits and technical challenges of implementing dark themes for global audiences.",
-    category: "marketing" as Category,
-    author: "Mark Thompson",
-    date: "Feb 12",
-    readTime: "4 min read",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDPqAMqRN1xEbhy3KniUJbJOg39ifkLg5-726tnlH0u9zmXfOn8zTmRqAt56WHRTyxf5exYJfMjltUdlhaYnZG9GyHM68wjfNfxvGo1B8m-K_oHqpRkk45IOQP_F1JDB8LfdoW9dYiOw-9jVq49gwJ88jagynR9lEF_BrU-L5WePy49VRCGULRXZQtafZgeqp4U-91iqwqYjbZYkJTPMjz5S9jr3bm5gJ0MI6D7jjQrgcwE9k6sPNtFiyjz_fBFhLbyhw5WkVA2p34",
-    authorImg: "https://lh3.googleusercontent.com/aida-public/AB6AXuDc4Htsi6R1hmJ6l-Bre8JhuP8_ljraYi-WrqqShDl6YY6axtIH1Xk9JRIk2Ud_nUzxF0Ze5yCi2SEkAmGfuaxCWxfZDm6iu9WvbMN99DqY9YTblnBJSc0-oBJeh6H81YkpAZCyHucw5bXx_DjwGtEnCqmSdr9UtZQNY7Ea-C-RS-btchvpcE0N_xNCsIa1NJY19yCIfPa7TxdSHG5P1oz-HaIaK01TtiuA0Yu3WnReABWhq9iEhcHhi30Swq39XM0wUEfSopWZ-J8",
-  },
-  {
-    slug: "high-conversion-landing-pages",
-    title: "10 Principles of High-Conversion Landing Pages",
-    excerpt: "Learn how the world's most successful tech companies structure their top-of-funnel experiences for maximum impact.",
-    category: "design" as Category,
-    author: "Elena Rodriguez",
-    date: "Feb 08",
-    readTime: "12 min read",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuD8BvwvLMJVSma-8MlmspW2hKcyQBEL64MK17frR-lhy57g5evEtbQ91UdEneCVIsKLwIRNk4nv3nuZGppav7DxE2gXGsVyRULW4bj9ER4Bcz0uRur6sfdmnv5WN5z7OsaIvK2nsnyY5pCoc65ROqQg51lhji4otOxnHY7Yqon_U2d9r38ZRQfJpMtFHDLRSFlr7yJzR13S7MpJoTc6FYepjp0HcW5e_PMsHRFMVXM3YXS09mf7DZ_bLTzMN2h3nmH3UNjKQHJ---o",
-    authorImg: "https://lh3.googleusercontent.com/aida-public/AB6AXuAhLpj1OXKAICPN8UKjFtBAruoJUQ3BGy9lUiM23vayw16wMPjjpEKJ6gT_isKyQpo6DllAQBoyA4_1bZJFTY9P40NdYyRSRLTxnRHQ5wjDe0e_FYe9W_llYIszAglpoykcKyRNTV0nynqjGLmCQ0kRu6sFoTFlGezWtTgsOv3DYLgU7AwTDuISjm65jsRu2mNg2qralJL_IyH5bMOtti_3AE2dW_2KoyrJbYzB7FYDiSTpO5B04ybpf3gCrBU9Cw9hsBR4F8CWBPY",
-  },
-  {
-    slug: "micro-interactions-user-loyalty",
-    title: "Micro-Interactions: The Secret to User Loyalty",
-    excerpt: "Small details make the difference. Discover how subtle animations can drastically improve user retention and brand affinity.",
-    category: "tech" as Category,
-    author: "James Wilson",
-    date: "Jan 30",
-    readTime: "6 min read",
-    image: "https://lh3.googleusercontent.com/aida-public/AB6AXuCojBiZ6ClfedLLQe0K1SaZsl21GNz2FEAbS_EKXBFND_g4gB3fzD0O1zQ3ibRqjpEtMZEMy-nTueHqVkkHlEZQwzFDjhQgtyJCyzdGbz111dSQLjQzEVyxAm1JwW_js6h79EAY6WH6_iOoWbZnqUM4nsrFsqnPbOGHFW7K35LHrGJfHtaGVP6JhS-xoXq85_MJm9t0G0f3-FT6TfOVm27M72ozq3Ulc__3lLHi0dc33dsUscmXrZ8AwVkdot-TAAMDgieN5J69tJk",
-    authorImg: "https://lh3.googleusercontent.com/aida-public/AB6AXuAOCmjCIwUiZlphcf3jqXj83hVAeKQQ5_2uGKHLo-_Lq7GA-2CzzIc60eeK_8SlK7WRkMbUg0sD7JatmRvZs22-IV4oewwCwD31SvHGQmPydCGNEGZ_fT42JWQFvwE8X6_M9bB_8TfHbHhwLW1--ML3oznAf83t1hnyWgrsKa6fZBKUQWMbJiObXrsb0D5VTozPgyBmUkocHLKVXF2NhohX13ivknjmwd5JivDNtglgdIJB7qYMpXwPCYOjmJcA_gpnR-_Tv-zNBPg",
-  },
-];
-
-const featuredArticle = {
-  slug: "future-digital-design",
-  title: "Exploring the Future of Digital Design and Innovation",
-  author: "Sarah Jenkins",
-  role: "Senior Design Lead",
-  readTime: "5 min read",
-  image: "https://lh3.googleusercontent.com/aida-public/AB6AXuChAIb-bVeygz_--3Dp3D-p61O4uz4HiRggsPbbqVJRMPzagnn-Aucnk_YAzYryUFxAsS-XmAie2drRCH2SBEzkO5O7yEjfQfENcGOWnc6k9KW0RAqG5ZHDbUQxjhQB0NuEYWx6MPvMR-EstKRErOzQY5HxlexX9A4CdxgzgebOaMk-RwMlLcYdHq4vo2X0J2Ale22j0jdjJawD_ZTToiSiUd5x6osrdXPmyfOOqud8OrdHcqRg6fPtMfabadWBYPQq4o21WhLymAY",
-  authorImg: "https://lh3.googleusercontent.com/aida-public/AB6AXuDxfSwKe_Nu3dY3jNDtpq5SjOZM9n77ynyexZaD9Qlb4KO0UGzskiUAyR4l4eYkbPzhkE9O3TAk8OrQrJ_c8xMtMvYJI7kTyIrLEwhqSsghRF5MYN3jrmmLh91iThH6vGbj4gOSvkEEvAUVcrT8TH5oBK2VbR3VjwX-t6nsdAhCxZjbEJzfuhD5-u7gsTLLI9CeB75qRL_t4q4bBq5HEoyoLeLMjONH7SscqM9NWbXWLl_Hm6QN9GDpRrJh9lUG1yQclB8-4SySzjc",
-};
-
-const secondaryFeatured = {
-  slug: "next-gen-tech-marketing",
-  title: "How Maiyu is Shaping the Next Generation of Tech Marketing",
-  excerpt: "Discover the intersection of creativity and data-driven strategies in our latest deep dive into performance aesthetics.",
-  category: "Case Study",
-  readTime: "8 min read",
-  date: "Jan 24, 2024",
-  image: "https://lh3.googleusercontent.com/aida-public/AB6AXuDB0i68V69E2e0FkNjQO-mAM00Ueh__kkm7Peh5Uin5452L5hFyHbP-7Lvkvb1pKLjW3c5uFCKlY22UTmV-XlkKc_XE6xndApFLuia-QPC_i5De0hBi4M3evEuTQad-F1CcJ08CEPjvbBT1F84z5_oR-cnBw0ucgghP6uQj0eVlHlN0YaeSa_-HqlDBJk5okIQVkkVPLyciVfz2lzI3FCDK5ZqI2Q7JkJIZIC57XjoLCdyCN8zi7EaPvAgZF1lC4umXzJ0DbnLtt6c",
-};
+import { articles, categories, featuredArticle, type Category } from "@/data/articles";
+import { cn } from "@/lib/utils";
 
 const Blog = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [activeCategory, setActiveCategory] = useState<Category>("all");
 
-  const filteredArticles = activeCategory === "all"
-    ? articles
-    : articles.filter((a) => a.category === activeCategory);
+  const recent = articles.filter((a) => a.slug !== featuredArticle.slug);
+  const filtered =
+    activeCategory === "all"
+      ? recent
+      : recent.filter((a) => a.category === activeCategory);
 
   return (
     <div className="bg-background min-h-screen">
-      {/* Featured Hero Article */}
-      <section className="max-w-7xl mx-auto px-6 pt-28 pb-8">
-        <AnimateInView variant="fadeUp">
-          <Link to={`/blog/${featuredArticle.slug}`}>
-            <div className="group relative overflow-hidden rounded-3xl bg-card min-h-[450px] flex flex-col justify-end">
-              <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
-                style={{
-                  backgroundImage: `linear-gradient(180deg, transparent 0%, color-mix(in srgb, var(--background) 90%, transparent) 100%), url("${featuredArticle.image}")`,
-                }}
-              />
-              <div className="relative p-8 md:p-12 max-w-3xl">
-                <Badge className="bg-maiyu-purple text-white mb-4">{t("blog.featured")}</Badge>
-                <h1 className="text-3xl md:text-5xl font-extrabold leading-tight text-white mb-6">
-                  {featuredArticle.title}
-                </h1>
-                <div className="flex items-center gap-4 text-white/60">
-                  <img
-                    alt={featuredArticle.author}
-                    className="h-10 w-10 rounded-full border-2 border-maiyu-purple object-cover"
-                    src={featuredArticle.authorImg}
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-white">{featuredArticle.author}</p>
-                    <p className="text-xs">{featuredArticle.role} &bull; {featuredArticle.readTime}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </AnimateInView>
-      </section>
-
-      {/* Category Filter Bar */}
-      <section className="max-w-7xl mx-auto px-6 mb-10">
-        <AnimateInView variant="fadeUp">
-          <div className="flex flex-wrap items-center gap-3">
-            {categories.map((cat) => (
-              <Button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                variant={activeCategory === cat ? "default" : "outline"}
-                className={
-                  activeCategory === cat
-                    ? "bg-maiyu-purple text-white rounded-xl"
-                    : "bg-card text-muted-foreground border-border rounded-xl hover:bg-muted"
-                }
-              >
-                {t(`blog.category.${cat}`)}
-              </Button>
-            ))}
-          </div>
-        </AnimateInView>
-      </section>
-
-      {/* Secondary Featured Article */}
-      <section className="max-w-7xl mx-auto px-6 mb-12">
-        <AnimateInView variant="fadeUp">
-          <Link to={`/blog/${secondaryFeatured.slug}`}>
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden rounded-2xl bg-card shadow-2xl">
-              <div className="lg:col-span-7 h-64 lg:h-auto overflow-hidden">
-                <img
-                  className="h-full w-full object-cover"
-                  src={secondaryFeatured.image}
-                  alt={secondaryFeatured.title}
-                />
-              </div>
-              <div className="lg:col-span-5 flex flex-col justify-center p-8 md:p-12">
-                <p className="mb-2 text-xs font-bold uppercase tracking-widest text-maiyu-purple">
-                  {secondaryFeatured.category}
-                </p>
-                <h2 className="mb-4 text-2xl font-bold leading-tight text-foreground">
-                  {secondaryFeatured.title}
-                </h2>
-                <p className="mb-6 text-muted-foreground">
-                  {secondaryFeatured.excerpt}
-                </p>
-                <div className="mt-auto flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {secondaryFeatured.readTime} &bull; {secondaryFeatured.date}
-                  </span>
-                  <span className="flex items-center gap-2 text-sm font-bold text-maiyu-purple hover:text-foreground transition-colors">
-                    {t("blog.readStory")}
-                    <ArrowRight size={16} />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Link>
-        </AnimateInView>
-      </section>
-
-      {/* Recent Articles Grid */}
-      <section className="max-w-7xl mx-auto px-6 mb-16">
-        <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-bold text-foreground">{t("blog.recentArticles")}</h3>
+      {/* ─── Hero ─────────────────────────────────────────────── */}
+      <section className="relative pt-32 md:pt-40 pb-16 md:pb-20 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-paper pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-8">
+          <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-4">
+            <p className="eyebrow">— {t("blog.eyebrow")}</p>
+          </AnimateInView>
+          <AnimateInView
+            variant="fadeUp"
+            delay={0.1}
+            className="col-span-12 md:col-span-8"
+          >
+            <h1 className="font-display text-display font-400 leading-[0.95] tracking-[-0.035em] text-foreground max-w-4xl">
+              {t("blog.title")}
+            </h1>
+          </AnimateInView>
+          <AnimateInView
+            variant="fadeUp"
+            delay={0.2}
+            className="col-span-12 md:col-span-6 md:col-start-7 mt-10"
+          >
+            <p className="font-sans text-body-lg text-foreground/75 leading-[1.65] max-w-xl">
+              {t("blog.description")}
+            </p>
+          </AnimateInView>
         </div>
-        <StaggerContainer className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArticles.map((article) => (
-            <motion.div key={article.slug} variants={staggerItemVariants}>
-              <Link to={`/blog/${article.slug}`}>
-                <Card className="flex flex-col rounded-2xl bg-card border-border overflow-hidden group h-full cursor-pointer">
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      src={article.image}
-                      alt={article.title}
-                    />
-                    <Badge className="absolute top-4 left-4 bg-background/80 text-foreground backdrop-blur-md text-[10px] uppercase">
-                      {article.category}
-                    </Badge>
-                  </div>
-                  <CardContent className="flex flex-1 flex-col p-6">
-                    <h4 className="mb-3 text-lg font-bold leading-snug text-foreground group-hover:text-maiyu-purple transition-colors">
-                      {article.title}
-                    </h4>
-                    <p className="mb-6 text-sm text-muted-foreground line-clamp-3">
-                      {article.excerpt}
+      </section>
+
+      {/* ─── Featured article — full-bleed magazine cover ─────── */}
+      <section className="pt-12 md:pt-16 pb-24 md:pb-32 bg-canvas-sand dark:bg-canvas-shale">
+        <div className="max-w-7xl mx-auto px-6 md:px-10">
+          <AnimateInView variant="fadeUp">
+            <Link
+              to={`/blog/${featuredArticle.slug}`}
+              className="group block"
+            >
+              <div className="relative overflow-hidden rounded-[2.5rem] aspect-[16/9] md:aspect-[21/10] bg-canvas-sand dark:bg-canvas-moss">
+                <img
+                  src={featuredArticle.image}
+                  alt={featuredArticle.title[language]}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent" />
+
+                <div className="absolute top-6 md:top-8 left-6 md:left-8">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-background/90 backdrop-blur-md px-4 py-1.5 text-[10px] tracking-[0.22em] uppercase font-medium text-foreground">
+                    <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
+                    {t("blog.featured")}
+                  </span>
+                </div>
+
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+                  <div className="max-w-3xl">
+                    <p className="font-mono text-micro text-foreground/70 mb-4 tabular-nums uppercase tracking-[0.15em]">
+                      {featuredArticle.date} · {t(`blog.category.${featuredArticle.category}`)}
                     </p>
-                    <div className="mt-auto flex items-center gap-3">
+                    <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground">
+                      {featuredArticle.title[language]}
+                    </h2>
+                    <p className="font-sans text-body text-foreground/75 mt-4 max-w-xl">
+                      {featuredArticle.excerpt[language]}
+                    </p>
+                    <div className="flex items-center gap-3 mt-8">
                       <img
-                        className="h-8 w-8 rounded-full border border-maiyu-purple/30 object-cover"
-                        src={article.authorImg}
-                        alt={article.author}
+                        src={featuredArticle.authorImg}
+                        alt={featuredArticle.author}
+                        className="size-10 rounded-full ring-1 ring-foreground/10 object-cover"
                       />
-                      <div className="text-[11px]">
-                        <p className="font-bold text-foreground">{article.author}</p>
-                        <p className="text-muted-foreground">
-                          {article.date} &bull; {article.readTime}
+                      <div>
+                        <p className="font-sans text-small font-medium text-foreground">
+                          {featuredArticle.author}
+                        </p>
+                        <p className="font-sans text-micro text-muted-foreground">
+                          {featuredArticle.role[language]} ·{" "}
+                          {featuredArticle.readTime[language]}
                         </p>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            </motion.div>
-          ))}
-        </StaggerContainer>
+                  </div>
+                </div>
+              </div>
+            </Link>
+          </AnimateInView>
+        </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="max-w-7xl mx-auto px-6 pb-16">
-        <AnimateInView variant="fadeUp">
-          <div className="rounded-3xl bg-maiyu-purple p-8 md:p-16 text-center">
-            <h2 className="text-3xl font-extrabold mb-4 text-foreground">{t("blog.newsletterTitle")}</h2>
-            <p className="mb-8 max-w-lg mx-auto text-foreground/80">
-              {t("blog.newsletterDesc")}
-            </p>
-            <form className="flex flex-col sm:flex-row max-w-md mx-auto gap-3" onSubmit={(e) => e.preventDefault()}>
-              <Input
-                className="flex-1 rounded-xl border-none px-6 py-4 text-foreground bg-background focus:ring-2 focus:ring-ring"
-                placeholder={t("blog.emailPlaceholder")}
-                type="email"
-              />
-              <Button className="bg-foreground text-background px-8 py-4 rounded-xl font-bold hover:bg-foreground/90 transition-colors">
-                {t("blog.subscribe")}
-              </Button>
-            </form>
+      {/* ─── Category filter + recent articles ─────────────────── */}
+      <section className="pb-24 md:pb-32 bg-canvas-bone dark:bg-canvas-moss border-y border-foreground/[0.06]">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 pt-20 md:pt-28">
+          <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-14">
+            <div>
+              <p className="eyebrow mb-4">— {t("blog.recentArticles")}</p>
+              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground">
+                {t("blog.recentArticles")}
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {categories.map((cat) => {
+                const active = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(cat)}
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-4 py-1.5 text-[10px] font-sans font-medium tracking-[0.18em] uppercase transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]",
+                      active
+                        ? "bg-foreground text-background border-foreground"
+                        : "border-foreground/20 text-foreground/70 hover:text-foreground hover:border-foreground/40",
+                    )}
+                  >
+                    {t(`blog.category.${cat}`)}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </AnimateInView>
+
+          <StaggerContainer className="grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-12">
+            {filtered.map((article, idx) => (
+              <motion.div
+                key={article.slug}
+                variants={staggerItemVariants}
+                className={
+                  idx % 3 === 0
+                    ? "md:col-span-7"
+                    : idx % 3 === 1
+                      ? "md:col-span-5 md:mt-20"
+                      : "md:col-span-6 md:col-start-4"
+                }
+              >
+                <Link to={`/blog/${article.slug}`} className="group block">
+                  <div
+                    className={cn(
+                      "relative overflow-hidden rounded-[2rem] bg-canvas-sand dark:bg-canvas-shale",
+                      idx % 3 === 1 ? "aspect-[4/5]" : "aspect-[16/10]",
+                    )}
+                  >
+                    <img
+                      src={article.image}
+                      alt={article.title[language]}
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-background/20 via-transparent to-transparent" />
+                    <div className="absolute top-5 left-5">
+                      <span className="inline-flex items-center rounded-full bg-background/90 backdrop-blur-md px-3 py-1 text-[10px] tracking-[0.18em] uppercase font-medium text-foreground">
+                        {t(`blog.category.${article.category}`)}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="mt-6">
+                    <p className="font-mono text-micro text-muted-foreground tabular-nums mb-2 uppercase tracking-[0.12em]">
+                      {article.date} · {article.readTime[language]}
+                    </p>
+                    <h3 className="font-display text-h3 font-400 tracking-[-0.02em] text-foreground group-hover:text-[color:var(--color-forest)] dark:group-hover:text-[color:var(--color-forest-bright)] transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] leading-[1.1]">
+                      {article.title[language]}
+                    </h3>
+                    <p className="font-sans text-body text-foreground/70 mt-3 leading-relaxed line-clamp-2">
+                      {article.excerpt[language]}
+                    </p>
+                    <div className="flex items-center gap-2.5 mt-5">
+                      <img
+                        src={article.authorImg}
+                        alt={article.author}
+                        className="size-7 rounded-full object-cover"
+                      />
+                      <span className="font-sans text-micro text-foreground/70">
+                        {article.author}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </StaggerContainer>
+        </div>
+      </section>
+
+      {/* ─── Newsletter — forest editorial block ───────────────── */}
+      <section className="relative py-24 md:py-32 bg-canvas-forest dark:bg-canvas-night text-[color:var(--color-canvas-cream)] overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_left,_rgba(216,138,43,0.1),_transparent_55%)] pointer-events-none" />
+        <div className="relative max-w-7xl mx-auto px-6 md:px-10">
+          <div className="grid grid-cols-12 gap-8 items-end">
+            <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-4">
+              <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/55">
+                — Subscribe
+              </p>
+            </AnimateInView>
+            <AnimateInView
+              variant="fadeUp"
+              delay={0.1}
+              className="col-span-12 md:col-span-8"
+            >
+              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-[color:var(--color-canvas-cream)] max-w-2xl">
+                {t("blog.newsletterTitle")}
+              </h2>
+              <p className="font-sans text-body text-[color:var(--color-canvas-cream)]/70 mt-5 max-w-lg leading-relaxed">
+                {t("blog.newsletterDesc")}
+              </p>
+
+              <form
+                onSubmit={(e) => e.preventDefault()}
+                className="mt-10 flex items-center gap-2 max-w-md border-b border-[color:var(--color-canvas-cream)]/25 pb-2 focus-within:border-[color:var(--color-amber)] transition-colors duration-[480ms]"
+              >
+                <Input
+                  type="email"
+                  placeholder={t("blog.emailPlaceholder")}
+                  className="flex-1 bg-transparent border-0 rounded-none px-0 h-10 font-sans text-body text-[color:var(--color-canvas-cream)] placeholder:text-[color:var(--color-canvas-cream)]/40 focus-visible:ring-0"
+                />
+                <button
+                  type="submit"
+                  className="group inline-flex items-center gap-1.5 font-sans text-[12px] font-medium tracking-[0.12em] uppercase text-[color:var(--color-canvas-cream)] hover:text-[color:var(--color-amber)] transition-colors duration-[480ms]"
+                >
+                  {t("blog.subscribe")}
+                  <ArrowUpRight
+                    size={14}
+                    strokeWidth={1.6}
+                    className="transition-transform duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </button>
+              </form>
+            </AnimateInView>
+          </div>
+        </div>
       </section>
     </div>
   );

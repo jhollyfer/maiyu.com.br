@@ -1,8 +1,8 @@
 import { useLanguage } from "@/contexts/language";
-import { Github, Linkedin, ArrowUp } from "lucide-react";
+import { Github, Linkedin, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const scrollToTop = (duration = 1400) => {
+const scrollToTop = (duration = 1200) => {
   const start = window.scrollY;
   const startTime = performance.now();
   const ease = (t: number) =>
@@ -31,55 +31,61 @@ const Footer = () => {
   ];
 
   return (
-    <footer className="pt-20 border-t border-border bg-card">
-      <div className="container mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
+    <footer className="relative bg-canvas-bone dark:bg-canvas-moss border-t border-foreground/[0.06] overflow-hidden">
+      {/* Massive editorial sign-off */}
+      <div className="relative max-w-7xl mx-auto px-6 md:px-10 pt-24 md:pt-32 pb-10">
+        <div className="mb-20 md:mb-28">
+          <p className="eyebrow mb-6">— {t("footer.signoff")}</p>
+          <h2 className="font-display text-display font-400 leading-[0.92] tracking-[-0.03em] text-foreground max-w-[18ch]">
+            Maiyu<span className="text-[color:var(--color-amber)]">.</span>
+          </h2>
+        </div>
 
-          {/* Brand */}
-          <div>
-            <Link to="/" className="block mb-4">
-              <span className="text-gradient font-heading text-3xl font-extrabold">
-                Maiyu.
-              </span>
-            </Link>
-            <p className="text-muted-foreground font-body text-xs leading-[1.9] mb-6 max-w-xs">
+        {/* Grid body */}
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-8 md:gap-12 pb-16 border-t border-foreground/[0.08] pt-12">
+          {/* Brand column */}
+          <div className="col-span-2 md:col-span-5">
+            <p className="text-body font-sans text-foreground/80 leading-relaxed max-w-sm mb-8">
               {t("footer.tagline")}
             </p>
-            <div className="flex space-x-3">
+            <div className="flex items-center gap-2">
               <a
                 href="https://github.com/maiyu-dev"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all duration-200"
-                style={{ borderRadius: "1px" }}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-foreground/15 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-[color,border-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                aria-label="GitHub"
               >
-                <Github size={15} />
+                <Github size={15} strokeWidth={1.4} />
               </a>
               <a
                 href="https://linkedin.com/company/maiyu"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-2 border border-border hover:border-foreground/20 text-muted-foreground hover:text-foreground transition-all duration-200"
-                style={{ borderRadius: "1px" }}
+                className="inline-flex size-10 items-center justify-center rounded-full border border-foreground/15 text-muted-foreground hover:text-foreground hover:border-foreground/40 transition-[color,border-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                aria-label="LinkedIn"
               >
-                <Linkedin size={15} />
+                <Linkedin size={15} strokeWidth={1.4} />
               </a>
             </div>
           </div>
 
-          {/* Navigation Links */}
-          <div>
-            <h3 className="font-heading font-bold text-sm text-foreground mb-5">
-              {t("footer.navigation")}
-            </h3>
-            <ul className="space-y-3">
+          {/* Navigate */}
+          <div className="md:col-span-3">
+            <p className="eyebrow mb-5">{t("footer.navigation")}</p>
+            <ul className="space-y-2.5">
               {navLinks.map((link) => (
-                <li key={link.name}>
+                <li key={link.to}>
                   <Link
                     to={link.to}
-                    className="text-muted-foreground font-body text-xs hover:text-foreground transition-colors duration-200"
+                    className="group inline-flex items-center gap-1.5 font-sans text-body text-foreground/70 hover:text-foreground transition-colors duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
                   >
-                    {link.name}
+                    <span>{link.name}</span>
+                    <ArrowUpRight
+                      size={13}
+                      strokeWidth={1.4}
+                      className="opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
+                    />
                   </Link>
                 </li>
               ))}
@@ -87,24 +93,34 @@ const Footer = () => {
           </div>
 
           {/* Contact */}
-          <div>
-            <h3 className="font-heading font-bold text-sm text-foreground mb-5">
-              {t("footer.contact")}
-            </h3>
-            <ul className="space-y-3">
-              <li className="text-muted-foreground font-body text-xs">Maiyu SH</li>
-              <li className="text-muted-foreground font-body text-xs">
-                Rua Gildo Sampaio, 140, CM Filadelfia
+          <div className="md:col-span-4">
+            <p className="eyebrow mb-5">{t("footer.contact")}</p>
+            <ul className="space-y-2.5">
+              <li className="font-sans text-body text-foreground/70">
+                Rua Gildo Sampaio, 140
               </li>
-              <li className="text-muted-foreground font-body text-xs">
-                Benjamin Constant, Amazonas
+              <li className="font-sans text-body text-foreground/70">
+                CM Filadelfia — Benjamin Constant, AM
               </li>
               <li>
                 <a
                   href="mailto:contato@maiyu.com"
-                  className="text-maiyu-amber hover:text-maiyu-amber/70 font-body text-xs transition-colors duration-200"
+                  className="group inline-flex items-center gap-1.5 font-sans text-body text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)] hover:opacity-80 transition-opacity"
                 >
                   contato@maiyu.com
+                  <ArrowUpRight
+                    size={13}
+                    strokeWidth={1.4}
+                    className="transition-transform duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                  />
+                </a>
+              </li>
+              <li>
+                <a
+                  href="tel:+5597984317149"
+                  className="font-sans text-body text-foreground/70 hover:text-foreground transition-colors"
+                >
+                  +55 (97) 9 8431-7149
                 </a>
               </li>
             </ul>
@@ -112,25 +128,30 @@ const Footer = () => {
         </div>
 
         {/* Bottom bar */}
-        <div className="py-6 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
-          <p className="text-muted-foreground font-body text-xs">
-            &copy; {currentYear} Maiyu SH. {t("footer.rights")}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pt-10 border-t border-foreground/[0.08]">
+          <p className="font-sans text-small text-muted-foreground">
+            © {currentYear} Maiyu SH. {t("footer.rights")}.
           </p>
-
-          <div className="flex items-center gap-6">
-            <span className="text-muted-foreground/70 font-body text-xs">{t("footer.terms")}</span>
-            <span className="text-muted-foreground/70 font-body text-xs">{t("footer.privacy")}</span>
-
-            <button
-              onClick={() => scrollToTop()}
-              className="flex items-center gap-2 text-muted-foreground hover:text-maiyu-amber font-body text-xs tracking-wider uppercase transition-colors duration-200 group"
-            >
-              <span>{t("footer.backToTop")}</span>
-              <span className="border border-border group-hover:border-maiyu-amber/50 p-1 transition-colors duration-200" style={{ borderRadius: "2px" }}>
-                <ArrowUp size={11} />
-              </span>
-            </button>
-          </div>
+          <p className="font-sans text-small text-muted-foreground italic max-w-md">
+            {t("footer.colophon")}
+          </p>
+          <button
+            onClick={() => scrollToTop()}
+            className="group inline-flex items-center gap-2 font-sans text-small text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <span className="eyebrow">{t("footer.backToTop")}</span>
+            <span className="inline-flex size-8 items-center justify-center rounded-full border border-foreground/15 group-hover:border-foreground/40 transition-[border-color,transform] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-y-0.5">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path
+                  d="M12 19V5M5 12L12 5L19 12"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </span>
+          </button>
         </div>
       </div>
     </footer>
