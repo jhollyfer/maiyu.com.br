@@ -73,10 +73,10 @@
   --color-brand-dark:   #403937;
 
   /* ─── Typography ─────────────────────────────────────────── */
-  --font-display: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-serif: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-brand: "Michroma", "Raleway", system-ui, sans-serif;
+  --font-display: "Raleway Variable", "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Raleway Variable", "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Raleway Variable", "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-brand: "Michroma", "Raleway Variable", "Raleway", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
   /* Fluid type scale */
@@ -135,24 +135,24 @@
   --highlight: #0BAFC7;
   --highlight-bar: #88FF9A;
 
-  --tint-mint: #77EED7;
-  --tint-peach: #FB80C1;
-  --tint-mist: #A480F5;
-  --tint-lime: #88FF9A;
-  --tint-green: #88FF9A;
-  --tint-peach-soft: #C9F9D2;
+  --tint-mint: #C2F7EC;
+  --tint-peach: #FDD3E9;
+  --tint-mist: #DDD0FB;
+  --tint-lime: #CCFFD4;
+  --tint-green: #CCFFD4;
+  --tint-peach-soft: #E3FCE8;
 
   --navy: #01111B;
   --navy-2: #0B1E2B;
   --on-navy: #E8F6FF;
 
-  --sky-top: #BFF4FC;
-  --sky-mid: #E6FFF0;
-  --sky-low: #A9F7C0;
-  --sky-glow: rgba(49, 225, 247, 0.45);
+  --sky-top: #DDF8FC;
+  --sky-mid: #F1FCF5;
+  --sky-low: #D3F8DE;
+  --sky-glow: rgba(49, 225, 247, 0.2);
   --sky-mint: #FAFAFA;
-  --forest-back: #BDF3E8;
-  --forest-mid: #9CF0BA;
+  --forest-back: #DDF6F0;
+  --forest-mid: #C6F2D4;
   --forest-front: var(--background);
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
@@ -208,11 +208,11 @@
   --highlight: #31E1F7;
   --highlight-bar: #88FF9A;
 
-  --tint-mint: #0B2E2A;
-  --tint-peach: #35142B;
-  --tint-mist: #1D1840;
-  --tint-lime: #0E3318;
-  --tint-green: #0E3318;
+  --tint-mint: #0D1F22;
+  --tint-peach: #1E1522;
+  --tint-mist: #17172E;
+  --tint-lime: #0E221A;
+  --tint-green: #0E221A;
   --tint-peach-soft: #0E2A22;
 
   --navy: #01111B;
@@ -221,11 +221,11 @@
 
   --sky-top: #01111B;
   --sky-mid: #062630;
-  --sky-low: #0C3A22;
+  --sky-low: #0A2A1E;
   --sky-glow: rgba(49, 225, 247, 0.22);
   --sky-mint: #080C14;
-  --forest-back: #0A2B30;
-  --forest-mid: #0B3422;
+  --forest-back: #0B2127;
+  --forest-mid: #0C271D;
   --forest-front: var(--background);
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
@@ -266,13 +266,13 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     font-weight: 800;
-    letter-spacing: -0.025em;
+    letter-spacing: -0.012em;
     text-wrap: balance;
   }
 
   h3, h4, h5, h6 {
     font-weight: 700;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.005em;
   }
 
   p {
@@ -399,18 +399,18 @@
 .dark .galaxy {
   opacity: 1;
   background:
-    radial-gradient(ellipse 40% 30% at 22% 28%, rgba(164, 128, 245, 0.22) 0%, transparent 70%),
-    radial-gradient(ellipse 35% 25% at 70% 18%, rgba(49, 225, 247, 0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 30% at 22% 28%, rgba(164, 128, 245, 0.14) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 25% at 70% 18%, rgba(49, 225, 247, 0.1) 0%, transparent 70%),
     radial-gradient(ellipse 60% 18% at 50% 40%, rgba(119, 238, 215, 0.08) 0%, transparent 70%);
 }
 
 /* Night cards carry a thin brand edge, like the portfolio cards */
-.dark .bg-tint-mint       { box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.45); }
+.dark .bg-tint-mint       { box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.3); }
 .dark .bg-tint-lime,
 .dark .bg-tint-green,
-.dark .bg-tint-peach-soft { box-shadow: inset 0 0 0 1px rgba(136, 255, 154, 0.45); }
-.dark .bg-tint-mist       { box-shadow: inset 0 0 0 1px rgba(164, 128, 245, 0.5); }
-.dark .bg-tint-peach      { box-shadow: inset 0 0 0 1px rgba(251, 128, 193, 0.45); }
+.dark .bg-tint-peach-soft { box-shadow: inset 0 0 0 1px rgba(136, 255, 154, 0.3); }
+.dark .bg-tint-mist       { box-shadow: inset 0 0 0 1px rgba(164, 128, 245, 0.32); }
+.dark .bg-tint-peach      { box-shadow: inset 0 0 0 1px rgba(251, 128, 193, 0.3); }
 
 @keyframes marquee {
   to { transform: translate3d(-50%, 0, 0); }

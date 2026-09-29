@@ -165,7 +165,7 @@ const Navbar = () => {
                       <Link
                         to={link.to}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block border-b border-foreground/[0.08] py-5 font-display text-4xl font-medium tracking-[-0.03em] text-foreground"
+                        className="block border-b border-foreground/[0.08] py-5 font-display text-4xl font-medium tracking-[-0.015em] text-foreground"
                       >
                         {link.name}
                       </Link>

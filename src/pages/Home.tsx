@@ -95,7 +95,7 @@ function Hero() {
       <div className="rails pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 md:px-8">
-        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.035em] text-foreground md:mt-14">
+        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.015em] text-foreground md:mt-14">
           <motion.span {...enter(0.1)} className="block md:pl-[4%]">
             {t("home.heroTitle1")}
           </motion.span>
@@ -151,7 +151,7 @@ function Work() {
       <div className="relative mt-10 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
         <ul className="marquee flex w-max gap-16 pr-16">
           {[...names, ...names].map((p, i) => (
-            <li key={i} className="font-display text-h3 font-medium tracking-[-0.03em] text-foreground/45">
+            <li key={i} className="font-display text-h3 font-medium tracking-[-0.015em] text-foreground/45">
               {p.title}
             </li>
           ))}
@@ -270,7 +270,7 @@ function Vision() {
                 <li key={item.title} className="flex gap-5">
                   <span
                     className={cn(
-                      "font-display font-medium leading-none tracking-[-0.03em] transition-all duration-500",
+                      "font-display font-medium leading-none tracking-[-0.015em] transition-all duration-500",
                       on ? "text-[3.5rem] text-foreground" : "text-h3 text-foreground/25",
                     )}
                   >
@@ -506,7 +506,7 @@ function ClosingCta() {
     <section className="relative overflow-hidden py-28 md:py-36">
       <Forest className="h-[34%] opacity-70" />
       <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
-        <h2 className="text-display tracking-[-0.035em] text-foreground">{t("home.ctaTitle")}</h2>
+        <h2 className="text-display tracking-[-0.015em] text-foreground">{t("home.ctaTitle")}</h2>
         <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/80">{t("home.ctaDesc")}</p>
         <div className="mt-10 flex flex-wrap justify-center gap-2">
           <CtaLink to={CALL_URL} className="rounded-xl" arrow>
