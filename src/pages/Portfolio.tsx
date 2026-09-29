@@ -18,7 +18,6 @@ const Portfolio = () => {
   return (
     <>
       <PageHero
-        pill={t("portfolio.badge")}
         title={`${t("portfolio.heroTitle1")} ${t("portfolio.heroTitle2")} ${t("portfolio.heroTitle3")}`}
         lead={t("portfolio.heroDescription")}
       />

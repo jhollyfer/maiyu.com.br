@@ -4,7 +4,7 @@ import {
   StaggerContainer,
   staggerItemVariants,
 } from "@/components/motion/animate-in-view";
-import { Cloud, SkyBackdrop } from "@/components/sky";
+import { Forest, SkyBackdrop } from "@/components/sky";
 import { useLanguage } from "@/contexts/language";
 import { articles } from "@/data/articles";
 import { projects } from "@/data/projects";
@@ -95,10 +95,6 @@ function Hero() {
       <div className="rails pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 md:px-8">
-        <motion.span {...enter(0)} className="pill mx-auto">
-          {t("home.pill")}
-        </motion.span>
-
         <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.035em] text-foreground md:mt-14">
           <motion.span {...enter(0.1)} className="block md:pl-[4%]">
             {t("home.heroTitle1")}
@@ -397,9 +393,6 @@ function Capabilities() {
         <AnimateInView className="mb-12 flex flex-col gap-5">
           <h2 className="max-w-3xl text-h2">{t("home.servicesHeading")}</h2>
           <span aria-hidden="true" className="brand-bar" />
-          <span className="w-fit rounded-md bg-tint-green px-2.5 py-1 text-micro font-medium text-foreground">
-            {t("home.pill")}
-          </span>
         </AnimateInView>
 
         <div className="grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-foreground/10 md:grid-cols-12">
@@ -511,8 +504,7 @@ function ClosingCta() {
   const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden py-28 md:py-36">
-      <Cloud seed={4} className="cloud-drift -left-[8%] top-[10%] w-[30%] min-w-[220px] opacity-70" />
-      <Cloud seed={9} className="cloud-drift-2 -right-[6%] bottom-[5%] w-[26%] min-w-[200px] opacity-70" />
+      <Forest className="h-[34%] opacity-70" />
       <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
         <h2 className="text-display tracking-[-0.035em] text-foreground">{t("home.ctaTitle")}</h2>
         <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/80">{t("home.ctaDesc")}</p>

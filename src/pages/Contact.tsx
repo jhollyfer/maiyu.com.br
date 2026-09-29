@@ -77,7 +77,6 @@ const Contact = () => {
   return (
     <>
       <PageHero
-        pill={t("contactPage.eyebrow")}
         title={t("contactPage.title")}
         lead={t("contactPage.description")}
       />

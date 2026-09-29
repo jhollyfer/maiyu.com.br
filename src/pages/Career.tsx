@@ -66,7 +66,6 @@ const Career = () => {
   return (
     <>
       <PageHero
-        pill={t("career.badge")}
         title={t("career.heroTitle")}
         lead={t("career.heroDescription")}
       >

@@ -151,8 +151,9 @@
   --sky-low: #A9F7C0;
   --sky-glow: rgba(49, 225, 247, 0.45);
   --sky-mint: #FAFAFA;
-  --cloud: #FFFFFF;
-  --cloud-shade: #9EE9F5;
+  --forest-back: #BDF3E8;
+  --forest-mid: #9CF0BA;
+  --forest-front: var(--background);
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
@@ -223,8 +224,9 @@
   --sky-low: #0C3A22;
   --sky-glow: rgba(49, 225, 247, 0.22);
   --sky-mint: #080C14;
-  --cloud: #0F3440;
-  --cloud-shade: #041820;
+  --forest-back: #0A2B30;
+  --forest-mid: #0B3422;
+  --forest-front: var(--background);
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
@@ -347,8 +349,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .cloud-drift   { animation: cloud-drift 38s ease-in-out infinite alternate; }
-    .cloud-drift-2 { animation: cloud-drift 52s ease-in-out -12s infinite alternate-reverse; }
+    .twinkle       { animation: twinkle 6s ease-in-out infinite; }
     .marquee       { animation: marquee 40s linear infinite; }
     .float         { animation: float 7s ease-in-out infinite; }
   }
@@ -393,6 +394,16 @@
   color: transparent;
 }
 
+/* Galaxy only at night: stars plus a purple and cyan nebula over the canopy */
+.galaxy { opacity: 0; transition: opacity 600ms ease; }
+.dark .galaxy {
+  opacity: 1;
+  background:
+    radial-gradient(ellipse 40% 30% at 22% 28%, rgba(164, 128, 245, 0.22) 0%, transparent 70%),
+    radial-gradient(ellipse 35% 25% at 70% 18%, rgba(49, 225, 247, 0.16) 0%, transparent 70%),
+    radial-gradient(ellipse 60% 18% at 50% 40%, rgba(119, 238, 215, 0.08) 0%, transparent 70%);
+}
+
 /* Night cards carry a thin brand edge, like the portfolio cards */
 .dark .bg-tint-mint       { box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.45); }
 .dark .bg-tint-lime,
@@ -409,7 +420,6 @@
   50% { transform: translate3d(0, -10px, 0) rotate(-2deg); }
 }
 
-@keyframes cloud-drift {
-  from { transform: translate3d(-4%, 0, 0); }
-  to   { transform: translate3d(4%, -2%, 0); }
+@keyframes twinkle {
+  50% { opacity: 0.25; }
 }

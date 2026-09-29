@@ -1,44 +1,104 @@
 import { cn } from "@/lib/utils";
-import { useId } from "react";
 
-/** Painterly cloud: overlapping puffs roughed up by an SVG turbulence filter. */
-export function Cloud({ className, seed = 3 }: { className?: string; seed?: number }) {
-  const id = useId().replace(/:/g, "");
+/** Small deterministic PRNG so the forest and the stars are stable across renders. */
+function rng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
+const W = 1440;
+
+/** Rainforest canopy ridge: broad cauliflower crowns built from overlapping lobes,
+ *  with a few emergent giants rising above the rest, as the Amazon reads from afar. */
+function canopyPath(seed: number, base: number, crown: number, emergents: number) {
+  const r = rng(seed);
+  const giants = new Set(Array.from({ length: emergents }, () => Math.floor(r() * 18)));
+  let d = `M0 ${base}`;
+  let x = 0;
+  let i = 0;
+  while (x < W) {
+    const giant = giants.has(i);
+    const w = crown * (giant ? 2.6 + r() * 1.2 : 2 + r() * 2.4);
+    const h = crown * (giant ? 1.5 + r() * 0.6 : 0.45 + r() * 0.55);
+    const lobes = 3 + Math.floor(r() * 3);
+    const lw = w / lobes;
+    const y = (f: number) => base - h * Math.pow(Math.sin(Math.PI * f), 0.55) - (f > 0 && f < 1 ? r() * crown * 0.12 : 0);
+    for (let j = 0; j < lobes; j++) {
+      const nx = x + lw * (j + 1);
+      const ny = j === lobes - 1 ? base : y((j + 1) / lobes);
+      d += ` A ${lw * 0.56} ${lw * 0.5} 0 0 1 ${nx.toFixed(1)} ${ny.toFixed(1)}`;
+    }
+    x += w;
+    i++;
+  }
+  return `${d} L ${x.toFixed(1)} 400 L 0 400 Z`;
+}
+
+const RIDGES = [
+  { d: canopyPath(7, 250, 46, 3), fill: "var(--forest-back)" },
+  { d: canopyPath(19, 305, 52, 2), fill: "var(--forest-mid)" },
+  { d: canopyPath(31, 360, 40, 2), fill: "var(--forest-front)" },
+];
+
+/** Amazon canopy silhouette, three ridges fading into the page. */
+export function Forest({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 400 180" aria-hidden="true" className={cn("pointer-events-none absolute", className)}>
-      <defs>
-        <linearGradient id={`g${id}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0.35" style={{ stopColor: "var(--cloud)" }} />
-          <stop offset="1" style={{ stopColor: "var(--cloud-shade)" }} />
-        </linearGradient>
-        <filter id={`f${id}`} x="-20%" y="-30%" width="140%" height="160%">
-          <feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="4" seed={seed} />
-          <feDisplacementMap in="SourceGraphic" scale="34" />
-          <feGaussianBlur stdDeviation="1.4" />
-        </filter>
-      </defs>
-      <g filter={`url(#f${id})`} fill={`url(#g${id})`}>
-        <ellipse cx="200" cy="140" rx="180" ry="34" />
-        <circle cx="120" cy="112" r="46" />
-        <circle cx="185" cy="88" r="62" />
-        <circle cx="262" cy="104" r="48" />
-        <circle cx="318" cy="128" r="30" />
-        <circle cx="72" cy="134" r="28" />
-      </g>
+    <svg
+      viewBox={`0 0 ${W} 400`}
+      preserveAspectRatio="xMidYMax slice"
+      aria-hidden="true"
+      className={cn("pointer-events-none absolute inset-x-0 bottom-0 h-[30%] w-full", className)}
+    >
+      {RIDGES.map((ridge, i) => (
+        <path key={i} d={ridge.d} fill={ridge.fill} />
+      ))}
     </svg>
   );
 }
 
-/** Dawn sky with drifting clouds. Night variant comes from dark tokens. */
+const STARS = (() => {
+  const r = rng(42);
+  return Array.from({ length: 140 }, (_, i) => ({
+    x: r() * 100,
+    y: r() * 70,
+    s: r() < 0.12 ? 1.8 : 0.6 + r() * 0.8,
+    d: (r() * 6).toFixed(2),
+    k: i,
+  }));
+})();
+
+/** Starfield and nebula, only at night. */
+export function Galaxy({ className }: { className?: string }) {
+  return (
+    <div aria-hidden="true" className={cn("galaxy pointer-events-none absolute inset-0", className)}>
+      <svg className="size-full" preserveAspectRatio="xMidYMid slice" viewBox="0 0 1440 900">
+        {STARS.map((st) => (
+          <circle
+            key={st.k}
+            cx={st.x * 14.4}
+            cy={st.y * 9}
+            r={st.s}
+            className="twinkle"
+            style={{ animationDelay: `-${st.d}s` }}
+            fill={st.s > 1.5 ? "#31E1F7" : "#E8F6FF"}
+          />
+        ))}
+      </svg>
+    </div>
+  );
+}
+
+/** Sky over the rainforest: cyan day, starry galaxy at night. */
 export function SkyBackdrop({ className, fade = true }: { className?: string; fade?: boolean }) {
   return (
     <div aria-hidden="true" className={cn("sky absolute inset-0 overflow-hidden", className)}>
-      <Cloud seed={2} className="cloud-drift -left-[6%] top-[52%] w-[38%] min-w-[260px] opacity-95" />
-      <Cloud seed={7} className="cloud-drift-2 -right-[4%] top-[20%] w-[18%] min-w-[150px] opacity-90" />
-      <Cloud seed={11} className="cloud-drift -right-[8%] top-[64%] w-[34%] min-w-[240px]" />
-      <Cloud seed={5} className="cloud-drift-2 left-[34%] top-[84%] w-[30%] min-w-[220px] opacity-90" />
+      <Galaxy />
+      <Forest />
       {fade && (
-        <div className="absolute inset-x-0 bottom-0 h-1/5 bg-gradient-to-b from-transparent to-background" />
+        <div className="absolute inset-x-0 bottom-0 h-[8%] bg-gradient-to-b from-transparent to-background" />
       )}
     </div>
   );

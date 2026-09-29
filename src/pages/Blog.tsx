@@ -24,7 +24,7 @@ const Blog = () => {
 
   return (
     <>
-      <PageHero pill={t("blog.eyebrow")} title={t("blog.title")} lead={t("blog.description")} />
+      <PageHero title={t("blog.title")} lead={t("blog.description")} />
 
       {/* Featured article */}
       <section className="pb-24 md:pb-32">
