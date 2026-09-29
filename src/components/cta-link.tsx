@@ -11,7 +11,7 @@ const variants = {
   ghost:
     "border border-foreground/25 text-foreground hover:border-foreground/50 hover:bg-foreground/[0.04]",
   /* Logo pairing: night ink with brand green; outlined green at night */
-  soft: "border border-transparent bg-navy text-brand-green hover:bg-navy-2 dark:border-brand-green/60 dark:bg-transparent dark:hover:bg-brand-green/10",
+  soft: "border border-foreground/25 bg-transparent text-foreground hover:border-foreground/50 hover:bg-foreground/[0.04] dark:border-brand-green/60 dark:text-brand-green dark:hover:bg-brand-green/10",
   brand:
     "bg-brand-green text-navy shadow-[0_10px_28px_-12px_rgba(136,255,154,0.75)] hover:bg-brand-blue",
   light: "bg-on-navy text-navy hover:bg-white",
