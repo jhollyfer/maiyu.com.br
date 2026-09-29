@@ -89,7 +89,7 @@ const Footer = () => {
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label={t("footer.backToTop")}
-            className="inline-flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex size-9 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5"
           >
             <ArrowUp size={15} strokeWidth={1.75} />
           </button>
@@ -97,7 +97,7 @@ const Footer = () => {
 
         <p
           aria-hidden="true"
-          className="select-none text-center font-display text-[clamp(5rem,22vw,18rem)] font-extrabold leading-[0.72] tracking-[-0.045em] text-foreground/[0.07]"
+          className="select-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] uppercase leading-[0.9] text-gradient-green opacity-25 dark:opacity-20"
         >
           Maiyu
         </p>

@@ -77,7 +77,7 @@ const Navbar = () => {
         >
           <Link to="/" className="flex items-center gap-2 justify-self-start" aria-label="Maiyu home">
             <img src="/favicon.svg" alt="" className="size-7" />
-            <span className="font-display text-xl font-extrabold tracking-[-0.02em] text-foreground">
+            <span className="font-brand text-lg uppercase tracking-[0.08em] text-foreground dark:text-brand-green">
               Maiyu
             </span>
           </Link>
@@ -94,7 +94,7 @@ const Navbar = () => {
                       className={cn(
                         "rounded-full px-4 py-2 text-small font-medium transition-colors duration-300",
                         active
-                          ? "bg-foreground/[0.06] font-semibold text-foreground dark:text-brand-green"
+                          ? "bg-foreground/[0.06] font-semibold text-foreground underline decoration-brand-green decoration-2 underline-offset-[6px] dark:text-brand-green"
                           : "text-foreground/70 hover:text-foreground",
                       )}
                     >

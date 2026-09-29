@@ -76,6 +76,7 @@
   --font-display: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-sans: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-serif: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-brand: "Michroma", "Raleway", system-ui, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
   /* Fluid type scale */
@@ -134,23 +135,24 @@
   --highlight: #0BAFC7;
   --highlight-bar: #88FF9A;
 
-  --tint-mint: #D9F8F2;
-  --tint-peach: #FEE2F0;
-  --tint-mist: #ECE4FD;
-  --tint-lime: #DCFFE1;
-  --tint-green: #DCFFE1;
-  --tint-peach-soft: #FFF0F7;
+  --tint-mint: #77EED7;
+  --tint-peach: #FB80C1;
+  --tint-mist: #A480F5;
+  --tint-lime: #88FF9A;
+  --tint-green: #88FF9A;
+  --tint-peach-soft: #C9F9D2;
 
   --navy: #01111B;
   --navy-2: #0B1E2B;
   --on-navy: #E8F6FF;
 
-  --sky-top: #DDF7FD;
-  --sky-mid: #EAFBF3;
-  --sky-low: #C9F7E4;
+  --sky-top: #BFF4FC;
+  --sky-mid: #E6FFF0;
+  --sky-low: #A9F7C0;
+  --sky-glow: rgba(49, 225, 247, 0.45);
   --sky-mint: #FAFAFA;
   --cloud: #FFFFFF;
-  --cloud-shade: #BFEFF7;
+  --cloud-shade: #9EE9F5;
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
@@ -205,23 +207,24 @@
   --highlight: #31E1F7;
   --highlight-bar: #88FF9A;
 
-  --tint-mint: #0B2427;
-  --tint-peach: #1F1530;
-  --tint-mist: #17173A;
-  --tint-lime: #10291A;
-  --tint-green: #10291A;
-  --tint-peach-soft: #1A1328;
+  --tint-mint: #0B2E2A;
+  --tint-peach: #35142B;
+  --tint-mist: #1D1840;
+  --tint-lime: #0E3318;
+  --tint-green: #0E3318;
+  --tint-peach-soft: #0E2A22;
 
   --navy: #01111B;
   --navy-2: #0B1E2B;
   --on-navy: #E8F6FF;
 
-  --sky-top: #080C14;
-  --sky-mid: #051A24;
-  --sky-low: #082C24;
+  --sky-top: #01111B;
+  --sky-mid: #062630;
+  --sky-low: #0C3A22;
+  --sky-glow: rgba(49, 225, 247, 0.22);
   --sky-mint: #080C14;
-  --cloud: #123038;
-  --cloud-shade: #07161E;
+  --cloud: #0F3440;
+  --cloud-shade: #041820;
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
@@ -302,6 +305,7 @@
   .font-sans    { font-family: var(--font-sans); }
   .font-serif   { font-family: var(--font-serif); }
   .font-mono    { font-family: var(--font-mono); }
+  .font-brand   { font-family: var(--font-brand); }
 
   .text-micro     { font-size: var(--text-micro); }
   .text-small     { font-size: var(--text-small); }
@@ -315,22 +319,6 @@
   .text-display   { font-size: var(--text-display); line-height: 1; }
   .text-display-xl{ font-size: var(--text-display-xl); line-height: 0.98; }
 
-  /* Brand gradients */
-  .bg-gradient-green { background-image: linear-gradient(120deg, #77EED7 0%, #88FF9A 100%); }
-  .bg-gradient-blue  { background-image: linear-gradient(120deg, #31E1F7 0%, #3168F7 100%); }
-  .text-gradient-green {
-    background-image: linear-gradient(100deg, #77EED7 0%, #88FF9A 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-  .text-gradient-blue {
-    background-image: linear-gradient(100deg, #31E1F7 0%, #3168F7 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
   /* Short green bar under headings, straight from the brand posts */
   .brand-bar {
     display: block;
@@ -343,6 +331,7 @@
   /* Sky: cyan top, mint horizon, the page's signature surface */
   .sky {
     background:
+      radial-gradient(ellipse 50% 40% at 85% 0%, var(--sky-glow) 0%, transparent 70%),
       radial-gradient(ellipse 60% 45% at 50% 100%, var(--sky-low) 0%, transparent 70%),
       linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%);
   }
@@ -364,23 +353,53 @@
     .float         { animation: float 7s ease-in-out infinite; }
   }
 
-  /* Pill label, the one eyebrow style */
+  /* Pill label, the one eyebrow style: logo pairing, night ink + green */
   .pill {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
     border-radius: 9999px;
-    border: 1px solid color-mix(in srgb, var(--foreground) 35%, transparent);
-    padding: 0.3rem 0.85rem;
+    border: 1px solid transparent;
+    background: #01111B;
+    padding: 0.35rem 0.9rem;
     font-size: var(--text-micro);
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: 0.01em;
-    color: var(--foreground);
+    color: #88FF9A;
+  }
+
+  .dark .pill {
+    border-color: rgba(136, 255, 154, 0.5);
+    background: rgba(136, 255, 154, 0.06);
   }
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 }
+
+/* Brand gradients, as @utility so dark: and hover: variants work */
+@utility bg-gradient-green { background-image: linear-gradient(120deg, #77EED7 0%, #88FF9A 100%); }
+@utility bg-gradient-blue  { background-image: linear-gradient(120deg, #31E1F7 0%, #3168F7 100%); }
+@utility text-gradient-green {
+  background-image: linear-gradient(100deg, #77EED7 0%, #88FF9A 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+@utility text-gradient-blue {
+  background-image: linear-gradient(100deg, #31E1F7 0%, #3168F7 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Night cards carry a thin brand edge, like the portfolio cards */
+.dark .bg-tint-mint       { box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.45); }
+.dark .bg-tint-lime,
+.dark .bg-tint-green,
+.dark .bg-tint-peach-soft { box-shadow: inset 0 0 0 1px rgba(136, 255, 154, 0.45); }
+.dark .bg-tint-mist       { box-shadow: inset 0 0 0 1px rgba(164, 128, 245, 0.5); }
+.dark .bg-tint-peach      { box-shadow: inset 0 0 0 1px rgba(251, 128, 193, 0.45); }
 
 @keyframes marquee {
   to { transform: translate3d(-50%, 0, 0); }

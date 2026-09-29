@@ -95,7 +95,7 @@ function Hero() {
       <div className="rails pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 md:px-8">
-        <motion.span {...enter(0)} className="pill mx-auto bg-surface/40 backdrop-blur-sm">
+        <motion.span {...enter(0)} className="pill mx-auto">
           {t("home.pill")}
         </motion.span>
 
@@ -103,10 +103,11 @@ function Hero() {
           <motion.span {...enter(0.1)} className="block md:pl-[4%]">
             {t("home.heroTitle1")}
           </motion.span>
-          <motion.span {...enter(0.2)} className="block text-right text-highlight md:pr-[4%]">
-            {t("home.heroTitle2")}
+          <motion.span {...enter(0.2)} className="block text-right md:pr-[4%]">
+            <span className="text-gradient-blue dark:text-gradient-green">{t("home.heroTitle2")}</span>
           </motion.span>
         </h1>
+        <motion.span {...enter(0.3)} aria-hidden="true" className="brand-bar ml-auto mt-6 w-28 md:mr-[4%]" />
 
         <motion.div
           {...enter(0.35)}
@@ -126,7 +127,7 @@ function Hero() {
             <CtaLink to="/contact" className="rounded-xl">
               {t("home.startProject")}
             </CtaLink>
-            <CtaLink to="/portfolio" variant="light" className="rounded-xl">
+            <CtaLink to="/portfolio" variant="soft" className="rounded-xl">
               {t("home.viewWork")}
             </CtaLink>
           </div>
@@ -148,6 +149,7 @@ function Work() {
     <section className="overflow-hidden py-24 md:py-32">
       <AnimateInView className="mx-auto max-w-2xl px-4 text-center">
         <h2 className="text-h2">{t("home.workTitle")}</h2>
+        <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
       </AnimateInView>
 
       <div className="relative mt-10 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
@@ -264,6 +266,7 @@ function Vision() {
         <div className="flex flex-col md:col-span-5">
           <Eyebrow>{t("home.visionLabel")}</Eyebrow>
           <h2 className="text-h2">{t("home.visionTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5" />
           <ol className="mt-auto space-y-3 pt-10">
             {items.map((item, i) => {
               const on = i === step || reduce;
@@ -290,7 +293,7 @@ function Vision() {
         </div>
 
         <div className="relative isolate min-h-[420px] overflow-hidden rounded-[1.75rem] bg-navy md:col-span-7">
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(232,246,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(232,246,255,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(49,225,247,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(49,225,247,0.07)_1px,transparent_1px)] bg-[size:64px_64px]" />
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <div
               className="size-[min(22rem,60vw)] rounded-full transition-[box-shadow,background] duration-1000"
@@ -328,6 +331,7 @@ function Process() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="text-h2">{t("home.processTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
           <p className="mt-5 font-serif text-lead text-foreground/75">{t("home.processDesc")}</p>
         </AnimateInView>
 
@@ -392,6 +396,7 @@ function Capabilities() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mb-12 flex flex-col gap-5">
           <h2 className="max-w-3xl text-h2">{t("home.servicesHeading")}</h2>
+          <span aria-hidden="true" className="brand-bar" />
           <span className="w-fit rounded-md bg-tint-green px-2.5 py-1 text-micro font-medium text-foreground">
             {t("home.pill")}
           </span>
@@ -429,13 +434,14 @@ function NavyBand() {
 
   return (
     <section className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32">
-      <div className="absolute inset-0 -z-10 [--border:rgba(232,246,255,0.1)]">
+      <div className="absolute inset-0 -z-10 [--border:rgba(49,225,247,0.12)]">
         <div className="rails size-full" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mx-auto max-w-2xl text-center">
           <h2 className="text-h2">{t("home.teamTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
           <p className="mx-auto mt-5 max-w-[48ch] font-serif text-lead text-on-navy/75">{t("home.teamDesc")}</p>
         </AnimateInView>
 
