@@ -165,9 +165,16 @@ const Navbar = () => {
                       <Link
                         to={link.to}
                         onClick={() => setMobileMenuOpen(false)}
-                        className="block border-b border-foreground/[0.08] py-5 font-display text-4xl font-medium tracking-[-0.015em] text-foreground"
+                        aria-current={location.pathname.startsWith(link.to) ? "page" : undefined}
+                        className={cn(
+                          "flex items-center justify-between border-b border-foreground/[0.08] py-5 font-display text-4xl font-bold tracking-[-0.015em]",
+                          location.pathname.startsWith(link.to) ? "text-foreground" : "text-foreground/60",
+                        )}
                       >
                         {link.name}
+                        {location.pathname.startsWith(link.to) && (
+                          <span aria-hidden="true" className="brand-bar w-10" />
+                        )}
                       </Link>
                     </motion.li>
                   ))}
