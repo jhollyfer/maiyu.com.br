@@ -28,6 +28,7 @@ import { motion } from "framer-motion";
 import { ArrowDown, Clock, GraduationCap, Home as HomeIcon, Shield } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { team } from "@/data/team";
 import { z } from "zod";
 
 const makeSchema = (t: (k: string) => string) =>
@@ -71,11 +72,11 @@ const Career = () => {
       >
         <div className="mt-10 flex items-center gap-3">
           <div className="flex -space-x-2">
-            {["jhollyfer", "lenny", "matheus"].map((n) => (
+            {team.map((m) => (
               <img
-                key={n}
-                src={`/${n}.png`}
-                alt=""
+                key={m.name}
+                src={m.img}
+                alt={m.name}
                 className="size-10 rounded-full bg-tint-mint object-cover ring-2 ring-background"
               />
             ))}
