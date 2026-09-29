@@ -10,6 +10,9 @@ const variants = {
   primary: "bg-primary text-primary-foreground hover:bg-primary/85",
   ghost:
     "border border-foreground/25 text-foreground hover:border-foreground/50 hover:bg-foreground/[0.04]",
+  peach: "bg-[#F2C6A2] text-[#101214] hover:bg-[#EDB78C]",
+  lime: "bg-[#DDE88A] text-[#101214] hover:bg-[#D2DF72]",
+  light: "bg-[#F7F9E8] text-[#253241] hover:bg-white",
 };
 
 /** Pill link. Internal paths use the router, http(s) opens a new tab. */

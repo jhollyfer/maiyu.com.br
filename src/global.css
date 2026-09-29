@@ -3,8 +3,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Maiyu design system: Amazon dawn sky.
-   Airy pastel surfaces, green-night ink, Geist + Newsreader. */
+/* Maiyu design system: dawn over the river.
+   Cream paper, navy ink, pastel cards, Geist + Newsreader. */
 
 @theme inline {
   /* Radii: one soft scale, buttons are pills */
@@ -53,7 +53,12 @@
   --color-tint-peach: var(--tint-peach);
   --color-tint-mist:  var(--tint-mist);
   --color-tint-lime:  var(--tint-lime);
+  --color-tint-green: var(--tint-green);
+  --color-tint-peach-soft: var(--tint-peach-soft);
   --color-surface:    var(--surface);
+  --color-navy:       var(--navy);
+  --color-navy-2:     var(--navy-2);
+  --color-on-navy:    var(--on-navy);
 
   /* ─── Typography ─────────────────────────────────────────── */
   --font-display: "Geist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -81,122 +86,136 @@
   --dur-base:    480ms;
 }
 
-/* ─── Light: Amazon dawn sky ────────────────────────────────── */
+/* ─── Light: dawn over the river ─────────────────────────────── */
 :root {
-  --radius: 1.25rem;
+  --radius: 1rem;
 
-  --background: #F4F7EC;
-  --surface: #FBFCF6;
-  --foreground: #1E2B25;
+  --background: #F7F9E8;
+  --surface: #FEFEF8;
+  --foreground: #101214;
 
-  --card: #FBFCF6;
-  --card-foreground: #1E2B25;
-  --popover: #FBFCF6;
-  --popover-foreground: #1E2B25;
+  --card: #FEFEF8;
+  --card-foreground: #101214;
+  --popover: #FEFEF8;
+  --popover-foreground: #101214;
 
-  --primary: #1E2B25;
-  --primary-foreground: #F4F7EC;
+  --primary: #253241;
+  --primary-foreground: #F7F9E8;
 
-  --secondary: #E8EDDD;
-  --secondary-foreground: #1E2B25;
+  --secondary: #ECEEDA;
+  --secondary-foreground: #101214;
 
-  --muted: #E8EDDD;
-  --muted-foreground: #5B665F;
+  --muted: #ECEEDA;
+  --muted-foreground: #5E6058;
 
-  --accent: #2E473C;
-  --accent-foreground: #F4F7EC;
+  --accent: #253241;
+  --accent-foreground: #F7F9E8;
 
-  --destructive: #A8432F;
-  --destructive-foreground: #FBFCF6;
+  --destructive: #B24A3A;
+  --destructive-foreground: #FEFEF8;
 
-  --border: rgba(30, 43, 37, 0.12);
-  --input: rgba(30, 43, 37, 0.18);
-  --ring: #2E473C;
+  --border: rgba(16, 18, 20, 0.12);
+  --input: rgba(16, 18, 20, 0.18);
+  --ring: #253241;
 
-  --tint-mint: #CFE8D2;
-  --tint-peach: #F3CBA9;
-  --tint-mist: #D8DCF4;
-  --tint-lime: #E3EB9E;
+  --tint-mint: #A8DDD0;
+  --tint-peach: #F2C6A2;
+  --tint-mist: #AEB8F2;
+  --tint-lime: #DDE88A;
+  --tint-green: #BFE3C2;
+  --tint-peach-soft: #FFE4CD;
 
-  --sky-top: #D8DCF4;
-  --sky-mid: #F7E3D2;
-  --sky-low: #F3CBA9;
-  --sky-mint: #CFE8D2;
-  --cloud: rgba(255, 255, 250, 0.85);
+  --navy: #253241;
+  --navy-2: #334861;
+  --on-navy: #F7F9E8;
 
-  --chart-1: #2E473C;
-  --chart-2: #6E8FA8;
-  --chart-3: #D59A6A;
-  --chart-4: #8FB295;
-  --chart-5: #A8432F;
+  --sky-top: #C9C9EE;
+  --sky-mid: #F6D9C4;
+  --sky-low: #F2C6A2;
+  --sky-mint: #F7F9E8;
+  --cloud: #FFFDF6;
+  --cloud-shade: #B7B3EA;
 
-  --sidebar: #FBFCF6;
-  --sidebar-foreground: #1E2B25;
-  --sidebar-primary: #1E2B25;
-  --sidebar-primary-foreground: #F4F7EC;
-  --sidebar-accent: #E8EDDD;
-  --sidebar-accent-foreground: #1E2B25;
-  --sidebar-border: rgba(30, 43, 37, 0.08);
-  --sidebar-ring: #2E473C;
+  --chart-1: #253241;
+  --chart-2: #AEB8F2;
+  --chart-3: #F2C6A2;
+  --chart-4: #A8DDD0;
+  --chart-5: #B24A3A;
+
+  --sidebar: #FEFEF8;
+  --sidebar-foreground: #101214;
+  --sidebar-primary: #253241;
+  --sidebar-primary-foreground: #F7F9E8;
+  --sidebar-accent: #ECEEDA;
+  --sidebar-accent-foreground: #101214;
+  --sidebar-border: rgba(16, 18, 20, 0.08);
+  --sidebar-ring: #253241;
 }
 
 /* ─── Dark: river night ─────────────────────────────────────── */
 .dark {
   color-scheme: dark;
 
-  --background: #0E1613;
-  --surface: #15201B;
-  --foreground: #E8EEE0;
+  --background: #111820;
+  --surface: #18212C;
+  --foreground: #EEF0DE;
 
-  --card: #15201B;
-  --card-foreground: #E8EEE0;
-  --popover: #15201B;
-  --popover-foreground: #E8EEE0;
+  --card: #18212C;
+  --card-foreground: #EEF0DE;
+  --popover: #18212C;
+  --popover-foreground: #EEF0DE;
 
-  --primary: #E8EEE0;
-  --primary-foreground: #0E1613;
+  --primary: #F7F9E8;
+  --primary-foreground: #111820;
 
-  --secondary: #1C2923;
-  --secondary-foreground: #E8EEE0;
+  --secondary: #1F2A36;
+  --secondary-foreground: #EEF0DE;
 
-  --muted: #1C2923;
-  --muted-foreground: #9DA99F;
+  --muted: #1F2A36;
+  --muted-foreground: #A2A89A;
 
-  --accent: #B9D6BE;
-  --accent-foreground: #0E1613;
+  --accent: #DDE88A;
+  --accent-foreground: #111820;
 
   --destructive: #E07A62;
-  --destructive-foreground: #0E1613;
+  --destructive-foreground: #111820;
 
-  --border: rgba(232, 238, 224, 0.1);
-  --input: rgba(232, 238, 224, 0.16);
-  --ring: #B9D6BE;
+  --border: rgba(238, 240, 222, 0.1);
+  --input: rgba(238, 240, 222, 0.16);
+  --ring: #DDE88A;
 
-  --tint-mint: #1C3127;
-  --tint-peach: #3A2A1F;
-  --tint-mist: #1E2336;
-  --tint-lime: #2C3219;
+  --tint-mint: #1E3A36;
+  --tint-peach: #3F2E22;
+  --tint-mist: #262C4A;
+  --tint-lime: #34381C;
+  --tint-green: #213325;
+  --tint-peach-soft: #33271E;
 
-  --sky-top: #0E1613;
-  --sky-mid: #1A2233;
-  --sky-low: #3A2A1F;
-  --sky-mint: #1C3127;
-  --cloud: rgba(200, 210, 230, 0.12);
+  --navy: #0B1118;
+  --navy-2: #1B2634;
+  --on-navy: #EEF0DE;
 
-  --chart-1: #B9D6BE;
-  --chart-2: #8FA8C8;
-  --chart-3: #E0A878;
-  --chart-4: #6E9477;
+  --sky-top: #111820;
+  --sky-mid: #1E2440;
+  --sky-low: #3F2E22;
+  --sky-mint: #111820;
+  --cloud: #3A4163;
+  --cloud-shade: #1A1F36;
+
+  --chart-1: #DDE88A;
+  --chart-2: #AEB8F2;
+  --chart-3: #F2C6A2;
+  --chart-4: #A8DDD0;
   --chart-5: #E07A62;
 
-  --sidebar: #15201B;
-  --sidebar-foreground: #E8EEE0;
-  --sidebar-primary: #E8EEE0;
-  --sidebar-primary-foreground: #0E1613;
-  --sidebar-accent: #1C2923;
-  --sidebar-accent-foreground: #E8EEE0;
-  --sidebar-border: rgba(232, 238, 224, 0.08);
-  --sidebar-ring: #B9D6BE;
+  --sidebar: #18212C;
+  --sidebar-foreground: #EEF0DE;
+  --sidebar-primary: #EEF0DE;
+  --sidebar-primary-foreground: #111820;
+  --sidebar-accent: #1F2A36;
+  --sidebar-accent-foreground: #EEF0DE;
+  --sidebar-border: rgba(238, 240, 222, 0.08);
+  --sidebar-ring: #DDE88A;
 }
 
 @layer base {
@@ -264,26 +283,28 @@
   .text-display   { font-size: var(--text-display); line-height: 1; }
   .text-display-xl{ font-size: var(--text-display-xl); line-height: 0.98; }
 
-  /* Sky: layered radial gradients, the page's signature surface */
+  /* Sky: lavender top, peach horizon, the page's signature surface */
   .sky {
     background:
-      radial-gradient(ellipse 70% 55% at 50% 0%, var(--sky-top) 0%, transparent 70%),
-      radial-gradient(ellipse 60% 50% at 0% 70%, var(--sky-mint) 0%, transparent 70%),
-      radial-gradient(ellipse 80% 60% at 100% 100%, var(--sky-low) 0%, transparent 70%),
+      radial-gradient(ellipse 60% 45% at 50% 100%, var(--sky-low) 0%, transparent 70%),
       linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%);
   }
 
-  .cloud {
-    position: absolute;
-    border-radius: 9999px;
-    background: radial-gradient(ellipse at center, var(--cloud) 0%, transparent 68%);
-    filter: blur(8px);
-    pointer-events: none;
+  /* Hairline column rails, framing the content like a ruled page */
+  .rails {
+    background-image:
+      linear-gradient(to right, var(--border), var(--border)),
+      linear-gradient(to right, var(--border), var(--border));
+    background-size: 1px 100%, 1px 100%;
+    background-repeat: no-repeat;
+    background-position: max(1rem, calc(50% - 40rem)) 0, min(calc(100% - 1rem), calc(50% + 40rem)) 0;
   }
 
   @media (prefers-reduced-motion: no-preference) {
     .cloud-drift   { animation: cloud-drift 38s ease-in-out infinite alternate; }
     .cloud-drift-2 { animation: cloud-drift 52s ease-in-out -12s infinite alternate-reverse; }
+    .marquee       { animation: marquee 40s linear infinite; }
+    .float         { animation: float 7s ease-in-out infinite; }
   }
 
   /* Pill label, the one eyebrow style */
@@ -302,6 +323,14 @@
 
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+@keyframes marquee {
+  to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes float {
+  50% { transform: translate3d(0, -10px, 0) rotate(-2deg); }
 }
 
 @keyframes cloud-drift {

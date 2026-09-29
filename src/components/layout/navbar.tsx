@@ -1,7 +1,7 @@
 import { CtaLink } from "@/components/cta-link";
 import { useLanguage } from "@/contexts/language";
 import { useTheme } from "@/contexts/theme";
-import { cn } from "@/lib/utils";
+import { CALL_URL, cn } from "@/lib/utils";
 import {
   AnimatePresence,
   motion,
@@ -40,8 +40,8 @@ const Navbar = () => {
     { name: t("nav.portfolio"), to: "/portfolio" },
     { name: t("nav.blog"), to: "/blog" },
     { name: t("nav.career"), to: "/career" },
-    { name: t("nav.contact"), to: "/contact" },
   ];
+  const mobileLinks = [...navLinks, { name: t("nav.contact"), to: "/contact" }];
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -66,28 +66,24 @@ const Navbar = () => {
 
   return (
     <>
-      <header
-        className={cn(
-          "fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-500",
-          scrolled || mobileMenuOpen
-            ? "border-foreground/[0.08] bg-background/75 backdrop-blur-xl"
-            : "border-transparent bg-transparent",
-        )}
-      >
-        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 md:px-8 lg:grid-cols-[1fr_auto_1fr]">
-          <Link
-            to="/"
-            className="flex items-center gap-2 justify-self-start"
-            aria-label="Maiyu home"
-          >
+      <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3">
+        <div
+          className={cn(
+            "mx-auto grid h-14 grid-cols-[1fr_auto] items-center gap-4 rounded-2xl border pl-4 pr-2 transition-[max-width,background-color,border-color,box-shadow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:grid-cols-[auto_1fr_auto]",
+            scrolled || mobileMenuOpen
+              ? "max-w-5xl border-foreground/[0.08] bg-surface/80 shadow-[0_8px_30px_-12px_rgba(37,50,65,0.25)] backdrop-blur-xl"
+              : "max-w-7xl border-transparent bg-transparent",
+          )}
+        >
+          <Link to="/" className="flex items-center gap-2 justify-self-start" aria-label="Maiyu home">
             <img src="/favicon.svg" alt="" className="size-7" />
             <span className="font-display text-xl font-medium tracking-[-0.03em] text-foreground">
               Maiyu
             </span>
           </Link>
 
-          <nav className="hidden lg:block" aria-label="Main">
-            <ul className="flex items-center gap-8">
+          <nav className="hidden lg:block lg:pl-10" aria-label="Main">
+            <ul className="flex items-center gap-1">
               {navLinks.map((link) => {
                 const active = location.pathname.startsWith(link.to);
                 return (
@@ -96,10 +92,10 @@ const Navbar = () => {
                       to={link.to}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "text-small font-medium transition-colors duration-300",
+                        "rounded-full px-4 py-2 text-small font-medium transition-colors duration-300",
                         active
-                          ? "text-foreground"
-                          : "text-foreground/65 hover:text-foreground",
+                          ? "bg-foreground/[0.06] text-foreground"
+                          : "text-foreground/70 hover:text-foreground",
                       )}
                     >
                       {link.name}
@@ -115,7 +111,10 @@ const Navbar = () => {
               <LanguageSwitcher />
             </div>
             <div className="hidden md:block">{themeButton}</div>
-            <CtaLink to="/contact" className="ml-2 hidden px-5 py-2.5 md:inline-flex">
+            <CtaLink to="/contact" variant="peach" className="ml-1 hidden rounded-xl px-4 py-2 md:inline-flex">
+              {t("nav.contact")}
+            </CtaLink>
+            <CtaLink to={CALL_URL} variant="lime" className="hidden rounded-xl px-4 py-2 md:inline-flex">
               {t("nav.getInTouch")}
             </CtaLink>
 
@@ -156,7 +155,7 @@ const Navbar = () => {
             <div className="flex h-full flex-col justify-between px-4 pt-24 pb-10">
               <nav aria-label="Mobile">
                 <ul className="flex flex-col">
-                  {navLinks.map((link, i) => (
+                  {mobileLinks.map((link, i) => (
                     <motion.li
                       key={link.to}
                       initial={{ opacity: 0, y: 16 }}
@@ -180,7 +179,7 @@ const Navbar = () => {
                   <LanguageSwitcher />
                   {themeButton}
                 </div>
-                <CtaLink to="/contact" onClick={() => setMobileMenuOpen(false)}>
+                <CtaLink to={CALL_URL} variant="lime" onClick={() => setMobileMenuOpen(false)}>
                   {t("nav.getInTouch")}
                 </CtaLink>
               </div>
