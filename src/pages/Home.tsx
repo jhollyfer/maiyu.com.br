@@ -5,6 +5,7 @@ import {
   staggerItemVariants,
 } from "@/components/motion/animate-in-view";
 import { Forest, SkyBackdrop } from "@/components/sky";
+import { VisionScene } from "@/components/vision-scenes";
 import { useLanguage } from "@/contexts/language";
 import { articles } from "@/data/articles";
 import { projects } from "@/data/projects";
@@ -90,7 +91,7 @@ function Hero() {
   });
 
   return (
-    <section className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden pt-28 pb-12">
+    <section className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden pt-28 pb-[clamp(170px,17vw,240px)]">
       <SkyBackdrop className="-z-10" />
       <div className="rails pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
@@ -301,15 +302,7 @@ function Vision() {
 
         <div className="relative isolate min-h-[420px] overflow-hidden rounded-[1.75rem] bg-navy md:col-span-7">
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(49,225,247,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(49,225,247,0.07)_1px,transparent_1px)] bg-[size:64px_64px]" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div
-              className="size-[min(22rem,60vw)] rounded-full transition-[box-shadow,background] duration-1000"
-              style={{
-                background: `radial-gradient(circle at 35% 30%, ${["#E4D8FD", "#CFF8FD", "#DCFFE1"][step]} 0%, ${["#A480F5", "#31E1F7", "#88FF9A"][step]}55 40%, transparent 70%)`,
-                boxShadow: `0 0 120px 10px ${["#A480F5", "#31E1F7", "#88FF9A"][step]}40`,
-              }}
-            />
-          </div>
+          <VisionScene step={step} />
           <span className="absolute bottom-6 left-6 rounded-lg border border-on-navy/30 px-3 py-1.5 text-small text-on-navy">
             {items[step].title}
           </span>

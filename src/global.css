@@ -152,9 +152,11 @@
   --sky-low: #D3F8DE;
   --sky-glow: rgba(49, 225, 247, 0.2);
   --sky-mint: #FAFAFA;
-  --forest-back: #DDF6F0;
-  --forest-mid: #C6F2D4;
-  --forest-front: var(--background);
+  --forest-back: #B4E6D2;
+  --forest-mid: #86D4AA;
+  --forest-front: #4FB283;
+  --river: #BDEFF6;
+  --river-glint: rgba(255, 255, 255, 0.85);
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
@@ -225,9 +227,11 @@
   --sky-low: #0A2A1E;
   --sky-glow: rgba(49, 225, 247, 0.22);
   --sky-mint: #080C14;
-  --forest-back: #0B2127;
-  --forest-mid: #0C271D;
-  --forest-front: var(--background);
+  --forest-back: #0C2328;
+  --forest-mid: #0A1E18;
+  --forest-front: #04110C;
+  --river: #0A2230;
+  --river-glint: rgba(232, 246, 255, 0.35);
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
@@ -352,6 +356,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
+    .vision-pulse  { animation: vision-pulse 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
     .twinkle       { animation: twinkle 6s ease-in-out infinite; }
     .marquee       { animation: marquee 40s linear infinite; }
     .float         { animation: float 7s ease-in-out infinite; }
@@ -397,6 +402,16 @@
   color: transparent;
 }
 
+/* Day scene (sun, macaws) only in light; galaxy only at night */
+.dark .day { display: none; }
+@media (prefers-reduced-motion: no-preference) {
+  .birds { animation: glide 26s ease-in-out infinite alternate; }
+}
+@keyframes glide {
+  from { transform: translate3d(-6%, 0, 0); }
+  to   { transform: translate3d(18%, -12%, 0); }
+}
+
 /* Galaxy only at night: stars plus a purple and cyan nebula over the canopy */
 .galaxy { opacity: 0; transition: opacity 600ms ease; }
 .dark .galaxy {
@@ -421,6 +436,11 @@
 
 @keyframes float {
   50% { transform: translate3d(0, -10px, 0) rotate(-2deg); }
+}
+
+@keyframes vision-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  100% { transform: scale(1.8); opacity: 0; }
 }
 
 @keyframes twinkle {

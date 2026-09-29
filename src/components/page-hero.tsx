@@ -13,7 +13,7 @@ export function PageHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden pt-36 pb-20 md:pt-44 md:pb-28">
+    <section className="relative overflow-hidden pt-36 pb-[clamp(180px,19vw,280px)] md:pt-44">
       <SkyBackdrop />
       <div className="rails pointer-events-none absolute inset-0 opacity-60" />
       <AnimateInView className="relative mx-auto flex max-w-4xl flex-col items-center px-4 text-center md:px-8">
