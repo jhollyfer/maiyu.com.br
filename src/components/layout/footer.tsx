@@ -30,7 +30,7 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-foreground/10 bg-background md:grid-cols-4 md:divide-x md:divide-foreground/10">
           <div className="border-b border-foreground/10 p-8 md:border-b-0">
-            <img src="/favicon.svg" alt="" className="mb-5 size-9" />
+            <img src="/maiyu-symbol.svg" alt="" className="mb-5 size-9" />
             <p className="max-w-xs font-serif text-body-lg leading-snug text-foreground/85">
               {t("footer.tagline")}
             </p>

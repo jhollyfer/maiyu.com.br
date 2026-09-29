@@ -76,7 +76,7 @@ const Navbar = () => {
           )}
         >
           <Link to="/" className="flex items-center gap-2 justify-self-start py-2" aria-label="Maiyu home">
-            <img src="/favicon.svg" alt="" className="size-7" />
+            <img src="/maiyu-symbol.svg" alt="" className="size-7" />
             <span className="font-brand text-lg uppercase tracking-[0.08em] text-foreground dark:text-brand-green">
               Maiyu
             </span>
