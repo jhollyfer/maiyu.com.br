@@ -3,5 +3,5 @@ export const team = [
   { name: "Lenny", img: "/lenny.png" },
   { name: "Matheus", img: "/matheus.png" },
   { name: "Dimerson", img: "/dimerson.jpg" },
-  { name: "Paulo", img: "/paulo.jpg" },
+  { name: "Paulo", img: "/paulo-avatar.jpg" },
 ];
