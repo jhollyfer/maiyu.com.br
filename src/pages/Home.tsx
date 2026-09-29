@@ -196,7 +196,14 @@ function Work() {
                 </div>
               </div>
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl md:col-span-6">
-                <img src={project.image} alt={project.title} className="absolute inset-0 size-full object-cover" />
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  width={1863}
+                  height={927}
+                  style={{ objectPosition: project.focus }}
+                  className="absolute inset-0 size-full object-cover"
+                />
               </div>
             </motion.div>
           </AnimatePresence>
@@ -445,8 +452,16 @@ function NavyBand() {
         <StaggerContainer className="mx-auto mt-14 flex max-w-5xl flex-wrap justify-center gap-3 md:gap-4">
           {team.map((m, i) => (
             <motion.figure key={m.name} variants={staggerItemVariants} className={cn("w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] md:w-[calc(20%-0.8rem)]", i % 2 === 1 && "md:-translate-y-8")}>
-              <div className={cn("overflow-hidden rounded-2xl", TEAM_TINTS[i])}>
-                <img src={m.img} alt={m.name} className="aspect-[3/4] w-full object-cover mix-blend-multiply" />
+              <div className={cn("group overflow-hidden rounded-2xl ring-1 ring-on-navy/10", TEAM_TINTS[i])}>
+                <img
+                  src={m.img}
+                  alt={m.name}
+                  width={384}
+                  height={512}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[3/4] w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                />
               </div>
               <figcaption className="mt-3 text-center text-small text-on-navy/80">{m.name}</figcaption>
             </motion.figure>

@@ -9,6 +9,8 @@ export type Project = {
   summary: LocalizedText;
   description: LocalizedText;
   image: string;
+  /** CSS object-position that keeps the screenshot's headline in frame when cropped. */
+  focus?: string;
   tech: string[];
   url: string;
   year: string;
@@ -35,6 +37,7 @@ export const projects: Project[] = [
       es: "Plataforma full-stack de gestión para la asociación de la comunidad indígena de Benjamin Constant. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.",
     },
     image: "/images/adacaibs.webp",
+    focus: "left center",
     tech: ["React", "AdonisJS", "TanStack Query", "PostgreSQL", "Tailwind CSS"],
     url: "https://adacaibs.com.br",
     year: "2024",
@@ -59,6 +62,7 @@ export const projects: Project[] = [
       es: "Plataforma de e-commerce para artesanía indígena del pueblo Matis. Catálogo de productos, carrito, gestión de pedidos y back-office que los propios artesanos operan, acceso directo al mercado, sin capa intermedia.",
     },
     image: "/images/matis.webp",
+    focus: "left bottom",
     tech: ["React", "Fastify", "Prisma", "PostgreSQL", "Tailwind CSS"],
     url: "https://matis.maiyu.com.br",
     year: "2024",
@@ -82,6 +86,7 @@ export const projects: Project[] = [
       es: "Plataforma digital para preservación cultural y participación comunitaria en la región amazónica. Gestión de contenido, organización de eventos y un archivo público que las comunidades curan con el tiempo.",
     },
     image: "/images/manganga.webp",
+    focus: "57% center",
     tech: ["React", "Fastify", "Prisma", "PostgreSQL", "Tailwind CSS"],
     url: "https://manganga.maiyu.com.br",
     year: "2025",

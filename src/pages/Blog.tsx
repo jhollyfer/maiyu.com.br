@@ -108,6 +108,10 @@ const Blog = () => {
                     <img
                       src={article.image}
                       alt=""
+                      width={640}
+                      height={440}
+                      loading="lazy"
+                      decoding="async"
                       className="aspect-[16/11] w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
                     />
                   </div>

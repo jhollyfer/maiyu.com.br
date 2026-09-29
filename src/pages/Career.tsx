@@ -76,6 +76,8 @@ const Career = () => {
                 key={m.name}
                 src={m.img}
                 alt={m.name}
+                width={40}
+                height={40}
                 className="size-10 rounded-full bg-tint-mint object-cover ring-2 ring-background"
               />
             ))}
