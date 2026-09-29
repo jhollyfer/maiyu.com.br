@@ -36,7 +36,7 @@ import { Link } from "react-router-dom";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
 const CARD_TINTS = ["bg-tint-peach-soft", "bg-tint-mint", "bg-tint-mist"];
-const TEAM_TINTS = ["bg-tint-peach", "bg-tint-mint", "bg-tint-lime"];
+const TEAM_TINTS = ["bg-tint-peach", "bg-tint-mint", "bg-tint-lime", "bg-tint-mist"];
 const STACK = [
   "React",
   "React Native",
@@ -54,6 +54,7 @@ const team = [
   { name: "Jhollyfer", img: "/jhollyfer.png" },
   { name: "Lenny", img: "/lenny.png" },
   { name: "Matheus", img: "/matheus.png" },
+  { name: "Dimerson", img: "/dimerson.jpg" },
 ];
 
 function Eyebrow({ children, className }: { children: React.ReactNode; className?: string }) {
@@ -443,9 +444,9 @@ function NavyBand() {
           <p className="mx-auto mt-5 max-w-[48ch] font-serif text-lead text-on-navy/75">{t("home.teamDesc")}</p>
         </AnimateInView>
 
-        <StaggerContainer className="mx-auto mt-14 grid max-w-3xl grid-cols-3 gap-3 md:gap-5">
+        <StaggerContainer className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-3 md:grid-cols-4 md:gap-5">
           {team.map((m, i) => (
-            <motion.figure key={m.name} variants={staggerItemVariants} className={cn(i === 1 && "md:-translate-y-8")}>
+            <motion.figure key={m.name} variants={staggerItemVariants} className={cn(i % 2 === 1 && "md:-translate-y-8")}>
               <div className={cn("overflow-hidden rounded-2xl", TEAM_TINTS[i])}>
                 <img src={m.img} alt={m.name} className="aspect-[3/4] w-full object-cover mix-blend-multiply" />
               </div>
