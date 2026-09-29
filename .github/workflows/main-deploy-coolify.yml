@@ -8,11 +8,45 @@ on:
 
 jobs:
   deploy:
+    name: Trigger Coolify Deploy
     runs-on: ubuntu-latest
     steps:
+      # `-f` é o que faz o passo reprovar quando o Coolify responde erro. Sem
+      # ele o curl sai com código 0 mesmo em 401 ou 404, e um deploy que nunca
+      # aconteceu aparece verde no histórico.
+      #
+      # POST, e não GET: desde o Coolify v4.2 a rota GET /api/v1/deploy existe
+      # só para devolver 405. Voltar para GET quebra o deploy de novo.
       - name: Deploy App to Coolify
         run: |
-          curl -s -X GET \
-            "https://coolify.maiyu.com.br/api/v1/deploy?uuid=q9o4atnvkuo67rnatilazezp&force=false" \
+          curl -fsS -X POST \
+            "https://coolify.maiyu.com.br/api/v1/deploy" \
             -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json"
+            -H "Content-Type: application/json" \
+            -d '{"uuid":"q9o4atnvkuo67rnatilazezp","force":false}'
+
+      # O build deste mesmo run, para saber qual bundle deveria estar no ar.
+      - name: Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-build
+          path: dist/
+
+      # O disparo acima é assíncrono: o Coolify responde assim que aceita o
+      # pedido, não quando o container novo sobe. O site é estático, então um
+      # 200 sozinho não prova nada (o container antigo também responde 200).
+      # A prova é o site servir o bundle com o hash gerado neste build.
+      - name: Smoke test do site
+        run: |
+          esperado=$(grep -oE '/assets/index-[^"]+\.js' dist/index.html | head -1)
+          echo "Bundle esperado: $esperado"
+          for tentativa in $(seq 1 20); do
+            if curl -fsS --max-time 10 https://maiyu.com.br/ | grep -qF "$esperado"; then
+              echo "Versão nova no ar na tentativa $tentativa."
+              exit 0
+            fi
+            echo "Ainda servindo a versão anterior (tentativa $tentativa)..."
+            sleep 15
+          done
+          echo "O site não passou a servir $esperado em cinco minutos."
+          exit 1
