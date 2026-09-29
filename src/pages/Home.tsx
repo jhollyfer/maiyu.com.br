@@ -210,18 +210,22 @@ function Work() {
           >
             <ArrowLeft size={16} />
           </button>
-          <div className="flex gap-1.5">
+          <div className="flex">
             {projects.map((p, i) => (
               <button
                 key={p.slug}
                 onClick={() => setActive(i)}
                 aria-label={p.title}
                 aria-current={i === active}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-500",
-                  i === active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25",
-                )}
-              />
+                className="flex h-8 items-center px-2"
+              >
+                <span
+                  className={cn(
+                    "block h-1.5 rounded-full transition-[width,background-color] duration-500",
+                    i === active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25",
+                  )}
+                />
+              </button>
             ))}
           </div>
           <button
@@ -270,13 +274,13 @@ function Vision() {
                 <li key={item.title} className="flex gap-5">
                   <span
                     className={cn(
-                      "font-display font-medium leading-none tracking-[-0.015em] transition-all duration-500",
+                      "font-display font-medium leading-none tracking-[-0.015em] transition-[font-size,color] duration-500",
                       on ? "text-[3.5rem] text-foreground" : "text-h3 text-foreground/25",
                     )}
                   >
                     {i + 1}
                   </span>
-                  <div className={cn("grid transition-all duration-500", on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 max-md:grid-rows-[1fr] max-md:opacity-100")}>
+                  <div className={cn("grid transition-[grid-template-rows,opacity] duration-500", on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 max-md:grid-rows-[1fr] max-md:opacity-100")}>
                     <div className="overflow-hidden">
                       <h3 className="pt-2 text-h4">{item.title}</h3>
                       <p className="mt-2 max-w-[44ch] font-serif text-body-lg text-foreground/75">{item.desc}</p>
@@ -471,7 +475,7 @@ function NavyBand() {
               <Eyebrow>{t("nav.blog")}</Eyebrow>
               <h2 className="text-h3">{t("home.notesTitle")}</h2>
             </div>
-            <Link to="/blog" className="text-small text-on-navy/70 underline-offset-4 hover:text-on-navy hover:underline">
+            <Link to="/blog" className="inline-block py-2 text-small text-on-navy/70 underline-offset-4 hover:text-on-navy hover:underline">
               {t("home.notesAll")}
             </Link>
           </AnimateInView>
@@ -516,7 +520,7 @@ function ClosingCta() {
             {t("home.viewWork")}
           </CtaLink>
         </div>
-        <Link to="/contact" className="mt-6 inline-flex items-center gap-1 text-small text-foreground/60 hover:text-foreground">
+        <Link to="/contact" className="mt-6 inline-flex items-center gap-1 py-2 text-small text-foreground/60 hover:text-foreground">
           {t("nav.contact")} <ArrowUpRight size={13} />
         </Link>
       </AnimateInView>

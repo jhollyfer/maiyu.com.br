@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { SkyBackdrop } from "../sky";
 
 const linkCls =
-  "group inline-flex items-center gap-1 text-body text-foreground/70 transition-colors duration-300 hover:text-foreground";
+  "group inline-flex items-center gap-1 py-1.5 text-body text-foreground/70 transition-colors duration-300 hover:text-foreground";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -82,14 +82,14 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4 pt-16 pb-8 text-center">
+        <div className="relative z-10 flex flex-col items-center gap-4 pt-16 pb-8 text-center">
           <p className="text-small text-foreground/70">
             © {currentYear} Maiyu. {t("footer.rights")}. {t("footer.signoff")}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label={t("footer.backToTop")}
-            className="inline-flex size-9 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <ArrowUp size={15} strokeWidth={1.75} />
           </button>
@@ -97,7 +97,7 @@ const Footer = () => {
 
         <p
           aria-hidden="true"
-          className="select-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] uppercase leading-[0.9] text-gradient-green opacity-25 dark:opacity-20"
+          className="pointer-events-none select-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] uppercase leading-[0.9] text-gradient-green opacity-25 dark:opacity-20"
         >
           Maiyu
         </p>

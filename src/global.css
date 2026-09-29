@@ -102,6 +102,7 @@
 /* ─── Light: Maiyu day ──────────────────────────────────────── */
 :root {
   --radius: 1rem;
+  color-scheme: light;
 
   --background: #FAFAFA;
   --surface: #FFFFFF;
@@ -253,6 +254,7 @@
 
   html {
     scroll-behavior: smooth;
+    -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -268,6 +270,7 @@
     font-weight: 800;
     letter-spacing: -0.012em;
     text-wrap: balance;
+    overflow-wrap: break-word;
   }
 
   h3, h4, h5, h6 {

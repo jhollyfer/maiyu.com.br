@@ -75,7 +75,7 @@ const Navbar = () => {
               : "max-w-7xl border-transparent bg-transparent",
           )}
         >
-          <Link to="/" className="flex items-center gap-2 justify-self-start" aria-label="Maiyu home">
+          <Link to="/" className="flex items-center gap-2 justify-self-start py-2" aria-label="Maiyu home">
             <img src="/favicon.svg" alt="" className="size-7" />
             <span className="font-brand text-lg uppercase tracking-[0.08em] text-foreground dark:text-brand-green">
               Maiyu
@@ -127,13 +127,13 @@ const Navbar = () => {
               <span className="relative block size-4">
                 <span
                   className={cn(
-                    "absolute inset-x-0 h-[1.5px] rounded-full bg-current transition-all duration-500",
+                    "absolute inset-x-0 h-[1.5px] rounded-full bg-current transition-[top,bottom,transform] duration-500",
                     mobileMenuOpen ? "top-1/2 -translate-y-1/2 rotate-45" : "top-[5px]",
                   )}
                 />
                 <span
                   className={cn(
-                    "absolute inset-x-0 h-[1.5px] rounded-full bg-current transition-all duration-500",
+                    "absolute inset-x-0 h-[1.5px] rounded-full bg-current transition-[top,bottom,transform] duration-500",
                     mobileMenuOpen ? "top-1/2 -translate-y-1/2 -rotate-45" : "bottom-[5px]",
                   )}
                 />

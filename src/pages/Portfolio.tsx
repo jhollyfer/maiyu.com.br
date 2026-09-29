@@ -38,7 +38,7 @@ const Portfolio = () => {
                 <p className="text-small text-foreground/65">
                   {t("portfolio.featuredLabel")}, {featuredProject.year}
                 </p>
-                <h2 className="mt-2 text-h1">{featuredProject.title}</h2>
+                <h2 className="mt-2 text-h2 lg:text-h1">{featuredProject.title}</h2>
                 <p className="mt-6 font-serif text-lead leading-snug text-foreground/85">
                   {featuredProject.description[language]}
                 </p>

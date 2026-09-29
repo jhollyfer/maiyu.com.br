@@ -31,7 +31,7 @@ const LanguageSwitcher = () => {
           "px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] uppercase",
           "text-foreground/70 hover:text-foreground hover:border-foreground/30",
           "transition-[color,border-color] duration-[480ms]",
-          "ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none",
+          "ease-[cubic-bezier(0.16,1,0.3,1)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         )}
         aria-label="Change language"
       >
