@@ -83,13 +83,13 @@ const Footer = () => {
         </div>
 
         <div className="flex flex-col items-center gap-4 pt-16 pb-8 text-center">
-          <p className="text-small text-[#253241]/80 dark:text-foreground/70">
+          <p className="text-small text-foreground/70">
             © {currentYear} Maiyu. {t("footer.rights")}. {t("footer.signoff")}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label={t("footer.backToTop")}
-            className="inline-flex size-9 items-center justify-center rounded-full bg-[#253241] text-[#F7F9E8] transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-transform duration-300 hover:-translate-y-0.5"
           >
             <ArrowUp size={15} strokeWidth={1.75} />
           </button>
@@ -97,7 +97,7 @@ const Footer = () => {
 
         <p
           aria-hidden="true"
-          className="select-none text-center font-display text-[clamp(5rem,22vw,18rem)] font-medium leading-[0.72] tracking-[-0.06em] text-[#253241]/15 dark:text-foreground/10"
+          className="select-none text-center font-display text-[clamp(5rem,22vw,18rem)] font-extrabold leading-[0.72] tracking-[-0.045em] text-foreground/[0.07]"
         >
           Maiyu
         </p>

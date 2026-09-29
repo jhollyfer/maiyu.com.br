@@ -59,22 +59,22 @@ function Eyebrow({ children, className }: { children: React.ReactNode; className
 /** Glider: a leaf riding the wind, the hero's focal point. */
 function Glider() {
   return (
-    <svg viewBox="0 0 260 200" aria-hidden="true" className="float h-auto w-full">
+    <svg viewBox="0 0 260 200" aria-hidden="true" className="float h-auto w-full text-navy">
       <defs>
         <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFE4CD" />
-          <stop offset="0.6" stopColor="#F2C6A2" />
-          <stop offset="1" stopColor="#E9A57E" />
+          <stop offset="0" stopColor="#88FF9A" />
+          <stop offset="0.6" stopColor="#77EED7" />
+          <stop offset="1" stopColor="#31E1F7" />
         </linearGradient>
         <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#DDE88A" stopOpacity="0" />
-          <stop offset="1" stopColor="#DDE88A" stopOpacity="0.9" />
+          <stop offset="0" stopColor="#31E1F7" stopOpacity="0" />
+          <stop offset="1" stopColor="#31E1F7" stopOpacity="0.9" />
         </linearGradient>
       </defs>
       <path d="M8 196 C 50 170, 80 150, 118 118" stroke="url(#trail)" strokeWidth="10" strokeLinecap="round" fill="none" strokeDasharray="1 14" />
       <path d="M112 124 C 130 60, 190 20, 252 8 C 238 70, 196 124, 112 124 Z" fill="url(#leaf)" />
-      <path d="M112 124 C 160 88, 206 46, 252 8" stroke="#253241" strokeOpacity="0.35" strokeWidth="2" fill="none" />
-      <path d="M150 96 L 168 104 M 176 70 L 196 76 M 200 46 L 220 50" stroke="#253241" strokeOpacity="0.2" strokeWidth="2" strokeLinecap="round" />
+      <path d="M112 124 C 160 88, 206 46, 252 8" stroke="currentColor" strokeOpacity="0.35" strokeWidth="2" fill="none" />
+      <path d="M150 96 L 168 104 M 176 70 L 196 76 M 200 46 L 220 50" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -99,11 +99,11 @@ function Hero() {
           {t("home.pill")}
         </motion.span>
 
-        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.05em] text-[#253241] dark:text-foreground md:mt-14">
+        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.035em] text-foreground md:mt-14">
           <motion.span {...enter(0.1)} className="block md:pl-[4%]">
             {t("home.heroTitle1")}
           </motion.span>
-          <motion.span {...enter(0.2)} className="block text-right md:pr-[4%]">
+          <motion.span {...enter(0.2)} className="block text-right text-highlight md:pr-[4%]">
             {t("home.heroTitle2")}
           </motion.span>
         </h1>
@@ -119,7 +119,7 @@ function Hero() {
           {...enter(0.45)}
           className="mt-auto flex flex-col items-start gap-6 pt-10 md:ml-auto md:max-w-md"
         >
-          <p className="font-serif text-lead leading-snug text-[#253241] dark:text-foreground/85">
+          <p className="font-serif text-lead leading-snug text-foreground/85">
             {t("home.heroDescription")}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -185,7 +185,7 @@ function Work() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <CtaLink to={project.url} variant="peach" className="rounded-xl" arrow>
+                  <CtaLink to={project.url} variant="soft" className="rounded-xl" arrow>
                     {t("home.workVisit")}
                   </CtaLink>
                   <ul className="flex flex-wrap gap-1.5">
@@ -271,7 +271,7 @@ function Vision() {
                 <li key={item.title} className="flex gap-5">
                   <span
                     className={cn(
-                      "font-display font-medium leading-none tracking-[-0.04em] transition-all duration-500",
+                      "font-display font-medium leading-none tracking-[-0.03em] transition-all duration-500",
                       on ? "text-[3.5rem] text-foreground" : "text-h3 text-foreground/25",
                     )}
                   >
@@ -290,13 +290,13 @@ function Vision() {
         </div>
 
         <div className="relative isolate min-h-[420px] overflow-hidden rounded-[1.75rem] bg-navy md:col-span-7">
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(247,249,232,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(247,249,232,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(232,246,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(232,246,255,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
           <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
             <div
               className="size-[min(22rem,60vw)] rounded-full transition-[box-shadow,background] duration-1000"
               style={{
-                background: `radial-gradient(circle at 35% 30%, ${["#FFE4CD", "#D0FDF2", "#FBFFDC"][step]} 0%, ${["#F2C6A2", "#A8DDD0", "#DDE88A"][step]}55 40%, transparent 70%)`,
-                boxShadow: `0 0 120px 10px ${["#F2C6A2", "#A8DDD0", "#DDE88A"][step]}40`,
+                background: `radial-gradient(circle at 35% 30%, ${["#E4D8FD", "#CFF8FD", "#DCFFE1"][step]} 0%, ${["#A480F5", "#31E1F7", "#88FF9A"][step]}55 40%, transparent 70%)`,
+                boxShadow: `0 0 120px 10px ${["#A480F5", "#31E1F7", "#88FF9A"][step]}40`,
               }}
             />
           </div>
@@ -360,7 +360,7 @@ function Process() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
                   >
-                    <s.icon size={40} strokeWidth={1.1} className="mb-6 text-[#253241]" />
+                    <s.icon size={40} strokeWidth={1.1} className="mb-6 text-foreground" />
                     <p className="max-w-[40ch] font-serif text-lead leading-snug text-foreground/90">{s.desc}</p>
                   </motion.div>
                 ) : (
@@ -392,7 +392,7 @@ function Capabilities() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mb-12 flex flex-col gap-5">
           <h2 className="max-w-3xl text-h2">{t("home.servicesHeading")}</h2>
-          <span className="w-fit rounded-md bg-tint-green px-2.5 py-1 text-micro font-medium text-[#253241] dark:text-foreground">
+          <span className="w-fit rounded-md bg-tint-green px-2.5 py-1 text-micro font-medium text-foreground">
             {t("home.pill")}
           </span>
         </AnimateInView>
@@ -429,7 +429,7 @@ function NavyBand() {
 
   return (
     <section className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32">
-      <div className="absolute inset-0 -z-10 [--border:rgba(247,249,232,0.1)]">
+      <div className="absolute inset-0 -z-10 [--border:rgba(232,246,255,0.1)]">
         <div className="rails size-full" />
       </div>
 
@@ -461,7 +461,7 @@ function NavyBand() {
         </div>
 
         <div className="mt-10 flex justify-center">
-          <CtaLink to="/career" variant="lime" className="rounded-xl" arrow>
+          <CtaLink to="/career" variant="brand" className="rounded-xl" arrow>
             {t("nav.career")}
           </CtaLink>
         </div>
@@ -483,11 +483,11 @@ function NavyBand() {
                 <Link to={`/blog/${a.slug}`} className="group flex items-center justify-between gap-6 py-5">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-body-lg transition-opacity group-hover:opacity-75">{a.title[language]}</span>
-                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-[#253241]">
+                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-foreground">
                       {a.readTime[language]}
                     </span>
                   </div>
-                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#F7F9E8] text-[#253241] transition-transform duration-300 group-hover:translate-x-1">
+                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1">
                     <ArrowRight size={16} />
                   </span>
                 </Link>
@@ -508,13 +508,13 @@ function ClosingCta() {
       <Cloud seed={4} className="cloud-drift -left-[8%] top-[10%] w-[30%] min-w-[220px] opacity-70" />
       <Cloud seed={9} className="cloud-drift-2 -right-[6%] bottom-[5%] w-[26%] min-w-[200px] opacity-70" />
       <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
-        <h2 className="text-display tracking-[-0.05em] text-[#253241] dark:text-foreground">{t("home.ctaTitle")}</h2>
+        <h2 className="text-display tracking-[-0.035em] text-foreground">{t("home.ctaTitle")}</h2>
         <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/80">{t("home.ctaDesc")}</p>
         <div className="mt-10 flex flex-wrap justify-center gap-2">
           <CtaLink to={CALL_URL} className="rounded-xl" arrow>
             {t("home.startProject")}
           </CtaLink>
-          <CtaLink to="/portfolio" variant="peach" className="rounded-xl">
+          <CtaLink to="/portfolio" variant="soft" className="rounded-xl">
             {t("home.viewWork")}
           </CtaLink>
         </div>

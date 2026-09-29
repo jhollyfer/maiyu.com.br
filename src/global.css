@@ -3,8 +3,8 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* Maiyu design system: dawn over the river.
-   Cream paper, navy ink, pastel cards, Geist + Newsreader. */
+/* Maiyu design system: Amazon night ink, brand green and cyan.
+   Light #FAFAFA paper, dark #080C14 night, Raleway throughout. */
 
 @theme inline {
   /* Radii: one soft scale, buttons are pills */
@@ -59,11 +59,23 @@
   --color-navy:       var(--navy);
   --color-navy-2:     var(--navy-2);
   --color-on-navy:    var(--on-navy);
+  --color-highlight:  var(--highlight);
+  --color-highlight-bar: var(--highlight-bar);
+
+  /* ─── Maiyu brand (fixed across themes) ─────────────────── */
+  --color-brand-green:  #88FF9A;
+  --color-brand-blue:   #77EED7;
+  --color-brand-cyan:   #31E1F7;
+  --color-brand-azure:  #3168F7;
+  --color-brand-purple: #A480F5;
+  --color-brand-pink:   #FB80C1;
+  --color-brand-black:  #272221;
+  --color-brand-dark:   #403937;
 
   /* ─── Typography ─────────────────────────────────────────── */
-  --font-display: "Geist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-sans: "Geist", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-serif: "Newsreader", "Georgia", serif;
+  --font-display: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-sans: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: "Raleway", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: "Geist Mono", ui-monospace, monospace;
 
   /* Fluid type scale */
@@ -86,136 +98,147 @@
   --dur-base:    480ms;
 }
 
-/* ─── Light: dawn over the river ─────────────────────────────── */
+/* ─── Light: Maiyu day ──────────────────────────────────────── */
 :root {
   --radius: 1rem;
 
-  --background: #F7F9E8;
-  --surface: #FEFEF8;
-  --foreground: #101214;
+  --background: #FAFAFA;
+  --surface: #FFFFFF;
+  --foreground: #01111B;
 
-  --card: #FEFEF8;
-  --card-foreground: #101214;
-  --popover: #FEFEF8;
-  --popover-foreground: #101214;
+  --card: #FFFFFF;
+  --card-foreground: #01111B;
+  --popover: #FFFFFF;
+  --popover-foreground: #01111B;
 
-  --primary: #253241;
-  --primary-foreground: #F7F9E8;
+  --primary: #01111B;
+  --primary-foreground: #88FF9A;
 
-  --secondary: #ECEEDA;
-  --secondary-foreground: #101214;
+  --secondary: #EEF2F4;
+  --secondary-foreground: #01111B;
 
-  --muted: #ECEEDA;
-  --muted-foreground: #5E6058;
+  --muted: #EEF2F4;
+  --muted-foreground: #403937;
 
-  --accent: #253241;
-  --accent-foreground: #F7F9E8;
+  --accent: #88FF9A;
+  --accent-foreground: #01111B;
 
-  --destructive: #B24A3A;
-  --destructive-foreground: #FEFEF8;
+  --destructive: #D6336C;
+  --destructive-foreground: #FFFFFF;
 
-  --border: rgba(16, 18, 20, 0.12);
-  --input: rgba(16, 18, 20, 0.18);
-  --ring: #253241;
+  --border: rgba(1, 17, 27, 0.1);
+  --input: rgba(1, 17, 27, 0.16);
+  --ring: #01111B;
 
-  --tint-mint: #A8DDD0;
-  --tint-peach: #F2C6A2;
-  --tint-mist: #AEB8F2;
-  --tint-lime: #DDE88A;
-  --tint-green: #BFE3C2;
-  --tint-peach-soft: #FFE4CD;
+  /* Headline highlight: brand cyan, darkened for contrast on white */
+  --highlight: #0BAFC7;
+  --highlight-bar: #88FF9A;
 
-  --navy: #253241;
-  --navy-2: #334861;
-  --on-navy: #F7F9E8;
+  --tint-mint: #D9F8F2;
+  --tint-peach: #FEE2F0;
+  --tint-mist: #ECE4FD;
+  --tint-lime: #DCFFE1;
+  --tint-green: #DCFFE1;
+  --tint-peach-soft: #FFF0F7;
 
-  --sky-top: #C9C9EE;
-  --sky-mid: #F6D9C4;
-  --sky-low: #F2C6A2;
-  --sky-mint: #F7F9E8;
-  --cloud: #FFFDF6;
-  --cloud-shade: #B7B3EA;
+  --navy: #01111B;
+  --navy-2: #0B1E2B;
+  --on-navy: #E8F6FF;
 
-  --chart-1: #253241;
-  --chart-2: #AEB8F2;
-  --chart-3: #F2C6A2;
-  --chart-4: #A8DDD0;
-  --chart-5: #B24A3A;
+  --sky-top: #DDF7FD;
+  --sky-mid: #EAFBF3;
+  --sky-low: #C9F7E4;
+  --sky-mint: #FAFAFA;
+  --cloud: #FFFFFF;
+  --cloud-shade: #BFEFF7;
 
-  --sidebar: #FEFEF8;
-  --sidebar-foreground: #101214;
-  --sidebar-primary: #253241;
-  --sidebar-primary-foreground: #F7F9E8;
-  --sidebar-accent: #ECEEDA;
-  --sidebar-accent-foreground: #101214;
-  --sidebar-border: rgba(16, 18, 20, 0.08);
-  --sidebar-ring: #253241;
+  --shadow-tint: rgba(1, 17, 27, 0.18);
+
+  --chart-1: #01111B;
+  --chart-2: #31E1F7;
+  --chart-3: #88FF9A;
+  --chart-4: #A480F5;
+  --chart-5: #FB80C1;
+
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #01111B;
+  --sidebar-primary: #01111B;
+  --sidebar-primary-foreground: #88FF9A;
+  --sidebar-accent: #EEF2F4;
+  --sidebar-accent-foreground: #01111B;
+  --sidebar-border: rgba(1, 17, 27, 0.08);
+  --sidebar-ring: #01111B;
 }
 
-/* ─── Dark: river night ─────────────────────────────────────── */
+/* ─── Dark: Maiyu night ─────────────────────────────────────── */
 .dark {
   color-scheme: dark;
 
-  --background: #111820;
-  --surface: #18212C;
-  --foreground: #EEF0DE;
+  --background: #080C14;
+  --surface: #0F1520;
+  --foreground: #E8F6FF;
 
-  --card: #18212C;
-  --card-foreground: #EEF0DE;
-  --popover: #18212C;
-  --popover-foreground: #EEF0DE;
+  --card: #0F1520;
+  --card-foreground: #E8F6FF;
+  --popover: #0F1520;
+  --popover-foreground: #E8F6FF;
 
-  --primary: #F7F9E8;
-  --primary-foreground: #111820;
+  --primary: #88FF9A;
+  --primary-foreground: #01111B;
 
-  --secondary: #1F2A36;
-  --secondary-foreground: #EEF0DE;
+  --secondary: #151D2A;
+  --secondary-foreground: #E8F6FF;
 
-  --muted: #1F2A36;
-  --muted-foreground: #A2A89A;
+  --muted: #151D2A;
+  --muted-foreground: #9AA7B4;
 
-  --accent: #DDE88A;
-  --accent-foreground: #111820;
+  --accent: #88FF9A;
+  --accent-foreground: #01111B;
 
-  --destructive: #E07A62;
-  --destructive-foreground: #111820;
+  --destructive: #FB80C1;
+  --destructive-foreground: #01111B;
 
-  --border: rgba(238, 240, 222, 0.1);
-  --input: rgba(238, 240, 222, 0.16);
-  --ring: #DDE88A;
+  --border: rgba(232, 246, 255, 0.1);
+  --input: rgba(232, 246, 255, 0.16);
+  --ring: #88FF9A;
 
-  --tint-mint: #1E3A36;
-  --tint-peach: #3F2E22;
-  --tint-mist: #262C4A;
-  --tint-lime: #34381C;
-  --tint-green: #213325;
-  --tint-peach-soft: #33271E;
+  --highlight: #31E1F7;
+  --highlight-bar: #88FF9A;
 
-  --navy: #0B1118;
-  --navy-2: #1B2634;
-  --on-navy: #EEF0DE;
+  --tint-mint: #0B2427;
+  --tint-peach: #1F1530;
+  --tint-mist: #17173A;
+  --tint-lime: #10291A;
+  --tint-green: #10291A;
+  --tint-peach-soft: #1A1328;
 
-  --sky-top: #111820;
-  --sky-mid: #1E2440;
-  --sky-low: #3F2E22;
-  --sky-mint: #111820;
-  --cloud: #3A4163;
-  --cloud-shade: #1A1F36;
+  --navy: #01111B;
+  --navy-2: #0B1E2B;
+  --on-navy: #E8F6FF;
 
-  --chart-1: #DDE88A;
-  --chart-2: #AEB8F2;
-  --chart-3: #F2C6A2;
-  --chart-4: #A8DDD0;
-  --chart-5: #E07A62;
+  --sky-top: #080C14;
+  --sky-mid: #051A24;
+  --sky-low: #082C24;
+  --sky-mint: #080C14;
+  --cloud: #123038;
+  --cloud-shade: #07161E;
 
-  --sidebar: #18212C;
-  --sidebar-foreground: #EEF0DE;
-  --sidebar-primary: #EEF0DE;
-  --sidebar-primary-foreground: #111820;
-  --sidebar-accent: #1F2A36;
-  --sidebar-accent-foreground: #EEF0DE;
-  --sidebar-border: rgba(238, 240, 222, 0.08);
-  --sidebar-ring: #DDE88A;
+  --shadow-tint: rgba(0, 0, 0, 0.5);
+
+  --chart-1: #88FF9A;
+  --chart-2: #31E1F7;
+  --chart-3: #77EED7;
+  --chart-4: #A480F5;
+  --chart-5: #FB80C1;
+
+  --sidebar: #0F1520;
+  --sidebar-foreground: #E8F6FF;
+  --sidebar-primary: #88FF9A;
+  --sidebar-primary-foreground: #01111B;
+  --sidebar-accent: #151D2A;
+  --sidebar-accent-foreground: #E8F6FF;
+  --sidebar-border: rgba(232, 246, 255, 0.08);
+  --sidebar-ring: #88FF9A;
 }
 
 @layer base {
@@ -237,14 +260,23 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
-    font-weight: 500;
-    letter-spacing: -0.03em;
+    font-weight: 800;
+    letter-spacing: -0.025em;
     text-wrap: balance;
   }
 
+  h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
   ::selection {
-    background: var(--tint-mint);
-    color: var(--foreground);
+    background: #88FF9A;
+    color: #01111B;
   }
 
   /* Dither grain, fixed overlay, never on scrolling layers */
@@ -254,7 +286,7 @@
     inset: 0;
     pointer-events: none;
     z-index: 60;
-    opacity: 0.05;
+    opacity: 0.035;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     mix-blend-mode: multiply;
   }
@@ -283,7 +315,32 @@
   .text-display   { font-size: var(--text-display); line-height: 1; }
   .text-display-xl{ font-size: var(--text-display-xl); line-height: 0.98; }
 
-  /* Sky: lavender top, peach horizon, the page's signature surface */
+  /* Brand gradients */
+  .bg-gradient-green { background-image: linear-gradient(120deg, #77EED7 0%, #88FF9A 100%); }
+  .bg-gradient-blue  { background-image: linear-gradient(120deg, #31E1F7 0%, #3168F7 100%); }
+  .text-gradient-green {
+    background-image: linear-gradient(100deg, #77EED7 0%, #88FF9A 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .text-gradient-blue {
+    background-image: linear-gradient(100deg, #31E1F7 0%, #3168F7 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  /* Short green bar under headings, straight from the brand posts */
+  .brand-bar {
+    display: block;
+    height: 0.375rem;
+    width: 4.5rem;
+    border-radius: 9999px;
+    background: var(--highlight-bar);
+  }
+
+  /* Sky: cyan top, mint horizon, the page's signature surface */
   .sky {
     background:
       radial-gradient(ellipse 60% 45% at 50% 100%, var(--sky-low) 0%, transparent 70%),

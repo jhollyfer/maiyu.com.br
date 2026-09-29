@@ -71,13 +71,13 @@ const Navbar = () => {
           className={cn(
             "mx-auto grid h-14 grid-cols-[1fr_auto] items-center gap-4 rounded-2xl border pl-4 pr-2 transition-[max-width,background-color,border-color,box-shadow] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] lg:grid-cols-[auto_1fr_auto]",
             scrolled || mobileMenuOpen
-              ? "max-w-5xl border-foreground/[0.08] bg-surface/80 shadow-[0_8px_30px_-12px_rgba(37,50,65,0.25)] backdrop-blur-xl"
+              ? "max-w-5xl border-foreground/[0.08] bg-surface/80 shadow-[0_8px_30px_-12px_var(--shadow-tint)] backdrop-blur-xl"
               : "max-w-7xl border-transparent bg-transparent",
           )}
         >
           <Link to="/" className="flex items-center gap-2 justify-self-start" aria-label="Maiyu home">
             <img src="/favicon.svg" alt="" className="size-7" />
-            <span className="font-display text-xl font-medium tracking-[-0.03em] text-foreground">
+            <span className="font-display text-xl font-extrabold tracking-[-0.02em] text-foreground">
               Maiyu
             </span>
           </Link>
@@ -94,7 +94,7 @@ const Navbar = () => {
                       className={cn(
                         "rounded-full px-4 py-2 text-small font-medium transition-colors duration-300",
                         active
-                          ? "bg-foreground/[0.06] text-foreground"
+                          ? "bg-foreground/[0.06] font-semibold text-foreground dark:text-brand-green"
                           : "text-foreground/70 hover:text-foreground",
                       )}
                     >
@@ -111,10 +111,10 @@ const Navbar = () => {
               <LanguageSwitcher />
             </div>
             <div className="hidden md:block">{themeButton}</div>
-            <CtaLink to="/contact" variant="peach" className="ml-1 hidden rounded-xl px-4 py-2 md:inline-flex">
+            <CtaLink to="/contact" variant="soft" className="ml-1 hidden rounded-xl px-4 py-2 md:inline-flex">
               {t("nav.contact")}
             </CtaLink>
-            <CtaLink to={CALL_URL} variant="lime" className="hidden rounded-xl px-4 py-2 md:inline-flex">
+            <CtaLink to={CALL_URL} variant="brand" className="hidden rounded-xl px-4 py-2 md:inline-flex">
               {t("nav.getInTouch")}
             </CtaLink>
 
@@ -179,7 +179,7 @@ const Navbar = () => {
                   <LanguageSwitcher />
                   {themeButton}
                 </div>
-                <CtaLink to={CALL_URL} variant="lime" onClick={() => setMobileMenuOpen(false)}>
+                <CtaLink to={CALL_URL} variant="brand" onClick={() => setMobileMenuOpen(false)}>
                   {t("nav.getInTouch")}
                 </CtaLink>
               </div>
