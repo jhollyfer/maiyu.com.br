@@ -29,16 +29,12 @@ const LanguageSwitcher = () => {
         className={cn(
           "inline-flex items-center gap-1.5 rounded-full border border-border/60",
           "px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] uppercase",
-          "text-muted-foreground hover:text-foreground hover:border-foreground/20",
+          "text-foreground/70 hover:text-foreground hover:border-foreground/30",
           "transition-[color,border-color] duration-[480ms]",
           "ease-[cubic-bezier(0.16,1,0.3,1)] focus:outline-none",
         )}
         aria-label="Change language"
       >
-        <span
-          className="size-1 rounded-full bg-[var(--color-amber)]"
-          aria-hidden="true"
-        />
         {current.label}
       </DropdownMenuTrigger>
       <DropdownMenuContent

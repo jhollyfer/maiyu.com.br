@@ -1,22 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <!-- Forest background — brand primary -->
-  <rect width="32" height="32" rx="7" fill="#2D5A3D"/>
-
-  <!-- Bezel inner border — echoes .bezel-shell -->
-  <rect x="1.5" y="1.5" width="29" height="29" rx="5.5" fill="none" stroke="#F6F1E7" stroke-opacity="0.14"/>
-
-  <!-- M lettermark — Fraunces serif, cream -->
-  <text
-    x="15"
-    y="23"
-    font-family="Fraunces, Georgia, 'Times New Roman', serif"
-    font-size="20"
-    font-weight="700"
-    fill="#F6F1E7"
-    text-anchor="middle"
-    letter-spacing="-0.5"
-  >M</text>
-
-  <!-- Period dot — amber accent -->
-  <circle cx="22.5" cy="23" r="1.8" fill="#D88A2B"/>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#D8DCF4"/>
+      <stop offset="0.55" stop-color="#F7E3D2"/>
+      <stop offset="1" stop-color="#F3CBA9"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="9" fill="url(#sky)"/>
+  <text x="16" y="22.5" font-family="Geist, system-ui, sans-serif" font-size="17" font-weight="600" fill="#1E2B25" text-anchor="middle" letter-spacing="-0.8">M</text>
 </svg>

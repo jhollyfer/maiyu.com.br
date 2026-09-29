@@ -1,506 +1,519 @@
+import { CtaLink } from "@/components/cta-link";
 import {
   AnimateInView,
   StaggerContainer,
   staggerItemVariants,
 } from "@/components/motion/animate-in-view";
+import { SkyBackdrop } from "@/components/sky";
 import { useLanguage } from "@/contexts/language";
+import { articles } from "@/data/articles";
 import { projects } from "@/data/projects";
-import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import {
+  AnimatePresence,
+  motion,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+} from "framer-motion";
 import {
   ArrowUpRight,
-  Database,
+  Compass,
   Globe,
+  Hammer,
   Leaf,
+  Lightbulb,
+  PenTool,
   Palette,
+  RefreshCw,
   Server,
   Smartphone,
 } from "lucide-react";
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-const Home = () => {
-  const { t, language } = useLanguage();
+const EASE = [0.16, 1, 0.3, 1] as const;
+const TINTS = ["bg-tint-mint", "bg-tint-peach", "bg-tint-mist", "bg-tint-lime"];
 
-  const services = [
-    {
-      icon: Globe,
-      title: t("home.serviceWeb"),
-      desc: t("home.serviceWebDesc"),
-      num: "01",
-    },
-    {
-      icon: Smartphone,
-      title: t("home.serviceMobile"),
-      desc: t("home.serviceMobileDesc"),
-      num: "02",
-    },
-    {
-      icon: Server,
-      title: t("home.serviceBackend"),
-      desc: t("home.serviceBackendDesc"),
-      num: "03",
-    },
-    {
-      icon: Database,
-      title: t("home.serviceDatabase"),
-      desc: t("home.serviceDatabaseDesc"),
-      num: "04",
-    },
-    {
-      icon: Palette,
-      title: t("home.serviceDesign"),
-      desc: t("home.serviceDesignDesc"),
-      num: "05",
-    },
-    {
-      icon: Leaf,
-      title: t("home.serviceImpact"),
-      desc: t("home.serviceImpactDesc"),
-      num: "06",
-    },
-  ];
+const team = [
+  { name: "Jhollyfer", img: "/jhollyfer.png" },
+  { name: "Lenny", img: "/lenny.png" },
+  { name: "Matheus", img: "/matheus.png" },
+];
 
-  const selectedWork = projects.slice(0, 3);
+/* ─── Hero ──────────────────────────────────────────────────── */
+function Hero() {
+  const { t } = useLanguage();
+  const reduce = useReducedMotion();
+  const enter = (delay: number) => ({
+    initial: reduce ? false : { opacity: 0, y: 24, filter: "blur(8px)" },
+    animate: { opacity: 1, y: 0, filter: "blur(0px)" },
+    transition: { duration: 1, delay, ease: EASE },
+  });
 
   return (
-    <div className="bg-background relative">
-      {/* ═══════════════════════════════════════════════════════
-         HERO — editorial asymmetric split
-      ═══════════════════════════════════════════════════════ */}
-      <section className="relative overflow-hidden pt-32 md:pt-40 pb-20 md:pb-28">
-        <div className="absolute inset-0 bg-gradient-paper pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-6 md:gap-8 items-end">
-          {/* Eyebrow meta — left column, offset */}
-          <AnimateInView
-            variant="fadeUp"
-            className="col-span-12 md:col-span-3 md:pt-6"
-          >
-            <div className="flex md:flex-col gap-3 md:gap-5 items-start">
-              <div className="inline-flex items-center gap-2">
-                <span className="relative flex h-1.5 w-1.5" aria-hidden="true">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[color:var(--color-amber)] opacity-60" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[color:var(--color-amber)]" />
-                </span>
-                <span className="eyebrow">{t("home.eyebrow")}</span>
-              </div>
-              <div className="hairline hidden md:block" />
-              <p className="eyebrow max-w-[18ch] leading-relaxed">
-                {t("home.badge")}
-              </p>
-            </div>
-          </AnimateInView>
-
-          {/* Display headline — 9-col span */}
-          <div className="col-span-12 md:col-span-9">
-            <AnimateInView variant="fadeUp" delay={0.1}>
-              <h1 className="font-display font-400 text-display-xl leading-[0.92] tracking-[-0.035em] text-foreground">
-                <span className="block">{t("home.heroTitle1")}</span>
-                <span className="block italic font-300 text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)]">
-                  {t("home.heroTitle2")}
-                </span>
-                <span className="block">{t("home.heroTitle3")}</span>
-              </h1>
-            </AnimateInView>
-          </div>
-
-          {/* Description + CTA — breaks grid, lower-right */}
-          <AnimateInView
-            variant="fadeUp"
-            delay={0.25}
-            className="col-span-12 md:col-span-5 md:col-start-8 mt-12 md:mt-16"
-          >
-            <p className="font-sans text-body-lg text-foreground/75 leading-[1.65] max-w-lg mb-8">
-              {t("home.heroDescription")}
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                to="/contact"
-                className="group inline-flex items-center gap-1 pl-6 pr-1.5 py-1.5 rounded-full bg-foreground text-background font-sans text-[13px] font-medium tracking-[0.02em] transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[color:var(--color-forest)] hover:text-[color:var(--color-canvas-cream)] dark:hover:bg-[color:var(--color-forest-bright)] active:scale-[0.97]"
-              >
-                <span className="py-2">{t("home.startProject")}</span>
-                <span className="ml-2 flex size-9 items-center justify-center rounded-full bg-background/15 group-hover:bg-background/25 transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                  <ArrowUpRight size={14} strokeWidth={1.6} />
-                </span>
-              </Link>
-              <Link
-                to="/portfolio"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-foreground/20 text-foreground font-sans text-[13px] font-medium tracking-[0.02em] transition-[color,border-color,background-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-foreground/40 hover:bg-foreground/[0.04]"
-              >
-                {t("home.viewWork")}
-              </Link>
-            </div>
-          </AnimateInView>
-        </div>
-
-        {/* Full-bleed photo band breaking below hero text */}
-        <AnimateInView
-          variant="scaleIn"
-          delay={0.3}
-          duration={1.2}
-          className="relative max-w-7xl mx-auto px-6 md:px-10 mt-20 md:mt-28"
+    <section className="relative flex min-h-[100dvh] items-center overflow-hidden pt-16">
+      <SkyBackdrop />
+      <div className="relative mx-auto flex max-w-6xl flex-col items-center px-4 text-center md:px-8">
+        <motion.span {...enter(0)} className="pill mb-8">
+          {t("home.pill")}
+        </motion.span>
+        <motion.h1
+          {...enter(0.1)}
+          className="text-[clamp(2.4rem,7vw,6.5rem)] leading-[0.98] tracking-[-0.045em] text-foreground"
         >
-          <div className="bezel-shell">
-            <div className="bezel-core relative overflow-hidden aspect-[3/2] md:aspect-[21/8]">
-              <img
-                src="/images/adacaibs.webp"
-                alt="Maiyu craft"
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="eager"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/70 via-background/10 to-transparent" />
-              <div className="hidden md:flex absolute bottom-0 left-0 right-0 p-6 md:p-10 items-end justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex -space-x-2">
-                    <img
-                      src="/jhollyfer.png"
-                      alt="Jhollyfer"
-                      className="size-9 rounded-full ring-2 ring-background object-cover"
-                    />
-                    <img
-                      src="/lenny.png"
-                      alt="Lenny"
-                      className="size-9 rounded-full ring-2 ring-background object-cover"
-                    />
-                    <img
-                      src="/matheus.png"
-                      alt="Matheus"
-                      className="size-9 rounded-full ring-2 ring-background object-cover"
-                    />
-                  </div>
-                  <p className="font-sans text-small text-foreground/90">
-                    {t("career.teamCount")}
-                  </p>
-                </div>
-                <span className="eyebrow hidden md:inline-block">
-                  Benjamin Constant · AM · BR
-                </span>
-              </div>
-            </div>
-          </div>
-          {/* Mobile-only team row — surfaces below the image */}
-          <div className="md:hidden mt-5 flex items-center gap-3 px-2">
-            <div className="flex -space-x-2">
-              <img
-                src="/jhollyfer.png"
-                alt="Jhollyfer"
-                className="size-9 rounded-full ring-2 ring-background object-cover"
-              />
-              <img
-                src="/lenny.png"
-                alt="Lenny"
-                className="size-9 rounded-full ring-2 ring-background object-cover"
-              />
-              <img
-                src="/matheus.png"
-                alt="Matheus"
-                className="size-9 rounded-full ring-2 ring-background object-cover"
-              />
-            </div>
-            <p className="font-sans text-small text-foreground/80">
-              {t("career.teamCount")}
-            </p>
-          </div>
+          {t("home.heroTitle1")}
+          <br />
+          {t("home.heroTitle2")}
+        </motion.h1>
+        <motion.p
+          {...enter(0.25)}
+          className="mt-8 max-w-[44ch] font-serif text-lead leading-snug text-foreground/80"
+        >
+          {t("home.heroDescription")}
+        </motion.p>
+        <motion.div {...enter(0.4)} className="mt-10">
+          <CtaLink to="/contact" arrow>
+            {t("home.startProject")}
+          </CtaLink>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Work: tabbed showcase ─────────────────────────────────── */
+function Work() {
+  const { t, language } = useLanguage();
+  const [active, setActive] = useState(0);
+  const project = projects[active];
+
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <AnimateInView className="mx-auto mb-12 max-w-2xl text-center">
+          <h2 className="text-h1">{t("home.workTitle")}</h2>
+          <p className="mt-5 font-serif text-lead text-foreground/75">{t("home.workLead")}</p>
         </AnimateInView>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-         STATS — woven into prose, not cards
-      ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 md:py-32 border-t border-foreground/[0.06]">
-        <div className="max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-8">
-          <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-3">
-            <p className="eyebrow">{t("home.statsLabel")}</p>
-          </AnimateInView>
-          <AnimateInView
-            variant="fadeUp"
-            delay={0.1}
-            className="col-span-12 md:col-span-9"
-          >
-            <p className="font-display text-h2 leading-[1.15] text-foreground/85 max-w-4xl">
-              {t("home.statsProse")
-                .split(/(\{team\}|\{count\}|\{location\})/)
-                .map((part, i) => {
-                  if (part === "{team}")
-                    return (
-                      <span
-                        key={i}
-                        className="text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)] italic"
-                      >
-                        {t("home.statsTeam")}
-                      </span>
-                    );
-                  if (part === "{count}")
-                    return (
-                      <span
-                        key={i}
-                        className="text-[color:var(--color-amber)] tabular-nums"
-                      >
-                        {t("home.statsCount")}
-                      </span>
-                    );
-                  if (part === "{location}")
-                    return (
-                      <span
-                        key={i}
-                        className="underline decoration-2 decoration-[color:var(--color-amber)]/60 underline-offset-[6px]"
-                      >
-                        {t("home.statsLocation")}
-                      </span>
-                    );
-                  return <span key={i}>{part}</span>;
-                })}
-            </p>
-          </AnimateInView>
+        <div
+          role="tablist"
+          aria-label={t("home.workTitle")}
+          className="no-scrollbar mb-8 flex justify-start gap-2 overflow-x-auto md:justify-center"
+        >
+          {projects.map((p, i) => (
+            <button
+              key={p.slug}
+              role="tab"
+              aria-selected={i === active}
+              onClick={() => setActive(i)}
+              className={cn(
+                "shrink-0 rounded-full border px-5 py-2 text-small font-medium transition-colors duration-300",
+                i === active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-foreground/20 text-foreground/70 hover:border-foreground/45 hover:text-foreground",
+              )}
+            >
+              {p.title}
+            </button>
+          ))}
         </div>
-      </section>
 
-      {/* ═══════════════════════════════════════════════════════
-         SERVICES — forest narrative block (cream-on-forest)
-      ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-24 md:py-32 bg-canvas-forest dark:bg-canvas-night text-[color:var(--color-canvas-cream)] overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,_rgba(216,138,43,0.08),_transparent_55%)] pointer-events-none" />
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10">
-          {/* Section header */}
-          <div className="grid grid-cols-12 gap-8 mb-16 md:mb-24">
-            <AnimateInView
-              variant="fadeUp"
-              className="col-span-12 md:col-span-3"
+        <div className="overflow-hidden rounded-[1.75rem] bg-tint-mist">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={project.slug}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.45, ease: EASE }}
+              className="grid grid-cols-1 md:grid-cols-12"
             >
-              <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/55">
-                — {t("home.servicesLabel")}
-              </p>
-            </AnimateInView>
-            <AnimateInView
-              variant="fadeUp"
-              delay={0.1}
-              className="col-span-12 md:col-span-9"
-            >
-              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-[color:var(--color-canvas-cream)] max-w-4xl">
-                {t("home.servicesHeading")}
-              </h2>
-              <p className="font-sans text-body-lg text-[color:var(--color-canvas-cream)]/70 mt-6 max-w-xl leading-relaxed">
-                {t("home.servicesSubheading")}
-              </p>
-            </AnimateInView>
-          </div>
-
-          {/* Alternating rows — editorial list, not card grid */}
-          <StaggerContainer className="flex flex-col">
-            {services.map((service, i) => (
-              <motion.div
-                key={service.title}
-                variants={staggerItemVariants}
-                className={`group grid grid-cols-12 gap-4 md:gap-8 py-8 md:py-10 border-t border-[color:var(--color-canvas-cream)]/[0.1] ${
-                  i === services.length - 1 ? "border-b" : ""
-                }`}
-              >
-                <div className="col-span-2 md:col-span-1">
-                  <span className="font-mono text-small text-[color:var(--color-amber)] tabular-nums">
-                    {service.num}
-                  </span>
-                </div>
-                <div className="col-span-10 md:col-span-4">
-                  <div className="flex items-center gap-3">
-                    <service.icon
-                      size={18}
-                      strokeWidth={1.4}
-                      className="text-[color:var(--color-amber)] transition-transform duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:rotate-[-8deg]"
-                    />
-                    <h3 className="font-display text-h3 font-400 tracking-[-0.02em] text-[color:var(--color-canvas-cream)]">
-                      {service.title}
-                    </h3>
-                  </div>
-                </div>
-                <div className="col-span-12 md:col-span-6 md:col-start-7">
-                  <p className="font-sans text-body text-[color:var(--color-canvas-cream)]/70 leading-relaxed max-w-md">
-                    {service.desc}
+              <div className="relative aspect-[4/3] md:col-span-7 md:aspect-auto md:min-h-[480px]">
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  className="absolute inset-0 size-full object-cover"
+                />
+              </div>
+              <div className="flex flex-col justify-between gap-10 p-6 md:col-span-5 md:p-10">
+                <div>
+                  <p className="text-small text-foreground/65">{project.client[language]}</p>
+                  <h3 className="mt-2 text-h2">{project.title}</h3>
+                  <p className="mt-6 font-serif text-lead leading-snug text-foreground/85">
+                    {project.description[language]}
                   </p>
                 </div>
-                <div className="col-span-12 md:col-span-1 flex md:justify-end">
-                  <ArrowUpRight
+                <div className="flex flex-wrap items-center justify-between gap-4">
+                  <ul className="flex flex-wrap gap-1.5">
+                    {project.tech.slice(0, 3).map((tech) => (
+                      <li
+                        key={tech}
+                        className="rounded-full bg-background/60 px-3 py-1 text-micro text-foreground/80"
+                      >
+                        {tech}
+                      </li>
+                    ))}
+                  </ul>
+                  <CtaLink to={project.url} variant="ghost" arrow>
+                    {t("home.workVisit")}
+                  </CtaLink>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Vision: sticky scroll on desktop, stack on mobile ─────── */
+function Vision() {
+  const { t } = useLanguage();
+  const ref = useRef<HTMLElement>(null);
+  const reduce = useReducedMotion();
+  const [step, setStep] = useState(0);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start start", "end end"],
+  });
+  useMotionValueEvent(scrollYProgress, "change", (v) =>
+    setStep(Math.min(2, Math.floor(v * 3))),
+  );
+
+  const items = [1, 2, 3].map((n) => ({
+    title: t(`home.vision${n}Title`),
+    desc: t(`home.vision${n}Desc`),
+  }));
+
+  return (
+    <section ref={ref} className={cn("relative bg-surface", !reduce && "md:h-[260vh]")}>
+      <div
+        className={cn(
+          "mx-auto grid max-w-7xl grid-cols-1 items-center gap-10 px-4 py-24 md:grid-cols-12 md:gap-16 md:px-8",
+          !reduce && "md:sticky md:top-0 md:h-[100dvh] md:pt-16 md:pb-0",
+        )}
+      >
+        <div className="md:col-span-6">
+          <span className="pill mb-6">{t("home.visionLabel")}</span>
+          <h2 className="text-h1">{t("home.visionTitle")}</h2>
+          <ol className="mt-10 space-y-6">
+            {items.map((item, i) => (
+              <li
+                key={item.title}
+                className={cn(
+                  "border-l-2 pl-5 transition-[opacity,border-color] duration-500",
+                  i === step || reduce
+                    ? "border-foreground opacity-100"
+                    : "border-foreground/15 md:opacity-40",
+                )}
+              >
+                <h3 className="text-h4">{item.title}</h3>
+                <p className="mt-2 max-w-[48ch] text-body text-foreground/75">{item.desc}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="relative aspect-[4/5] overflow-hidden rounded-[1.75rem] md:col-span-6 md:aspect-[4/5] md:max-h-[78dvh]">
+          <img
+            src="/images/matis.webp"
+            alt=""
+            className="absolute inset-0 size-full object-cover"
+          />
+          <div
+            className={cn(
+              "absolute inset-0 opacity-35 transition-colors duration-700 dark:opacity-20",
+              TINTS[step],
+            )}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Process: 4 steps, selectable ──────────────────────────── */
+function Process() {
+  const { t } = useLanguage();
+  const [active, setActive] = useState(0);
+  const icons = [Compass, PenTool, Hammer, RefreshCw];
+  const steps = icons.map((icon, i) => ({
+    icon,
+    title: t(`home.step${i + 1}Title`),
+    desc: t(`home.step${i + 1}Desc`),
+  }));
+  const Icon = steps[active].icon;
+
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <AnimateInView className="mb-12 max-w-2xl">
+          <h2 className="text-h1">{t("home.processTitle")}</h2>
+          <p className="mt-5 font-serif text-lead text-foreground/75">{t("home.processDesc")}</p>
+        </AnimateInView>
+
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+          <ul className="flex flex-col gap-2 md:col-span-5">
+            {steps.map((s, i) => (
+              <li key={s.title}>
+                <button
+                  onClick={() => setActive(i)}
+                  aria-pressed={i === active}
+                  className={cn(
+                    "flex w-full items-center justify-between rounded-2xl px-5 py-4 text-left transition-colors duration-300",
+                    i === active ? "bg-surface" : "hover:bg-foreground/[0.04]",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "text-h4 font-medium tracking-[-0.02em]",
+                      i === active ? "text-foreground" : "text-foreground/55",
+                    )}
+                  >
+                    {s.title}
+                  </span>
+                  <s.icon
                     size={18}
-                    strokeWidth={1.2}
-                    className="text-[color:var(--color-canvas-cream)]/40 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-1 group-hover:-translate-y-1"
+                    strokeWidth={1.5}
+                    className={i === active ? "text-foreground" : "text-foreground/35"}
                   />
+                </button>
+                {/* Mobile: description inline under the active step */}
+                {i === active && (
+                  <p className="px-5 pt-2 pb-3 text-body text-foreground/75 md:hidden">{s.desc}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+
+          <div
+            className={cn(
+              "relative hidden min-h-[360px] overflow-hidden rounded-[1.75rem] p-10 transition-colors duration-500 md:col-span-7 md:flex md:flex-col md:justify-between",
+              TINTS[active],
+            )}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={active}
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -16 }}
+                transition={{ duration: 0.45, ease: EASE }}
+                className="flex h-full flex-col justify-between gap-16"
+              >
+                <Icon size={36} strokeWidth={1.25} />
+                <div>
+                  <h3 className="text-h2">{steps[active].title}</h3>
+                  <p className="mt-4 max-w-[40ch] font-serif text-lead leading-snug text-foreground/85">
+                    {steps[active].desc}
+                  </p>
                 </div>
               </motion.div>
-            ))}
-          </StaggerContainer>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-         SELECTED WORK — asymmetric 1-wide + 2 stacked
-      ═══════════════════════════════════════════════════════ */}
-      <section className="py-24 md:py-32 bg-canvas-bone dark:bg-canvas-moss">
-        <div className="max-w-7xl mx-auto px-6 md:px-10">
-          <div className="grid grid-cols-12 gap-8 mb-16">
-            <AnimateInView
-              variant="fadeUp"
-              className="col-span-12 md:col-span-3"
-            >
-              <p className="eyebrow">— {t("home.selectedWork")}</p>
-            </AnimateInView>
-            <AnimateInView
-              variant="fadeUp"
-              delay={0.1}
-              className="col-span-12 md:col-span-9"
-            >
-              <h2 className="font-display text-h1 font-400 leading-[0.98] tracking-[-0.025em] text-foreground max-w-3xl">
-                {t("home.selectedWorkDesc")}
-              </h2>
-            </AnimateInView>
+            </AnimatePresence>
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-            {/* Featured big */}
-            <AnimateInView
-              variant="fadeUp"
-              className="md:col-span-8 md:row-span-2"
+/* ─── Capabilities bento: 4+2 / 2+2+2 / 6 ───────────────────── */
+function Capabilities() {
+  const { t } = useLanguage();
+  const cells = [
+    { icon: Lightbulb, key: "Consulting", span: "md:col-span-4", tone: "bg-tint-mint" },
+    { icon: Globe, key: "Web", span: "md:col-span-2", tone: "bg-tint-peach" },
+    { icon: Smartphone, key: "Mobile", span: "md:col-span-2", tone: "bg-surface" },
+    { icon: Server, key: "Backend", span: "md:col-span-2", tone: "bg-tint-mist" },
+    { icon: Palette, key: "Design", span: "md:col-span-2", tone: "bg-tint-lime" },
+  ];
+
+  return (
+    <section className="pb-24 md:pb-32">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <AnimateInView className="mb-12">
+          <h2 className="max-w-2xl text-h1">{t("home.servicesHeading")}</h2>
+        </AnimateInView>
+
+        <StaggerContainer className="grid grid-cols-1 gap-4 md:grid-cols-6">
+          {cells.map((c) => (
+            <motion.div
+              key={c.key}
+              variants={staggerItemVariants}
+              className={cn(
+                "flex min-h-[240px] flex-col justify-between gap-8 rounded-[1.75rem] p-7",
+                c.span,
+                c.tone,
+              )}
             >
-              <a
-                href={selectedWork[0].url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group block"
-              >
-                <div className="relative overflow-hidden rounded-[2rem] aspect-[4/3] bg-canvas-sand dark:bg-canvas-moss">
-                  <img
-                    src={selectedWork[0].image}
-                    alt={selectedWork[0].title}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-background/65 via-background/5 to-transparent" />
-                  <div className="absolute top-6 left-6">
-                    <span className="inline-flex items-center gap-2 rounded-full bg-background/85 backdrop-blur-md px-3 py-1 text-[10px] tracking-[0.2em] uppercase font-medium text-foreground">
-                      <span className="size-1 rounded-full bg-[color:var(--color-amber)]" />
-                      {selectedWork[0].year}
-                    </span>
-                  </div>
-                </div>
-                <div className="mt-6 flex items-start justify-between gap-4">
+              <c.icon size={24} strokeWidth={1.5} />
+              <div>
+                <h3 className="text-h3">{t(`home.service${c.key}`)}</h3>
+                <p className="mt-3 max-w-[46ch] text-body text-foreground/75">
+                  {t(`home.service${c.key}Desc`)}
+                </p>
+              </div>
+            </motion.div>
+          ))}
+
+          <motion.div
+            variants={staggerItemVariants}
+            className="relative isolate flex min-h-[320px] flex-col justify-end overflow-hidden rounded-[1.75rem] p-7 text-[#F4F7EC] md:col-span-6 md:p-10"
+          >
+            <img
+              src="/images/manganga.webp"
+              alt=""
+              className="absolute inset-0 -z-10 size-full object-cover"
+            />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-[#0E1613]/95 via-[#0E1613]/70 to-[#0E1613]/20" />
+            <Leaf size={24} strokeWidth={1.5} className="mb-6" />
+            <h3 className="text-h2">{t("home.serviceImpact")}</h3>
+            <p className="mt-3 max-w-[52ch] text-body text-[#F4F7EC]/85">
+              {t("home.serviceImpactDesc")}
+            </p>
+          </motion.div>
+        </StaggerContainer>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Team ──────────────────────────────────────────────────── */
+function Team() {
+  const { t } = useLanguage();
+  return (
+    <section className="bg-surface py-24 md:py-32">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-end gap-12 px-4 md:grid-cols-12 md:px-8">
+        <AnimateInView className="md:col-span-5">
+          <h2 className="text-h1">{t("home.teamTitle")}</h2>
+          <p className="mt-5 max-w-[40ch] font-serif text-lead text-foreground/75">
+            {t("home.teamDesc")}
+          </p>
+          <CtaLink to="/career" variant="ghost" arrow className="mt-8">
+            {t("nav.career")}
+          </CtaLink>
+        </AnimateInView>
+        <StaggerContainer className="grid grid-cols-3 gap-3 md:col-span-7 md:gap-4">
+          {team.map((m, i) => (
+            <motion.figure
+              key={m.name}
+              variants={staggerItemVariants}
+              className={cn(i === 1 && "md:-translate-y-10")}
+            >
+              <div className={cn("overflow-hidden rounded-[1.25rem]", TINTS[i])}>
+                <img
+                  src={m.img}
+                  alt={m.name}
+                  className="aspect-[3/4] w-full object-cover mix-blend-multiply dark:mix-blend-normal"
+                />
+              </div>
+              <figcaption className="mt-3 text-small text-foreground/80">{m.name}</figcaption>
+            </motion.figure>
+          ))}
+        </StaggerContainer>
+      </div>
+    </section>
+  );
+}
+
+/* ─── Journal ───────────────────────────────────────────────── */
+function Journal() {
+  const { t, language } = useLanguage();
+  const [lead, ...rest] = articles.slice(0, 3);
+
+  return (
+    <section className="py-24 md:py-32">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <AnimateInView className="mb-12 flex flex-wrap items-end justify-between gap-6">
+          <h2 className="text-h1">{t("home.notesTitle")}</h2>
+          <CtaLink to="/blog" variant="ghost" arrow>
+            {t("home.notesAll")}
+          </CtaLink>
+        </AnimateInView>
+
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
+          <AnimateInView className="md:col-span-7">
+            <Link to={`/blog/${lead.slug}`} className="group block">
+              <div className="overflow-hidden rounded-[1.75rem] bg-tint-peach">
+                <img
+                  src={lead.image}
+                  alt=""
+                  className="aspect-[16/10] w-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
+                />
+              </div>
+              <h3 className="mt-6 max-w-[28ch] text-h2 transition-opacity group-hover:opacity-75">
+                {lead.title[language]}
+              </h3>
+              <p className="mt-3 max-w-[56ch] text-body text-foreground/70">
+                {lead.excerpt[language]}
+              </p>
+            </Link>
+          </AnimateInView>
+
+          <div className="flex flex-col divide-y divide-foreground/10 md:col-span-5">
+            {rest.map((a, i) => (
+              <AnimateInView key={a.slug} delay={0.1 * (i + 1)}>
+                <Link
+                  to={`/blog/${a.slug}`}
+                  className="group flex items-start justify-between gap-6 py-6 first:pt-0"
+                >
                   <div>
-                    <h3 className="font-display text-h2 font-400 tracking-[-0.02em] text-foreground group-hover:text-[color:var(--color-forest)] dark:group-hover:text-[color:var(--color-forest-bright)] transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
-                      {selectedWork[0].title}
+                    <p className="text-small text-muted-foreground">{a.readTime[language]}</p>
+                    <h3 className="mt-2 text-h4 font-medium transition-opacity group-hover:opacity-75">
+                      {a.title[language]}
                     </h3>
-                    <p className="font-sans text-body text-foreground/70 mt-2 max-w-md">
-                      {selectedWork[0].summary[language]}
-                    </p>
                   </div>
                   <ArrowUpRight
-                    size={20}
-                    strokeWidth={1.3}
-                    className="text-muted-foreground mt-2 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-1 group-hover:-translate-y-1"
+                    size={18}
+                    strokeWidth={1.5}
+                    className="mt-1 shrink-0 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
                   />
-                </div>
-              </a>
-            </AnimateInView>
-
-            {/* Two stacked */}
-            {selectedWork.slice(1).map((project, i) => (
-              <AnimateInView
-                key={project.slug}
-                variant="fadeUp"
-                delay={0.1 + i * 0.1}
-                className="md:col-span-4"
-              >
-                <a
-                  href={project.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group block"
-                >
-                  <div className="relative overflow-hidden rounded-[1.5rem] aspect-[5/4] bg-canvas-sand dark:bg-canvas-moss">
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-[1200ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-background/50 via-transparent to-transparent" />
-                  </div>
-                  <div className="mt-4 flex items-start justify-between gap-2">
-                    <div>
-                      <p className="font-mono text-micro text-muted-foreground tabular-nums">
-                        {project.year}
-                      </p>
-                      <h4 className="font-display text-h3 font-400 tracking-[-0.02em] text-foreground mt-1 group-hover:text-[color:var(--color-forest)] dark:group-hover:text-[color:var(--color-forest-bright)] transition-colors duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)]">
-                        {project.title}
-                      </h4>
-                    </div>
-                    <ArrowUpRight
-                      size={16}
-                      strokeWidth={1.3}
-                      className="text-muted-foreground mt-2 transition-all duration-[600ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:text-[color:var(--color-amber)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-                    />
-                  </div>
-                </a>
+                </Link>
               </AnimateInView>
             ))}
           </div>
-
-          <AnimateInView variant="fadeUp" delay={0.2} className="mt-16">
-            <Link
-              to="/portfolio"
-              className="group inline-flex items-center gap-2 font-sans text-body text-foreground hover:text-[color:var(--color-forest)] dark:hover:text-[color:var(--color-forest-bright)] transition-colors duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)]"
-            >
-              <span className="border-b border-current pb-0.5">
-                {t("portfolio.loadMore")}
-              </span>
-              <ArrowUpRight
-                size={15}
-                strokeWidth={1.4}
-                className="transition-transform duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Link>
-          </AnimateInView>
         </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════════════════
-         CTA — full-bleed forest section
-      ═══════════════════════════════════════════════════════ */}
-      <section className="relative py-28 md:py-40 bg-canvas-forest dark:bg-canvas-night text-[color:var(--color-canvas-cream)] overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-paper opacity-40 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-[60%] h-full bg-[radial-gradient(ellipse_at_right,_rgba(216,138,43,0.12),_transparent_60%)] pointer-events-none" />
-
-        <div className="relative max-w-7xl mx-auto px-6 md:px-10 grid grid-cols-12 gap-8">
-          <AnimateInView variant="fadeUp" className="col-span-12 md:col-span-3">
-            <p className="font-sans text-micro tracking-[0.22em] uppercase font-medium text-[color:var(--color-canvas-cream)]/60">
-              — {t("home.ctaDescription")}
-            </p>
-          </AnimateInView>
-
-          <AnimateInView
-            variant="fadeUp"
-            delay={0.12}
-            className="col-span-12 md:col-span-9"
-          >
-            <h2 className="font-display text-display font-400 leading-[0.95] tracking-[-0.03em] text-[color:var(--color-canvas-cream)] max-w-5xl">
-              {t("home.ctaTitle")}
-            </h2>
-
-            <div className="mt-12 md:mt-16 flex flex-wrap items-center gap-4">
-              <Link
-                to="/contact"
-                className="group inline-flex items-center gap-1 pl-7 pr-1.5 py-1.5 rounded-full bg-[color:var(--color-amber)] text-[color:var(--color-canvas-night)] font-sans text-[14px] font-medium tracking-[0.02em] transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:bg-[color:var(--color-amber-warm)] active:scale-[0.97]"
-              >
-                <span className="py-2.5">{t("home.ctaButton1")}</span>
-                <span className="ml-2 flex size-10 items-center justify-center rounded-full bg-[color:var(--color-canvas-night)]/15 group-hover:bg-[color:var(--color-canvas-night)]/25 transition-all duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:translate-x-0.5 group-hover:-translate-y-0.5">
-                  <ArrowUpRight size={15} strokeWidth={1.6} />
-                </span>
-              </Link>
-              <Link
-                to="/portfolio"
-                className="inline-flex items-center gap-2 px-7 py-3.5 rounded-full border border-[color:var(--color-canvas-cream)]/25 text-[color:var(--color-canvas-cream)] font-sans text-[14px] font-medium tracking-[0.02em] transition-[color,border-color,background-color] duration-[480ms] ease-[cubic-bezier(0.16,1,0.3,1)] hover:border-[color:var(--color-canvas-cream)]/50 hover:bg-[color:var(--color-canvas-cream)]/[0.04]"
-              >
-                {t("home.ctaButton2")}
-              </Link>
-            </div>
-          </AnimateInView>
-        </div>
-      </section>
-    </div>
+      </div>
+    </section>
   );
-};
+}
+
+/* ─── Closing CTA ───────────────────────────────────────────── */
+function ClosingCta() {
+  const { t } = useLanguage();
+  return (
+    <section className="relative overflow-hidden py-32 md:py-44">
+      <SkyBackdrop className="[mask-image:linear-gradient(to_bottom,transparent,black_30%)]" />
+      <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
+        <h2 className="text-display tracking-[-0.045em]">{t("home.ctaTitle")}</h2>
+        <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/80">
+          {t("home.ctaDesc")}
+        </p>
+        <div className="mt-10 flex flex-wrap justify-center gap-3">
+          <CtaLink to="/contact" arrow>
+            {t("home.startProject")}
+          </CtaLink>
+          <CtaLink to="/portfolio" variant="ghost">
+            {t("home.viewWork")}
+          </CtaLink>
+        </div>
+      </AnimateInView>
+    </section>
+  );
+}
+
+const Home = () => (
+  <>
+    <Hero />
+    <Work />
+    <Vision />
+    <Process />
+    <Capabilities />
+    <Team />
+    <Journal />
+    <ClosingCta />
+  </>
+);
 
 export default Home;
