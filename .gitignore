@@ -1,0 +1,9 @@
+# Segredos. O `frontend/.gitignore` cobre o projeto, mas a raiz não cobria nada,
+# e um `.env` criado aqui por engano entraria no commit sem ninguém notar.
+.env
+.env.local
+
+# IDE da JetBrains.
+.idea/
+
+node_modules/
