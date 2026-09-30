@@ -43,7 +43,7 @@ pnpm dev:frontend     pnpm test:frontend     pnpm check:frontend  # lint + typec
 
 # frontend
 pnpm dev              # porta 3000
-pnpm build            # regenera routeTree.gen.ts e src/paraglide, que são commitados
+pnpm build            # regenera routeTree.gen.ts (commitado) e src/paraglide (não)
 pnpm lint             pnpm typecheck         pnpm test
 pnpm check            # prettier --check
 pnpm check-cycles     # lê .output/, então roda depois do build

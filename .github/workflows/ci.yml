@@ -36,6 +36,15 @@ jobs:
         working-directory: ./frontend
         run: pnpm install --frozen-lockfile
 
+      # Antes do lint, do typecheck e dos testes, e é a diferença para o
+      # academy: lá o paraglide está instalado e sem uso, e aqui toda tela lê
+      # `#/paraglide/messages`. A saída não é versionada (quem a gera é o plugin
+      # do Vite no build), então sem este passo os três passos abaixo não
+      # achariam o módulo.
+      - name: Compila as mensagens
+        working-directory: ./frontend
+        run: pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/paraglide
+
       - name: Run linter
         working-directory: ./frontend
         run: pnpm lint
