@@ -1,8 +1,10 @@
-import type * as React from 'react'
+import * as React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
 
 import { SkyBackdrop } from '#/components/common/sky'
+import { Button } from '#/components/ui/button'
+import { ButtonGroup } from '#/components/ui/button-group'
 import { cn } from '#/lib/utils'
 import type { Merge } from '#/lib/interfaces'
 import { m } from '#/paraglide/messages'
@@ -21,9 +23,10 @@ type NotFoundPageProps = Merge<
 /**
  * A página de saída: endereço que não existe, e também erro não tratado.
  *
- * Mesma API compound do academy (`Title`, `Description`, `Actions`), com a cara
- * da Maiyu: céu, mata e a pílula navy com o código. Sem children, escreve o 404
- * genérico; a fronteira de erro troca as partes que quiser.
+ * A mesma API compound do academy (`Title`, `Subtitle`, `Description`,
+ * `Actions`, `HomeButton`), com a cara da Maiyu no lugar do painel preto e do
+ * astronauta: céu, mata e a pílula navy com o código. Sem children, escreve o
+ * 404 genérico; a fronteira de erro troca as partes que quiser.
  */
 export function NotFoundPage({
   className,
@@ -52,7 +55,7 @@ export function NotFoundPage({
               {m.notFound_description()}
             </NotFoundPageDescription>
             <NotFoundPageActions>
-              <NotFoundPageHomeLink />
+              <NotFoundPageHomeButton />
             </NotFoundPageActions>
           </>
         )}
@@ -74,6 +77,19 @@ export function NotFoundPageTitle({
   )
 }
 
+export function NotFoundPageSubtitle({
+  className,
+  ...props
+}: React.ComponentProps<'p'>): React.JSX.Element {
+  return (
+    <p
+      data-slot="not-found-page-subtitle"
+      className={cn('mt-4 text-h4 font-semibold text-foreground', className)}
+      {...props}
+    />
+  )
+}
+
 export function NotFoundPageDescription({
   className,
   ...props
@@ -81,7 +97,10 @@ export function NotFoundPageDescription({
   return (
     <p
       data-slot="not-found-page-description"
-      className={cn('mt-7 max-w-[44ch] text-lead text-foreground/80', className)}
+      className={cn(
+        'mt-7 max-w-[44ch] text-lead text-foreground/80',
+        className,
+      )}
       {...props}
     />
   )
@@ -89,30 +108,55 @@ export function NotFoundPageDescription({
 
 export function NotFoundPageActions({
   className,
+  children,
   ...props
-}: React.ComponentProps<'div'>): React.JSX.Element {
+}: React.ComponentProps<'div'>): React.JSX.Element | null {
+  if (!children) return null
+
   return (
-    <div
+    // Cada ação num grupo aninhado, como no academy: o `ButtonGroup` cola os
+    // filhos diretos, e estas são saídas independentes, não um controle
+    // segmentado.
+    <ButtonGroup
       data-slot="not-found-page-actions"
-      className={cn('mt-10 flex flex-wrap justify-center gap-2', className)}
+      className={cn('mt-10 flex-wrap items-center justify-center', className)}
       {...props}
-    />
+    >
+      {React.Children.map(children, (action) => {
+        if (!action) return null
+
+        return <ButtonGroup>{action}</ButtonGroup>
+      })}
+    </ButtonGroup>
   )
 }
 
 /**
- * A saída padrão: voltar ao início. Link e não botão, para responder a abrir em
- * nova aba e ao clique do meio.
+ * A saída padrão: voltar ao início.
+ *
+ * `to` segue prop, porque é destino de navegação e não markup, e como `Link` o
+ * botão responde a abrir em nova aba e ao clique do meio.
  */
-export function NotFoundPageHomeLink(): React.JSX.Element {
+export function NotFoundPageHomeButton({
+  to = '/',
+  children,
+}: {
+  to?: string
+  children?: React.ReactNode
+}): React.JSX.Element {
   return (
-    <Link
-      to="/"
-      data-slot="not-found-page-home-link"
-      className="inline-flex items-center gap-2 rounded-full border border-foreground/25 px-6 py-3 text-small font-medium transition-colors hover:border-foreground/50 hover:bg-foreground/[0.04]"
-    >
-      <ArrowLeftIcon size={15} />
-      {m.notFound_returnHome()}
-    </Link>
+    <Button
+      nativeButton={false}
+      variant="outline"
+      size="lg"
+      data-slot="not-found-page-home-button"
+      className="w-fit rounded-full px-6"
+      render={
+        <Link to={to}>
+          <ArrowLeftIcon />
+          {children ?? m.notFound_returnHome()}
+        </Link>
+      }
+    />
   )
 }

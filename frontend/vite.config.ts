@@ -14,23 +14,21 @@ const config = defineConfig({
   plugins: [
     devtools(),
     /*
-     * Aqui o paraglide é usado de verdade, e é a diferença para os irmãos.
+     * A mesma estratégia dos irmãos, `url` e depois `baseLocale`, e aqui ela é
+     * usada de verdade: o site da Maiyu fala três línguas desde antes da
+     * migração (português, inglês e espanhol, para quem chega pela fronteira
+     * com o Peru e a Colômbia).
      *
-     * O site da Maiyu fala três línguas desde antes da migração (português,
-     * inglês e espanhol, para quem chega pela fronteira com o Peru e a
-     * Colômbia), e as mensagens moram em `messages/{locale}.json`. Nos irmãos o
-     * plugin está instalado e sem uso porque o texto é português literal.
-     *
-     * A estratégia não tem `url`, e é decisão: o site antigo nunca pôs o idioma
-     * no endereço, e prefixar `/en` agora mudaria todo link já compartilhado. A
-     * escolha fica no cookie, que o servidor lê na primeira renderização - com
-     * `localStorage` o SSR sairia sempre em português e trocaria na hidratação.
-     * Sem cookie, vale o idioma do navegador, e sem ele o português.
+     * O português é o idioma base e não leva prefixo, então todo link já
+     * compartilhado do site antigo (`/portfolio`, `/blog/...`) continua
+     * respondendo igual. Inglês e espanhol ganham endereço próprio (`/en/...`,
+     * `/es/...`), que é o que deixa o buscador indexar as três versões e o
+     * `hreflang` apontar para cada uma.
      */
     paraglideVitePlugin({
       project: './project.inlang',
       outdir: './src/paraglide',
-      strategy: ['cookie', 'preferredLanguage', 'baseLocale'],
+      strategy: ['url', 'baseLocale'],
     }),
     // Cravar o preset: sem ele o Nitro detecta a plataforma pelas variáveis de
     // ambiente do CI e só cai em `node-server` quando nenhuma responde. É o que
@@ -41,13 +39,6 @@ const config = defineConfig({
       router: {
         routeToken: 'layout',
       },
-      /*
-       * Sem prerender, embora nenhuma página leia API. O idioma vem do cookie, e
-       * um HTML pré-renderizado sai num idioma só: quem escolheu inglês
-       * receberia a página em português e a veria trocar na hidratação. O SSR
-       * por requisição lê o cookie e responde no idioma certo desde o primeiro
-       * byte.
-       */
     }),
     viteReact(),
     babel({ presets: [reactCompilerPreset()] }),

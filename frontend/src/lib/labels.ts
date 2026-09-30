@@ -1,0 +1,42 @@
+import { m } from '#/paraglide/messages'
+
+import type {
+  ArticleCategory,
+  JobLocation,
+  JobPosition,
+  JobType,
+} from './entity'
+
+/**
+ * Os rótulos de cada valor do vocabulário, no idioma da requisição.
+ *
+ * Separado de `entity.ts` pelo motivo do academy: lá o valor é identificador,
+ * aqui é texto de interface. A diferença para os irmãos é que o valor aqui é
+ * **função** e não string: a mensagem do paraglide precisa ser lida no render,
+ * no idioma de quem visita, e uma string resolvida no carregamento do módulo
+ * congelaria o idioma da primeira requisição do servidor.
+ *
+ * `Record` com a chave fechada, então valor novo no vocabulário sem rótulo
+ * aqui não compila.
+ */
+
+export const JOB_POSITION_LABELS: Record<JobPosition, () => string> = {
+  frontend: () => m.career_selectFrontend(),
+  designer: () => m.career_selectDesigner(),
+  qa: () => m.career_selectQa(),
+  backend: () => m.career_selectBackend(),
+}
+
+export const ARTICLE_CATEGORY_LABELS: Record<ArticleCategory, () => string> = {
+  tech: () => m.blog_category_tech(),
+  design: () => m.blog_category_design(),
+  marketing: () => m.blog_category_marketing(),
+}
+
+export const JOB_LOCATION_LABELS: Record<JobLocation, () => string> = {
+  remote: () => m.career_jobLocation_remote(),
+}
+
+export const JOB_TYPE_LABELS: Record<JobType, () => string> = {
+  fulltime: () => m.career_jobType_fulltime(),
+}

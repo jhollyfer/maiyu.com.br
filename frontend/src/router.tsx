@@ -7,11 +7,13 @@ import {
   NotFoundPage,
   NotFoundPageActions,
   NotFoundPageDescription,
-  NotFoundPageHomeLink,
+  NotFoundPageHomeButton,
+  NotFoundPageSubtitle,
   NotFoundPageTitle,
 } from '#/components/common/not-found-page'
 import { Button } from '#/components/ui/button'
 import { m } from '#/paraglide/messages'
+import { deLocalizeUrl, localizeUrl } from '#/paraglide/runtime'
 
 export function getRouter() {
   const context = getContext()
@@ -22,6 +24,18 @@ export function getRouter() {
     scrollRestoration: true,
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+
+    /*
+     * O idioma mora no prefixo do endereço (`/en/portfolio`), e as rotas não
+     * sabem disso: `routes/` declara `/portfolio` uma vez só. A entrada tira o
+     * prefixo antes de casar a rota, e a saída o devolve em todo `Link`, então
+     * quem navega em inglês continua em inglês sem que tela nenhuma monte URL
+     * com idioma à mão.
+     */
+    rewrite: {
+      input: ({ url }) => deLocalizeUrl(url),
+      output: ({ url }) => localizeUrl(url),
+    },
     defaultNotFoundComponent: () => <NotFoundPage />,
 
     /*
@@ -34,14 +48,15 @@ export function getRouter() {
     defaultErrorComponent: ({ reset }) => (
       <NotFoundPage code="500">
         <NotFoundPageTitle>{m.error_title()}</NotFoundPageTitle>
+        <NotFoundPageSubtitle>{m.error_subtitle()}</NotFoundPageSubtitle>
         <NotFoundPageDescription>
-          {m.error_subtitle()}. {m.error_description()}
+          {m.error_description()}
         </NotFoundPageDescription>
         <NotFoundPageActions>
-          <Button size="lg" className="rounded-full px-5" onClick={reset}>
+          <Button size="lg" className="w-fit rounded-full px-6" onClick={reset}>
             {m.error_retry()}
           </Button>
-          <NotFoundPageHomeLink />
+          <NotFoundPageHomeButton />
         </NotFoundPageActions>
       </NotFoundPage>
     ),

@@ -15,6 +15,7 @@ import { TooltipProvider } from '#/components/ui/tooltip'
 
 import { SITE_IMAGE, SITE_TITLE, SITE_URL } from '#/lib/site'
 import { ogLocale } from '#/lib/i18n'
+import { jsonLdScript, organizationJsonLd } from '#/lib/structured-data'
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
 
@@ -88,32 +89,9 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       },
       { rel: 'stylesheet', href: appCss },
     ],
-    scripts: [
-      {
-        type: 'application/ld+json',
-        children: JSON.stringify({
-          '@context': 'https://schema.org',
-          '@type': 'ProfessionalService',
-          name: SITE_TITLE,
-          description: m.meta_description(),
-          url: SITE_URL,
-          logo: SITE_IMAGE,
-          email: 'contato@maiyu.com',
-          telephone: '+55 97 98431-7149',
-          address: {
-            '@type': 'PostalAddress',
-            streetAddress: 'Rua Gildo Sampaio, 140',
-            addressLocality: 'Benjamin Constant',
-            addressRegion: 'AM',
-            addressCountry: 'BR',
-          },
-          sameAs: [
-            'https://github.com/maiyu-dev',
-            'https://linkedin.com/company/maiyu',
-          ],
-        }),
-      },
-    ],
+    // A identidade do site em toda rota, e não só na home: quem chega por um
+    // artigo compartilhado precisa que o rastreador saiba de quem é a página.
+    scripts: [jsonLdScript(organizationJsonLd(m.meta_description()))],
   }),
   shellComponent: RootDocument,
 })
