@@ -22,30 +22,6 @@ jobs:
     name: Trigger Coolify Deploy
     runs-on: ubuntu-latest
     steps:
-      # A porta e o healthcheck da aplicação moram no painel do Coolify, fora
-      # do repositório, e foram o que derrubou o primeiro deploy do frontend
-      # novo: a aplicação ainda esperava o nginx do site anterior na porta 80, e
-      # a imagem Nitro escuta na 3000. O proxy perdeu o container e o site
-      # respondeu 503 até a cadeia antiga voltar.
-      #
-      # Por isso o próprio deploy declara o que a imagem precisa, antes de
-      # disparar: porta 3000 e healthcheck em `/health` (a rota que não depende
-      # de renderizar a home). É idempotente, e com `-f` um token sem permissão
-      # de escrita reprova aqui, antes do deploy, com o site anterior de pé.
-      - name: Alinha a aplicação à imagem Nitro
-        env:
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-        run: |
-          set -euo pipefail
-
-          resposta=$(curl -fsS -X PATCH \
-            "${COOLIFY_URL}/api/v1/applications/${UUID_APP}" \
-            -H "Authorization: Bearer ${COOLIFY_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"ports_exposes":"3000","health_check_enabled":true,"health_check_path":"/health","health_check_port":"3000"}')
-
-          echo "Aplicação: ${resposta}"
-
       # `-f` é o que faz o passo reprovar quando o Coolify responde erro. Sem
       # ele o curl sai com código 0 mesmo em 401 ou 404, e um deploy que nunca
       # aconteceu aparece verde no histórico.
