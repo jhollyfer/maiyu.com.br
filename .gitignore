@@ -7,3 +7,7 @@
 .idea/
 
 node_modules/
+
+# Build solto na raiz. O site é `frontend/`, e o build dele sai em
+# `frontend/.output/`, que o `frontend/.gitignore` já cobre.
+dist/
