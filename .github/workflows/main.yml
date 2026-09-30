@@ -4,6 +4,13 @@ on:
   push:
     branches: [main]
 
+# Um push de cada vez. Sem isto, dois pushes seguidos em `main` disparam dois
+# deploys que correm juntos, e o segundo a terminar publica a imagem que
+# terminou por ultimo - que nao e necessariamente a do commit mais novo.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-frontend:
     uses: ./.github/workflows/main-build-frontend.yml
