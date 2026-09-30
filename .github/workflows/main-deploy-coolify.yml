@@ -6,47 +6,155 @@ on:
       COOLIFY_TOKEN:
         required: true
 
+# Os valores que mudam de projeto para projeto, num lugar só. Três aqui e não
+# cinco como no academy: a Maiyu não tem API, só o site. O uuid é da
+# APLICAÇÃO, não da instância: o valor está na URL do painel, em
+# `/project/<projeto>/application/<UUID>`. Uuid de projeto, de serviço, ou de
+# aplicação de outro team que não o do token não é recusado - é aceito e não
+# implanta nada, que é o modo de falha que este arquivo passou a cobrar.
+env:
+  COOLIFY_URL: https://coolify.maiyu.com.br
+  UUID_APP: q9o4atnvkuo67rnatilazezp
+  URL_APP: https://maiyu.com.br
+
 jobs:
   deploy:
     name: Trigger Coolify Deploy
     runs-on: ubuntu-latest
     steps:
+      # A porta e o healthcheck da aplicação moram no painel do Coolify, fora
+      # do repositório, e foram o que derrubou o primeiro deploy do frontend
+      # novo: a aplicação ainda esperava o nginx do site anterior na porta 80, e
+      # a imagem Nitro escuta na 3000. O proxy perdeu o container e o site
+      # respondeu 503 até a cadeia antiga voltar.
+      #
+      # Por isso o próprio deploy declara o que a imagem precisa, antes de
+      # disparar: porta 3000 e healthcheck em `/health` (a rota que não depende
+      # de renderizar a home). É idempotente, e com `-f` um token sem permissão
+      # de escrita reprova aqui, antes do deploy, com o site anterior de pé.
+      - name: Alinha a aplicação à imagem Nitro
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          resposta=$(curl -fsS -X PATCH \
+            "${COOLIFY_URL}/api/v1/applications/${UUID_APP}" \
+            -H "Authorization: Bearer ${COOLIFY_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d '{"ports_exposes":"3000","health_check_enabled":true,"health_check_path":"/health","health_check_port":"3000"}')
+
+          echo "Aplicação: ${resposta}"
+
       # `-f` é o que faz o passo reprovar quando o Coolify responde erro. Sem
       # ele o curl sai com código 0 mesmo em 401 ou 404, e um deploy que nunca
       # aconteceu aparece verde no histórico.
       #
       # POST, e não GET: desde o Coolify v4.2 a rota GET /api/v1/deploy existe
       # só para devolver 405. Voltar para GET quebra o deploy de novo.
-      - name: Deploy App to Coolify
+      #
+      # E o código HTTP sozinho não basta: quando o `uuid` não casa com nenhuma
+      # aplicação visível ao token, o Coolify responde **200 com a lista de
+      # implantações vazia**. O `-f` deixa passar, o job fecha verde e nada foi
+      # publicado. Por isso o corpo é lido, impresso e cobrado.
+      - name: Dispara o deploy no Coolify
+        env:
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
-          curl -fsS -X POST \
-            "https://coolify.maiyu.com.br/api/v1/deploy" \
-            -H "Authorization: Bearer ${{ secrets.COOLIFY_TOKEN }}" \
-            -H "Content-Type: application/json" \
-            -d '{"uuid":"q9o4atnvkuo67rnatilazezp","force":false}'
+          set -euo pipefail
 
-      # O build deste mesmo run, para saber qual bundle deveria estar no ar.
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-build
-          path: dist/
+          disparar() {
+            rotulo="$1"
+            uuid="$2"
+
+            resposta=$(curl -fsS -X POST \
+              "${COOLIFY_URL}/api/v1/deploy" \
+              -H "Authorization: Bearer ${COOLIFY_TOKEN}" \
+              -H "Content-Type: application/json" \
+              -d "{\"uuid\":\"${uuid}\",\"force\":false}")
+
+            echo "${rotulo}: ${resposta}"
+
+            if ! printf '%s' "${resposta}" | grep -q 'deployment_uuid'; then
+              echo "O Coolify aceitou o pedido de ${rotulo} e não enfileirou implantação nenhuma."
+              echo "O uuid ${uuid} não corresponde a nenhuma aplicação alcançável por este token."
+              exit 1
+            fi
+          }
+
+          disparar "App" "${UUID_APP}"
 
       # O disparo acima é assíncrono: o Coolify responde assim que aceita o
-      # pedido, não quando o container novo sobe. O site é estático, então um
-      # 200 sozinho não prova nada (o container antigo também responde 200).
-      # A prova é o site servir o bundle com o hash gerado neste build.
-      - name: Smoke test do site
+      # pedido, não quando o container novo sobe. Sem esta espera o passo
+      # terminaria antes de existir o que verificar.
+      #
+      # O que se verifica é a REVISÃO, e não a vitalidade: o `/health` do
+      # container antigo responde 200 igual ao do novo, e o job fecharia verde
+      # contra a versão que já estava no ar. O site serve `revision.txt`, e a
+      # espera só termina quando ele bate com o commit desta execução.
+      #
+      # O site antigo, estático, conferia o hash do bundle no HTML da home. Com
+      # SSR o HTML é gerado a cada requisição e o hash deixa de ser prova
+      # estável, então a régua passa a ser a do academy.
+      #
+      # E a conferência é pelo CORPO, nunca pelo código HTTP: o Nitro atende
+      # `/revision.txt` ausente com o catch-all de SSR, que responde 200 com
+      # HTML. Um `curl -f` ali passaria verde contra uma imagem que não tem o
+      # arquivo - que é a versão frontend do mesmo defeito que trouxe este passo.
+      #
+      # Isso aconteceu de verdade, e por um motivo que este comentário não
+      # previa: o carimbo era escrito **depois** do build, e o Nitro serve
+      # `public/` por um manifesto congelado durante o build, não lendo o
+      # diretório. O arquivo existia na imagem e ainda assim caía no catch-all.
+      # `main-build-frontend.yml` hoje carimba antes do build e cobra a entrada
+      # no manifesto - e o passo abaixo diz o que recebeu quando não casa, que é
+      # o que teria apontado a causa na primeira tentativa.
+      - name: Smoke test da revisão
         run: |
-          esperado=$(grep -oE '/assets/index-[^"]+\.js' dist/index.html | head -1)
-          echo "Bundle esperado: $esperado"
-          for tentativa in $(seq 1 20); do
-            if curl -fsS --max-time 10 https://maiyu.com.br/ | grep -qF "$esperado"; then
-              echo "Versão nova no ar na tentativa $tentativa."
-              exit 0
-            fi
-            echo "Ainda servindo a versão anterior (tentativa $tentativa)..."
-            sleep 15
-          done
-          echo "O site não passou a servir $esperado em cinco minutos."
-          exit 1
+          set -euo pipefail
+
+          corpo=$(mktemp)
+          trap 'rm -f "${corpo}"' EXIT
+
+          esperar() {
+            rotulo="$1"
+            endereco="$2"
+
+            for tentativa in $(seq 1 8); do
+              # Apagar antes de cada tentativa, e não confiar no `-o`: quando o
+              # curl não conecta, ele não trunca o arquivo, e o corpo da
+              # tentativa anterior sobreviveria para ser conferido de novo - um
+              # falso positivo esperando a hora de acontecer.
+              rm -f "${corpo}"
+
+              # O corpo vai para arquivo, e não para variável: a resposta errada
+              # aqui é HTML de SSR, que carrega byte nulo, e `$(...)` o descarta
+              # com um aviso do bash que não diz nada sobre a causa.
+              resumo=$(curl -sS --max-time 10 -o "${corpo}" -w '%{http_code} %{content_type}' "${endereco}" || true)
+              codigo="${resumo%% *}"
+              [ -n "${codigo}" ] || codigo=000
+
+              if [ ! -s "${corpo}" ] || [ "${codigo}" = "000" ] || [ "${codigo}" -ge 500 ]; then
+                echo "${rotulo} ainda não responde (tentativa ${tentativa}, ${resumo:-sem resposta})..."
+              elif grep -q "${GITHUB_SHA}" "${corpo}"; then
+                echo "${rotulo} respondeu na revisão ${GITHUB_SHA} (tentativa ${tentativa})."
+                return 0
+              else
+                # O `head -c` é o que faltou quando este passo gastou cinco
+                # minutos repetindo "revisão antiga" contra uma resposta que era
+                # HTML: o tipo e os primeiros bytes apontam a causa na primeira
+                # tentativa, em vez de custar uma investigação inteira.
+                echo "${rotulo} respondeu ${resumo}, sem a revisão (tentativa ${tentativa}):"
+                head -c 120 "${corpo}" | tr -d '\000' | tr '\n' ' '
+                echo
+              fi
+
+              sleep 15
+            done
+
+            echo "${rotulo} não chegou na revisão ${GITHUB_SHA} em dois minutos."
+            echo "Deploy real do Coolify leva de 10 a 70 segundos: passar disso é defeito, não lentidão."
+            return 1
+          }
+
+          esperar "O App" "${URL_APP}/revision.txt"
