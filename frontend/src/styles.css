@@ -466,6 +466,16 @@
   animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/*
+ * O rótulo pequeno acima de um título de seção. Raro: só onde o título sozinho
+ * não situa, como no academy.
+ */
+@utility eyebrow {
+  margin-bottom: 1rem;
+  font-size: var(--text-small);
+  opacity: 0.6;
+}
+
 @utility birds {
   animation: glide 26s ease-in-out infinite alternate;
 }

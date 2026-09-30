@@ -16,7 +16,9 @@ describe('buildSitemap', () => {
   })
 
   it('escapa o & de uma query string', () => {
-    const xml = buildSitemap('https://maiyu.com.br', [{ path: '/blog?a=1&b=2' }])
+    const xml = buildSitemap('https://maiyu.com.br', [
+      { path: '/blog?a=1&b=2' },
+    ])
 
     expect(xml).toContain('a=1&amp;b=2')
     expect(xml).not.toContain('a=1&b=2')
