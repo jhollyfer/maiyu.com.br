@@ -72,7 +72,7 @@ function RouteComponent(): React.JSX.Element {
     <>
       <PageHero title={m.career_heroTitle()} lead={m.career_heroDescription()}>
         <div className={cn(REVEAL, 'mt-10 flex items-center gap-3 delay-200')}>
-          <div className="flex -space-x-2">
+          <div className="flex shrink-0 -space-x-2">
             {team.map((member) => (
               <img
                 key={member.name}
