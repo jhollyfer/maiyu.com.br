@@ -10,11 +10,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-foreground text-background hover:bg-[color:var(--color-forest)] hover:text-[color:var(--color-canvas-cream)] dark:hover:bg-[color:var(--color-forest-bright)]",
+          "bg-foreground text-background hover:bg-navy-2 dark:hover:bg-brand-blue",
         forest:
-          "bg-[color:var(--color-forest)] text-[color:var(--color-canvas-cream)] hover:bg-[color:var(--color-forest-bright)] dark:bg-[color:var(--color-forest-bright)] dark:text-[color:var(--color-canvas-night)]",
+          "bg-navy text-brand-green hover:bg-navy-2 dark:bg-brand-green dark:text-navy dark:hover:bg-brand-blue",
         amber:
-          "bg-[color:var(--color-amber)] text-[color:var(--color-canvas-night)] hover:bg-[color:var(--color-amber-warm)] shadow-[0_1px_0_rgba(0,0,0,0.08),0_8px_24px_-8px_rgba(216,138,43,0.4)]",
+          "bg-brand-green text-navy hover:bg-brand-blue shadow-[0_10px_28px_-12px_rgba(136,255,154,0.75)]",
         destructive:
           "bg-destructive text-destructive-foreground hover:opacity-90 focus-visible:ring-destructive/40",
         outline:
@@ -24,7 +24,7 @@ const buttonVariants = cva(
         ghost:
           "bg-transparent hover:bg-foreground/[0.06] text-foreground",
         link:
-          "text-[color:var(--color-forest)] dark:text-[color:var(--color-forest-bright)] underline-offset-4 hover:underline rounded-none",
+          "text-foreground dark:text-brand-green underline-offset-4 hover:underline rounded-none",
       },
       size: {
         default: "h-10 px-5 py-2 has-[>svg]:px-4",

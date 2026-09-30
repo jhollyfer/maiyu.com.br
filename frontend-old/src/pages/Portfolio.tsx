@@ -18,7 +18,6 @@ const Portfolio = () => {
   return (
     <>
       <PageHero
-        pill={t("portfolio.badge")}
         title={`${t("portfolio.heroTitle1")} ${t("portfolio.heroTitle2")} ${t("portfolio.heroTitle3")}`}
         lead={t("portfolio.heroDescription")}
       />
@@ -31,6 +30,9 @@ const Portfolio = () => {
               <img
                 src={featuredProject.image}
                 alt={featuredProject.title}
+                width={1863}
+                height={927}
+                style={{ objectPosition: featuredProject.focus }}
                 className="absolute inset-0 size-full object-cover"
               />
             </div>
@@ -39,7 +41,7 @@ const Portfolio = () => {
                 <p className="text-small text-foreground/65">
                   {t("portfolio.featuredLabel")}, {featuredProject.year}
                 </p>
-                <h2 className="mt-2 text-h1">{featuredProject.title}</h2>
+                <h2 className="mt-2 text-h2 lg:text-h1">{featuredProject.title}</h2>
                 <p className="mt-6 font-serif text-lead leading-snug text-foreground/85">
                   {featuredProject.description[language]}
                 </p>
@@ -93,6 +95,11 @@ const Portfolio = () => {
                   <img
                     src={project.image}
                     alt={project.title}
+                    width={1863}
+                    height={927}
+                    loading="lazy"
+                    decoding="async"
+                    style={{ objectPosition: project.focus }}
                     className="size-full object-cover transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.03]"
                   />
                 </div>

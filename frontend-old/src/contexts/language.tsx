@@ -23,7 +23,6 @@ const translations: Translations = {
     "nav.contact": "Contact",
     "nav.getInTouch": "Book a call",
 
-    "home.pill": "Consulting · Technology · Development · Design",
     "home.heroTitle1": "Technology born",
     "home.heroTitle2": "in the rainforest.",
     "home.heroDescription": "Consulting, technology, development and design under one roof. From strategy to the finished product, from Benjamin Constant, Amazonas, to anywhere.",
@@ -73,7 +72,6 @@ const translations: Translations = {
     "home.serviceImpactDesc": "Technology with consequences for the Amazon basin. Tools that outlast us, for the communities we live alongside.",
     "home.selectedWorkDesc": "A short list of projects we cared about making.",
 
-    "blog.eyebrow": "The Journal",
     "blog.title": "Notes from the build.",
     "blog.description": "Notes on consulting, technology, engineering and design from the Amazon.",
     "blog.featured": "Featured",
@@ -107,7 +105,6 @@ const translations: Translations = {
     "blogArticle.notFound": "This piece doesn't exist, or was never published.",
     "blogArticle.returnToJournal": "Return to the Journal",
 
-    "career.badge": "We're Hiring",
     "career.heroEyebrow": "Open Positions",
     "career.heroTitle": "Build something that matters, with people who care.",
     "career.heroDescription": "We are a small, deliberately close team. We ship things we're proud of, work in hours that respect real life, and treat the craft seriously.",
@@ -150,7 +147,6 @@ const translations: Translations = {
     "career.selectQa": "QA Engineer",
     "career.selectBackend": "Back-end Engineer (Node.js)",
 
-    "contactPage.eyebrow": "Let's Talk",
     "contactPage.subtitle": "Reach Out",
     "contactPage.title": "Tell us about your technology challenge.",
     "contactPage.description": "We read every message personally and reply within one working day. No sales funnels, no bots, no triage queue.",
@@ -173,7 +169,6 @@ const translations: Translations = {
     "contactPage.locationTitle": "Visit",
     "contactPage.locationSubtitle": "Where we actually are",
 
-    "portfolio.badge": "Selected Work",
     "portfolio.eyebrow": "Case Studies · 2023-2025",
     "portfolio.heroTitle1": "Real technology",
     "portfolio.heroTitle2": "for real communities,",
@@ -214,7 +209,6 @@ const translations: Translations = {
     "nav.contact": "Contato",
     "nav.getInTouch": "Agendar conversa",
 
-    "home.pill": "Consultoria · Tecnologia · Desenvolvimento · Design",
     "home.heroTitle1": "Tecnologia que nasce",
     "home.heroTitle2": "na floresta.",
     "home.heroDescription": "Consultoria, tecnologia, desenvolvimento e design no mesmo lugar. Da estratégia ao produto pronto, de Benjamin Constant, Amazonas, para qualquer lugar.",
@@ -264,7 +258,6 @@ const translations: Translations = {
     "home.serviceImpactDesc": "Tecnologia com consequência pra bacia amazônica. Ferramentas que sobrevivem a nós, pras comunidades onde vivemos.",
     "home.selectedWorkDesc": "Uma lista curta de projetos que tivemos orgulho de fazer.",
 
-    "blog.eyebrow": "O Diário",
     "blog.title": "Anotações da obra.",
     "blog.description": "Notas sobre consultoria, tecnologia, engenharia e design a partir da Amazônia.",
     "blog.featured": "Em Destaque",
@@ -298,7 +291,6 @@ const translations: Translations = {
     "blogArticle.notFound": "Esta peça não existe, ou nunca foi publicada.",
     "blogArticle.returnToJournal": "Voltar ao Diário",
 
-    "career.badge": "Estamos Contratando",
     "career.heroEyebrow": "Vagas Abertas",
     "career.heroTitle": "Construa algo que importa, com gente que se importa.",
     "career.heroDescription": "Somos um time pequeno, deliberadamente próximo. Entregamos coisas das quais temos orgulho, trabalhamos em horários que respeitam a vida real, e levamos o ofício a sério.",
@@ -341,7 +333,6 @@ const translations: Translations = {
     "career.selectQa": "QA Engineer",
     "career.selectBackend": "Engenheiro Back-end (Node.js)",
 
-    "contactPage.eyebrow": "Vamos Conversar",
     "contactPage.subtitle": "Entre em Contato",
     "contactPage.title": "Conte seu desafio de tecnologia.",
     "contactPage.description": "Lemos cada mensagem pessoalmente e respondemos em até um dia útil. Sem funil de vendas, sem bots, sem fila de triagem.",
@@ -364,7 +355,6 @@ const translations: Translations = {
     "contactPage.locationTitle": "Visitar",
     "contactPage.locationSubtitle": "Onde nós realmente estamos",
 
-    "portfolio.badge": "Trabalhos Selecionados",
     "portfolio.eyebrow": "Estudos de Caso · 2023-2025",
     "portfolio.heroTitle1": "Tecnologia real",
     "portfolio.heroTitle2": "para comunidades reais,",
@@ -405,7 +395,6 @@ const translations: Translations = {
     "nav.contact": "Contacto",
     "nav.getInTouch": "Agendar llamada",
 
-    "home.pill": "Consultoría · Tecnología · Desarrollo · Diseño",
     "home.heroTitle1": "Tecnología que nace",
     "home.heroTitle2": "en la selva.",
     "home.heroDescription": "Consultoría, tecnología, desarrollo y diseño bajo un mismo techo. De la estrategia al producto terminado, desde Benjamin Constant, Amazonas, a cualquier lugar.",
@@ -455,7 +444,6 @@ const translations: Translations = {
     "home.serviceImpactDesc": "Tecnología con consecuencias para la cuenca amazónica. Herramientas que nos sobreviven, para las comunidades donde vivimos.",
     "home.selectedWorkDesc": "Una lista corta de proyectos que nos enorgullecimos de hacer.",
 
-    "blog.eyebrow": "El Diario",
     "blog.title": "Notas desde la obra.",
     "blog.description": "Notas sobre consultoría, tecnología, ingeniería y diseño desde la Amazonía.",
     "blog.featured": "Destacado",
@@ -489,7 +477,6 @@ const translations: Translations = {
     "blogArticle.notFound": "Esta pieza no existe, o nunca fue publicada.",
     "blogArticle.returnToJournal": "Volver al Diario",
 
-    "career.badge": "Estamos Contratando",
     "career.heroEyebrow": "Vacantes Abiertas",
     "career.heroTitle": "Construye algo que importa, con gente que se importa.",
     "career.heroDescription": "Somos un equipo pequeño, deliberadamente cercano. Entregamos cosas de las que estamos orgullosos, trabajamos en horarios que respetan la vida real, y tomamos el oficio en serio.",
@@ -532,7 +519,6 @@ const translations: Translations = {
     "career.selectQa": "QA Engineer",
     "career.selectBackend": "Ingeniero Back-end (Node.js)",
 
-    "contactPage.eyebrow": "Hablemos",
     "contactPage.subtitle": "Contáctanos",
     "contactPage.title": "Cuéntanos tu desafío tecnológico.",
     "contactPage.description": "Leemos cada mensaje personalmente y respondemos en un día hábil. Sin embudos de venta, sin bots, sin cola de triage.",
@@ -555,7 +541,6 @@ const translations: Translations = {
     "contactPage.locationTitle": "Visitar",
     "contactPage.locationSubtitle": "Donde realmente estamos",
 
-    "portfolio.badge": "Trabajos Seleccionados",
     "portfolio.eyebrow": "Casos de Estudio · 2023-2025",
     "portfolio.heroTitle1": "Tecnología real",
     "portfolio.heroTitle2": "para comunidades reales,",

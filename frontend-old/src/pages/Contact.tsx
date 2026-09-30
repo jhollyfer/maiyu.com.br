@@ -77,7 +77,6 @@ const Contact = () => {
   return (
     <>
       <PageHero
-        pill={t("contactPage.eyebrow")}
         title={t("contactPage.title")}
         lead={t("contactPage.description")}
       />
@@ -196,7 +195,7 @@ const Contact = () => {
                   {item.values.map((val) => (
                     <li key={val.text}>
                       {"href" in val ? (
-                        <a href={val.href} className="underline-offset-4 hover:underline">
+                        <a href={val.href} className="inline-block py-1.5 underline-offset-4 hover:underline">
                           {val.text}
                         </a>
                       ) : (

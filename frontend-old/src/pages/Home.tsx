@@ -4,7 +4,8 @@ import {
   StaggerContainer,
   staggerItemVariants,
 } from "@/components/motion/animate-in-view";
-import { Cloud, SkyBackdrop } from "@/components/sky";
+import { Forest, SkyBackdrop } from "@/components/sky";
+import { VisionScene } from "@/components/vision-scenes";
 import { useLanguage } from "@/contexts/language";
 import { articles } from "@/data/articles";
 import { projects } from "@/data/projects";
@@ -59,22 +60,22 @@ function Eyebrow({ children, className }: { children: React.ReactNode; className
 /** Glider: a leaf riding the wind, the hero's focal point. */
 function Glider() {
   return (
-    <svg viewBox="0 0 260 200" aria-hidden="true" className="float h-auto w-full">
+    <svg viewBox="0 0 260 200" aria-hidden="true" className="float h-auto w-full text-navy">
       <defs>
         <linearGradient id="leaf" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#FFE4CD" />
-          <stop offset="0.6" stopColor="#F2C6A2" />
-          <stop offset="1" stopColor="#E9A57E" />
+          <stop offset="0" stopColor="#88FF9A" />
+          <stop offset="0.6" stopColor="#77EED7" />
+          <stop offset="1" stopColor="#31E1F7" />
         </linearGradient>
         <linearGradient id="trail" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0" stopColor="#DDE88A" stopOpacity="0" />
-          <stop offset="1" stopColor="#DDE88A" stopOpacity="0.9" />
+          <stop offset="0" stopColor="#31E1F7" stopOpacity="0" />
+          <stop offset="1" stopColor="#31E1F7" stopOpacity="0.9" />
         </linearGradient>
       </defs>
       <path d="M8 196 C 50 170, 80 150, 118 118" stroke="url(#trail)" strokeWidth="10" strokeLinecap="round" fill="none" strokeDasharray="1 14" />
       <path d="M112 124 C 130 60, 190 20, 252 8 C 238 70, 196 124, 112 124 Z" fill="url(#leaf)" />
-      <path d="M112 124 C 160 88, 206 46, 252 8" stroke="#253241" strokeOpacity="0.35" strokeWidth="2" fill="none" />
-      <path d="M150 96 L 168 104 M 176 70 L 196 76 M 200 46 L 220 50" stroke="#253241" strokeOpacity="0.2" strokeWidth="2" strokeLinecap="round" />
+      <path d="M112 124 C 160 88, 206 46, 252 8" stroke="currentColor" strokeOpacity="0.35" strokeWidth="2" fill="none" />
+      <path d="M150 96 L 168 104 M 176 70 L 196 76 M 200 46 L 220 50" stroke="currentColor" strokeOpacity="0.2" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -90,23 +91,20 @@ function Hero() {
   });
 
   return (
-    <section className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden pt-28 pb-12">
+    <section className="relative isolate flex min-h-[100dvh] flex-col overflow-hidden pt-28 pb-[clamp(170px,17vw,240px)]">
       <SkyBackdrop className="-z-10" />
       <div className="rails pointer-events-none absolute inset-0 -z-10 opacity-60" />
 
       <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-4 md:px-8">
-        <motion.span {...enter(0)} className="pill mx-auto bg-surface/40 backdrop-blur-sm">
-          {t("home.pill")}
-        </motion.span>
-
-        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.05em] text-[#253241] dark:text-foreground md:mt-14">
+        <h1 className="relative mt-10 text-[clamp(2.8rem,8.4vw,7.75rem)] leading-[0.95] tracking-[-0.015em] text-foreground md:mt-14">
           <motion.span {...enter(0.1)} className="block md:pl-[4%]">
             {t("home.heroTitle1")}
           </motion.span>
           <motion.span {...enter(0.2)} className="block text-right md:pr-[4%]">
-            {t("home.heroTitle2")}
+            <span className="text-gradient-blue dark:text-gradient-green">{t("home.heroTitle2")}</span>
           </motion.span>
         </h1>
+        <motion.span {...enter(0.3)} aria-hidden="true" className="brand-bar ml-auto mt-6 w-28 md:mr-[4%]" />
 
         <motion.div
           {...enter(0.35)}
@@ -119,14 +117,14 @@ function Hero() {
           {...enter(0.45)}
           className="mt-auto flex flex-col items-start gap-6 pt-10 md:ml-auto md:max-w-md"
         >
-          <p className="font-serif text-lead leading-snug text-[#253241] dark:text-foreground/85">
+          <p className="font-serif text-lead leading-snug text-foreground/85">
             {t("home.heroDescription")}
           </p>
           <div className="flex flex-wrap gap-2">
             <CtaLink to="/contact" className="rounded-xl">
               {t("home.startProject")}
             </CtaLink>
-            <CtaLink to="/portfolio" variant="light" className="rounded-xl">
+            <CtaLink to="/portfolio" variant="soft" className="rounded-xl">
               {t("home.viewWork")}
             </CtaLink>
           </div>
@@ -148,12 +146,13 @@ function Work() {
     <section className="overflow-hidden py-24 md:py-32">
       <AnimateInView className="mx-auto max-w-2xl px-4 text-center">
         <h2 className="text-h2">{t("home.workTitle")}</h2>
+        <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
       </AnimateInView>
 
       <div className="relative mt-10 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]">
         <ul className="marquee flex w-max gap-16 pr-16">
           {[...names, ...names].map((p, i) => (
-            <li key={i} className="font-display text-h3 font-medium tracking-[-0.03em] text-foreground/45">
+            <li key={i} className="font-display text-h3 font-medium tracking-[-0.015em] text-foreground/45">
               {p.title}
             </li>
           ))}
@@ -185,7 +184,7 @@ function Work() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <CtaLink to={project.url} variant="peach" className="rounded-xl" arrow>
+                  <CtaLink to={project.url} variant="soft" className="rounded-xl" arrow>
                     {t("home.workVisit")}
                   </CtaLink>
                   <ul className="flex flex-wrap gap-1.5">
@@ -198,7 +197,14 @@ function Work() {
                 </div>
               </div>
               <div className="relative aspect-[4/3] overflow-hidden rounded-2xl md:col-span-6">
-                <img src={project.image} alt={project.title} className="absolute inset-0 size-full object-cover" />
+                <img
+                  src={project.image}
+                  alt={project.title}
+                  width={1863}
+                  height={927}
+                  style={{ objectPosition: project.focus }}
+                  className="absolute inset-0 size-full object-cover"
+                />
               </div>
             </motion.div>
           </AnimatePresence>
@@ -212,18 +218,22 @@ function Work() {
           >
             <ArrowLeft size={16} />
           </button>
-          <div className="flex gap-1.5">
+          <div className="flex">
             {projects.map((p, i) => (
               <button
                 key={p.slug}
                 onClick={() => setActive(i)}
                 aria-label={p.title}
                 aria-current={i === active}
-                className={cn(
-                  "h-1.5 rounded-full transition-all duration-500",
-                  i === active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25",
-                )}
-              />
+                className="flex h-8 items-center px-2"
+              >
+                <span
+                  className={cn(
+                    "block h-1.5 rounded-full transition-[width,background-color] duration-500",
+                    i === active ? "w-6 bg-foreground" : "w-1.5 bg-foreground/25",
+                  )}
+                />
+              </button>
             ))}
           </div>
           <button
@@ -264,6 +274,7 @@ function Vision() {
         <div className="flex flex-col md:col-span-5">
           <Eyebrow>{t("home.visionLabel")}</Eyebrow>
           <h2 className="text-h2">{t("home.visionTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5" />
           <ol className="mt-auto space-y-3 pt-10">
             {items.map((item, i) => {
               const on = i === step || reduce;
@@ -271,13 +282,13 @@ function Vision() {
                 <li key={item.title} className="flex gap-5">
                   <span
                     className={cn(
-                      "font-display font-medium leading-none tracking-[-0.04em] transition-all duration-500",
+                      "font-display font-medium leading-none tracking-[-0.015em] transition-[font-size,color] duration-500",
                       on ? "text-[3.5rem] text-foreground" : "text-h3 text-foreground/25",
                     )}
                   >
                     {i + 1}
                   </span>
-                  <div className={cn("grid transition-all duration-500", on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 max-md:grid-rows-[1fr] max-md:opacity-100")}>
+                  <div className={cn("grid transition-[grid-template-rows,opacity] duration-500", on ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0 max-md:grid-rows-[1fr] max-md:opacity-100")}>
                     <div className="overflow-hidden">
                       <h3 className="pt-2 text-h4">{item.title}</h3>
                       <p className="mt-2 max-w-[44ch] font-serif text-body-lg text-foreground/75">{item.desc}</p>
@@ -290,16 +301,8 @@ function Vision() {
         </div>
 
         <div className="relative isolate min-h-[420px] overflow-hidden rounded-[1.75rem] bg-navy md:col-span-7">
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(247,249,232,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(247,249,232,0.06)_1px,transparent_1px)] bg-[size:64px_64px]" />
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-            <div
-              className="size-[min(22rem,60vw)] rounded-full transition-[box-shadow,background] duration-1000"
-              style={{
-                background: `radial-gradient(circle at 35% 30%, ${["#FFE4CD", "#D0FDF2", "#FBFFDC"][step]} 0%, ${["#F2C6A2", "#A8DDD0", "#DDE88A"][step]}55 40%, transparent 70%)`,
-                boxShadow: `0 0 120px 10px ${["#F2C6A2", "#A8DDD0", "#DDE88A"][step]}40`,
-              }}
-            />
-          </div>
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(49,225,247,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(49,225,247,0.07)_1px,transparent_1px)] bg-[size:64px_64px]" />
+          <VisionScene step={step} />
           <span className="absolute bottom-6 left-6 rounded-lg border border-on-navy/30 px-3 py-1.5 text-small text-on-navy">
             {items[step].title}
           </span>
@@ -328,6 +331,7 @@ function Process() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mx-auto mb-14 max-w-2xl text-center">
           <h2 className="text-h2">{t("home.processTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
           <p className="mt-5 font-serif text-lead text-foreground/75">{t("home.processDesc")}</p>
         </AnimateInView>
 
@@ -360,7 +364,7 @@ function Process() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: 0.15, ease: EASE }}
                   >
-                    <s.icon size={40} strokeWidth={1.1} className="mb-6 text-[#253241]" />
+                    <s.icon size={40} strokeWidth={1.1} className="mb-6 text-foreground" />
                     <p className="max-w-[40ch] font-serif text-lead leading-snug text-foreground/90">{s.desc}</p>
                   </motion.div>
                 ) : (
@@ -392,9 +396,7 @@ function Capabilities() {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mb-12 flex flex-col gap-5">
           <h2 className="max-w-3xl text-h2">{t("home.servicesHeading")}</h2>
-          <span className="w-fit rounded-md bg-tint-green px-2.5 py-1 text-micro font-medium text-[#253241] dark:text-foreground">
-            {t("home.pill")}
-          </span>
+          <span aria-hidden="true" className="brand-bar" />
         </AnimateInView>
 
         <div className="grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-foreground/10 md:grid-cols-12">
@@ -429,21 +431,30 @@ function NavyBand() {
 
   return (
     <section className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32">
-      <div className="absolute inset-0 -z-10 [--border:rgba(247,249,232,0.1)]">
+      <div className="absolute inset-0 -z-10 [--border:rgba(49,225,247,0.12)]">
         <div className="rails size-full" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <AnimateInView className="mx-auto max-w-2xl text-center">
           <h2 className="text-h2">{t("home.teamTitle")}</h2>
+          <span aria-hidden="true" className="brand-bar mt-5 mx-auto" />
           <p className="mx-auto mt-5 max-w-[48ch] font-serif text-lead text-on-navy/75">{t("home.teamDesc")}</p>
         </AnimateInView>
 
         <StaggerContainer className="mx-auto mt-14 flex max-w-5xl flex-wrap justify-center gap-3 md:gap-4">
           {team.map((m, i) => (
             <motion.figure key={m.name} variants={staggerItemVariants} className={cn("w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] md:w-[calc(20%-0.8rem)]", i % 2 === 1 && "md:-translate-y-8")}>
-              <div className={cn("overflow-hidden rounded-2xl", TEAM_TINTS[i])}>
-                <img src={m.img} alt={m.name} className="aspect-[3/4] w-full object-cover mix-blend-multiply" />
+              <div className={cn("group overflow-hidden rounded-2xl ring-1 ring-on-navy/10", TEAM_TINTS[i])}>
+                <img
+                  src={m.img}
+                  alt={m.name}
+                  width={384}
+                  height={512}
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[3/4] w-full object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.04]"
+                />
               </div>
               <figcaption className="mt-3 text-center text-small text-on-navy/80">{m.name}</figcaption>
             </motion.figure>
@@ -461,7 +472,7 @@ function NavyBand() {
         </div>
 
         <div className="mt-10 flex justify-center">
-          <CtaLink to="/career" variant="lime" className="rounded-xl" arrow>
+          <CtaLink to="/career" variant="brand" className="rounded-xl" arrow>
             {t("nav.career")}
           </CtaLink>
         </div>
@@ -472,7 +483,7 @@ function NavyBand() {
               <Eyebrow>{t("nav.blog")}</Eyebrow>
               <h2 className="text-h3">{t("home.notesTitle")}</h2>
             </div>
-            <Link to="/blog" className="text-small text-on-navy/70 underline-offset-4 hover:text-on-navy hover:underline">
+            <Link to="/blog" className="inline-block py-2 text-small text-on-navy/70 underline-offset-4 hover:text-on-navy hover:underline">
               {t("home.notesAll")}
             </Link>
           </AnimateInView>
@@ -483,11 +494,11 @@ function NavyBand() {
                 <Link to={`/blog/${a.slug}`} className="group flex items-center justify-between gap-6 py-5">
                   <div className="flex flex-wrap items-center gap-3">
                     <span className="text-body-lg transition-opacity group-hover:opacity-75">{a.title[language]}</span>
-                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-[#253241]">
+                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-foreground">
                       {a.readTime[language]}
                     </span>
                   </div>
-                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#F7F9E8] text-[#253241] transition-transform duration-300 group-hover:translate-x-1">
+                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1">
                     <ArrowRight size={16} />
                   </span>
                 </Link>
@@ -505,20 +516,19 @@ function ClosingCta() {
   const { t } = useLanguage();
   return (
     <section className="relative overflow-hidden py-28 md:py-36">
-      <Cloud seed={4} className="cloud-drift -left-[8%] top-[10%] w-[30%] min-w-[220px] opacity-70" />
-      <Cloud seed={9} className="cloud-drift-2 -right-[6%] bottom-[5%] w-[26%] min-w-[200px] opacity-70" />
+      <Forest className="h-[34%] opacity-70" />
       <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center px-4 text-center">
-        <h2 className="text-display tracking-[-0.05em] text-[#253241] dark:text-foreground">{t("home.ctaTitle")}</h2>
+        <h2 className="text-display tracking-[-0.015em] text-foreground">{t("home.ctaTitle")}</h2>
         <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/80">{t("home.ctaDesc")}</p>
         <div className="mt-10 flex flex-wrap justify-center gap-2">
           <CtaLink to={CALL_URL} className="rounded-xl" arrow>
             {t("home.startProject")}
           </CtaLink>
-          <CtaLink to="/portfolio" variant="peach" className="rounded-xl">
+          <CtaLink to="/portfolio" variant="soft" className="rounded-xl">
             {t("home.viewWork")}
           </CtaLink>
         </div>
-        <Link to="/contact" className="mt-6 inline-flex items-center gap-1 text-small text-foreground/60 hover:text-foreground">
+        <Link to="/contact" className="mt-6 inline-flex items-center gap-1 py-2 text-small text-foreground/60 hover:text-foreground">
           {t("nav.contact")} <ArrowUpRight size={13} />
         </Link>
       </AnimateInView>

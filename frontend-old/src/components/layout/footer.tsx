@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { SkyBackdrop } from "../sky";
 
 const linkCls =
-  "group inline-flex items-center gap-1 text-body text-foreground/70 transition-colors duration-300 hover:text-foreground";
+  "group inline-flex items-center gap-1 py-1.5 text-body text-foreground/70 transition-colors duration-300 hover:text-foreground";
 
 const Footer = () => {
   const { t } = useLanguage();
@@ -30,7 +30,7 @@ const Footer = () => {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-foreground/10 bg-background md:grid-cols-4 md:divide-x md:divide-foreground/10">
           <div className="border-b border-foreground/10 p-8 md:border-b-0">
-            <img src="/favicon.svg" alt="" className="mb-5 size-9" />
+            <img src="/maiyu-symbol.svg" alt="" className="mb-5 size-9" />
             <p className="max-w-xs font-serif text-body-lg leading-snug text-foreground/85">
               {t("footer.tagline")}
             </p>
@@ -82,14 +82,14 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="flex flex-col items-center gap-4 pt-16 pb-8 text-center">
-          <p className="text-small text-[#253241]/80 dark:text-foreground/70">
+        <div className="relative z-10 flex flex-col items-center gap-4 pt-16 pb-8 text-center">
+          <p className="text-small text-foreground/70">
             © {currentYear} Maiyu. {t("footer.rights")}. {t("footer.signoff")}
           </p>
           <button
             onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             aria-label={t("footer.backToTop")}
-            className="inline-flex size-9 items-center justify-center rounded-full bg-[#253241] text-[#F7F9E8] transition-transform duration-300 hover:-translate-y-0.5"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <ArrowUp size={15} strokeWidth={1.75} />
           </button>
@@ -97,7 +97,7 @@ const Footer = () => {
 
         <p
           aria-hidden="true"
-          className="select-none text-center font-display text-[clamp(5rem,22vw,18rem)] font-medium leading-[0.72] tracking-[-0.06em] text-[#253241]/15 dark:text-foreground/10"
+          className="pointer-events-none select-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] uppercase leading-[0.9] text-gradient-green opacity-25 dark:opacity-20"
         >
           Maiyu
         </p>

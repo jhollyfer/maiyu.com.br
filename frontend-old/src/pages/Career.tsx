@@ -66,7 +66,6 @@ const Career = () => {
   return (
     <>
       <PageHero
-        pill={t("career.badge")}
         title={t("career.heroTitle")}
         lead={t("career.heroDescription")}
       >
@@ -77,6 +76,8 @@ const Career = () => {
                 key={m.name}
                 src={m.img}
                 alt={m.name}
+                width={40}
+                height={40}
                 className="size-10 rounded-full bg-tint-mint object-cover ring-2 ring-background"
               />
             ))}
@@ -89,7 +90,7 @@ const Career = () => {
       <section className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <AnimateInView className="mb-12 max-w-2xl">
-            <h2 className="text-h1">{t("career.benefitsTitle")}</h2>
+            <h2 className="text-h2 lg:text-h1">{t("career.benefitsTitle")}</h2>
             <p className="mt-5 font-serif text-lead text-foreground/75">
               {t("career.benefitsDescription")}
             </p>
@@ -118,7 +119,7 @@ const Career = () => {
       <section className="bg-surface py-24 md:py-32">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 md:grid-cols-12 md:px-8">
           <AnimateInView className="md:col-span-4">
-            <h2 className="text-h1">{t("career.jobsTitle")}</h2>
+            <h2 className="text-h2 lg:text-h1">{t("career.jobsTitle")}</h2>
             <p className="mt-5 font-serif text-lead text-foreground/75">
               {t("career.jobsDescription")}
             </p>
@@ -152,7 +153,7 @@ const Career = () => {
       <section id="apply" className="scroll-mt-20 py-24 md:py-32">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 md:px-8 lg:grid-cols-12">
           <AnimateInView className="lg:col-span-5">
-            <h2 className="text-h1">{t("career.formTitle")}</h2>
+            <h2 className="text-h2 lg:text-h1">{t("career.formTitle")}</h2>
             <p className="mt-5 font-serif text-lead text-foreground/75">
               {t("career.formSubtitle")}
             </p>

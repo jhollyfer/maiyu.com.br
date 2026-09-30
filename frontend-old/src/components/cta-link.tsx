@@ -10,9 +10,11 @@ const variants = {
   primary: "bg-primary text-primary-foreground hover:bg-primary/85",
   ghost:
     "border border-foreground/25 text-foreground hover:border-foreground/50 hover:bg-foreground/[0.04]",
-  peach: "bg-[#F2C6A2] text-[#101214] hover:bg-[#EDB78C]",
-  lime: "bg-[#DDE88A] text-[#101214] hover:bg-[#D2DF72]",
-  light: "bg-[#F7F9E8] text-[#253241] hover:bg-white",
+  /* Logo pairing: night ink with brand green; outlined green at night */
+  soft: "border border-foreground/25 bg-transparent text-foreground hover:border-foreground/50 hover:bg-foreground/[0.04] dark:border-brand-green/60 dark:text-brand-green dark:hover:bg-brand-green/10",
+  brand:
+    "bg-brand-green text-navy shadow-[0_10px_28px_-12px_rgba(136,255,154,0.75)] hover:bg-brand-blue",
+  light: "bg-on-navy text-navy hover:bg-white",
 };
 
 /** Pill link. Internal paths use the router, http(s) opens a new tab. */

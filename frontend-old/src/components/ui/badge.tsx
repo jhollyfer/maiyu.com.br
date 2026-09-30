@@ -14,9 +14,9 @@ const badgeVariants = cva(
         outline:
           "border-foreground/25 text-foreground/80 hover:border-foreground/50",
         forest:
-          "border-[color:var(--color-forest)]/30 text-[color:var(--color-forest)] bg-[color:var(--color-forest)]/5 dark:text-[color:var(--color-forest-bright)] dark:border-[color:var(--color-forest-bright)]/30",
+          "border-foreground/20 text-foreground bg-brand-green/25 dark:border-brand-green/40 dark:text-brand-green dark:bg-brand-green/10",
         amber:
-          "border-[color:var(--color-amber)]/35 text-[color:var(--color-amber)] bg-[color:var(--color-amber)]/[0.06] dark:text-[color:var(--color-amber-warm)] dark:border-[color:var(--color-amber-warm)]/35",
+          "border-brand-azure/35 text-brand-azure bg-brand-cyan/10 dark:border-brand-cyan/40 dark:text-brand-cyan",
         river:
           "border-[color:var(--color-river)]/30 text-[color:var(--color-river)] bg-[color:var(--color-river)]/5",
         secondary:

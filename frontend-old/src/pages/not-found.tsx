@@ -22,7 +22,7 @@ export function NotFound() {
       <SkyBackdrop />
       <AnimateInView className="relative mx-auto flex max-w-3xl flex-col items-center text-center">
         <span className="pill mb-7">{t("notFound.code")}</span>
-        <h1 className="text-display tracking-[-0.045em]">{t("notFound.title")}</h1>
+        <h1 className="text-display tracking-[-0.02em]">{t("notFound.title")}</h1>
         <p className="mt-7 max-w-[44ch] font-serif text-lead text-foreground/80">
           {t("notFound.description")}
         </p>
