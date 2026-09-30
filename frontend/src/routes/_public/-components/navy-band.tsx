@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
-import { PillButton } from '#/components/common/pill-button'
+import { PillButton } from './pill-button'
 import { articles } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
 import { team } from '#/lib/team'

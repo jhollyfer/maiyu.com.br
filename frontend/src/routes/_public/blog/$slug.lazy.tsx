@@ -9,7 +9,7 @@ import {
   NotFoundPageHomeButton,
   NotFoundPageTitle,
 } from '#/components/common/not-found-page'
-import { PillButton } from '#/components/common/pill-button'
+import { PillButton } from '../-components/pill-button'
 import { SkyBackdrop } from '#/components/common/sky'
 import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'

@@ -4,7 +4,7 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { PageHero } from './-components/page-hero'
 import { REVEAL, STAGGER } from './-components/reveal'
-import { PillButton } from '#/components/common/pill-button'
+import { PillButton } from './-components/pill-button'
 import { localized } from '#/lib/i18n'
 import { featuredProject, projects } from '#/lib/projects'
 import { cn } from '#/lib/utils'

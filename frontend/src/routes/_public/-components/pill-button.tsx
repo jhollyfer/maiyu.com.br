@@ -10,11 +10,14 @@ import type { Merge } from '#/lib/interfaces'
  * A pílula do site: o botão redondo do hero, do fim da home e das páginas
  * internas.
  *
- * A mesma peça do academy, e pelo mesmo motivo: mora aqui e não em
+ * A mesma peça do academy, e pelo mesmo motivo: mora fora de
  * `components/ui/button.tsx` porque aquele diretório é o que o `shadcn`
  * entrega, e `shadcn add button` reescreve o arquivo inteiro. O que é da Maiyu
  * **compõe** o botão de fábrica, que continua tratando foco, `disabled`,
  * `render` e ícone.
+ *
+ * Na casca pública e não em `components/common/`, que é onde o academy a
+ * guarda: lá o painel também a usa, e aqui só a vitrine.
  *
  * Os nomes dos tons são os do academy; as cores são as da Maiyu:
  *

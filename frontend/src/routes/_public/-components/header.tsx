@@ -6,8 +6,8 @@ import { LanguageSwitcher } from './language-switcher'
 import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 import { useScrolled } from './use-scrolled'
-import { PillButton } from '#/components/common/pill-button'
-import { ThemeToggle } from '#/components/common/theme-toggle'
+import { PillButton } from './pill-button'
+import { ThemeToggle } from './theme-toggle'
 import { Button } from '#/components/ui/button'
 import {
   NavigationMenu,

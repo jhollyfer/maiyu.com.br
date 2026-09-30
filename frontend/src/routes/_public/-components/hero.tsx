@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 
 import { Glider } from './glider'
 import { REVEAL } from './reveal'
-import { PillButton } from '#/components/common/pill-button'
+import { PillButton } from './pill-button'
 import { SkyBackdrop } from '#/components/common/sky'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'

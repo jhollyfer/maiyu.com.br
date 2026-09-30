@@ -4,7 +4,7 @@ import { vineResolver } from '@hookform/resolvers/vine'
 import { toast } from 'sonner'
 
 import { FIELD, LABEL } from './form-style'
-import { PillButton } from '#/components/common/pill-button'
+import { PillButton } from './pill-button'
 import {
   Field,
   FieldError,
