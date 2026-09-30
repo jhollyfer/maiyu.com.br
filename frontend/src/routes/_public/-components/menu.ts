@@ -29,11 +29,7 @@ const CAREER = linkOptions({ to: '/career', label: () => m.nav_career() })
 const CONTACT = linkOptions({ to: '/contact', label: () => m.nav_contact() })
 
 export type MenuItem =
-  | typeof HOME
-  | typeof PORTFOLIO
-  | typeof BLOG
-  | typeof CAREER
-  | typeof CONTACT
+  typeof HOME | typeof PORTFOLIO | typeof BLOG | typeof CAREER | typeof CONTACT
 
 /**
  * A barra do desktop. Sem "Início", porque a marca à esquerda já leva para a

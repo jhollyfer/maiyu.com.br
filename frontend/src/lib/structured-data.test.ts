@@ -27,7 +27,7 @@ describe('breadcrumbListJsonLd', () => {
       { name: 'Diário', url: 'https://maiyu.com.br/blog' },
     ])
 
-    expect(list?.itemListElement).toEqual([
+    expect(list.itemListElement).toEqual([
       { '@type': 'ListItem', position: 1, name: 'Início', item: HOME.url },
       {
         '@type': 'ListItem',

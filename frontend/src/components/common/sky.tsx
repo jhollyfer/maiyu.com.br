@@ -31,13 +31,13 @@ function f(n: number): string {
 }
 
 /** A linha do dossel: copas largas feitas de lóbulos sobrepostos, como a mata se lê de longe. */
-function canopyPath(seed: number, base: number, crown: number): string {
+function canopyPath(seed: number, base: number, lobe: number): string {
   const r = rng(seed)
   let d = `M0 ${base}`
   let x = 0
   while (x < W) {
-    const w = crown * (2 + r() * 2.4)
-    const h = crown * (0.45 + r() * 0.55)
+    const w = lobe * (2 + r() * 2.4)
+    const h = lobe * (0.45 + r() * 0.55)
     const lobes = 3 + Math.floor(r() * 3)
     const lw = w / lobes
     for (let j = 0; j < lobes; j++) {
@@ -46,7 +46,7 @@ function canopyPath(seed: number, base: number, crown: number): string {
       let ny = base
       if (j < lobes - 1)
         ny =
-          base - h * Math.pow(Math.sin(Math.PI * t), 0.55) - r() * crown * 0.12
+          base - h * Math.pow(Math.sin(Math.PI * t), 0.55) - r() * lobe * 0.12
       d += ` A ${f(lw * 0.56)} ${f(lw * 0.5)} 0 0 1 ${f(x + lw * (j + 1))} ${f(ny)}`
     }
     x += w

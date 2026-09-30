@@ -105,7 +105,4 @@ export const messages: MessagesProviderContact = {
   getMessage(defaultMessage, rule, field, meta) {
     return current().getMessage(defaultMessage, rule, field, meta)
   },
-  toJSON() {
-    return current().toJSON()
-  },
 }
