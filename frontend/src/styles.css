@@ -62,7 +62,11 @@
 
   --secondary: #eef2f4;
   --secondary-foreground: #01111b;
-  --secondary-hover: color-mix(in oklab, var(--secondary) 80%, var(--foreground));
+  --secondary-hover: color-mix(
+    in oklab,
+    var(--secondary) 80%,
+    var(--foreground)
+  );
 
   --muted: #eef2f4;
   --muted-foreground: #403937;
@@ -450,6 +454,18 @@
   transform-origin: center;
 }
 
+/*
+ * O traço que se desenha, nas ilustrações da visão. O elemento declara
+ * `pathLength="1"`, então o tracejado de uma unidade cobre o traço inteiro
+ * qualquer que seja o comprimento real, e a animação só leva o deslocamento de
+ * 1 a 0. É o `pathLength` do motion, em CSS.
+ */
+@utility vision-draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @utility birds {
   animation: glide 26s ease-in-out infinite alternate;
 }
@@ -539,6 +555,12 @@
   100% {
     transform: scale(1.8);
     opacity: 0;
+  }
+}
+
+@keyframes vision-draw {
+  to {
+    stroke-dashoffset: 0;
   }
 }
 

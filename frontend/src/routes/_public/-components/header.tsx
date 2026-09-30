@@ -1,49 +1,56 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ListIcon } from '@phosphor-icons/react'
-import { useMotionValueEvent, useScroll } from 'motion/react'
+import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 
-import { MAIN_LINKS, MOBILE_LINKS } from './nav-links'
 import { LanguageSwitcher } from './language-switcher'
-import { CtaLink } from '#/components/common/cta-link'
+import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
+import { navLinkVariants } from './nav-link'
+import { useScrolled } from './use-scrolled'
+import { PillButton } from '#/components/common/pill-button'
 import { ThemeToggle } from '#/components/common/theme-toggle'
+import { Button } from '#/components/ui/button'
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from '#/components/ui/navigation-menu'
 import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
   SheetTitle,
   SheetTrigger,
 } from '#/components/ui/sheet'
-import { CALL_URL } from '#/lib/site'
-import { cn } from '#/lib/utils'
+import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
 /**
  * O cabeçalho flutuante.
  *
- * Transparente no topo, e ganha fundo, aro e sombra quando a página rola - é
- * a pílula que acompanha a leitura sem cobrir o céu do hero na chegada. O
- * estado vem do `useScroll` do motion, que já assina a rolagem uma vez só para
- * a página inteira.
+ * Transparente no topo, e ganha fundo, aro e sombra quando a página rola: é a
+ * pílula que acompanha a leitura sem cobrir o céu do hero na chegada. O estado
+ * vem de `useScrolled`, e o desenho de cada estado mora em classes
+ * `data-[scrolled=true]:`, sem ternário.
  *
- * O link ativo é marcado pelo `data-status="active"` que o `Link` do router
- * escreve sozinho (junto com `aria-current="page"`), e não por comparação de
- * `pathname` à mão.
+ * `NavigationMenu` na barra e `Sheet` no celular, como no academy: as duas
+ * primitivas já trazem foco preso, `Esc`, `aria-expanded` e trava de rolagem,
+ * que é o que o overlay escrito à mão do site antigo fazia pela metade.
  */
 export function Header(): React.JSX.Element {
-  const [scrolled, setScrolled] = React.useState(false)
-  const { scrollY } = useScroll()
-
-  useMotionValueEvent(scrollY, 'change', (y) => setScrolled(y > 24))
+  const scrolled = useScrolled(24)
 
   return (
-    <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3">
+    <header
+      data-slot="site-header"
+      className="fixed inset-x-0 top-0 z-50 px-3 pt-3"
+    >
       <div
         data-scrolled={scrolled}
-        className={cn(
-          'mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 rounded-2xl border border-transparent bg-transparent pr-2 pl-4 transition-[max-width,background-color,border-color,box-shadow] duration-700 ease-out-expo lg:grid-cols-[auto_1fr_auto]',
-          'data-[scrolled=true]:max-w-5xl data-[scrolled=true]:border-foreground/[0.08] data-[scrolled=true]:bg-surface/80 data-[scrolled=true]:shadow-[0_8px_30px_-12px_var(--shadow-tint)] data-[scrolled=true]:backdrop-blur-xl',
-        )}
+        className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 rounded-2xl border border-transparent bg-transparent pr-2 pl-4 transition-[max-width,background-color,border-color,box-shadow] duration-700 ease-out-expo motion-reduce:transition-none data-[scrolled=true]:max-w-5xl data-[scrolled=true]:border-foreground/[0.08] data-[scrolled=true]:bg-surface/80 data-[scrolled=true]:shadow-[0_8px_30px_-12px_var(--shadow-tint)] data-[scrolled=true]:backdrop-blur-xl lg:grid-cols-[auto_1fr_auto]"
       >
         <Link
           to="/"
@@ -52,44 +59,50 @@ export function Header(): React.JSX.Element {
         >
           <img src="/maiyu-symbol.svg" alt="" className="size-7" />
           <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase dark:text-brand-green">
-            Maiyu
+            {SITE_TITLE}
           </span>
         </Link>
 
-        <nav className="hidden lg:block lg:pl-10" aria-label={m.a11y_mainNav()}>
-          <ul className="flex items-center gap-1">
-            {MAIN_LINKS.map((link) => (
-              <li key={link.to}>
-                <Link
-                  to={link.to}
-                  className="rounded-full px-4 py-2 text-small font-medium text-foreground/70 transition-colors duration-300 hover:text-foreground data-[status=active]:bg-foreground/[0.06] data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:underline data-[status=active]:decoration-brand-green data-[status=active]:decoration-2 data-[status=active]:underline-offset-[6px] dark:data-[status=active]:text-brand-green"
+        <NavigationMenu
+          aria-label={m.a11y_mainNav()}
+          className="hidden flex-none lg:flex lg:pl-10"
+        >
+          <NavigationMenuList className="gap-1">
+            {NAVIGATION.map((item) => (
+              <NavigationMenuItem key={item.to}>
+                <NavigationMenuLink
+                  className={navLinkVariants({ tone: 'bar' })}
+                  render={<Link to={item.to} />}
                 >
-                  {link.label()}
-                </Link>
-              </li>
+                  {item.label()}
+                </NavigationMenuLink>
+              </NavigationMenuItem>
             ))}
-          </ul>
-        </nav>
+          </NavigationMenuList>
+        </NavigationMenu>
 
         <div className="flex items-center gap-1.5 justify-self-end">
           <div className="hidden md:block">
             <LanguageSwitcher />
           </div>
           <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
-          <CtaLink
-            to="/contact"
-            variant="soft"
-            className="ml-1 hidden rounded-xl px-4 py-2 md:inline-flex"
-          >
-            {m.nav_contact()}
-          </CtaLink>
-          <CtaLink
-            to={CALL_URL}
-            variant="brand"
-            className="hidden rounded-xl px-4 py-2 md:inline-flex"
-          >
-            {m.nav_getInTouch()}
-          </CtaLink>
+          <PillButton
+            tone="outline"
+            scale="md"
+            className="ml-1 hidden rounded-xl md:inline-flex"
+            render={<Link to={CONTACT_LINK.to}>{CONTACT_LINK.label()}</Link>}
+          />
+          <PillButton
+            tone="neon"
+            scale="md"
+            className="hidden rounded-xl md:inline-flex"
+            render={
+              <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
+                <WhatsappLogoIcon />
+                {m.nav_getInTouch()}
+              </a>
+            }
+          />
           <MobileMenu />
         </div>
       </div>
@@ -98,61 +111,84 @@ export function Header(): React.JSX.Element {
 }
 
 /**
- * O menu do celular, sobre o `Sheet` do registry.
+ * O menu do celular.
  *
- * `Sheet` e não o overlay feito à mão do site antigo: o do registry já trava a
- * rolagem do fundo, prende o foco dentro dele, fecha no `Esc` e devolve o foco
- * ao botão - as quatro coisas que o overlay antigo fazia pela metade.
+ * Painel de cima, ocupando a tela, e não o lateral do academy: é o desenho do
+ * site no ar, com os destinos em títulos grandes, e o painel estreito de lado
+ * os espremeria em duas linhas.
  *
- * Cada link fecha o painel com `SheetClose render={<Link />}`: a navegação e o
- * fechamento saem do mesmo clique, sem estado próprio para sincronizar.
+ * Cada link fecha o painel com `SheetClose render={<Link />}`, e não com um
+ * `onClick` que mexe em estado: a navegação e o fechamento saem do mesmo
+ * clique, e o componente continua não controlado.
  */
 function MobileMenu(): React.JSX.Element {
   return (
     <Sheet>
       <SheetTrigger
-        aria-label={m.a11y_openMenu()}
-        className="inline-flex size-11 items-center justify-center rounded-full text-foreground transition-colors hover:bg-foreground/[0.06] lg:hidden"
-      >
-        <ListIcon size={20} />
-      </SheetTrigger>
+        render={
+          <Button
+            variant="ghost"
+            size="icon-lg"
+            className="size-11 rounded-full lg:hidden"
+            aria-label={m.a11y_openMenu()}
+          >
+            <ListIcon />
+          </Button>
+        }
+      />
       <SheetContent
         side="top"
-        className="h-dvh bg-background/95 px-4 pt-24 pb-10 backdrop-blur-2xl"
+        className="h-dvh bg-background/95 px-4 pt-20 pb-10 backdrop-blur-2xl"
       >
-        <SheetTitle className="sr-only">{m.a11y_mainNav()}</SheetTitle>
-        <nav aria-label={m.a11y_mainNav()} className="flex-1">
-          <ul className="flex flex-col">
-            {MOBILE_LINKS.map((link) => (
-              <li key={link.to}>
-                <SheetClose
-                  nativeButton={false}
-                  render={
-                    <Link
-                      to={link.to}
-                      className="group flex items-center justify-between border-b border-foreground/[0.08] py-5 font-display text-4xl font-bold tracking-[-0.015em] text-foreground/60 data-[status=active]:text-foreground"
-                    >
-                      {link.label()}
-                      <span
-                        aria-hidden="true"
-                        className="brand-bar hidden w-10 group-data-[status=active]:block"
-                      />
-                    </Link>
-                  }
-                />
-              </li>
-            ))}
-          </ul>
+        {/*
+          Título e descrição sempre, como pede o padrão do Sheet: é o que o
+          leitor de tela anuncia ao abrir. Aqui os dois ficam só para ele, porque
+          a marca já está no cabeçalho logo acima.
+        */}
+        <SheetHeader className="sr-only">
+          <SheetTitle>{SITE_TITLE}</SheetTitle>
+          <SheetDescription>{m.a11y_mainNav()}</SheetDescription>
+        </SheetHeader>
+
+        <nav
+          aria-label={m.a11y_mainNav()}
+          className="grid flex-1 auto-rows-min overflow-y-auto"
+        >
+          {MOBILE_NAVIGATION.map((item) => (
+            <SheetClose
+              key={item.to}
+              nativeButton={false}
+              render={
+                <Link
+                  to={item.to}
+                  className={navLinkVariants({ tone: 'sheet' })}
+                >
+                  {item.label()}
+                  <span
+                    aria-hidden="true"
+                    className="brand-bar hidden w-10 group-data-[status=active]:block"
+                  />
+                </Link>
+              }
+            />
+          ))}
         </nav>
-        <div className="flex items-center justify-between gap-4 pt-10">
+
+        <SheetFooter className="flex-row items-center justify-between gap-4 px-0">
           <div className="flex items-center gap-2">
             <LanguageSwitcher />
-            <ThemeToggle className="size-9 rounded-full" />
+            <ThemeToggle className="size-11 rounded-full" />
           </div>
-          <CtaLink to={CALL_URL} variant="brand">
-            {m.nav_getInTouch()}
-          </CtaLink>
-        </div>
+          <PillButton
+            tone="neon"
+            render={
+              <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
+                <WhatsappLogoIcon />
+                {m.nav_getInTouch()}
+              </a>
+            }
+          />
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   )

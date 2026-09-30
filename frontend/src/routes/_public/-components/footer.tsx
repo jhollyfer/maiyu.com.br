@@ -1,13 +1,12 @@
+import type * as React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
-import { FOOTER_LINKS } from './nav-links'
+import { FOOTER_NAVIGATION } from './menu'
+import { navLinkVariants } from './nav-link'
 import { SkyBackdrop } from '#/components/common/sky'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
-
-const LINK =
-  'group inline-flex items-center gap-1 py-1.5 text-body text-foreground/70 transition-colors duration-300 hover:text-foreground'
 
 /**
  * O rodapé: o cartão de quatro colunas sobre o céu, o botão de voltar ao topo
@@ -21,7 +20,10 @@ export function Footer(): React.JSX.Element {
   const year = new Date().getFullYear()
 
   return (
-    <footer className="relative isolate overflow-hidden pt-4">
+    <footer
+      data-slot="site-footer"
+      className="relative isolate overflow-hidden pt-4"
+    >
       <SkyBackdrop
         fade={false}
         className="top-[45%] -z-10 [mask-image:linear-gradient(to_bottom,transparent,black_35%)]"
@@ -40,10 +42,13 @@ export function Footer(): React.JSX.Element {
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_navigation()}
             </p>
-            <ul className="space-y-2">
-              {FOOTER_LINKS.map((link) => (
+            <ul>
+              {FOOTER_NAVIGATION.map((link) => (
                 <li key={link.to}>
-                  <Link to={link.to} className={LINK}>
+                  <Link
+                    to={link.to}
+                    className={navLinkVariants({ tone: 'footer' })}
+                  >
                     {link.label()}
                   </Link>
                 </li>
@@ -55,14 +60,14 @@ export function Footer(): React.JSX.Element {
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_social()}
             </p>
-            <ul className="space-y-2">
+            <ul>
               {SOCIALS.map((social) => (
                 <li key={social.name}>
                   <a
                     href={social.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={LINK}
+                    className={navLinkVariants({ tone: 'footer' })}
                   >
                     {social.name}
                     <ArrowUpRightIcon size={13} />
@@ -76,16 +81,22 @@ export function Footer(): React.JSX.Element {
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_contact()}
             </p>
-            <ul className="space-y-2 text-body text-foreground/70">
-              <li>{CONTACT.street}</li>
-              <li>{CONTACT.district}</li>
+            <ul className="text-body text-foreground/70">
+              <li className="py-2">{CONTACT.street}</li>
+              <li className="py-2">{CONTACT.district}</li>
               <li>
-                <a href={`mailto:${CONTACT.email}`} className={LINK}>
+                <a
+                  href={`mailto:${CONTACT.email}`}
+                  className={navLinkVariants({ tone: 'footer' })}
+                >
                   {CONTACT.email}
                 </a>
               </li>
               <li>
-                <a href={CONTACT.phoneHref} className={LINK}>
+                <a
+                  href={CONTACT.phoneHref}
+                  className={navLinkVariants({ tone: 'footer' })}
+                >
                   {CONTACT.phone}
                 </a>
               </li>
@@ -101,7 +112,7 @@ export function Footer(): React.JSX.Element {
             type="button"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label={m.footer_backToTop()}
-            className="inline-flex size-11 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="inline-flex size-11 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
           >
             <ArrowUpIcon size={15} />
           </button>

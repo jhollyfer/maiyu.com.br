@@ -1,4 +1,6 @@
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import type * as React from 'react'
+
+import { cn } from '#/lib/utils'
 
 /**
  * As três ilustrações da seção "A visão", uma por passo, trocadas em fade
@@ -10,9 +12,35 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
  * Nada de ternário: o que muda de um ponto para outro (raio, peso, âncora do
  * rótulo) vem nos próprios dados, e a escolha de estilo do anel sai de uma
  * função com retorno antecipado.
+ *
+ * A animação é CSS, como toda entrada do site: `tw-animate-css` para o que
+ * aparece e a utilidade `vision-draw` para o traço que se desenha. O site
+ * antigo usava o `motion` só para isto. Cada cena remonta pela `key` quando o
+ * passo muda, e remontar é o que reinicia a animação.
+ *
+ * `motion-reduce:animate-none` em cada peça: quem pediu menos movimento vê a
+ * cena pronta, sem o traço se desenhando.
  */
 
-const EASE = [0.16, 1, 0.3, 1] as const
+/** A entrada de uma peça da cena, com o atraso passado por `style`. */
+const APPEAR =
+  'animate-in fade-in-0 duration-700 [animation-fill-mode:both] motion-reduce:animate-none'
+
+/** O mesmo, subindo um pouco: o editor e o README chegam de baixo. */
+const RISE = cn(APPEAR, 'slide-in-from-bottom-3')
+
+/**
+ * O traço que se desenha. `pathLength={1}` vai junto, no elemento. Sem
+ * animação o deslocamento precisa voltar a zero à mão, senão o anel some.
+ */
+const DRAW =
+  'vision-draw motion-reduce:animate-none motion-reduce:[stroke-dashoffset:0]'
+
+/** O atraso de uma peça, em segundos, como o `style` o recebe. */
+function delay(seconds: number): React.CSSProperties {
+  return { animationDelay: `${seconds}s` }
+}
+
 const INK = '#E8F6FF'
 const NAVY = '#01111B'
 const PANEL = '#0B1E2B'
@@ -20,10 +48,6 @@ const GREEN = '#88FF9A'
 const CYAN = '#31E1F7'
 const BLUE = '#77EED7'
 const PURPLE = '#A480F5'
-
-type SceneProps = {
-  draw: boolean
-}
 
 const RIVER =
   'M -20 110 C 90 140, 160 250, 262 262 S 420 230, 470 300 S 560 400, 640 380'
@@ -74,7 +98,7 @@ const SIGNAL_BARS = [
 ] as const
 
 /** 1 · Pensado para a borda: as cidades ao longo do Solimões, ligadas mesmo com sinal ruim. */
-function EdgeScene({ draw }: SceneProps): React.JSX.Element {
+function EdgeScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
       <path
@@ -93,7 +117,7 @@ function EdgeScene({ draw }: SceneProps): React.JSX.Element {
         strokeWidth="2"
       />
       {LINKS.map(([a, b], i) => (
-        <motion.line
+        <line
           key={`${a}-${b}`}
           x1={TOWNS[a].x}
           y1={TOWNS[a].y}
@@ -103,9 +127,8 @@ function EdgeScene({ draw }: SceneProps): React.JSX.Element {
           strokeOpacity="0.7"
           strokeWidth="1.5"
           strokeDasharray="4 7"
-          initial={draw && { pathLength: 0 }}
-          animate={{ pathLength: 1 }}
-          transition={{ duration: 1.2, delay: 0.2 + i * 0.12, ease: EASE }}
+          className={APPEAR}
+          style={delay(0.2 + i * 0.12)}
         />
       ))}
       {TOWNS.map((town) => {
@@ -203,14 +226,10 @@ const PEOPLE = [
 ] as const
 
 /** 2 · De quem usa: código e documentação entregues à comunidade. */
-function OwnedScene({ draw }: SceneProps): React.JSX.Element {
+function OwnedScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
-      <motion.g
-        initial={draw && { opacity: 0, y: 12 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: EASE }}
-      >
+      <g className={RISE}>
         <rect
           x="60"
           y="60"
@@ -243,12 +262,8 @@ function OwnedScene({ draw }: SceneProps): React.JSX.Element {
             fillOpacity={line.opacity}
           />
         ))}
-      </motion.g>
-      <motion.g
-        initial={draw && { opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.15, ease: EASE }}
-      >
+      </g>
+      <g className={RISE} style={delay(0.15)}>
         <rect x="300" y="120" width="210" height="190" rx="16" fill={INK} />
         <text
           x="322"
@@ -272,14 +287,16 @@ function OwnedScene({ draw }: SceneProps): React.JSX.Element {
             fillOpacity={line.opacity}
           />
         ))}
-      </motion.g>
+      </g>
       {PEOPLE.map((person, i) => (
-        <motion.g
+        <g
           key={person.color}
-          initial={draw && { opacity: 0, scale: 0.6 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, delay: 0.35 + i * 0.08, ease: EASE }}
-          style={{ transformBox: 'fill-box', transformOrigin: 'center' }}
+          className={cn(APPEAR, 'zoom-in-50')}
+          style={{
+            ...delay(0.35 + i * 0.08),
+            transformBox: 'fill-box',
+            transformOrigin: 'center',
+          }}
         >
           <circle cx={person.x} cy={person.y} r="22" fill={person.color} />
           <circle
@@ -294,7 +311,7 @@ function OwnedScene({ draw }: SceneProps): React.JSX.Element {
             fill={NAVY}
             fillOpacity="0.55"
           />
-        </motion.g>
+        </g>
       ))}
       <path
         d="M 440 330 q 40 -10 50 -40"
@@ -352,24 +369,24 @@ function ringStyle(i: number): {
 }
 
 /** 3 · Feito para durar: os anéis de uma samaúma, um por ano à frente. */
-function LastScene({ draw }: SceneProps): React.JSX.Element {
+function LastScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
       <circle cx="300" cy="210" r="180" fill={GREEN} fillOpacity="0.04" />
       {Array.from({ length: RINGS }, (_, i) => {
         const style = ringStyle(i)
         return (
-          <motion.path
+          <path
             key={i}
             d={ringPath(i)}
+            pathLength={1}
             fill="none"
             stroke={style.stroke}
             strokeOpacity={style.opacity}
             strokeWidth={style.width}
             strokeLinejoin="round"
-            initial={draw && { pathLength: 0, opacity: 0 }}
-            animate={{ pathLength: 1, opacity: 1 }}
-            transition={{ duration: 0.9, delay: i * 0.06, ease: EASE }}
+            className={DRAW}
+            style={delay(i * 0.06)}
           />
         )
       })}
@@ -420,27 +437,26 @@ const SCENES = [EdgeScene, OwnedScene, LastScene] as const
 export type VisionStep = 0 | 1 | 2
 
 /**
- * A cena do passo atual, com fade entre uma e outra.
+ * A cena do passo atual.
  *
- * Quem pediu menos movimento vê a cena pronta, sem o traço se desenhando: o
- * `draw` desliga o `initial` de cada peça.
+ * A `key` é o passo: trocar de passo remonta a cena, e a remontagem é o que
+ * refaz a entrada. Sem saída animada, e é decisão: a cena anterior some no
+ * mesmo quadro em que a próxima começa a aparecer, o que em 500ms de fade lê
+ * como troca, e poupa manter duas cenas montadas ao mesmo tempo.
  */
 export function VisionScene({ step }: { step: VisionStep }): React.JSX.Element {
-  const draw = !useReducedMotion()
   const Scene = SCENES[step]
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={step}
-        className="absolute inset-0 flex items-center justify-center p-6 md:p-10"
-        initial={draw && { opacity: 0, scale: 0.97 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.97 }}
-        transition={{ duration: 0.5, ease: EASE }}
-      >
-        <Scene draw={draw} />
-      </motion.div>
-    </AnimatePresence>
+    <div
+      key={step}
+      data-slot="vision-scene"
+      className={cn(
+        APPEAR,
+        'absolute inset-0 flex items-center justify-center p-6 zoom-in-95 duration-500 md:p-10',
+      )}
+    >
+      <Scene />
+    </div>
   )
 }
