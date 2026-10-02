@@ -8,13 +8,9 @@ Um projeto só, `frontend/`, no mesmo padrão do `frontend/` de `academy`,
 `simple-hub` e `adacaibs`: o próprio `package.json`, lockfile e Dockerfile.
 **Não há workspace na raiz**, e é de propósito, como nos irmãos.
 
-| Diretório       | O que é                                                   |
-| --------------- | --------------------------------------------------------- |
-| `frontend/`     | TanStack Start (React 19) sobre Vite e Nitro              |
-| `frontend-old/` | o site anterior (React + Vite + react-router), referência |
-
-`frontend-old/` sai do repositório depois da auditoria visual da migração. Até
-lá ele é a referência de conteúdo e de aparência, e não recebe mudança.
+| Diretório   | O que é                                      |
+| ----------- | -------------------------------------------- |
+| `frontend/` | TanStack Start (React 19) sobre Vite e Nitro |
 
 ## A regra zero
 
