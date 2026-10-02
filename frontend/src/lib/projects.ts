@@ -72,32 +72,6 @@ export const projects: ReadonlyArray<Project> = [
     url: 'https://matis.maiyu.com.br',
     year: '2024',
   },
-  {
-    slug: 'manganga',
-    title: 'Manganga',
-    client: {
-      en: 'Cultural preservation collective',
-      'pt-BR': 'Coletivo de preservação cultural',
-      es: 'Colectivo de preservación cultural',
-    },
-    summary: {
-      en: 'Digital platform for cultural preservation and community engagement.',
-      'pt-BR':
-        'Plataforma digital para preservação cultural e engajamento comunitário.',
-      es: 'Plataforma digital para preservación cultural y participación comunitaria.',
-    },
-    description: {
-      en: 'A digital platform for cultural preservation and community engagement in the Amazon region. Content management, event organisation, and a public-facing archive that communities can curate themselves over time.',
-      'pt-BR':
-        'Plataforma digital para preservação cultural e engajamento comunitário na região amazônica. Gestão de conteúdo, organização de eventos e um arquivo público que as comunidades curam ao longo do tempo.',
-      es: 'Plataforma digital para preservación cultural y participación comunitaria en la región amazónica. Gestión de contenido, organización de eventos y un archivo público que las comunidades curan con el tiempo.',
-    },
-    image: '/images/manganga.webp',
-    focus: '57% center',
-    tech: ['React', 'Fastify', 'Prisma', 'PostgreSQL', 'Tailwind CSS'],
-    url: 'https://manganga.maiyu.com.br',
-    year: '2025',
-  },
 ]
 
 /** O estudo de caso em destaque no portfólio: o marcado, ou o primeiro. */
