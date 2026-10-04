@@ -3,30 +3,49 @@ import { Link } from '@tanstack/react-router'
 import {
   ArrowRightIcon,
   ArrowUpRightIcon,
-  UserIcon,
+  ChartLineUpIcon,
+  CodeIcon,
+  PenNibIcon,
 } from '@phosphor-icons/react'
+import type { Icon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
 import { articles } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
-import { team } from '#/lib/team'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
+type Role = {
+  icon: Icon
+  tint: string
+  title: () => string
+  description: () => string
+}
+
 /**
- * O fundo de cada retrato, na ordem do time. As fotos têm recorte de fundo, e
- * a cor atrás é o que as costura numa fileira só.
- *
- * As fotos estão ocultas por ora, com um ícone no lugar; `member.img` continua
- * em `lib/team.ts` para a volta delas.
+ * O que o time faz, por ofício e não por rosto: a home apresenta engenheiros,
+ * designers e analistas, e não as pessoas uma a uma.
  */
-const TEAM_TINTS = [
-  'bg-tint-peach',
-  'bg-tint-mint',
-  'bg-tint-lime',
-  'bg-tint-mist',
-  'bg-tint-green',
+const ROLES: ReadonlyArray<Role> = [
+  {
+    icon: CodeIcon,
+    tint: 'bg-tint-mint',
+    title: () => m.home_role1Title(),
+    description: () => m.home_role1Desc(),
+  },
+  {
+    icon: PenNibIcon,
+    tint: 'bg-tint-peach',
+    title: () => m.home_role2Title(),
+    description: () => m.home_role2Desc(),
+  },
+  {
+    icon: ChartLineUpIcon,
+    tint: 'bg-tint-lime',
+    title: () => m.home_role3Title(),
+    description: () => m.home_role3Desc(),
+  },
 ]
 
 /** A stack que a Maiyu usa, em fita. */
@@ -72,36 +91,25 @@ export function NavyBand(): React.JSX.Element {
           </p>
         </div>
 
-        <ul className="mx-auto mt-14 flex max-w-5xl flex-wrap justify-center gap-3 md:gap-4">
-          {team.map((member, index) => (
+        <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
+          {ROLES.map((role, index) => (
             <li
-              key={member.name}
+              key={index}
               className={cn(
                 REVEAL,
-                'w-[calc(50%-0.375rem)] sm:w-[calc(33.333%-0.5rem)] md:w-[calc(20%-0.8rem)]',
-                index % 2 === 1 && 'md:-translate-y-8',
+                'flex flex-col gap-10 rounded-[1.75rem] p-7 text-foreground md:p-9',
+                index === 1 && 'md:-translate-y-8',
+                role.tint,
               )}
               style={{ animationDelay: `${index * STAGGER}ms` }}
             >
-              <figure>
-                <div
-                  className={cn(
-                    'overflow-hidden rounded-2xl ring-1 ring-on-navy/10',
-                    TEAM_TINTS[index % TEAM_TINTS.length],
-                  )}
-                >
-                  <div
-                    role="img"
-                    aria-label={member.name}
-                    className="flex aspect-[3/4] w-full items-center justify-center text-navy/35"
-                  >
-                    <UserIcon size={48} weight="light" />
-                  </div>
-                </div>
-                <figcaption className="mt-3 text-center text-small text-on-navy/80">
-                  {member.name}
-                </figcaption>
-              </figure>
+              <role.icon size={28} />
+              <div>
+                <h3 className="text-h3">{role.title()}</h3>
+                <p className="mt-3 text-body text-foreground/75">
+                  {role.description()}
+                </p>
+              </div>
             </li>
           ))}
         </ul>

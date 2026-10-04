@@ -14,7 +14,6 @@ import { PageHero } from './-components/page-hero'
 import { REVEAL, STAGGER } from './-components/reveal'
 import { JOBS } from '#/lib/jobs'
 import { JOB_LOCATION_LABELS, JOB_TYPE_LABELS } from '#/lib/labels'
-import { team } from '#/lib/team'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
@@ -71,23 +70,14 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero title={m.career_heroTitle()} lead={m.career_heroDescription()}>
-        <div className={cn(REVEAL, 'mt-10 flex items-center gap-3 delay-200')}>
-          <div className="flex shrink-0 -space-x-2">
-            {team.map((member) => (
-              <img
-                key={member.name}
-                src={member.img}
-                alt={member.name}
-                width={40}
-                height={40}
-                className="size-10 rounded-full bg-tint-mint object-cover ring-2 ring-background"
-              />
-            ))}
-          </div>
-          <p className="text-small text-foreground/80">
-            {m.career_teamCount()}
-          </p>
-        </div>
+        <p
+          className={cn(
+            REVEAL,
+            'mt-10 text-small text-foreground/80 delay-200',
+          )}
+        >
+          {m.career_teamCount()}
+        </p>
       </PageHero>
 
       <section data-slot="career-benefits" className="pb-24 md:pb-32">
