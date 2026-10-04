@@ -49,44 +49,147 @@ const CYAN = '#31E1F7'
 const BLUE = '#77EED7'
 const PURPLE = '#A480F5'
 
+/** O Solimões, de oeste (Peru) a leste, subindo para São Paulo de Olivença. */
 const RIVER =
-  'M -20 110 C 90 140, 160 250, 262 262 S 420 230, 470 300 S 560 400, 640 380'
+  'M -20 168 C 50 150, 90 185, 140 172 S 220 108, 290 140 S 360 218, 396 244 S 452 300, 500 286 S 552 170, 620 46'
 
-/** As cidades da tríplice fronteira; Benjamin Constant é a casa. */
+/** O Javari, que desce de Benjamin Constant e é a fronteira Peru-Brasil. */
+const JAVARI =
+  'M 384 254 C 364 284, 330 304, 296 316 S 200 336, 130 326 S 40 344, -20 352'
+
+/** As linhas secas da Colômbia: a do oeste até o rio, a de Tabatinga ao norte. */
+const BORDERS = ['M 150 -10 L 104 172', 'M 398 238 L 438 -10'] as const
+
+/** O ponto onde os três países se encontram, entre Letícia, Tabatinga e Santa Rosa. */
+const TRIPOINT = { x: 392, y: 250 } as const
+
+/** Os três países, cada um com a bandeira e o nome na própria língua. */
+const COUNTRIES = [
+  { x: 262, y: 52, name: 'COLOMBIA', flag: 'co' },
+  { x: 120, y: 254, name: 'PERÚ', flag: 'pe' },
+  { x: 470, y: 392, name: 'BRASIL', flag: 'br' },
+] as const
+
+type Flag = (typeof COUNTRIES)[number]['flag']
+
+/** Bandeira de 18 por 12, desenhada a partir do canto superior esquerdo. */
+const FLAGS: Record<Flag, React.JSX.Element> = {
+  co: (
+    <>
+      <rect width="18" height="6" fill="#FCD116" />
+      <rect y="6" width="18" height="3" fill="#003893" />
+      <rect y="9" width="18" height="3" fill="#CE1126" />
+    </>
+  ),
+  pe: (
+    <>
+      <rect width="18" height="12" fill="#D91023" />
+      <rect x="6" width="6" height="12" fill="#FFFFFF" />
+    </>
+  ),
+  br: (
+    <>
+      <rect width="18" height="12" fill="#009C3B" />
+      <path d="M 9 1.5 L 16.5 6 L 9 10.5 L 1.5 6 Z" fill="#FFDF00" />
+      <circle cx="9" cy="6" r="2.6" fill="#002776" />
+    </>
+  ),
+}
+
+/**
+ * As cidades da fronteira, de um lado e do outro do rio; Benjamin Constant é a
+ * casa. `dy` leva o rótulo para baixo onde em cima ele bateria no vizinho.
+ */
 const TOWNS = [
   {
-    x: 150,
-    y: 150,
-    name: 'Atalaia do Norte',
-    dx: -8,
+    x: 346,
+    y: 300,
+    name: 'Benjamin Constant',
+    dx: 0,
+    dy: 30,
+    anchor: 'middle',
+    kind: 'home',
+  },
+  {
+    x: 384,
+    y: 230,
+    name: 'Letícia',
+    dx: -10,
+    dy: -10,
     anchor: 'end',
     kind: 'town',
   },
   {
-    x: 262,
-    y: 236,
-    name: 'Benjamin Constant',
+    x: 414,
+    y: 258,
+    name: 'Tabatinga',
     dx: 12,
+    dy: 4,
     anchor: 'start',
-    kind: 'home',
+    kind: 'town',
   },
-  { x: 404, y: 196, name: 'Tabatinga', dx: 12, anchor: 'start', kind: 'town' },
-  { x: 446, y: 262, name: 'Letícia', dx: 12, anchor: 'start', kind: 'town' },
-  { x: 352, y: 318, name: 'Santa Rosa', dx: 12, anchor: 'start', kind: 'town' },
+  {
+    x: 366,
+    y: 262,
+    name: 'Santa Rosa',
+    dx: -10,
+    dy: 4,
+    anchor: 'end',
+    kind: 'town',
+  },
+  {
+    x: 246,
+    y: 334,
+    name: 'Atalaia do Norte',
+    dx: 0,
+    dy: 22,
+    anchor: 'middle',
+    kind: 'town',
+  },
+  {
+    x: 206,
+    y: 118,
+    name: 'Puerto Nariño',
+    dx: 0,
+    dy: -12,
+    anchor: 'middle',
+    kind: 'town',
+  },
+  {
+    x: 112,
+    y: 182,
+    name: 'Caballococha',
+    dx: 0,
+    dy: 22,
+    anchor: 'middle',
+    kind: 'town',
+  },
+  {
+    x: 560,
+    y: 104,
+    name: 'São Paulo de Olivença',
+    dx: -10,
+    dy: 4,
+    anchor: 'end',
+    kind: 'town',
+  },
 ] as const
 
+/** A rede sai de casa para os três países. */
 const LINKS = [
   [0, 1],
-  [1, 2],
-  [2, 3],
-  [1, 4],
-  [4, 3],
+  [0, 2],
+  [0, 3],
+  [0, 4],
+  [1, 5],
+  [3, 6],
+  [2, 7],
 ] as const
 
 /** Como cada ponto se desenha, pelo `kind`. */
 const TOWN_STYLE = {
-  home: { r: 8, fill: GREEN, opacity: 0.95, size: 14, weight: 700 },
-  town: { r: 5, fill: INK, opacity: 0.6, size: 12, weight: 500 },
+  home: { r: 8, fill: GREEN, opacity: 0.95, size: 17, weight: 700 },
+  town: { r: 5, fill: INK, opacity: 0.7, size: 14, weight: 500 },
 } as const
 
 /** Sinal fraco: uma barra acesa, três apagadas. */
@@ -97,10 +200,42 @@ const SIGNAL_BARS = [
   { fill: INK, opacity: 0.18 },
 ] as const
 
-/** 1 · Pensado para a borda: as cidades ao longo do Solimões, ligadas mesmo com sinal ruim. */
+/**
+ * 1 · Pensado para a borda: a tríplice fronteira Brasil, Colômbia e Peru, com
+ * as cidades dos três lados do Solimões ligadas a partir de casa, mesmo com
+ * sinal ruim. O desenho segue o mapa real (Letícia ao norte do rio, Santa Rosa
+ * na ilha, Benjamin Constant na boca do Javari), simplificado.
+ */
 function EdgeScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
+      {BORDERS.map((d) => (
+        <path
+          key={d}
+          d={d}
+          fill="none"
+          stroke={INK}
+          strokeOpacity="0.35"
+          strokeWidth="1.2"
+          strokeDasharray="6 5"
+        />
+      ))}
+      <path
+        d={JAVARI}
+        fill="none"
+        stroke={CYAN}
+        strokeOpacity="0.2"
+        strokeWidth="12"
+        strokeLinecap="round"
+      />
+      <path
+        d={JAVARI}
+        fill="none"
+        stroke={INK}
+        strokeOpacity="0.35"
+        strokeWidth="1.2"
+        strokeDasharray="6 5"
+      />
       <path
         d={RIVER}
         fill="none"
@@ -116,6 +251,87 @@ function EdgeScene(): React.JSX.Element {
         strokeOpacity="0.7"
         strokeWidth="2"
       />
+      {COUNTRIES.map((country, i) => (
+        <g key={country.flag} className={APPEAR} style={delay(0.1 + i * 0.1)}>
+          <g transform={`translate(${country.x - 40} ${country.y - 10})`}>
+            <rect
+              x="-1"
+              y="-1"
+              width="20"
+              height="14"
+              rx="2"
+              fill={NAVY}
+              stroke={INK}
+              strokeOpacity="0.3"
+            />
+            {FLAGS[country.flag]}
+          </g>
+          <text
+            x={country.x - 14}
+            y={country.y}
+            fill={INK}
+            fillOpacity="0.6"
+            fontSize="16"
+            fontWeight="600"
+            letterSpacing="3"
+            fontFamily="var(--font-sans)"
+          >
+            {country.name}
+          </text>
+        </g>
+      ))}
+      <g className={APPEAR} style={delay(0.15)}>
+        <circle
+          cx={TRIPOINT.x}
+          cy={TRIPOINT.y}
+          r="40"
+          fill={CYAN}
+          fillOpacity="0.1"
+          className="vision-pulse"
+        />
+        <circle
+          cx={TRIPOINT.x}
+          cy={TRIPOINT.y}
+          r="40"
+          fill={CYAN}
+          fillOpacity="0.08"
+          stroke={CYAN}
+          strokeOpacity="0.9"
+          strokeWidth="1.6"
+          strokeDasharray="4 5"
+        />
+        <line
+          x1={TRIPOINT.x + 28}
+          y1={TRIPOINT.y - 29}
+          x2="446"
+          y2="174"
+          stroke={CYAN}
+          strokeOpacity="0.9"
+          strokeWidth="1.4"
+        />
+        <rect
+          x="446"
+          y="158"
+          width="128"
+          height="32"
+          rx="16"
+          fill={PANEL}
+          stroke={CYAN}
+          strokeOpacity="0.9"
+        />
+        <text
+          x="510"
+          y="179"
+          textAnchor="middle"
+          fill={CYAN}
+          fontSize="15"
+          fontWeight="700"
+          letterSpacing="1.5"
+          fontFamily="var(--font-sans)"
+        >
+          BR · CO · PE
+        </text>
+      </g>
       {LINKS.map(([a, b], i) => (
         <line
           key={`${a}-${b}`}
@@ -148,7 +364,7 @@ function EdgeScene(): React.JSX.Element {
             <circle cx={town.x} cy={town.y} r={style.r} fill={style.fill} />
             <text
               x={town.x + town.dx}
-              y={town.y - 12}
+              y={town.y + town.dy}
               textAnchor={town.anchor}
               fill={INK}
               fillOpacity={style.opacity}
@@ -161,7 +377,7 @@ function EdgeScene(): React.JSX.Element {
           </g>
         )
       })}
-      <g transform="translate(236 290)">
+      <g transform="translate(24 352)">
         <rect
           x="0"
           y="0"
