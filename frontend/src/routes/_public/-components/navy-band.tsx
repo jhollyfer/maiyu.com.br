@@ -1,6 +1,10 @@
 import type * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import {
+  ArrowRightIcon,
+  ArrowUpRightIcon,
+  UserIcon,
+} from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
@@ -13,6 +17,9 @@ import { m } from '#/paraglide/messages'
 /**
  * O fundo de cada retrato, na ordem do time. As fotos têm recorte de fundo, e
  * a cor atrás é o que as costura numa fileira só.
+ *
+ * As fotos estão ocultas por ora, com um ícone no lugar; `member.img` continua
+ * em `lib/team.ts` para a volta delas.
  */
 const TEAM_TINTS = [
   'bg-tint-peach',
@@ -79,19 +86,17 @@ export function NavyBand(): React.JSX.Element {
               <figure>
                 <div
                   className={cn(
-                    'group overflow-hidden rounded-2xl ring-1 ring-on-navy/10',
+                    'overflow-hidden rounded-2xl ring-1 ring-on-navy/10',
                     TEAM_TINTS[index % TEAM_TINTS.length],
                   )}
                 >
-                  <img
-                    src={member.img}
-                    alt={member.name}
-                    width={384}
-                    height={512}
-                    loading="lazy"
-                    decoding="async"
-                    className="aspect-[3/4] w-full object-cover object-top transition-transform duration-700 ease-out-expo group-hover:scale-[1.04] motion-reduce:transition-none"
-                  />
+                  <div
+                    role="img"
+                    aria-label={member.name}
+                    className="flex aspect-[3/4] w-full items-center justify-center text-navy/35"
+                  >
+                    <UserIcon size={48} weight="light" />
+                  </div>
                 </div>
                 <figcaption className="mt-3 text-center text-small text-on-navy/80">
                   {member.name}
