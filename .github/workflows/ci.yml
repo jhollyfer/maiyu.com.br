@@ -14,7 +14,7 @@ concurrency:
 jobs:
   # A PR that only touches text does not run the suites (`_standards/tooling.md` §7,
   # `DECISIONS.md` #273): the PR's files are listed in shell, with no third-party filter, and
-  # backend and frontend are called only when some file is NOT text. A skipped job shows as
+  # the frontend is called only when some file is NOT text. A skipped job shows as
   # skipped, which satisfies the required check (GitHub's page not checked).
   # `repository` below always runs.
   changes:
@@ -48,13 +48,9 @@ jobs:
           done < <(git diff --name-only "$BASE_SHA...$HEAD_SHA")
           echo "code=$code" >> "$GITHUB_OUTPUT"
 
-  # The same reusables that the push to main calls, so the PR does not go through a
-  # different gate from the deploy's (`_standards/tooling.md` §8.1).
-  backend:
-    needs: changes
-    if: ${{ needs.changes.outputs.code == 'true' }}
-    uses: ./.github/workflows/main-check-backend.yml
-
+  # The same reusable that the push to main calls, so the PR does not go through a
+  # different gate from the deploy's (`_standards/tooling.md` §8.1). Profile without
+  # `backend/` (`DECISIONS.md` #286): there is no backend job.
   frontend:
     needs: changes
     if: ${{ needs.changes.outputs.code == 'true' }}

@@ -804,6 +804,18 @@ O mesmo vale para **código** que tem de ser igual em todo projeto da stack: mor
 (`code-diverge:`). Só o arquivo que existe ali é cobrado; o resto do projeto continua dele. Bug achado
 num projeto num arquivo desses se corrige aqui e volta para todos (`DECISIONS.md` #280).
 
+**Perfil sem `backend/`** (`DECISIONS.md` #286). O projeto que só tem `frontend/` (site sem API, sem
+E2E contra backend e sem MinIO) não usa os nove arquivos: o sync detecta a falta do diretório
+`backend/` e grava sete. São os de `workflows/` sem `main-check-backend.yml` e
+`main-docker-backend.yml`, com `ci.yml`, `main.yml`, `main-check-frontend.yml`,
+`main-build-frontend.yml` e `main-deploy-coolify.yml` trocados pelos de
+`_templates/workflows-frontend/`. A troca tira só o que depende do backend (job de backend, build
+de `shared/`, job de E2E com Postgres e MinIO, `VITE_API_URL`, `COOLIFY_API_UUID` e o smoke test de
+`/health-check`); pins de action, permissões e o resto são os mesmos. O fluxo do `main.yml` vira
+`build-frontend` → `docker-frontend` → `deploy`. O `--check` cobre o mesmo conjunto: arquivo de
+backend num projeto assim aparece como `workflow-diverge: ... a mais` e o sync o remove. Quem nasce
+sem `backend/` e ganha um depois passa ao conjunto completo no sync seguinte.
+
 `main.yml`: `check-backend` ∥ `build-frontend` → `docker-backend` ∥ `docker-frontend` → `deploy`.
 O deploy espera as **duas** imagens: implantar o frontend contra uma API que não passou é publicar
 meia versão. O PR e o push chamam o **mesmo** reutilizável de check: o PR não passa por uma régua
@@ -921,6 +933,11 @@ push): o merge entra com o E2E já provado, e repeti-lo atrasa o deploy em uns d
   `secrets.`, e um valor criado na aba errada chega vazio. Workflow novo vindo do sync num projeto
   que ainda não tem os secrets fica vermelho na primeira `main`: o sync avisa disso ao gravar os
   workflows.
+- **Perfil sem `backend/`** (§8.1, `DECISIONS.md` #286): valem só `DOCKERHUB_USERNAME`,
+  `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL`. Não existem
+  `COOLIFY_API_UUID` nem `VITE_API_URL`; o `main-deploy-coolify.yml` dispara só o app e o passo
+  "Endereço de produção" confere só `VITE_SITE_URL`. O disparo e a prova abaixo valem iguais, sem a
+  parte da API: o smoke test termina em `VITE_SITE_URL/revision.txt` igual a `GITHUB_SHA`.
 - O disparo é assíncrono, então o job termina num **smoke test**: a API responde `200` em
   `/health-check`, e o app serve `/revision.txt` com corpo **igual a `GITHUB_SHA`**. Conferência pelo
   corpo, nunca pelo status: o catch-all de SSR responde `200` com HTML para arquivo ausente.
