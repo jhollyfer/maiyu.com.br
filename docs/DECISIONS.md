@@ -1,0 +1,28 @@
+# Decisões
+
+**Maiyu** · escolhas difíceis de desfazer, com o porquê e o custo aceito
+
+> Leia antes de decidir para não reabrir o que já foi resolvido. Decisão nova entra no fim.
+> Só entra o que cumpre os três critérios: difícil de reverter, surpreendente para quem chega sem
+> contexto, e com troca real (`_standards/documentation.md` §5).
+> Regra que vale para todo projeto não fica aqui: vai para `_standards/DECISIONS.md` (upstream).
+> Decisão ainda aberta fica na issue ou em `.specs/features/<f>/context.md`; fechada, vira linha aqui.
+
+| # | Data | Tema | Decisão | Por quê | Alternativas descartadas | Custo aceito |
+|---|---|---|---|---|---|---|
+| 1 | 2026-11-04 | Projeto único, sem workspace na raiz | `frontend/` com o próprio `package.json`, lockfile e Dockerfile; a raiz só tem atalhos de script | é o desenho do `frontend/` de `academy`, `simple-hub` e `adacaibs`; não há `backend/` nem `shared/` para dividir | pnpm workspace na raiz: sem segundo pacote não paga o custo | scripts da raiz entram por `cd frontend`; dependência não é compartilhada com outro pacote |
+| 2 | 2026-11-04 | Paraglide em uso, idioma na URL | `server.ts` com `paraglideMiddleware`, `rewrite` em `router.tsx`, `lib/i18n.ts`; prefixo `/en` e `/es`, `pt-BR` sem prefixo | o site fala três línguas; sem o middleware o SSR renderiza em português e a hidratação troca o texto | idioma por cookie: a URL deixa de identificar a versão e o buscador indexa uma só; paraglide instalado sem uso, como nos irmãos: não serve a três idiomas | arquivo `server.ts` que os irmãos não têm; `rewrite` próprio no router |
+| 3 | 2026-11-04 | Conteúdo em `lib/`, sem camada de API | `projects.ts`, `articles.ts`, `jobs.ts` com registros tipados; sem `integrations/tanstack-query/http.ts`, `queries.ts` nem `mutations.ts` | o site não tem API; consulta e mutation não teriam o que chamar | mock de API local: duas fontes para o mesmo dado | artigo, projeto ou vaga novos exigem commit e deploy |
+| 4 | 2026-11-04 | Sem `start.ts` | o arquivo não existe | no academy ele dá o escopo por requisição do cliente HTTP e o CSRF das server functions; aqui não há cliente HTTP nem server function | copiar o `start.ts` por paridade: código morto | quem adicionar server function ou cliente HTTP precisa criar o `start.ts` junto |
+| 5 | 2026-11-04 | Healthcheck em `/health` | rota de servidor `routes/health.ts`; o painel do Coolify aponta para ela | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira | `/` : lento e acopla a saúde ao conteúdo | a configuração do painel precisa ser lembrada num servidor novo (`ARCHITECTURE.md` §9.1) |
+| 6 | 2026-11-04 | Workflows fora do sync | `.github/workflows` ficam como estão, sem adotar o modelo do upstream | o modelo do upstream pressupõe API e backend e o deploy dele (`COOLIFY_API_UUID`, `VITE_API_URL`); o site não tem backend | adotar o modelo e podar à mão: o sync voltaria a divergir; esconder a divergência: contraria a régua | `sync --check` acusa `workflow-diverge`. Pendente de decisão do dono: ajustar o upstream com um modelo para site sem backend, ou aceitar o desvio |
+| 7 | 2026-11-04 | Formulários confirmam na tela e não enviam | `ContactForm` e `CareerForm` validam, mostram o toast e limpam; o contato real segue por e-mail e WhatsApp | é o comportamento do site anterior e não há endpoint; o dono ainda não definiu o destino das mensagens | enviar por serviço de terceiros: dado pessoal sai do controle da Maiyu sem decisão | visitante pode achar que a mensagem foi entregue; ver `PRD.md` §8 |
+| 8 | 2026-11-04 | Deploy no Coolify por `POST` | `curl -fsS -X POST` em `/api/v1/deploy`, com smoke test em `/revision.txt` | a rota responde 405 a `GET` desde o Coolify v4.2; `-f` faz o passo reprovar em 401 e 404 | `GET`: quebra o deploy; `curl` sem `-f`: deploy que nunca aconteceu aparece verde | o `UUID_APP` é da aplicação e precisa ser conferido: uuid de outro team é aceito e não implanta nada |
+| 9 | 2026-11-04 | `frontend/.env.example` do modelo com chaves que o site não usa | o arquivo traz `VITE_API_URL`, `STORAGE_PUBLIC_URL`, `VITE_UPLOAD_MAX_SIZE`, `E2E_*` e as demais do modelo; `ENV.md` diz que nenhuma é lida | o modelo é fechado e o sync exige as mesmas chaves, na mesma ordem, em todo projeto | podar o arquivo: o `--check` acusa `env-diverge` | chaves mortas no arquivo; pendente de ajuste no upstream, junto com a #6 |
+| 10 | 2026-11-04 | Animação em CSS, sem `motion` | `REVEAL` e `STAGGER` de `reveal.ts`, com `motion-reduce:` em tudo; o `motion` fica no `package.json` e nada o importa | CSS não carrega JavaScript de animação e respeita `prefers-reduced-motion` por classe | `motion` nas revelações: bundle maior e hidratação mais cara | dependência instalada sem uso, por paridade com o academy; `vitrine-contract.test.ts` reprova se ele voltar |
+
+- **Tema** é a decisão como substantivo, não a pergunta.
+- **Custo aceito** é a consequência negativa honesta da escolha.
+
+Decisão não se edita nem se apaga: a linha nova diz "substitui #N" e a antiga ganha
+"substituída por #M" no Tema.
