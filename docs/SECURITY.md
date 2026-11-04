@@ -59,7 +59,7 @@ flowchart LR
 | páginas SSR | `GET` em `/`, `/portfolio`, `/blog`, `/career`, `/contact` | internet para o SSR | `frontend/src/routes/_public/` |
 | filtro do diário | `?category=` | internet para o SSR | `frontend/src/lib/blog-search.ts` |
 | formulários | validação no cliente; nada é enviado | cliente | `frontend/src/routes/_public/-components/contact-form.tsx` |
-| `/health`, `/sitemap.xml` | `GET` | internet para o SSR | `frontend/src/routes/health.ts` |
+| `/health-check`, `/sitemap.xml` | `GET` | internet para o SSR | `frontend/src/routes/health-check.ts` |
 | deploy | `POST` ao Coolify | CI para o Coolify | `.github/workflows/main-deploy-coolify.yml` |
 
 ### 2.6 Abusos priorizados

@@ -60,7 +60,7 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 |---|---|
 | Idiomas | pt-BR, en e es, com paridade de mensagens cobrada por `lib/messages.test.ts` |
 | Desempenho | SSR do TanStack Start com rotas `.lazy`; animação em CSS |
-| Disponibilidade | imagem Nitro na porta 3000, healthcheck em `/health` |
+| Disponibilidade | imagem Nitro na porta 3000, healthcheck em `/health-check` |
 | Acessibilidade | WCAG 2.1 AA, `motion-reduce` em toda animação (`DESIGN.md` §10) |
 | Dispositivos | celular primeiro; desktop com a barra completa |
 | Dados pessoais | o site não grava dado pessoal; o formulário não envia nada (`SECURITY.md` §8) |

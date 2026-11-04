@@ -10,7 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicLayoutRouteImport } from './routes/_public/layout'
-import { Route as HealthRouteImport } from './routes/health'
+import { Route as HealthCheckRouteImport } from './routes/health-check'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
@@ -24,9 +24,9 @@ const PublicLayoutRoute = PublicLayoutRouteImport.update({
   id: '/_public',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HealthRoute = HealthRouteImport.update({
-  id: '/health',
-  path: '/health',
+const HealthCheckRoute = HealthCheckRouteImport.update({
+  id: '/health-check',
+  path: '/health-check',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -82,7 +82,7 @@ const PublicBlogSlugRoute = PublicBlogSlugRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
-  '/health': typeof HealthRoute
+  '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
@@ -92,7 +92,7 @@ export interface FileRoutesByFullPath {
   '/blog/': typeof PublicBlogIndexRoute
 }
 export interface FileRoutesByTo {
-  '/health': typeof HealthRoute
+  '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
@@ -105,7 +105,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_public': typeof PublicLayoutRouteWithChildren
-  '/health': typeof HealthRoute
+  '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_public/$': typeof PublicSplatRoute
   '/_public/career': typeof PublicCareerRoute
@@ -119,7 +119,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/health'
+    | '/health-check'
     | '/sitemap.xml'
     | '/$'
     | '/career'
@@ -129,7 +129,7 @@ export interface FileRouteTypes {
     | '/blog/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/health'
+    | '/health-check'
     | '/sitemap.xml'
     | '/$'
     | '/career'
@@ -141,7 +141,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_public'
-    | '/health'
+    | '/health-check'
     | '/sitemap.xml'
     | '/_public/$'
     | '/_public/career'
@@ -154,7 +154,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   PublicLayoutRoute: typeof PublicLayoutRouteWithChildren
-  HealthRoute: typeof HealthRoute
+  HealthCheckRoute: typeof HealthCheckRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
 }
 
@@ -167,11 +167,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicLayoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/health': {
-      id: '/health'
-      path: '/health'
-      fullPath: '/health'
-      preLoaderRoute: typeof HealthRouteImport
+    '/health-check': {
+      id: '/health-check'
+      path: '/health-check'
+      fullPath: '/health-check'
+      preLoaderRoute: typeof HealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -259,7 +259,7 @@ const PublicLayoutRouteWithChildren = PublicLayoutRoute._addFileChildren(
 
 const rootRouteChildren: RootRouteChildren = {
   PublicLayoutRoute: PublicLayoutRouteWithChildren,
-  HealthRoute: HealthRoute,
+  HealthCheckRoute: HealthCheckRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
 }
 export const routeTree = rootRouteImport
