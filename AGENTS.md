@@ -2,7 +2,7 @@
 
 Site institucional da Maiyu, consultoria e desenvolvimento de software sob demanda de Benjamin Constant/AM (Alto Solimões), na tríplice fronteira Brasil, Peru e Colômbia, construída por indígenas e pessoas originárias da região. Três idiomas (português, inglês e espanhol), sem backend.
 
-Um projeto só, `frontend/` (TanStack Start sobre Vite e Nitro), no mesmo padrão do `frontend/` de `academy`, `simple-hub` e `adacaibs`: o próprio `package.json`, lockfile e Dockerfile. **Não há workspace na raiz**, e é de propósito, como nos irmãos.
+Um workspace pnpm com um pacote só, `frontend/` (TanStack Start sobre Vite e Nitro), e um `pnpm-lock.yaml` na raiz, como nos irmãos (`_standards/tooling.md` §1). Não há `backend/` nem `shared/`: o site não tem API.
 
 ## O padrão Maiyu é seguido estritamente
 
@@ -117,8 +117,9 @@ O detalhe está em `docs/ARCHITECTURE.md` §9 e §9.1. O que precisa estar na ca
   site anterior.
 - O healthcheck no painel precisa apontar para `/health`. O painel sobrepõe o `HEALTHCHECK` do
   `Dockerfile-production`, e em `/` ele mediria a renderização da home inteira.
-- Os workflows são cópia exata do modelo do upstream, como nos irmãos (`DECISIONS.md` #6). Secrets
-  do repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_API_UUID`, `COOLIFY_APP_UUID`, `VITE_API_URL` e `VITE_SITE_URL`.
+- Os workflows são o perfil sem backend do modelo do upstream (`DECISIONS.md` #14). Secrets do
+  repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`
+  e `VITE_SITE_URL`.
 - O deploy sai por `POST` no Coolify, e o smoke test espera `VITE_SITE_URL` + `/revision.txt`
   responder o sha do commit. **Não volte para `GET`**: a rota
   responde 405 desde a v4.2.
