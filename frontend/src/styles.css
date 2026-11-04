@@ -48,19 +48,19 @@
   --radius: 1rem;
   color-scheme: light;
 
-  --background: #fafafa;
-  --surface: #ffffff;
+  --background: #f6f2ea;
+  --surface: #fffdf8;
   --foreground: #01111b;
 
-  --card: #ffffff;
+  --card: #fffdf8;
   --card-foreground: #01111b;
-  --popover: #ffffff;
+  --popover: #fffdf8;
   --popover-foreground: #01111b;
 
   --primary: #01111b;
   --primary-foreground: #88ff9a;
 
-  --secondary: #eef2f4;
+  --secondary: #ede6d8;
   --secondary-foreground: #01111b;
   --secondary-hover: color-mix(
     in oklab,
@@ -68,8 +68,8 @@
     var(--foreground)
   );
 
-  --muted: #eef2f4;
-  --muted-foreground: #403937;
+  --muted: #ede6d8;
+  --muted-foreground: #4a3f36;
 
   --accent: #88ff9a;
   --accent-foreground: #01111b;
@@ -77,8 +77,8 @@
   --destructive: #d6336c;
   --destructive-foreground: #ffffff;
 
-  --border: rgba(1, 17, 27, 0.1);
-  --input: rgba(1, 17, 27, 0.16);
+  --border: rgba(58, 40, 24, 0.12);
+  --input: rgba(58, 40, 24, 0.2);
   --ring: #01111b;
   --overlay: rgba(1, 17, 27, 0.4);
 
@@ -89,37 +89,46 @@
   --highlight: #0bafc7;
   --highlight-bar: #88ff9a;
 
-  --tint-mint: #c2f7ec;
-  --tint-peach: #fdd3e9;
-  --tint-mist: #ddd0fb;
-  --tint-lime: #ccffd4;
-  --tint-green: #ccffd4;
-  --tint-peach-soft: #e3fce8;
+  --tint-mint: #d3eee0;
+  --tint-peach: #f7d9c8;
+  --tint-mist: #ead6e6;
+  --tint-lime: #dcefc8;
+  --tint-green: #dcefc8;
+  --tint-peach-soft: #f3e8d2;
 
   --navy: #01111b;
   --navy-2: #0b1e2b;
   --on-navy: #e8f6ff;
 
   /* O céu e a mata do fundo: dia na Amazônia. */
-  --sky-top: #ddf8fc;
-  --sky-mid: #f1fcf5;
-  --sky-low: #d3f8de;
-  --sky-glow: rgba(49, 225, 247, 0.2);
-  --forest-back: #b4e6d2;
-  --forest-mid: #86d4aa;
-  --forest-front: #4fb283;
-  --river: #bdeff6;
-  --river-glint: rgba(255, 255, 255, 0.85);
+  --sky-top: #d6f1ec;
+  --sky-mid: #f5f1e3;
+  --sky-low: #dcefd4;
+  --sky-glow: rgba(240, 160, 80, 0.24);
+  --forest-back: #a5d0b3;
+  --forest-mid: #62a881;
+  --forest-front: #2c7652;
+  --river: #d6bf98;
+  --river-glint: rgba(255, 248, 232, 0.85);
+
+  /*
+   * A terra da região: o urucum da pintura, o açaí e o barro do Solimões, que
+   * é rio de água branca. A terra é o `--clay` do aporta, a mesma região.
+   * Só para o trançado e detalhes, nunca superfície.
+   */
+  --urucum: #b5402a;
+  --acai: #4b1f45;
+  --terra: #a8643d;
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
-  --badge-neutral: #eef2f4;
+  --badge-neutral: #ede6d8;
   --badge-neutral-fg: #01111b;
-  --badge-info: #c2f7ec;
+  --badge-info: #d3eee0;
   --badge-info-fg: #01111b;
-  --badge-success: #ccffd4;
+  --badge-success: #dcefc8;
   --badge-success-fg: #01111b;
-  --badge-warning: #fdd3e9;
+  --badge-warning: #f7d9c8;
   --badge-warning-fg: #01111b;
 }
 
@@ -127,23 +136,23 @@
 .dark {
   color-scheme: dark;
 
-  --background: #080c14;
-  --surface: #0f1520;
+  --background: #07120e;
+  --surface: #0e1a15;
   --foreground: #e8f6ff;
 
-  --card: #0f1520;
+  --card: #0e1a15;
   --card-foreground: #e8f6ff;
-  --popover: #0f1520;
+  --popover: #0e1a15;
   --popover-foreground: #e8f6ff;
 
   --primary: #88ff9a;
   --primary-foreground: #01111b;
 
-  --secondary: #151d2a;
+  --secondary: #14241e;
   --secondary-foreground: #e8f6ff;
 
-  --muted: #151d2a;
-  --muted-foreground: #9aa7b4;
+  --muted: #14241e;
+  --muted-foreground: #a6b5aa;
 
   --accent: #88ff9a;
   --accent-foreground: #01111b;
@@ -159,32 +168,36 @@
   --highlight: #31e1f7;
   --highlight-bar: #88ff9a;
 
-  --tint-mint: #0d1f22;
-  --tint-peach: #1e1522;
-  --tint-mist: #17172e;
-  --tint-lime: #0e221a;
-  --tint-green: #0e221a;
-  --tint-peach-soft: #0e2a22;
+  --tint-mint: #0c211b;
+  --tint-peach: #24140f;
+  --tint-mist: #1e1220;
+  --tint-lime: #122214;
+  --tint-green: #122214;
+  --tint-peach-soft: #1d1a10;
 
-  --sky-top: #01111b;
-  --sky-mid: #062630;
-  --sky-low: #0a2a1e;
-  --sky-glow: rgba(49, 225, 247, 0.22);
-  --forest-back: #0c2328;
-  --forest-mid: #0a1e18;
-  --forest-front: #04110c;
-  --river: #0a2230;
-  --river-glint: rgba(232, 246, 255, 0.35);
+  --sky-top: #03130f;
+  --sky-mid: #07241d;
+  --sky-low: #0c2a19;
+  --sky-glow: rgba(240, 160, 80, 0.12);
+  --forest-back: #0d261d;
+  --forest-mid: #091c14;
+  --forest-front: #03100a;
+  --river: #1f1a10;
+  --river-glint: rgba(240, 220, 180, 0.3);
+
+  --urucum: #e0704f;
+  --acai: #c58bc0;
+  --terra: #c08a5c;
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
-  --badge-neutral: #151d2a;
+  --badge-neutral: #14241e;
   --badge-neutral-fg: #e8f6ff;
-  --badge-info: #0d1f22;
+  --badge-info: #0c211b;
   --badge-info-fg: #e8f6ff;
-  --badge-success: #0e221a;
+  --badge-success: #122214;
   --badge-success-fg: #e8f6ff;
-  --badge-warning: #1e1522;
+  --badge-warning: #24140f;
   --badge-warning-fg: #e8f6ff;
 }
 
@@ -226,6 +239,10 @@
   --color-tint-lime: var(--tint-lime);
   --color-tint-green: var(--tint-green);
   --color-tint-peach-soft: var(--tint-peach-soft);
+  --color-forest: var(--forest-front);
+  --color-urucum: var(--urucum);
+  --color-acai: var(--acai);
+  --color-terra: var(--terra);
   --color-navy: var(--navy);
   --color-navy-2: var(--navy-2);
   --color-on-navy: var(--on-navy);
@@ -385,6 +402,28 @@
   background: var(--highlight-bar);
 }
 
+/*
+ * O trançado: a faixa de cestaria que costura uma seção na outra. Losangos de
+ * fibra em urucum, terra e mata, desenhados em SVG com as cores do tema, e não
+ * o grafismo de um povo específico: grafismo tem dono, e só entra aqui com a
+ * autorização de quem o pinta.
+ */
+@utility trancado {
+  height: 0.875rem;
+  background-color: var(--terra);
+  background-image:
+    linear-gradient(135deg, var(--urucum) 25%, transparent 25%),
+    linear-gradient(225deg, var(--urucum) 25%, transparent 25%),
+    linear-gradient(315deg, var(--forest-front) 25%, transparent 25%),
+    linear-gradient(45deg, var(--forest-front) 25%, transparent 25%);
+  background-size: 1.75rem 0.875rem;
+  background-position:
+    0 0,
+    0 0,
+    0.875rem 0,
+    0.875rem 0;
+}
+
 /* O céu: ciano no alto, verde no horizonte, que é a superfície da marca. */
 @utility sky {
   background:
@@ -426,12 +465,6 @@
 
 @utility text-gradient-green {
   background-image: linear-gradient(100deg, #77eed7 0%, #88ff9a 100%);
-  background-clip: text;
-  color: transparent;
-}
-
-@utility text-gradient-blue {
-  background-image: linear-gradient(100deg, #31e1f7 0%, #3168f7 100%);
   background-clip: text;
   color: transparent;
 }

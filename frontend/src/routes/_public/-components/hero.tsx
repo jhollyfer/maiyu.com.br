@@ -12,7 +12,7 @@ import { m } from '#/paraglide/messages'
  * A primeira dobra: céu, mata, o título em duas linhas e a folha planando.
  *
  * O único `h1` da home. As duas linhas do título se desencontram de propósito,
- * a primeira à esquerda e a segunda à direita com o gradiente, e a barra verde
+ * a primeira à esquerda e a segunda à direita na cor da mata, e a barra verde
  * fecha sob a segunda: é a composição das artes de divulgação da Maiyu.
  *
  * A entrada é escalonada por `animationDelay`, na ordem de leitura: título,
@@ -33,7 +33,7 @@ export function Hero(): React.JSX.Element {
             {m.home_heroTitle1()}
           </span>
           <span className={cn(REVEAL, 'block text-right delay-100 md:pr-[4%]')}>
-            <span className="text-gradient-blue dark:text-gradient-green">
+            <span className="text-forest dark:text-brand-green">
               {m.home_heroTitle2()}
             </span>
           </span>

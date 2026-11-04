@@ -78,6 +78,14 @@ export function NavyBand(): React.JSX.Element {
       data-slot="home-navy-band"
       className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32"
     >
+      <div
+        aria-hidden="true"
+        className="trancado absolute inset-x-0 top-0 opacity-90"
+      />
+      <div
+        aria-hidden="true"
+        className="trancado absolute inset-x-0 bottom-0 opacity-90"
+      />
       <div className="absolute inset-0 -z-10 [--border:rgba(49,225,247,0.12)]">
         <div className="rails size-full" />
       </div>
