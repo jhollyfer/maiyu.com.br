@@ -115,7 +115,7 @@ O detalhe está em `docs/ARCHITECTURE.md` §9 e §9.1. O que precisa estar na ca
 
 - A aplicação no Coolify é a imagem Nitro na porta 3000, e não mais o nginx estático da porta 80 do
   site anterior.
-- O healthcheck no painel precisa apontar para `/health`. O painel sobrepõe o `HEALTHCHECK` do
+- O healthcheck no painel precisa apontar para `/health-check` (régua, `DECISIONS.md` #15). O painel sobrepõe o `HEALTHCHECK` do
   `Dockerfile-production`, e em `/` ele mediria a renderização da home inteira.
 - Os workflows são o perfil sem backend do modelo do upstream (`DECISIONS.md` #14). Secrets do
   repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`

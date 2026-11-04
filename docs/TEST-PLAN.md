@@ -72,5 +72,5 @@ A definição de pronto da casa vale aqui sem cópia: `_standards/tooling.md` §
 
 - [ ] Home, portfólio, diário, carreiras e contato nos três idiomas, em claro e escuro.
 - [ ] Celular a 320 px sem rolagem horizontal.
-- [ ] `/health` responde `ok` e `/sitemap.xml` abre.
+- [ ] `/health-check` responde `{"status":"ok"}` e `/sitemap.xml` abre.
 - [ ] Troca de idioma preserva a rota.
