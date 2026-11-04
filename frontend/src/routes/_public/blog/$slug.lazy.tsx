@@ -1,7 +1,9 @@
 import type * as React from 'react'
 import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
-import { ArrowLeftIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
+import { Photo } from '../-components/photo'
+import { PillButton } from '../-components/pill-button'
 import { REVEAL } from '../-components/reveal'
 import {
   NotFoundPage,
@@ -9,11 +11,6 @@ import {
   NotFoundPageHomeButton,
   NotFoundPageTitle,
 } from '#/components/common/not-found-page'
-import { PillButton } from '../-components/pill-button'
-import { SkyBackdrop } from '#/components/common/sky'
-import { localized } from '#/lib/i18n'
-import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
-import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Avatar, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import {
@@ -21,8 +18,13 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
-import { Card } from '#/components/ui/card'
+import { articles } from '#/lib/articles'
+import type { ArticleBlock } from '#/lib/articles'
+import { localized } from '#/lib/i18n'
+import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
@@ -53,140 +55,182 @@ function ArticleNotFound(): React.JSX.Element {
   )
 }
 
-/** O intertítulo e o parágrafo do corpo, com a medida de leitura do site no ar. */
-const HEADING = 'mt-16 mb-5 text-h2'
-const PARAGRAPH = 'mb-8 text-body-lg leading-[1.75] text-foreground/85'
-
-/** Os três tópicos da primeira seção. */
-const BULLETS = [
-  () => m.blogArticle_bullet1(),
-  () => m.blogArticle_bullet2(),
-  () => m.blogArticle_bullet3(),
-]
+/**
+ * Como cada tipo de bloco se desenha, por lookup e não por `if`.
+ *
+ * Parágrafo com `leading-[1.75]` e corpo grande: a medida vem do `max-w`
+ * do artigo, não de cada linha. O intertítulo leva o losango de urucum como
+ * marcador de capítulo e mais espaço acima do que abaixo, para que ele
+ * pertença ao parágrafo que abre, e não ao que fecha.
+ */
+const BLOCKS: Record<
+  ArticleBlock['kind'],
+  (text: string, key: string) => React.JSX.Element
+> = {
+  heading: (text, key) => (
+    <div key={key} className="mt-16 mb-5">
+      <span
+        aria-hidden="true"
+        className="mb-5 block size-2 rotate-45 bg-urucum"
+      />
+      <h2 className="text-h2 text-balance">{text}</h2>
+    </div>
+  ),
+  paragraph: (text, key) => (
+    <p
+      key={key}
+      className="mb-7 text-body-lg leading-[1.75] text-foreground/85"
+    >
+      {text}
+    </p>
+  ),
+}
 
 /**
- * Um artigo do diário, inteiro.
+ * Um artigo do diário, inteiro: capa em Fraunces, foto de lugar com crédito e
+ * o corpo numa coluna de leitura.
  *
- * O corpo é o texto único que o site no ar mostra em todo artigo: o conteúdo
- * de cada um ainda não foi escrito, e o cabeçalho (título, resumo, autor) é o
- * que muda de um para outro. Quando os textos existirem, o corpo passa a sair
- * de markdown pelo `react-markdown`, como o `RichText` do academy.
+ * O corpo vem de `articles.ts` já nas três línguas, bloco a bloco. Quando o
+ * volume pedir markdown, ele passa a sair do `react-markdown`, como o
+ * `RichText` do academy.
  */
 function RouteComponent(): React.JSX.Element {
   const article = route.useLoaderData()
+  const more = articles
+    .filter((other) => other.slug !== article.slug)
+    .slice(0, 2)
 
   return (
     <>
-      <header
-        data-slot="article-header"
-        className="relative overflow-hidden pt-32 pb-16 md:pt-40"
-      >
-        <SkyBackdrop />
-        <div className={cn(REVEAL, 'relative mx-auto max-w-3xl px-4 md:px-8')}>
+      <header data-slot="article-header" className="pt-32 md:pt-40">
+        <div className={cn(REVEAL, 'mx-auto max-w-4xl px-4 md:px-8')}>
           <Breadcrumb>
             <BreadcrumbList className="text-small">
               <BreadcrumbItem>
                 <BreadcrumbLink
-                  render={<Link to="/blog" />}
-                  className="group inline-flex min-h-11 items-center gap-2 text-foreground/70 hover:text-foreground"
+                  render={<Link to="/" />}
+                  className="inline-flex min-h-11 items-center"
                 >
-                  <ArrowLeftIcon
-                    size={14}
-                    className="transition-transform duration-300 group-hover:-translate-x-0.5 motion-reduce:transition-none"
-                  />
-                  {m.blogArticle_backToJournal()}
+                  {m.nav_home()}
                 </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<Link to="/blog" />}
+                  className="inline-flex min-h-11 items-center"
+                >
+                  {m.nav_blog()}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem className="min-w-0">
+                <BreadcrumbPage className="block max-w-[28ch] truncate sm:max-w-[48ch]">
+                  {localized(article.title)}
+                </BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
-          <p className="mt-10 flex flex-wrap items-center gap-3 text-small text-foreground/70">
+
+          <h1 className="mt-10 text-h1 leading-[1.02] tracking-[-0.015em] text-balance">
+            {localized(article.title)}
+          </h1>
+          <p className="mt-8 max-w-[52ch] font-serif text-lead leading-snug text-foreground/80">
+            {localized(article.excerpt)}
+          </p>
+          <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border pt-6">
+            <Avatar className="size-10 bg-secondary">
+              <AvatarImage
+                src="/maiyu-symbol.svg"
+                alt=""
+                className="object-contain p-2"
+              />
+            </Avatar>
+            <p className="text-small text-muted-foreground">
+              <span className="block text-body font-medium text-foreground">
+                {m.blogArticle_author()}
+              </span>
+              <time dateTime={article.date}>{article.date}</time>
+              {', '}
+              {localized(article.readTime)}
+            </p>
             <Badge
               variant="outline"
-              className="h-auto border-foreground/20 bg-transparent px-3 py-1 text-micro text-foreground/80"
+              className="ml-auto h-auto px-3 py-1 text-micro"
             >
               {ARTICLE_CATEGORY_LABELS[article.category]()}
             </Badge>
-            <time dateTime={article.date}>{article.date}</time>
-          </p>
-          <h1 className="mt-4 text-h1 md:text-display">
-            {localized(article.title)}
-          </h1>
-          <p className="mt-8 font-serif text-lead leading-snug text-foreground/80">
-            {localized(article.excerpt)}
-          </p>
-          <div className="mt-10 flex items-center gap-4">
-            <Avatar className="size-11">
-              <AvatarImage src={article.authorImg} alt="" />
-            </Avatar>
-            <div>
-              <p className="text-body font-medium">{article.author}</p>
-              <p className="text-small text-foreground/70">
-                {localized(article.role)}, {localized(article.readTime)}
-              </p>
-            </div>
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-6xl px-4 md:px-8">
-        <AspectRatio
-          ratio={16 / 9}
-          className={cn(
-            REVEAL,
-            'overflow-hidden rounded-[1.75rem] bg-tint-mist delay-200 zoom-in-95 duration-1000 md:aspect-[21/10]',
-          )}
-        >
-          <img
-            src={article.image}
-            alt=""
-            fetchPriority="high"
-            className="size-full object-cover"
-          />
-        </AspectRatio>
+      <div
+        className={cn(REVEAL, 'mx-auto mt-12 max-w-6xl px-4 delay-200 md:px-8')}
+      >
+        <Photo
+          name={article.photo}
+          ratio={21 / 10}
+          sizes="(min-width: 1152px) 1100px, 100vw"
+          priority
+        />
       </div>
 
-      <article className="mx-auto max-w-2xl px-4 py-20 md:px-8 md:py-28">
-        <p className={PARAGRAPH}>{m.blogArticle_introText()}</p>
-
-        <h2 className={HEADING}>{m.blogArticle_section1Title()}</h2>
-        <p className={PARAGRAPH}>{m.blogArticle_section1Text()}</p>
-        <ul className="mb-12 list-disc space-y-3 pl-5 text-body text-foreground/85 marker:text-foreground/40">
-          {BULLETS.map((bullet, index) => (
-            <li key={index}>{bullet()}</li>
-          ))}
-        </ul>
-
-        <h2 className={HEADING}>{m.blogArticle_section2Title()}</h2>
-        <p className={PARAGRAPH}>{m.blogArticle_section2Text()}</p>
-
-        <blockquote className="my-16 rounded-[1.5rem] bg-tint-peach p-8 md:p-10">
-          <p className="font-serif text-h3 leading-snug italic">
-            “{m.blogArticle_quote()}”
-          </p>
-        </blockquote>
-
-        <h2 className={HEADING}>{m.blogArticle_section3Title()}</h2>
-        <p className={PARAGRAPH}>{m.blogArticle_section3Text()}</p>
+      <article
+        data-slot="article-body"
+        className="mx-auto max-w-[44rem] px-4 pt-16 pb-24 md:px-8 md:pt-24"
+      >
+        {article.body.map((block, index) =>
+          BLOCKS[block.kind](localized(block.text), `${index}`),
+        )}
       </article>
 
-      <section data-slot="article-cta" className="pb-24 md:pb-32">
-        <div className={cn(REVEAL, 'mx-auto max-w-5xl px-4 md:px-8')}>
-          <Card className="flex-col items-start gap-8 rounded-[1.75rem] bg-tint-mint p-8 text-base ring-0 md:flex-row md:items-end md:justify-between md:p-14">
-            <div>
-              <h2 className="text-h1">{m.blogArticle_ctaTitle()}</h2>
-              <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
-                {m.blogArticle_ctaDescription()}
-              </p>
-            </div>
-            <PillButton
-              render={
-                <Link to="/contact">
-                  {m.nav_getInTouch()}
-                  <ArrowUpRightIcon />
+      <span
+        aria-hidden="true"
+        className="trancado mx-auto block w-full max-w-7xl"
+      />
+
+      <section data-slot="article-more" className="py-20 md:py-28">
+        <div className="mx-auto max-w-4xl px-4 md:px-8">
+          <h2 className="text-h2">{m.blogArticle_moreTitle()}</h2>
+          <ul className="mt-8 divide-y divide-border border-y border-border">
+            {more.map((other) => (
+              <li key={other.slug}>
+                <Link
+                  to="/blog/$slug"
+                  params={{ slug: other.slug }}
+                  className="group flex items-center justify-between gap-6 py-6"
+                >
+                  <span className="font-serif text-h4 leading-snug text-balance underline-offset-4 group-hover:underline">
+                    {localized(other.title)}
+                  </span>
+                  <ArrowRightIcon
+                    size={20}
+                    aria-hidden="true"
+                    className="shrink-0 text-urucum transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none"
+                  />
                 </Link>
-              }
-            />
-          </Card>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      <section data-slot="article-cta" className="bg-secondary py-20 md:py-28">
+        <div className="mx-auto flex max-w-4xl flex-col items-start gap-8 px-4 md:flex-row md:items-end md:justify-between md:px-8">
+          <div>
+            <h2 className="text-h1 text-balance">{m.blogArticle_ctaTitle()}</h2>
+            <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
+              {m.blogArticle_ctaDescription()}
+            </p>
+          </div>
+          <PillButton
+            render={
+              <Link to="/contact">
+                {m.nav_getInTouch()}
+                <ArrowUpRightIcon />
+              </Link>
+            }
+          />
         </div>
       </section>
     </>

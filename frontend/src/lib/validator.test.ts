@@ -28,7 +28,7 @@ const CONTACT = {
 const APPLICATION = {
   name: 'Maria Souza',
   email: 'maria@mail.com',
-  position: 'frontend',
+  position: 'development',
   linkedin: '',
 }
 

@@ -1,14 +1,13 @@
 import type * as React from 'react'
 import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
+import { ArrowRightIcon } from '@phosphor-icons/react'
 
 import { FIELD } from '../-components/form-style'
 import { PageHero } from '../-components/page-hero'
-import { REVEAL, STAGGER } from '../-components/reveal'
+import { Photo } from '../-components/photo'
 import { PillButton } from '../-components/pill-button'
-import { AspectRatio } from '#/components/ui/aspect-ratio'
-import { Avatar, AvatarImage } from '#/components/ui/avatar'
+import { REVEAL, STAGGER } from '../-components/reveal'
 import { Badge } from '#/components/ui/badge'
-import { Card } from '#/components/ui/card'
 import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { articles, featuredArticle } from '#/lib/articles'
@@ -25,10 +24,7 @@ export const Route = createLazyFileRoute('/_public/blog/')({
   component: RouteComponent,
 })
 
-/** A cor de cada cartão da grade, em rodízio. */
-const TINTS = ['bg-tint-mint', 'bg-tint-peach', 'bg-tint-mist']
-
-/** As entradas da grade: todas, menos a que já está em destaque no topo. */
+/** As entradas da lista: todas, menos a que já está em destaque no topo. */
 const RECENT = articles.filter(
   (article) => article.slug !== featuredArticle.slug,
 )
@@ -46,12 +42,17 @@ const FILTERS: ReadonlyArray<{
 ]
 
 /**
- * O diário: o artigo em destaque, a grade filtrável e a newsletter.
+ * O diário: o texto em destaque com a foto de lugar, a lista filtrável em
+ * fileiras com fio e a newsletter.
  *
  * O filtro é `Link` e não botão com estado: a categoria mora na URL, então o
  * filtro sobrevive ao recarregar e ao voltar do artigo, e é compartilhável.
  * `resetScroll={false}` porque trocar de categoria não é trocar de página, e
- * pular para o topo tiraria a grade da frente de quem acabou de filtrar.
+ * pular para o topo tiraria a lista da frente de quem acabou de filtrar.
+ *
+ * A lista não leva foto: o diário se lê pelo título, e miniaturas iguais
+ * competiriam com a foto do destaque, que é quem carrega o lugar. A `Photo`
+ * também traz um link de crédito, então não pode morar dentro de outro link.
  */
 function RouteComponent(): React.JSX.Element {
   const { category } = route.useSearch()
@@ -64,65 +65,65 @@ function RouteComponent(): React.JSX.Element {
     <>
       <PageHero title={m.blog_title()} lead={m.blog_description()} />
 
-      <section data-slot="blog-featured" className="pb-24 md:pb-32">
+      <section data-slot="blog-featured" className="py-16 md:py-24">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <Link
-            to="/blog/$slug"
-            params={{ slug: featuredArticle.slug }}
-            className="group block"
-          >
-            <Card
+          <div className="grid grid-cols-1 gap-x-12 gap-y-10 md:grid-cols-12">
+            <div className={cn(REVEAL, 'md:col-span-7')}>
+              <Photo
+                name={featuredArticle.photo}
+                ratio={3 / 2}
+                sizes="(min-width: 1280px) 700px, (min-width: 768px) 55vw, 100vw"
+                priority
+              />
+            </div>
+            <div
               className={cn(
                 REVEAL,
-                'grid grid-cols-1 gap-0 rounded-[1.75rem] bg-tint-lime py-0 text-base ring-0 md:grid-cols-12',
+                'flex flex-col gap-6 delay-200 md:col-span-5',
               )}
             >
-              <AspectRatio
-                ratio={4 / 3}
-                className="overflow-hidden md:col-span-7 md:aspect-auto md:min-h-[480px]"
-              >
-                <img
-                  src={featuredArticle.image}
-                  alt=""
-                  className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
+              <p className="flex items-center gap-3 text-small text-muted-foreground">
+                <span
+                  aria-hidden="true"
+                  className="size-2 rotate-45 bg-urucum"
                 />
-              </AspectRatio>
-              <div className="flex flex-col justify-between gap-10 p-6 md:col-span-5 md:p-10">
-                <div>
-                  <p className="text-small text-foreground/65">
-                    {m.blog_featured()},{' '}
-                    {ARTICLE_CATEGORY_LABELS[featuredArticle.category]()}
-                  </p>
-                  <h2 className="mt-3 text-h2">
-                    {localized(featuredArticle.title)}
-                  </h2>
-                  <p className="mt-5 font-serif text-lead leading-snug text-foreground/85">
-                    {localized(featuredArticle.excerpt)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Avatar className="size-10">
-                    <AvatarImage src={featuredArticle.authorImg} alt="" />
-                  </Avatar>
-                  <div>
-                    <p className="text-small font-medium">
-                      {featuredArticle.author}
-                    </p>
-                    <p className="text-micro text-foreground/70">
-                      {localized(featuredArticle.role)},{' '}
-                      {localized(featuredArticle.readTime)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </Link>
+                {ARTICLE_CATEGORY_LABELS[featuredArticle.category]()}
+                <time dateTime={featuredArticle.date}>
+                  {featuredArticle.date}
+                </time>
+              </p>
+              <h2 className="text-h1 text-balance">
+                <Link
+                  to="/blog/$slug"
+                  params={{ slug: featuredArticle.slug }}
+                  className="underline-offset-8 hover:underline"
+                >
+                  {localized(featuredArticle.title)}
+                </Link>
+              </h2>
+              <p className="max-w-[46ch] font-serif text-lead leading-snug text-foreground/85">
+                {localized(featuredArticle.excerpt)}
+              </p>
+              <Link
+                to="/blog/$slug"
+                params={{ slug: featuredArticle.slug }}
+                className="group inline-flex min-h-11 items-center gap-2 self-start text-body font-medium text-urucum"
+              >
+                {m.blog_readArticle()}
+                <ArrowRightIcon
+                  size={18}
+                  aria-hidden="true"
+                  className="transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none"
+                />
+              </Link>
+            </div>
+          </div>
         </div>
       </section>
 
-      <section data-slot="blog-list" className="bg-surface py-24 md:py-32">
+      <section data-slot="blog-list" className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="mb-12 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div className="flex flex-col gap-6 border-t border-border pt-12 md:flex-row md:items-end md:justify-between">
             <h2 className="text-h1">{m.blog_recentArticles()}</h2>
             <nav
               aria-label={m.blog_recentArticles()}
@@ -154,13 +155,10 @@ function RouteComponent(): React.JSX.Element {
           </div>
 
           {/*
-            `key` na categoria: trocar o filtro remonta a grade, e a remontagem
+            `key` na categoria: trocar o filtro remonta a lista, e a remontagem
             refaz a entrada em cascata, como o `StaggerContainer` fazia.
           */}
-          <ul
-            key={category ?? 'all'}
-            className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2 lg:grid-cols-3"
-          >
+          <ul key={category ?? 'all'} className="mt-8 divide-y divide-border">
             {filtered.map((article, index) => (
               <li
                 key={article.slug}
@@ -170,35 +168,29 @@ function RouteComponent(): React.JSX.Element {
                 <Link
                   to="/blog/$slug"
                   params={{ slug: article.slug }}
-                  className="group block"
+                  className="group grid grid-cols-1 gap-x-12 gap-y-3 py-10 md:grid-cols-12"
                 >
-                  <AspectRatio
-                    ratio={16 / 11}
-                    className={cn(
-                      'overflow-hidden rounded-[1.5rem]',
-                      TINTS[index % TINTS.length],
-                    )}
-                  >
-                    <img
-                      src={article.image}
-                      alt=""
-                      width={640}
-                      height={440}
-                      loading="lazy"
-                      decoding="async"
-                      className="size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
-                    />
-                  </AspectRatio>
-                  <p className="mt-5 text-small text-muted-foreground">
-                    {ARTICLE_CATEGORY_LABELS[article.category]()},{' '}
-                    {localized(article.readTime)}
+                  <p className="text-small text-muted-foreground md:col-span-3">
+                    {ARTICLE_CATEGORY_LABELS[article.category]()}
+                    <span className="mt-1 block">
+                      <time dateTime={article.date}>{article.date}</time>
+                      {', '}
+                      {localized(article.readTime)}
+                    </span>
                   </p>
-                  <h3 className="mt-2 text-h4 font-medium transition-opacity group-hover:opacity-75">
-                    {localized(article.title)}
-                  </h3>
-                  <p className="mt-2 line-clamp-2 text-body text-foreground/70">
-                    {localized(article.excerpt)}
-                  </p>
+                  <div className="md:col-span-8">
+                    <h3 className="font-serif text-h3 leading-tight text-balance underline-offset-4 group-hover:underline">
+                      {localized(article.title)}
+                    </h3>
+                    <p className="mt-3 max-w-[62ch] text-body text-foreground/70">
+                      {localized(article.excerpt)}
+                    </p>
+                  </div>
+                  <ArrowRightIcon
+                    size={20}
+                    aria-hidden="true"
+                    className="hidden justify-self-end text-urucum transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none md:col-span-1 md:block"
+                  />
                 </Link>
               </li>
             ))}
@@ -225,9 +217,12 @@ function Newsletter(): React.JSX.Element {
   }
 
   return (
-    <section data-slot="blog-newsletter" className="py-24 md:py-32">
+    <section
+      data-slot="blog-newsletter"
+      className="bg-secondary py-24 md:py-32"
+    >
       <div className={cn(REVEAL, 'mx-auto max-w-7xl px-4 md:px-8')}>
-        <div className="flex flex-col items-center rounded-[1.75rem] bg-tint-mist px-6 py-16 text-center md:py-20">
+        <div className="flex flex-col items-center px-6 text-center">
           <h2 className="text-h1">{m.blog_newsletterTitle()}</h2>
           <p className="mt-5 max-w-[44ch] font-serif text-lead text-foreground/80">
             {m.blog_newsletterDesc()}

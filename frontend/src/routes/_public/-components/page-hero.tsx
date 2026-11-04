@@ -1,28 +1,29 @@
 import type * as React from 'react'
 
 import { REVEAL } from './reveal'
-import { SkyBackdrop } from '#/components/common/sky'
 import { cn } from '#/lib/utils'
 
 type PageHeroProps = {
   /** O `h1` da página. */
   title: React.ReactNode
-  /** A frase sob a barra verde. */
+  /** A frase sob o título. */
   lead?: string
   /** O que vem depois do texto: pílula de categoria, ações. */
   children?: React.ReactNode
 }
 
 /**
- * O topo centralizado das páginas internas: céu, mata, título e barra verde.
+ * A capa editorial das páginas internas: título grande em Fraunces à
+ * esquerda, a frase de apoio e o trançado como fio de base.
  *
- * O papel do `SectionTitle as="h1"` do academy, que abre as páginas internas
- * de lá. Mora aqui, na casca pública, pelo mesmo motivo: é peça da vitrine, e
- * as quatro páginas que a usam são todas desta área.
+ * Sem ilustração: a página abre só com tipografia, e a foto de lugar entra
+ * logo abaixo, na seção seguinte. O papel do `SectionTitle as="h1"` do
+ * academy, que abre as páginas internas de lá, e mora aqui pelo mesmo motivo
+ * de antes: é peça da vitrine.
  *
- * O `padding` de baixo acompanha a altura da mata (o `clamp` tem o mesmo
- * intervalo do `Forest`), e é o que impede o texto de cair por cima das copas
- * em tela pequena.
+ * O trançado fica no fim da capa, e não no meio da página: ele separa o
+ * capítulo de abertura do primeiro conteúdo, como o fio que fecha a página
+ * de um caderno.
  */
 export function PageHero({
   title,
@@ -30,36 +31,33 @@ export function PageHero({
   children,
 }: PageHeroProps): React.JSX.Element {
   return (
-    <section
-      data-slot="page-hero"
-      className="relative overflow-hidden pt-36 pb-[clamp(180px,19vw,280px)] md:pt-44"
-    >
-      <SkyBackdrop />
-      <div className="rails pointer-events-none absolute inset-0 opacity-60" />
-      <div className="relative mx-auto flex max-w-4xl flex-col items-center px-4 text-center md:px-8">
+    <section data-slot="page-hero" className="pt-36 md:pt-44">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
         <h1
           className={cn(
             REVEAL,
-            'text-[clamp(2.4rem,5.5vw,5.25rem)] leading-[0.98] tracking-[-0.015em] text-foreground',
+            'max-w-5xl text-display leading-[0.98] tracking-[-0.02em] text-balance text-foreground',
           )}
         >
           {title}
         </h1>
-        <span
-          aria-hidden="true"
-          className={cn(REVEAL, 'brand-bar mt-7 w-24 delay-100')}
-        />
         {lead && (
           <p
             className={cn(
               REVEAL,
-              'mt-7 max-w-[46ch] text-lead leading-snug text-foreground/80 delay-100',
+              'mt-8 max-w-[56ch] text-lead leading-snug text-foreground/80 delay-100',
             )}
           >
             {lead}
           </p>
         )}
-        {children}
+        {children && (
+          <div className={cn(REVEAL, 'mt-8 delay-200')}>{children}</div>
+        )}
+        <span
+          aria-hidden="true"
+          className="trancado mt-16 block w-full md:mt-20"
+        />
       </div>
     </section>
   )

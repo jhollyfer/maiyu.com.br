@@ -63,7 +63,7 @@ export const FIELD_LABELS: Record<Locale, Record<string, string>> = {
     name: 'o nome',
     email: 'o e-mail',
     message: 'a mensagem',
-    position: 'uma vaga',
+    position: 'uma área',
     linkedin: 'o LinkedIn ou portfólio',
   },
   en: {
@@ -72,7 +72,7 @@ export const FIELD_LABELS: Record<Locale, Record<string, string>> = {
     name: 'your name',
     email: 'your email',
     message: 'a message',
-    position: 'a position',
+    position: 'a field',
     linkedin: 'your LinkedIn or portfolio',
   },
   es: {
@@ -81,7 +81,7 @@ export const FIELD_LABELS: Record<Locale, Record<string, string>> = {
     name: 'tu nombre',
     email: 'tu correo',
     message: 'un mensaje',
-    position: 'una vacante',
+    position: 'un área',
     linkedin: 'tu LinkedIn o portafolio',
   },
 }

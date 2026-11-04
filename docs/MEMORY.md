@@ -28,11 +28,24 @@ Depois, o registry inteiro do shadcn foi instalado (`DECISIONS.md` #11) e as tel
 mão, por não terem equivalente: os painéis de `process.tsx`, a `dl` de `roots.tsx`, o passo a passo de
 `vision.tsx`, os pontos do carrossel e a grade do rodapé.
 
+Por último, o redesign editorial (tarefa 2.4, `DECISIONS.md` #12 e #13): saiu o céu ilustrado
+(`sky.tsx` e `glider.tsx` apagados, com os utilitários e tokens que só eles usavam), entraram Fraunces
+nos h1 e h2, fotos de lugar do Wikimedia Commons com crédito na legenda (`lib/photos.ts` e
+`-components/photo.tsx`: Benjamin Constant, o porto e Letícia, todas CC0), as capturas reais dos cinco
+produtos no portfólio, os quatro artigos do diário reescritos no contexto (assinados como Equipe
+Maiyu), carreiras como banco de talentos sem vaga nem benefício inventado, títulos e descrições de SEO
+por rota e a `og-image.png` nova. A foto da foz do Javari não baixou (o Commons limitou e depois
+respondeu 404), e ficou de fora.
+
 ## Próximos passos
 
-1. Abrir o PR da branch quando o dono pedir.
-2. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
-3. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
+1. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
+   sem passar pelo crivo de quem é da Maiyu.
+2. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
+3. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
+   `maiyu.com.br`.
+4. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
+5. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
    de quem o pinta (`DESIGN.md` §2).
 
 ## Contexto importante

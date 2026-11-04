@@ -36,8 +36,9 @@ export function Audience(): React.JSX.Element {
     <section data-slot="home-audience" className="py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 md:grid-cols-12 md:px-8">
         <div className={cn(REVEAL, 'md:col-span-5')}>
-          <h2 className="text-h2">{m.home_audienceTitle()}</h2>
-          <span aria-hidden="true" className="brand-bar mt-5" />
+          <h2 className="text-display tracking-[-0.015em]">
+            {m.home_audienceTitle()}
+          </h2>
           <p className="mt-6 max-w-[42ch] font-serif text-body-lg text-foreground/80">
             {m.home_audienceDesc()}
           </p>
@@ -62,7 +63,7 @@ export function Audience(): React.JSX.Element {
                   />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle className="line-clamp-none text-h4">
+                  <ItemTitle className="line-clamp-none text-h3 font-semibold">
                     {label()}
                   </ItemTitle>
                 </ItemContent>

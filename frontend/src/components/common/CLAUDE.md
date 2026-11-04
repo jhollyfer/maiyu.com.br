@@ -18,10 +18,9 @@ e dos formulários. No academy o `PillButton` e o `ThemeToggle` moram aqui
 porque o painel também os usa; aqui não há painel, e eles descem. Sobe para cá
 o que uma área **fora** da vitrine também desenha.
 
-| Peça                 | Por que mora aqui                                                              |
-| -------------------- | ------------------------------------------------------------------------------ |
-| `not-found-page.tsx` | o `router.tsx` desenha o 404 e o erro fora de qualquer casca                   |
-| `sky.tsx`            | a página de erro, que é deste diretório, usa o céu; e a vitrine inteira também |
+| Peça                 | Por que mora aqui                                            |
+| -------------------- | ------------------------------------------------------------ |
+| `not-found-page.tsx` | o `router.tsx` desenha o 404 e o erro fora de qualquer casca |
 
 ## Compound onde há estado compartilhado
 

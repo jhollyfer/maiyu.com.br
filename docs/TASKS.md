@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 8 tarefas · 6 feitas · 0 em andamento · 2 a fazer - atualizado 2026-11-04
+**Resumo:** 9 tarefas · 7 feitas · 0 em andamento · 2 a fazer - atualizado 2026-11-04
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -31,6 +31,7 @@ Dizer, no site, quem é a Maiyu: tríplice fronteira, equipe indígena e origin�
 | 2.1 | Reposicionar a vitrine: copy indígena/tríplice fronteira e design mais amazônico | Alta | Feita | checklist abaixo; aguarda PR |
 | 2.2 | Decidir os workflows de `.github/workflows` com o dono ou ajustar o upstream | Média | Feita | cópia do modelo, como nos irmãos (`DECISIONS.md` #6) |
 | 2.3 | Definir o destino dos formulários de contato e candidatura | Média | A fazer | `PRD.md` §8 |
+| 2.4 | Redesign editorial: fotografia do lugar, Fraunces nos títulos, cinco produtos no portfólio, diário e carreiras reescritos no contexto | Alta | Feita | `DECISIONS.md` #12 e #13 |
 
 Checklist da 2.1:
 

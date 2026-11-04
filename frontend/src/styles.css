@@ -103,16 +103,8 @@
   --navy-2: #0b1e2b;
   --on-navy: #e8f6ff;
 
-  /* O céu e a mata do fundo: dia na Amazônia. */
-  --sky-top: #d6f1ec;
-  --sky-mid: #f5f1e3;
-  --sky-low: #dcefd4;
-  --sky-glow: rgba(240, 160, 80, 0.24);
-  --forest-back: #a5d0b3;
-  --forest-mid: #62a881;
+  /* A mata: o verde da frase de alcance e dos losangos do trançado. */
   --forest-front: #2c7652;
-  --river: #d6bf98;
-  --river-glint: rgba(255, 248, 232, 0.85);
 
   /*
    * A terra da região: o urucum da pintura, o açaí e o barro do Solimões, que
@@ -135,7 +127,7 @@
   --badge-warning-fg: #01111b;
 }
 
-/* O mesmo site à noite: navy profundo e céu estrelado. */
+/* O mesmo site à noite: a mata escura. */
 .dark {
   color-scheme: dark;
 
@@ -177,16 +169,7 @@
   --tint-lime: #122214;
   --tint-green: #122214;
   --tint-peach-soft: #1d1a10;
-
-  --sky-top: #03130f;
-  --sky-mid: #07241d;
-  --sky-low: #0c2a19;
-  --sky-glow: rgba(240, 160, 80, 0.12);
-  --forest-back: #0d261d;
-  --forest-mid: #091c14;
   --forest-front: #03100a;
-  --river: #1f1a10;
-  --river-glint: rgba(240, 220, 180, 0.3);
 
   --urucum: #e0704f;
   --acai: #c58bc0;
@@ -438,27 +421,6 @@
     0.875rem 0;
 }
 
-/* O céu: ciano no alto, verde no horizonte, que é a superfície da marca. */
-@utility sky {
-  background:
-    radial-gradient(
-      ellipse 50% 40% at 85% 0%,
-      var(--sky-glow) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 45% at 50% 100%,
-      var(--sky-low) 0%,
-      transparent 70%
-    ),
-    linear-gradient(
-      180deg,
-      var(--sky-top) 0%,
-      var(--sky-mid) 55%,
-      var(--sky-low) 100%
-    );
-}
-
 /* Os dois fios verticais que emolduram o conteúdo como página pautada. */
 @utility rails {
   background-image:
@@ -473,26 +435,8 @@
     min(calc(100% - 1rem), calc(50% + 40rem)) 0;
 }
 
-@utility bg-gradient-green {
-  background-image: linear-gradient(120deg, #77eed7 0%, #88ff9a 100%);
-}
-
-@utility text-gradient-green {
-  background-image: linear-gradient(100deg, #77eed7 0%, #88ff9a 100%);
-  background-clip: text;
-  color: transparent;
-}
-
 @utility marquee {
   animation: marquee 40s linear infinite;
-}
-
-@utility float {
-  animation: float 7s ease-in-out infinite;
-}
-
-@utility twinkle {
-  animation: twinkle 6s ease-in-out infinite;
 }
 
 @utility vision-pulse {
@@ -511,54 +455,6 @@
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/*
- * O rótulo pequeno acima de um título de seção. Raro: só onde o título sozinho
- * não situa, como no academy.
- */
-@utility eyebrow {
-  margin-bottom: 1rem;
-  font-size: var(--text-small);
-  opacity: 0.6;
-}
-
-@utility birds {
-  animation: glide 26s ease-in-out infinite alternate;
-}
-
-/*
- * O dia (sol e araras) só no claro; a galáxia só à noite. Por classe e não por
- * JS: o tema escuro chega pelo script do `next-themes` antes da hidratação, e
- * decidir em React desenharia o céu errado no primeiro quadro.
- */
-.dark .day {
-  display: none;
-}
-
-.galaxy {
-  opacity: 0;
-  transition: opacity 600ms ease;
-}
-
-.dark .galaxy {
-  opacity: 1;
-  background:
-    radial-gradient(
-      ellipse 40% 30% at 22% 28%,
-      rgba(164, 128, 245, 0.14) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 35% 25% at 70% 18%,
-      rgba(49, 225, 247, 0.1) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 18% at 50% 40%,
-      rgba(119, 238, 215, 0.08) 0%,
-      transparent 70%
-    );
 }
 
 /*
@@ -589,21 +485,6 @@
   }
 }
 
-@keyframes float {
-  50% {
-    transform: translate3d(0, -10px, 0) rotate(-2deg);
-  }
-}
-
-@keyframes glide {
-  from {
-    transform: translate3d(-6%, 0, 0);
-  }
-  to {
-    transform: translate3d(18%, -12%, 0);
-  }
-}
-
 @keyframes vision-pulse {
   0% {
     transform: scale(0.6);
@@ -618,11 +499,5 @@
 @keyframes vision-draw {
   to {
     stroke-dashoffset: 0;
-  }
-}
-
-@keyframes twinkle {
-  50% {
-    opacity: 0.25;
   }
 }

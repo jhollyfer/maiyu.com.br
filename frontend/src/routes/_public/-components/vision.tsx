@@ -57,9 +57,7 @@ export function Vision(): React.JSX.Element {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-24 md:grid-cols-12 md:gap-12 md:px-8 md:motion-safe:sticky md:motion-safe:top-0 md:motion-safe:h-[100dvh]">
         <div className="flex flex-col md:col-span-5">
           <div className={REVEAL}>
-            <p className="eyebrow">{m.home_visionLabel()}</p>
-            <h2 className="text-h2">{m.home_visionTitle()}</h2>
-            <span aria-hidden="true" className="brand-bar mt-5" />
+            <h2 className="text-display">{m.home_visionTitle()}</h2>
           </div>
           <ol className="mt-auto space-y-3 pt-10">
             {ITEMS.map((item, index) => (
@@ -87,7 +85,7 @@ export function Vision(): React.JSX.Element {
         <div
           className={cn(
             REVEAL,
-            'relative isolate min-h-[420px] overflow-hidden rounded-[1.75rem] bg-navy delay-200 md:col-span-7',
+            'relative isolate min-h-[420px] overflow-hidden rounded-2xl bg-navy delay-200 md:col-span-7',
           )}
         >
           <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(49,225,247,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(49,225,247,0.07)_1px,transparent_1px)] bg-[size:64px_64px]" />

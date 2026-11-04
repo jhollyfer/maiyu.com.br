@@ -4,14 +4,13 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
-import { SkyBackdrop } from '#/components/common/sky'
 import { Button } from '#/components/ui/button'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
 /**
- * O rodapé: o cartão de quatro colunas sobre o céu, o botão de voltar ao topo
- * e o "MAIYU" gigante de assinatura.
+ * O rodapé: o trançado como topo, quatro colunas separadas por fios, o botão
+ * de voltar ao topo e o "MAIYU" gigante de assinatura.
  *
  * O botão fica em `relative z-10` e o wordmark em `pointer-events-none`: sem
  * isso o texto gigante, que sobe por cima da linha do botão pela entrelinha
@@ -23,23 +22,20 @@ export function Footer(): React.JSX.Element {
   return (
     <footer
       data-slot="site-footer"
-      className="relative isolate overflow-hidden pt-4"
+      className="relative isolate overflow-hidden pt-20"
     >
-      <SkyBackdrop
-        fade={false}
-        className="top-[45%] -z-10 [mask-image:linear-gradient(to_bottom,transparent,black_35%)]"
-      />
+      <div aria-hidden="true" className="trancado absolute inset-x-0 top-0" />
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="grid grid-cols-1 overflow-hidden rounded-[1.75rem] border border-foreground/10 bg-background md:grid-cols-4 md:divide-x md:divide-foreground/10">
-          <div className="border-b border-foreground/10 p-8 md:border-b-0">
+        <div className="grid grid-cols-1 border-y border-border md:grid-cols-4 md:divide-x md:divide-border">
+          <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
             <img src="/maiyu-symbol.svg" alt="" className="mb-5 size-9" />
             <p className="max-w-xs font-serif text-body-lg leading-snug text-foreground/85">
               {m.footer_tagline()}
             </p>
           </div>
 
-          <div className="border-b border-foreground/10 p-8 md:border-b-0">
+          <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_navigation()}
             </p>
@@ -57,7 +53,7 @@ export function Footer(): React.JSX.Element {
             </ul>
           </div>
 
-          <div className="border-b border-foreground/10 p-8 md:border-b-0">
+          <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_social()}
             </p>
@@ -78,7 +74,7 @@ export function Footer(): React.JSX.Element {
             </ul>
           </div>
 
-          <div className="p-8">
+          <div className="py-8 md:px-8 md:last:pr-0">
             <p className="mb-4 text-small text-muted-foreground">
               {m.footer_contact()}
             </p>
@@ -122,7 +118,7 @@ export function Footer(): React.JSX.Element {
 
         <p
           aria-hidden="true"
-          className="pointer-events-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] leading-[0.9] uppercase opacity-25 select-none text-gradient-green dark:opacity-20"
+          className="pointer-events-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] leading-[0.9] text-forest uppercase opacity-15 select-none dark:text-brand-green dark:opacity-15"
         >
           {SITE_TITLE}
         </p>

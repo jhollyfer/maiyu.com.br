@@ -35,11 +35,11 @@ import { m } from '#/paraglide/messages'
 
 /**
  * O que o formulário guarda enquanto a pessoa preenche, e que difere do que o
- * validator devolve: a vaga começa sem escolha (`null`, que é o que faz o
+ * validator devolve: a área começa sem escolha (`null`, que é o que faz o
  * `Select` mostrar o texto de convite) e o link começa como texto vazio.
  *
  * Dois tipos, como na matrícula do academy: `useForm<Valores, unknown,
- * Payload>`. Um tipo só obrigaria a vaga a nascer com uma escolha feita.
+ * Payload>`. Um tipo só obrigaria a área a nascer com uma escolha feita.
  */
 type CareerFormValues = Merge<
   Omit<CareerApplicationCreatePayload, 'position' | 'linkedin'>,
@@ -47,10 +47,10 @@ type CareerFormValues = Merge<
 >
 
 /**
- * O formulário de candidatura da página de carreiras.
+ * O formulário de cadastro no banco de talentos, na página de carreiras.
  *
  * O mesmo padrão e a mesma decisão de `contact-form.tsx`: não há backend, e a
- * candidatura confirma na tela, como no site no ar.
+ * cadastro confirma na tela, como no site no ar.
  */
 export function CareerForm(): React.JSX.Element {
   const form = useForm<
@@ -138,7 +138,7 @@ export function CareerForm(): React.JSX.Element {
               </FieldLabel>
               {/*
                 `items` com os rótulos: sem ele o gatilho mostraria o
-                identificador da vaga (`frontend`) em vez do nome dela.
+                identificador da área (`development`) em vez do nome dela.
               */}
               <Select
                 items={JOB_POSITIONS.map((position) => ({

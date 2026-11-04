@@ -1,200 +1,154 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
 
-import { REVEAL } from './reveal'
+import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
 import { Badge } from '#/components/ui/badge'
-import { Card, CardContent, CardFooter, CardHeader } from '#/components/ui/card'
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-} from '#/components/ui/carousel'
-import type { CarouselApi } from '#/components/ui/carousel'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
+import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-/**
- * A cor de cada cartão, em rodízio. Três e não uma por projeto: a lista cresce
- * sem que alguém precise escolher cor para o próximo.
- */
-const CARD_TINTS = ['bg-tint-peach-soft', 'bg-tint-mint', 'bg-tint-mist']
+type ProjectProps = {
+  project: Project
+}
 
-/** Os nomes em fita, repetidos até cobrir uma tela larga duas vezes. */
-const MARQUEE = [...projects, ...projects, ...projects, ...projects]
+/** A stack do projeto em etiquetas, no máximo três: o resto está no portfólio. */
+function Stack({ project }: ProjectProps): React.JSX.Element {
+  return (
+    <ul className="flex flex-wrap gap-1.5">
+      {project.tech.slice(0, 3).map((tech) => (
+        <Badge
+          key={tech}
+          render={<li />}
+          variant="secondary"
+          className="h-auto px-3 py-1 text-micro font-normal"
+        >
+          {tech}
+        </Badge>
+      ))}
+    </ul>
+  )
+}
 
-/** O número com dois dígitos, como no contador `01 / 03`. */
-function pad(value: number): string {
-  return String(value).padStart(2, '0')
+/** O botão de visitar, igual no destaque e nas linhas. */
+function Visit({ project }: ProjectProps): React.JSX.Element {
+  return (
+    <PillButton
+      tone="outline"
+      className="rounded-xl"
+      render={
+        <a href={project.url} target="_blank" rel="noopener noreferrer">
+          {m.home_workVisit()}
+          <ArrowUpRightIcon />
+        </a>
+      }
+    />
+  )
 }
 
 /**
- * "Já em produção": a fita com os nomes e o carrossel dos projetos.
+ * A captura de tela do projeto, com a moldura fina.
  *
- * O `Carousel` do registry, e não o cartão único com `AnimatePresence` do site
- * antigo: o embla traz o arrasto com o dedo, que era o que faltava no celular,
- * e a navegação por seta do teclado. O contador e os pontos leem o índice da
- * API do carrossel, então não há segundo estado para divergir do que está na
- * tela.
+ * `width` e `height` reais do arquivo para o navegador reservar o espaço antes
+ * de baixar, e `object-position` do registro para a manchete do print não sair
+ * do recorte.
+ */
+function Shot({
+  project,
+  className,
+}: ProjectProps & { className?: string }): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'overflow-hidden rounded-2xl border border-border bg-secondary',
+        className,
+      )}
+    >
+      <img
+        src={project.image}
+        alt={project.title}
+        width={1863}
+        height={927}
+        loading="lazy"
+        decoding="async"
+        style={{ objectPosition: project.focus }}
+        className="aspect-[2/1] size-full object-cover"
+      />
+    </div>
+  )
+}
+
+/**
+ * "Já em produção": um projeto em destaque, grande, e os demais em lista com
+ * fios.
+ *
+ * Substitui o carrossel: no carrossel só um projeto aparecia por vez, e a prova
+ * de que a Maiyu entrega precisa estar toda à vista. O primeiro do registro é
+ * o destaque; a ordem do registro é a ordem na tela.
  */
 export function Work(): React.JSX.Element {
-  const [api, setApi] = React.useState<CarouselApi>()
-  const [active, setActive] = React.useState(0)
-
-  React.useEffect(() => {
-    if (!api) return
-
-    function sync(): void {
-      if (!api) return
-
-      setActive(api.selectedScrollSnap())
-    }
-
-    sync()
-    api.on('select', sync)
-
-    return () => {
-      api.off('select', sync)
-    }
-  }, [api])
+  const [lead, ...rest] = projects
 
   return (
-    <section data-slot="home-work" className="overflow-hidden py-24 md:py-32">
-      <div className={cn(REVEAL, 'mx-auto max-w-2xl px-4 text-center')}>
-        <h2 className="text-h2">{m.home_workTitle()}</h2>
-        <span aria-hidden="true" className="brand-bar mx-auto mt-5" />
-      </div>
+    <section data-slot="home-work" className="py-24 md:py-32">
+      <div className="mx-auto max-w-7xl px-4 md:px-8">
+        <h2 className={cn(REVEAL, 'max-w-3xl text-display')}>
+          {m.home_workTitle()}
+        </h2>
 
-      <div
-        aria-hidden="true"
-        className="relative mt-10 [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
-      >
-        <ul className="marquee flex w-max gap-16 pr-16">
-          {[...MARQUEE, ...MARQUEE].map((project, index) => (
+        <article
+          className={cn(
+            REVEAL,
+            'mt-14 grid gap-8 delay-100 md:grid-cols-12 md:gap-12',
+          )}
+        >
+          <Shot project={lead} className="md:order-2 md:col-span-7" />
+          <div className="flex flex-col justify-between gap-8 md:col-span-5">
+            <div>
+              <p className="text-small text-muted-foreground">
+                {localized(lead.client)}
+              </p>
+              <h3 className="mt-3 text-h1">{lead.title}</h3>
+              <p className="mt-5 max-w-[48ch] font-serif text-body-lg text-foreground/80">
+                {localized(lead.description)}
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-4">
+              <Stack project={lead} />
+              <Visit project={lead} />
+            </div>
+          </div>
+        </article>
+
+        <ul className="mt-16 divide-y divide-border border-y border-border">
+          {rest.map((project, index) => (
             <li
-              key={index}
-              className="font-display text-h3 font-medium tracking-[-0.015em] text-foreground/45"
+              key={project.slug}
+              className={cn(
+                REVEAL,
+                'grid gap-6 py-8 md:grid-cols-12 md:items-center md:gap-10',
+              )}
+              style={{ animationDelay: `${index * STAGGER}ms` }}
             >
-              {project.title}
+              <Shot project={project} className="md:col-span-3" />
+              <div className="md:col-span-6">
+                <h3 className="text-h3">{project.title}</h3>
+                <p className="mt-1 text-small text-muted-foreground">
+                  {localized(project.client)}
+                </p>
+                <p className="mt-3 max-w-[56ch] font-serif text-body-lg text-foreground/80">
+                  {localized(project.summary)}
+                </p>
+              </div>
+              <div className="flex flex-col items-start gap-4 md:col-span-3">
+                <Stack project={project} />
+                <Visit project={project} />
+              </div>
             </li>
           ))}
         </ul>
-      </div>
-
-      <div className="mx-auto mt-14 max-w-7xl px-4 md:px-8">
-        <Carousel
-          setApi={setApi}
-          opts={{ loop: true }}
-          aria-label={m.home_workTitle()}
-        >
-          <CarouselContent>
-            {projects.map((project, index) => (
-              <CarouselItem key={project.slug}>
-                <Card
-                  className={cn(
-                    'relative gap-0 rounded-[1.75rem] py-0 text-body ring-0',
-                    CARD_TINTS[index % CARD_TINTS.length],
-                  )}
-                >
-                  <CardHeader className="flex items-center justify-between px-6 pt-6 text-small text-foreground/60 md:px-10 md:pt-8">
-                    <span>{localized(project.client)}</span>
-                    <span>
-                      {pad(index + 1)} / {pad(projects.length)}
-                    </span>
-                  </CardHeader>
-                  <CardContent className="grid grid-cols-1 gap-8 p-6 md:grid-cols-12 md:gap-10 md:p-10">
-                    <div className="flex flex-col justify-between gap-8 md:col-span-6">
-                      <div>
-                        <h3 className="text-h1">{project.title}</h3>
-                        <p className="mt-6 max-w-[48ch] font-serif text-lead leading-snug text-foreground/85">
-                          “{localized(project.description)}”
-                        </p>
-                      </div>
-                      <CardFooter className="flex-wrap gap-3 p-0">
-                        <PillButton
-                          tone="outline"
-                          className="rounded-xl"
-                          render={
-                            <a
-                              href={project.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {m.home_workVisit()}
-                              <ArrowUpRightIcon />
-                            </a>
-                          }
-                        />
-                        <ul className="flex flex-wrap gap-1.5">
-                          {project.tech.slice(0, 3).map((tech) => (
-                            <Badge
-                              key={tech}
-                              render={<li />}
-                              variant="secondary"
-                              className="h-auto bg-surface/60 px-3 py-1 text-micro font-normal text-foreground/80"
-                            >
-                              {tech}
-                            </Badge>
-                          ))}
-                        </ul>
-                      </CardFooter>
-                    </div>
-                    <div className="relative aspect-[4/3] overflow-hidden rounded-2xl md:col-span-6">
-                      <img
-                        src={project.image}
-                        alt={project.title}
-                        width={1863}
-                        height={927}
-                        loading="lazy"
-                        decoding="async"
-                        style={{ objectPosition: project.focus }}
-                        className="absolute inset-0 size-full object-cover"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-
-          <div className="mt-6 flex items-center justify-center gap-4">
-            {/*
-              Os botões do registry, tirados da posição absoluta das bordas: lá
-              eles flutuam fora do cartão, e aqui ficam embaixo, com os pontos
-              no meio. `aria-label` sobre o texto oculto em inglês que o
-              componente traz.
-            */}
-            <CarouselPrevious
-              aria-label={m.a11y_previousProject()}
-              size="icon-lg"
-              className="static inset-auto m-0 size-10 translate-none"
-            />
-            <div className="flex">
-              {projects.map((project, index) => (
-                <button
-                  key={project.slug}
-                  type="button"
-                  onClick={() => api?.scrollTo(index)}
-                  aria-label={project.title}
-                  aria-current={index === active}
-                  data-active={index === active}
-                  className="group flex h-8 items-center px-2"
-                >
-                  <span className="block h-1.5 w-1.5 rounded-full bg-foreground/25 transition-[width,background-color] duration-500 group-data-[active=true]:w-6 group-data-[active=true]:bg-foreground motion-reduce:transition-none" />
-                </button>
-              ))}
-            </div>
-            <CarouselNext
-              aria-label={m.a11y_nextProject()}
-              size="icon-lg"
-              className="static inset-auto m-0 size-10 translate-none"
-            />
-          </div>
-        </Carousel>
       </div>
     </section>
   )

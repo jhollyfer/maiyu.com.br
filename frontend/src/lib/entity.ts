@@ -11,8 +11,8 @@
  * código que só precisa do vocabulário importa **deste** arquivo.
  */
 
-/** As vagas que o formulário de candidatura aceita. */
-export const JOB_POSITIONS = ['frontend', 'designer', 'qa', 'backend'] as const
+/** As áreas do banco de talentos: o que o formulário de cadastro aceita. */
+export const JOB_POSITIONS = ['development', 'design', 'data'] as const
 
 export type JobPosition = (typeof JOB_POSITIONS)[number]
 
@@ -20,13 +20,3 @@ export type JobPosition = (typeof JOB_POSITIONS)[number]
 export const ARTICLE_CATEGORIES = ['tech', 'design', 'marketing'] as const
 
 export type ArticleCategory = (typeof ARTICLE_CATEGORIES)[number]
-
-/** Onde a vaga é exercida. Hoje só remoto, e o tipo impede inventar outro. */
-export const JOB_LOCATIONS = ['remote'] as const
-
-export type JobLocation = (typeof JOB_LOCATIONS)[number]
-
-/** A carga da vaga. */
-export const JOB_TYPES = ['fulltime'] as const
-
-export type JobType = (typeof JOB_TYPES)[number]

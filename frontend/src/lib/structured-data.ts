@@ -119,12 +119,51 @@ export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
     url: article.url,
     image: article.image,
     datePublished: article.publishedAt,
-    author: { '@type': 'Person', name: article.author },
+    // A autoria é da Maiyu como organização: os textos saem da equipe, e
+    // `Person` anunciaria ao buscador uma pessoa que não assina nada.
+    author: { '@type': 'Organization', name: article.author, url: SITE_URL },
     publisher: {
       '@type': 'Organization',
       name: SITE_TITLE,
       logo: { '@type': 'ImageObject', url: SITE_IMAGE },
     },
+  }
+}
+
+/** Os campos de um projeto do portfólio que o `CreativeWork` publica. */
+export type ProjectEntry = {
+  name: string
+  description: string
+  url: string
+  image: string
+  dateCreated: string
+}
+
+/**
+ * A lista do portfólio: um `ItemList` de `CreativeWork`, na ordem da página.
+ *
+ * Cada item aponta para o site no ar do projeto, e não para uma página daqui:
+ * o portfólio não tem página de detalhe, e o que prova o trabalho é o produto.
+ */
+export function projectListJsonLd(
+  projects: ReadonlyArray<ProjectEntry>,
+): JsonLd {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    itemListElement: projects.map((project, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      item: {
+        '@type': 'CreativeWork',
+        name: project.name,
+        description: project.description,
+        url: project.url,
+        image: project.image,
+        dateCreated: project.dateCreated,
+        creator: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+      },
+    })),
   }
 }
 

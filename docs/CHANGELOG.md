@@ -17,5 +17,11 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- Novo visual editorial: fotos de Benjamin Constant, do porto e de Letícia com crédito, títulos em serifa (Fraunces) e a faixa de trançado como divisor entre capítulos, no lugar do céu ilustrado.
+- Portfólio com os cinco produtos no ar (ADACAIBS, MatisCraft, Aporta, Curupira e Jogos Estudantis), cada um com a captura real da tela.
+- Diário com quatro artigos novos sobre o trabalho da Maiyu na tríplice fronteira, assinados pela Equipe Maiyu.
+- Carreiras vira banco de talentos por área (desenvolvimento, design de produto, análise e dados), com o jeito de trabalhar da Maiyu no lugar de benefícios.
+- Título e descrição de cada página pensados para quem busca software sob demanda na região, e imagem de compartilhamento nova.
+
 - Visual mais amazônico: fundo de papel de fibra, mata mais densa, rio barrento, e uma faixa de trançado em urucum, terra e mata na parte da home que fala do time.
 - O destaque do título da home passa do gradiente azul para o verde da mata.

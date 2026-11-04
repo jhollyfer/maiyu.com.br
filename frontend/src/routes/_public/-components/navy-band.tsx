@@ -1,18 +1,10 @@
 import type * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import {
-  ArrowRightIcon,
-  ArrowUpRightIcon,
-  ChartLineUpIcon,
-  CodeIcon,
-  PenNibIcon,
-} from '@phosphor-icons/react'
-import type { Icon } from '@phosphor-icons/react'
+import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
 import { Badge } from '#/components/ui/badge'
-import { Card } from '#/components/ui/card'
 import {
   Item,
   ItemActions,
@@ -26,8 +18,6 @@ import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 type Role = {
-  icon: Icon
-  tint: string
   title: () => string
   description: () => string
 }
@@ -38,20 +28,14 @@ type Role = {
  */
 const ROLES: ReadonlyArray<Role> = [
   {
-    icon: CodeIcon,
-    tint: 'bg-tint-mint',
     title: () => m.home_role1Title(),
     description: () => m.home_role1Desc(),
   },
   {
-    icon: PenNibIcon,
-    tint: 'bg-tint-peach',
     title: () => m.home_role2Title(),
     description: () => m.home_role2Desc(),
   },
   {
-    icon: ChartLineUpIcon,
-    tint: 'bg-tint-lime',
     title: () => m.home_role3Title(),
     description: () => m.home_role3Desc(),
   },
@@ -100,35 +84,26 @@ export function NavyBand(): React.JSX.Element {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className={cn(REVEAL, 'mx-auto max-w-2xl text-center')}>
-          <h2 className="text-h2">{m.home_teamTitle()}</h2>
-          <span aria-hidden="true" className="brand-bar mx-auto mt-5" />
-          <p className="mx-auto mt-5 max-w-[48ch] font-serif text-lead text-on-navy/75">
+        <div className={cn(REVEAL, 'max-w-4xl')}>
+          <h2 className="text-display tracking-[-0.015em]">
+            {m.home_teamTitle()}
+          </h2>
+          <p className="mt-6 max-w-[56ch] font-serif text-lead text-on-navy/80">
             {m.home_teamDesc()}
           </p>
         </div>
 
-        <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
+        <ul className="mt-14 grid grid-cols-1 gap-10 border-t border-on-navy/15 pt-10 md:grid-cols-3 md:gap-12">
           {ROLES.map((role, index) => (
             <li
               key={index}
-              className={cn(REVEAL, index === 1 && 'md:-translate-y-8')}
+              className={cn(REVEAL)}
               style={{ animationDelay: `${index * STAGGER}ms` }}
             >
-              <Card
-                className={cn(
-                  'h-full gap-10 rounded-[1.75rem] p-7 text-body text-foreground ring-0 md:p-9',
-                  role.tint,
-                )}
-              >
-                <role.icon size={28} />
-                <div>
-                  <h3 className="text-h3">{role.title()}</h3>
-                  <p className="mt-3 text-body text-foreground/75">
-                    {role.description()}
-                  </p>
-                </div>
-              </Card>
+              <h3 className="text-h3">{role.title()}</h3>
+              <p className="mt-3 max-w-[36ch] font-serif text-body-lg text-on-navy/75">
+                {role.description()}
+              </p>
             </li>
           ))}
         </ul>
@@ -149,7 +124,7 @@ export function NavyBand(): React.JSX.Element {
           </ul>
         </div>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex">
           <PillButton
             tone="neon"
             className="rounded-xl"
@@ -170,8 +145,7 @@ export function NavyBand(): React.JSX.Element {
             )}
           >
             <div>
-              <p className="eyebrow">{m.nav_blog()}</p>
-              <h2 className="text-h3">{m.home_notesTitle()}</h2>
+              <h2 className="text-h1">{m.home_notesTitle()}</h2>
             </div>
             <Link
               to="/blog"

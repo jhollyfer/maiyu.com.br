@@ -25,9 +25,9 @@ export const projects: ReadonlyArray<Project> = [
     slug: 'adacaibs',
     title: 'ADACAIBS',
     client: {
-      en: 'Indigenous association · Benjamin Constant',
-      'pt-BR': 'Associação indígena · Benjamin Constant',
-      es: 'Asociación indígena · Benjamin Constant',
+      en: 'Ticuna association · Belém do Solimões',
+      'pt-BR': 'Associação Ticuna · Belém do Solimões',
+      es: 'Asociación Ticuna · Belém do Solimões',
     },
     summary: {
       en: 'Association management platform for an indigenous community.',
@@ -35,10 +35,10 @@ export const projects: ReadonlyArray<Project> = [
       es: 'Plataforma de gestión para una asociación indígena.',
     },
     description: {
-      en: 'A full-stack association management platform for the indigenous community of Benjamin Constant. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
+      en: 'A full-stack association management platform for the Ticuna association of the Belém do Solimões village. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
       'pt-BR':
-        'Plataforma full-stack de gestão para a associação da comunidade indígena de Benjamin Constant. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
-      es: 'Plataforma full-stack de gestión para la asociación de la comunidad indígena de Benjamin Constant. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
+        'Plataforma full-stack de gestão para a associação do povo Ticuna da aldeia Belém do Solimões. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
+      es: 'Plataforma full-stack de gestión para la asociación del pueblo Ticuna de la aldea Belém do Solimões. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
     },
     image: '/images/adacaibs.webp',
     focus: 'left center',
@@ -130,7 +130,8 @@ export const projects: ReadonlyArray<Project> = [
     },
     summary: {
       en: 'Athlete sign-up, draw, fixtures and live standings for the school games.',
-      'pt-BR': 'Inscrição, sorteio, tabela e classificação dos jogos da escola.',
+      'pt-BR':
+        'Inscrição, sorteio, tabela e classificação dos jogos da escola.',
       es: 'Inscripción, sorteo, tabla y clasificación de los juegos escolares.',
     },
     description: {
