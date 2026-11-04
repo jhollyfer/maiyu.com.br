@@ -3,8 +3,19 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev:frontend": "cd frontend && pnpm dev",
-    "test:frontend": "cd frontend && pnpm test",
-    "check:frontend": "cd frontend && pnpm lint && pnpm typecheck"
+    "dev": "pnpm --filter ./frontend dev",
+    "check": "pnpm --recursive check",
+    "test:unit": "pnpm --recursive test:unit"
+  },
+  "type": "module",
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "^11.0.0",
+      "onFail": "download"
+    }
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

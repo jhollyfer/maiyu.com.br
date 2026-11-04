@@ -6,15 +6,8 @@ name: Build Frontend
 on:
   workflow_call:
     secrets:
-      VITE_API_URL:
-        required: false
       VITE_SITE_URL:
         required: false
-    inputs:
-      e2e:
-        description: roda o Playwright; a main passa false, o PR já provou o mesmo código
-        type: boolean
-        default: true
 
 permissions:
   contents: read
@@ -24,7 +17,5 @@ jobs:
     uses: ./.github/workflows/main-check-frontend.yml
     with:
       publish: true
-      e2e: ${{ inputs.e2e }}
     secrets:
-      VITE_API_URL: ${{ secrets.VITE_API_URL }}
       VITE_SITE_URL: ${{ secrets.VITE_SITE_URL }}
