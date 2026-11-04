@@ -1,6 +1,6 @@
 # Design system
 
-**Maiyu** · amazônico, claro, acolhedor
+**Maiyu** · editorial, ribeirinho, de confiança
 
 > Registra a **decisão**: que valor, por quê, onde usar. O valor que o código lê mora no tema
 > (`styles.css`, `components.json`); componente usa token semântico, nunca hex nem valor arbitrário
@@ -9,9 +9,16 @@
 
 ## 1. Visão geral
 
-- Direção: transmitir uma empresa de tecnologia da floresta e do rio, feita por indígenas e pessoas originárias do Alto Solimões, séria e acolhedora para organizações de qualquer setor e para povos e organizações indígenas.
-- Modo dominante: Convencer (vitrine pública), com Ler no diário. Não há tela de operação.
-- Tema: claro e escuro. O `next-themes` escreve a classe `dark` no `<html>` antes da hidratação, com `defaultTheme="system"`.
+- Direção "Editorial ribeirinho" (decisão do dono, `DECISIONS.md` #12): a vitrine se lê como uma
+  publicação séria da região, e não como um site ilustrado. Fotografia do lugar (rio, cidade,
+  fronteira), tipografia grande e a cestaria como assinatura. Transmite uma empresa de tecnologia
+  profissional, feita por indígenas e originários do Alto Solimões, para organizações de qualquer
+  setor e para povos e organizações indígenas de qualquer país.
+- Substitui a direção anterior (céu, mata e folha em SVG): o `SkyBackdrop` e o `Forest` de
+  `components/common/sky.tsx` saem das páginas.
+- Modo dominante: Convencer (home), Experiência (portfólio), Ler (diário). Não há tela de operação.
+- Tema: claro e escuro. O `next-themes` escreve a classe `dark` no `<html>` antes da hidratação, com
+  `defaultTheme="system"`.
 
 ## 2. Cores
 
@@ -54,16 +61,33 @@ Contraste conferido (AA), por cálculo de luminância relativa WCAG em 2026-11-0
 ## 3. Tipografia
 
 Famílias servidas do próprio bundle (`@fontsource`), para não depender de domínio de terceiro:
-Raleway Variable (voz da marca, títulos e corpo), Michroma (só o wordmark MAIYU) e Geist Mono (número e código).
+
+- **Fraunces Variable** (`--font-display`, eixo óptico): h1 e h2, capa e capítulo, peso 560 e
+  `letter-spacing: -0.02em`. Serifa editorial, que segura o tamanho de capa sem virar cartaz.
+- **Raleway Variable** (`--font-sans`, `--font-serif`): voz da marca no corpo, na interface e nos
+  títulos de bloco (h3 a h6, peso 700).
+- **Michroma**: só o wordmark MAIYU. **Geist Mono**: só número e código.
 
 | Papel | Token | Tamanho | Onde |
 |---|---|---|---|
-| Display | `--text-display`, `--text-display-xl` | `clamp` de 3rem a 7.25rem | só página pública |
-| Título | `--text-h1`, `--text-h2` | `clamp` de 1.9rem a 4rem | título da página e de seção |
-| Subtítulo | `--text-h3`, `--text-h4` | `clamp` de 1.2rem a 1.85rem | título de card |
-| Corpo | `--text-body`, `--text-body-lg`, `--text-lead` | `clamp` de 0.95rem a 1.4rem | texto e input |
-| Secundário | `--text-small` | `clamp` de 0.8rem a 0.9rem | texto de apoio |
+| Display | `--text-display`, `--text-display-xl` | `clamp` de 3rem a 6rem | capa da home e frase do convite |
+| Título | `--text-h1`, `--text-h2` | `clamp` de 1.9rem a 4rem | título da página e de capítulo |
+| Subtítulo | `--text-h3`, `--text-h4` | `clamp` de 1.2rem a 1.85rem | título de bloco e de item |
+| Corpo | `--text-body`, `--text-body-lg`, `--text-lead` | `clamp` de 0.95rem a 1.4rem | texto e input, medida de 60 a 75 caracteres |
+| Secundário | `--text-small` | `clamp` de 0.8rem a 0.9rem | apoio, legenda de foto |
 | Legenda | `--text-micro`, `--text-2xs` | de 0.625rem a 0.78rem | rótulo pequeno |
+
+## 3.1 Fotografia
+
+- Só paisagem e lugar da região, de licença livre (Wikimedia Commons, CC0 e CC BY-SA), registradas
+  em `frontend/src/lib/photos.ts` com autor, licença e página de origem. A legenda do `Photo`
+  (`routes/_public/-components/photo.tsx`) mostra o crédito, que a CC BY-SA exige.
+- Rosto de pessoa indígena de banco de imagem não entra: não traz o consentimento de quem aparece.
+  Foto do time e das comunidades entra quando for da Maiyu, com autorização.
+- Arquivos WebP em 640, 1280 e 1920 px (`public/images/photos/<nome>-<largura>.webp`), com
+  `srcset`, `width` e `height` (sem pulo de layout) e `loading="lazy"`, exceto a foto da primeira
+  dobra (`priority`: `eager` e `fetchpriority="high"`).
+- Produto aparece por captura real da tela (`public/images/<projeto>.webp`).
 
 ## 4. Layout
 

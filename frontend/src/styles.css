@@ -3,9 +3,11 @@
 @import 'shadcn/tailwind.css';
 
 /*
- * As três famílias, servidas do próprio bundle.
+ * As quatro famílias, servidas do próprio bundle.
  *
- * Raleway é a voz da marca, títulos e corpo. Michroma só existe para o
+ * Fraunces é a voz editorial dos títulos grandes (h1 e h2): serifa com eixo
+ * óptico, que segura o tamanho de capa sem virar letreiro. Raleway é a voz da
+ * marca no corpo, na interface e nos títulos menores. Michroma só existe para o
  * wordmark MAIYU, o lettering do logo; Geist Mono fica com número e código.
  *
  * Do pacote e não do Google Fonts: o site antigo já tinha trocado para o
@@ -14,6 +16,7 @@
  * às vezes não chega.
  */
 @import '@fontsource-variable/raleway';
+@import '@fontsource-variable/fraunces/opsz.css';
 @import '@fontsource/michroma';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
@@ -266,7 +269,7 @@
   --color-brand-black: #272221;
   --color-brand-dark: #403937;
 
-  --font-display: 'Raleway Variable', Raleway, system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
   --font-sans: 'Raleway Variable', Raleway, system-ui, sans-serif;
   --font-serif: 'Raleway Variable', Raleway, system-ui, sans-serif;
   --font-brand: Michroma, 'Raleway Variable', system-ui, sans-serif;
@@ -293,7 +296,7 @@
   --text-h1--line-height: 1.02;
   --text-display: clamp(3rem, 2.2rem + 4.2vw, 5.75rem);
   --text-display--line-height: 1;
-  --text-display-xl: clamp(3.25rem, 2.2rem + 5.4vw, 7.25rem);
+  --text-display-xl: clamp(3.25rem, 2.2rem + 4.6vw, 6rem);
   --text-display-xl--line-height: 0.98;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -320,17 +323,28 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.012em;
     text-wrap: balance;
     overflow-wrap: break-word;
   }
 
+  /*
+   * Capa e capítulo em Fraunces, no peso médio e com o eixo óptico solto:
+   * serifa pesada em 6rem vira cartaz, e o editorial quer jornal.
+   */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 560;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+
+  /* Título de bloco é interface: Raleway, que é a voz da marca. */
   h3,
   h4,
   h5,
   h6 {
+    font-family: var(--font-sans);
     font-weight: 700;
     letter-spacing: -0.005em;
   }
