@@ -45,6 +45,13 @@ export function organizationJsonLd(description: string): JsonLd {
       addressRegion: 'AM',
       addressCountry: 'BR',
     },
+    // A sede é em Benjamin Constant, mas quem contrata está dos três lados da
+    // fronteira: sem isto o buscador lê a Maiyu como empresa só do Brasil.
+    areaServed: [
+      { '@type': 'Country', name: 'Brasil' },
+      { '@type': 'Country', name: 'Peru' },
+      { '@type': 'Country', name: 'Colombia' },
+    ],
     sameAs: SOCIALS.map((social) => social.href),
   }
 }
