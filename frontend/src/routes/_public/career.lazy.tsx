@@ -9,6 +9,14 @@ import {
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemTitle,
+} from '#/components/ui/item'
 import { CareerForm } from './-components/career-form'
 import { PageHero } from './-components/page-hero'
 import { REVEAL, STAGGER } from './-components/reveal'
@@ -92,20 +100,25 @@ function RouteComponent(): React.JSX.Element {
             {BENEFITS.map((benefit, index) => (
               <li
                 key={index}
-                className={cn(
-                  REVEAL,
-                  'flex flex-col gap-10 rounded-[1.75rem] p-7 md:p-9',
-                  benefit.tint,
-                )}
+                className={REVEAL}
                 style={{ animationDelay: `${index * STAGGER}ms` }}
               >
-                <benefit.icon size={24} />
-                <div>
-                  <h3 className="text-h3">{benefit.title()}</h3>
-                  <p className="mt-3 max-w-[44ch] text-body text-foreground/75">
-                    {benefit.description()}
-                  </p>
-                </div>
+                <Card
+                  className={cn(
+                    'h-full gap-10 rounded-[1.75rem] py-7 text-body text-foreground ring-0 [--card-spacing:--spacing(7)] md:py-9 md:[--card-spacing:--spacing(9)]',
+                    benefit.tint,
+                  )}
+                >
+                  <CardHeader>
+                    <benefit.icon size={24} />
+                  </CardHeader>
+                  <CardContent>
+                    <h3 className="text-h3">{benefit.title()}</h3>
+                    <p className="mt-3 max-w-[44ch] text-body text-foreground/75">
+                      {benefit.description()}
+                    </p>
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>
@@ -127,22 +140,26 @@ function RouteComponent(): React.JSX.Element {
                 className={REVEAL}
                 style={{ animationDelay: `${index * STAGGER}ms` }}
               >
-                <a
-                  href={'#'.concat(APPLY_ID)}
-                  className="group flex items-center justify-between gap-6 rounded-2xl bg-background px-6 py-5 transition-colors hover:bg-tint-mint motion-reduce:transition-none"
+                <Item
+                  render={<a href={'#'.concat(APPLY_ID)} />}
+                  className="flex-nowrap justify-between gap-6 rounded-2xl border-transparent bg-background px-6 py-5 text-base transition-colors hover:bg-tint-mint motion-reduce:transition-none"
                 >
-                  <div>
-                    <h3 className="text-h4 font-medium">{job.title()}</h3>
-                    <p className="mt-1 text-small text-muted-foreground">
+                  <ItemContent className="gap-1">
+                    <ItemTitle className="line-clamp-none text-h4 font-medium">
+                      {job.title()}
+                    </ItemTitle>
+                    <ItemDescription className="line-clamp-none text-small text-muted-foreground">
                       {JOB_LOCATION_LABELS[job.location]()},{' '}
                       {JOB_TYPE_LABELS[job.type]()}
-                    </p>
-                  </div>
-                  <ArrowDownIcon
-                    size={18}
-                    className="shrink-0 transition-transform duration-300 group-hover:translate-y-0.5 motion-reduce:transition-none"
-                  />
-                </a>
+                    </ItemDescription>
+                  </ItemContent>
+                  <ItemActions>
+                    <ArrowDownIcon
+                      size={18}
+                      className="shrink-0 transition-transform duration-300 group-hover/item:translate-y-0.5 motion-reduce:transition-none"
+                    />
+                  </ItemActions>
+                </Item>
               </li>
             ))}
           </ul>

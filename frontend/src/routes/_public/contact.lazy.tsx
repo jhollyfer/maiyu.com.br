@@ -3,6 +3,7 @@ import { createLazyFileRoute } from '@tanstack/react-router'
 import { EnvelopeIcon, MapPinIcon, PhoneIcon } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
 
+import { Card, CardContent, CardHeader } from '#/components/ui/card'
 import { ContactForm } from './-components/contact-form'
 import { PageHero } from './-components/page-hero'
 import { REVEAL, STAGGER } from './-components/reveal'
@@ -87,35 +88,42 @@ function RouteComponent(): React.JSX.Element {
             {CHANNELS.map((channel, index) => (
               <li
                 key={index}
-                className={cn(
-                  REVEAL,
-                  'flex-1 rounded-[1.75rem] p-6 md:p-8',
-                  channel.tint,
-                )}
+                className={cn(REVEAL, 'flex flex-1 flex-col')}
                 style={{ animationDelay: `${(index + 1) * STAGGER}ms` }}
               >
-                <div className="flex items-center gap-2 text-small text-foreground/70">
-                  <channel.icon size={16} />
-                  {channel.title()}
-                </div>
-                <h2 className="mt-3 text-h4 font-medium">
-                  {channel.subtitle()}
-                </h2>
-                <ul className="mt-4 space-y-1 text-body">
-                  {channel.lines.map((line) => (
-                    <li key={line.text}>
-                      {line.href && (
-                        <a
-                          href={line.href}
-                          className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
-                        >
-                          {line.text}
-                        </a>
-                      )}
-                      {!line.href && line.text}
-                    </li>
-                  ))}
-                </ul>
+                <Card
+                  className={cn(
+                    'flex-1 gap-0 rounded-[1.75rem] py-6 text-body text-foreground ring-0 [--card-spacing:--spacing(6)] md:py-8 md:[--card-spacing:--spacing(8)]',
+                    channel.tint,
+                  )}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-2 text-small text-foreground/70">
+                      <channel.icon size={16} />
+                      {channel.title()}
+                    </div>
+                    <h2 className="mt-3 text-h4 font-medium">
+                      {channel.subtitle()}
+                    </h2>
+                  </CardHeader>
+                  <CardContent>
+                    <ul className="mt-4 space-y-1 text-body">
+                      {channel.lines.map((line) => (
+                        <li key={line.text}>
+                          {line.href && (
+                            <a
+                              href={line.href}
+                              className="inline-flex min-h-11 items-center underline-offset-4 hover:underline"
+                            >
+                              {line.text}
+                            </a>
+                          )}
+                          {!line.href && line.text}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
               </li>
             ))}
           </ul>

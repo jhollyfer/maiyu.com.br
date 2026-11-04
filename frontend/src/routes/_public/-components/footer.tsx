@@ -5,6 +5,7 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 import { SkyBackdrop } from '#/components/common/sky'
+import { Button } from '#/components/ui/button'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
@@ -108,14 +109,15 @@ export function Footer(): React.JSX.Element {
           <p className="text-small text-foreground/70">
             © {year} {SITE_TITLE}. {m.footer_rights()}. {m.footer_signoff()}
           </p>
-          <button
+          <Button
             type="button"
+            size="icon-lg"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             aria-label={m.footer_backToTop()}
-            className="inline-flex size-11 items-center justify-center rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 motion-reduce:transition-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+            className="size-11 rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:bg-brand-green motion-reduce:transition-none"
           >
             <ArrowUpIcon size={15} />
-          </button>
+          </Button>
         </div>
 
         <p

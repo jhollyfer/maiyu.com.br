@@ -3,8 +3,10 @@ import { Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
 
 import { SkyBackdrop } from '#/components/common/sky'
+import { Badge } from '#/components/ui/badge'
 import { Button } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
+import { Empty } from '#/components/ui/empty'
 import { cn } from '#/lib/utils'
 import type { Merge } from '#/lib/interfaces'
 import { m } from '#/paraglide/messages'
@@ -44,10 +46,10 @@ export function NotFoundPage({
       {...props}
     >
       <SkyBackdrop />
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center pb-[clamp(140px,17vw,240px)] text-center">
-        <span className="mb-7 inline-flex items-center rounded-full bg-navy px-3.5 py-1.5 text-micro font-bold text-brand-green dark:border dark:border-brand-green/50 dark:bg-brand-green/5">
+      <Empty className="relative mx-auto max-w-3xl flex-none gap-0 rounded-none border-0 p-0 pb-[clamp(140px,17vw,240px)] text-balance">
+        <Badge className="mb-7 h-auto rounded-full border-0 bg-navy px-3.5 py-1.5 text-micro font-bold text-brand-green dark:border dark:border-brand-green/50 dark:bg-brand-green/5">
           {code}
-        </span>
+        </Badge>
         {children ?? (
           <>
             <NotFoundPageTitle>{m.notFound_title()}</NotFoundPageTitle>
@@ -59,7 +61,7 @@ export function NotFoundPage({
             </NotFoundPageActions>
           </>
         )}
-      </div>
+      </Empty>
     </section>
   )
 }
