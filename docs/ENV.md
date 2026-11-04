@@ -39,7 +39,7 @@ desenvolvimento nenhuma variável é necessária.
 ## 3. Segredo fora do Git
 
 O `.gitignore` do `frontend/` ignora `.env` e `.env.*`, com exceção do `.env.example`. Os segredos do
-CI/CD ficam nos secrets do repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` e `COOLIFY_TOKEN`
+CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_API_UUID`, `COOLIFY_APP_UUID`, `VITE_API_URL` e `VITE_SITE_URL`. `VITE_API_URL` e `VITE_SITE_URL` em `https://`, sem barra no fim; vazios, o build de publicação reprova
 (`ARCHITECTURE.md` §9.1).
 
 ## 4. Por ambiente

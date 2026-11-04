@@ -21,12 +21,12 @@
 Tarefa 2.1 (`TASKS.md`) feita na branch `feat/vitrine-posicionamento-indigena`: copy nova nos três
 idiomas, `areaServed` no JSON-LD, tema mais quente (fibra, mata, rio barrento, urucum, açaí, terra) e o
 trançado na faixa escura da home. Build, lint, typecheck, testes, prettier e ciclos de chunk verdes;
-conferido no navegador em claro, escuro e celular. Os workflows seguem fora do sync (`DECISIONS.md` #6).
+conferido no navegador em claro, escuro e celular. Os workflows viraram cópia exata do modelo, como nos irmãos, e o `sync --check` sai limpo; o CI e o deploy reprovam enquanto não houver `backend/` (`DECISIONS.md` #6).
 
 ## Próximos passos
 
 1. Abrir o PR da branch quando o dono pedir.
-2. Levar ao dono as perguntas de `PRD.md` §8 e a decisão dos workflows (#6 e #9).
+2. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
 3. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
    de quem o pinta (`DESIGN.md` §2).
 

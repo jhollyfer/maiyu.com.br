@@ -117,9 +117,10 @@ O detalhe está em `docs/ARCHITECTURE.md` §9 e §9.1. O que precisa estar na ca
   site anterior.
 - O healthcheck no painel precisa apontar para `/health`. O painel sobrepõe o `HEALTHCHECK` do
   `Dockerfile-production`, e em `/` ele mediria a renderização da home inteira.
-- Secrets do repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN` e `COOLIFY_TOKEN`.
-- O deploy sai por `POST` no Coolify com `curl -fsS`, e o smoke test espera
-  `https://maiyu.com.br/revision.txt` responder o sha do commit. **Não volte para `GET`**: a rota
+- Os workflows são cópia exata do modelo do upstream, como nos irmãos (`DECISIONS.md` #6). Secrets
+  do repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_API_UUID`, `COOLIFY_APP_UUID`, `VITE_API_URL` e `VITE_SITE_URL`.
+- O deploy sai por `POST` no Coolify, e o smoke test espera `VITE_SITE_URL` + `/revision.txt`
+  responder o sha do commit. **Não volte para `GET`**: a rota
   responde 405 desde a v4.2.
 
 ## Escrita

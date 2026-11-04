@@ -118,7 +118,7 @@ padrão do frontend dos irmãos é `/health` (`DECISIONS.md` #5).
 |---|---|---|
 | Healthcheck do painel em `/health` | painel do Coolify | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira |
 | Aplicação na imagem Nitro, porta 3000 | painel do Coolify | o site anterior era nginx estático na porta 80 |
-| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_TOKEN` | secrets do repositório no GitHub | o workflow publica a imagem `maiyu-web` e chama o deploy |
+| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_API_UUID`, `COOLIFY_APP_UUID`, `VITE_API_URL`, `VITE_SITE_URL` | secrets do repositório no GitHub | os workflows do modelo publicam a imagem `maiyu-app` e chamam o deploy (`DECISIONS.md` #6) |
 | `UUID_APP` e `COOLIFY_URL` do deploy | `.github/workflows/main-deploy-coolify.yml` | o uuid é da aplicação e não da instância; uuid de outro team é aceito e não implanta nada |
 | Deploy por `POST` em `/api/v1/deploy` com `curl -fsS` | workflow | a rota responde 405 a `GET` desde o Coolify v4.2 |
 | Smoke test em `https://maiyu.com.br/revision.txt` com o sha do commit | workflow | prova que a imagem nova está de pé |
