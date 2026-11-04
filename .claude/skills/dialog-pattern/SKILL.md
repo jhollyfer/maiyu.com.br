@@ -7,38 +7,70 @@ description: >-
   também para toda confirmação destrutiva, que é AlertDialog e tem regra própria
   aqui. Dispare quando o usuário falar em "dialog", "modal", "confirmação",
   "popup", ou pedir para padronizar/revisar dialogs existentes. Há UM único
-  padrão válido (trigger-forward + `ref`, uncontrolled), reproduzido inteiro
-  aqui — siga-o exatamente, não improvise outra forma. Painel lateral usa
-  [[sheet-pattern]]; o estilo de código é [[code-pattern]].
+  padrão válido (uncontrolled; gatilho visível por trigger-forward, abertura sem
+  gatilho por `Dialog.createHandle()`), reproduzido inteiro aqui — siga-o
+  exatamente, não improvise outra forma. Painel lateral usa [[sheet-pattern]];
+  o estilo de código é [[code-pattern]].
 ---
 
 # Padrão de Dialog
 
-`Dialog` é o modal central: `components/ui/dialog`, wrapper da primitiva de UI do
-projeto. Existe **UM único padrão**, reproduzido abaixo. Não há variação, não há
-"modelo alternativo": todo Dialog novo copia essa forma. É o irmão do
-[[sheet-pattern]] — mesma forma, componente diferente.
+`Dialog` é o modal central: `components/ui/dialog`, o wrapper shadcn sobre o `Dialog` do Base UI.
+Existe **um único padrão**, reproduzido abaixo. É o irmão do [[sheet-pattern]]: mesma forma,
+componente diferente.
+
+Contrato: `_doc-lib/base-ui.md#react/components/dialog` (anatomia, `createHandle`, `initialFocus`,
+`finalFocus`), `#react/components/alert-dialog`, `#react/overview/accessibility`;
+`_doc-lib/tanstack-query.md#guides/mutations`; `_doc-lib/react-hook-form.md#docs/useform/seterror`.
+Abra a página oficial da entrada antes de decidir (`AGENTS.md`). A régua da camada é
+`_standards/frontend.md` (§4 formulários, §6.1 compound, §8 kit comum) e `_standards/i18n.md`; esta
+skill não repete o que está lá, só fixa a forma do Dialog.
+
+**Modal não é a primeira opção.** Dialog serve a tarefa que precisa interromper e proteger o foco.
+O resto é inline, `Sheet` ([[sheet-pattern]]) ou página própria (`$id/edit`).
 
 ## Antes de escrever
 
-1. **Alias de import.** Leia `tsconfig.json` (`compilerOptions.paths`) ou
-   `package.json` (`imports`). Os exemplos aqui usam `#/`; troque pelo alias do
-   projeto (`@/`, `~/`, relativo).
-2. **Primitiva de UI.** Abra `components/ui/dialog.tsx`. Tem prop **`render`**? É
-   Base UI. Tem **`asChild`**? É Radix/shadcn. Use a que estiver lá — é a única
-   coisa que muda entre as duas, o resto da forma é idêntico.
-3. **Exemplo canônico do projeto.** Se existir `components/common/dialog-example.tsx`
-   (ou equivalente), **ele vence esta skill**. Senão, o código abaixo é a referência.
-4. **Validação.** O exemplo usa VineJS; se o projeto usa Zod, Valibot ou Yup, troque
-   o schema e o resolver. A forma do `Controller` e do tratamento de erro não muda.
+1. **Alias e pacote compartilhado.** Leia `tsconfig.json` / `package.json` (`imports`). Os exemplos
+   usam `#/` e `@acme/shared`; troque pelo alias do projeto e por `@<projeto>/shared`.
+2. **Primitiva.** Abra `components/ui/dialog.tsx`. A casa é Base UI (prop `render`). Projeto ainda
+   em Radix (`asChild`) está fora da régua: a forma é a mesma, mas registre a migração.
+3. **O que já existe.** Procure `lib/dialog-handle.ts`, `hooks/use-dismissable-dialog.ts`,
+   `components/common/confirm-dialog/`, `lib/form-errors.ts`, `lib/form-a11y.ts` e o hook de mutation
+   do módulo (`integrations/tanstack-query/mutations/<módulo>.ts`). Existe: use. Não existe: crie
+   **uma vez**, no lugar da árvore (`architecture.md` §4), nunca dentro do Dialog.
 
-## A referência (fonte da verdade)
+## A referência
+
+```ts
+// lib/dialog-handle.ts — a fábrica do handle, um lugar só
+import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
+
+export const createDialogHandle = DialogPrimitive.createHandle
+export type DialogHandle = ReturnType<typeof createDialogHandle>
+```
+
+```ts
+// hooks/use-dismissable-dialog.ts — fecha o Dialog uncontrolled pelo botão visível
+export function useDismissableDialog(): {
+  readonly closeRef: React.RefObject<HTMLButtonElement | null>
+  readonly close: () => void
+} {
+  const closeRef = React.useRef<HTMLButtonElement | null>(null)
+  const close = React.useCallback(() => closeRef.current?.click(), [])
+  return { closeRef, close }
+}
+```
 
 ```tsx
+// routes/_private/administrator/teams/-components/team-create-dialog.tsx
 import * as React from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { vineResolver } from '@hookform/resolvers/vine'
-import type { Infer } from '@vinejs/vine/types'
+import {
+  AdministratorTeamCreateValidator,
+  type AdministratorTeamCreatePayload,
+} from '@acme/shared'
 
 import {
   Dialog,
@@ -54,46 +86,66 @@ import { Button } from '#/components/ui/button'
 import { Input } from '#/components/ui/input'
 import { Field, FieldError, FieldGroup, FieldLabel } from '#/components/ui/field'
 import { useDismissableDialog } from '#/hooks/use-dismissable-dialog'
-import { vine } from '#/lib/validator'
+import { useTeamCreateMutation } from '#/integrations/tanstack-query/mutations/administrator'
+import type { DialogHandle } from '#/lib/dialog-handle'
+import { applyHTTPErrorToForm } from '#/lib/form-errors'
+import { errorId, invalidProps } from '#/lib/form-a11y'
+import type { Merge } from '@<projeto>/shared'
+import { m } from '#/paraglide/messages'
 
-const FormValidator = vine.create({
-  name: vine.string().trim(),
-})
+const TEAM_CREATE_FIELDS = ['name'] as const
 
-type FormType = Infer<typeof FormValidator>
+type TeamCreateDialogProps = Merge<
+  React.ComponentProps<typeof DialogTrigger>,
+  { readonly handle?: DialogHandle }
+>
 
-export function DialogExample({
+export function TeamCreateDialog({
   ref,
+  handle,
+  render,
   ...rest
-}: React.ComponentProps<typeof DialogTrigger>): React.JSX.Element {
+}: TeamCreateDialogProps): React.JSX.Element {
   return (
-    <Dialog>
-      <DialogTrigger {...rest} ref={ref} />
+    <Dialog handle={handle}>
+      {render !== undefined && <DialogTrigger {...rest} ref={ref} render={render} />}
       <DialogContent className="sm:max-w-xl">
-        <DialogExampleForm />
+        <TeamCreateForm />
       </DialogContent>
     </Dialog>
   )
 }
 
-function DialogExampleForm(): React.JSX.Element {
+function TeamCreateForm(): React.JSX.Element {
   const { closeRef, close } = useDismissableDialog()
-  const form = useForm<FormType>({
-    resolver: vineResolver(FormValidator),
+  const create = useTeamCreateMutation()
+  const form = useForm<AdministratorTeamCreatePayload>({
+    resolver: vineResolver(AdministratorTeamCreateValidator),
     defaultValues: { name: '' },
+    mode: 'onTouched',
   })
 
-  function onValid(_data: FormType): void {
-    close()
+  function onValid(payload: AdministratorTeamCreatePayload): void {
+    create.mutate(payload, {
+      onSuccess: () => {
+        form.reset()
+        close()
+      },
+      onError: (error) =>
+        applyHTTPErrorToForm({
+          form,
+          error,
+          fields: TEAM_CREATE_FIELDS,
+          retry: () => form.handleSubmit(onValid)(),
+        }),
+    })
   }
 
   return (
     <form onSubmit={form.handleSubmit(onValid)}>
       <DialogHeader>
-        <DialogTitle>Editar perfil</DialogTitle>
-        <DialogDescription>
-          Faça as alterações e clique em salvar quando terminar.
-        </DialogDescription>
+        <DialogTitle>{m.teams_create_title()}</DialogTitle>
+        <DialogDescription>{m.teams_create_description()}</DialogDescription>
       </DialogHeader>
       <div className="grid flex-1 auto-rows-min gap-6 px-4 py-4">
         <FieldGroup>
@@ -102,24 +154,28 @@ function DialogExampleForm(): React.JSX.Element {
             control={form.control}
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
-                <FieldLabel htmlFor="dialog-example-name">Nome</FieldLabel>
+                <FieldLabel htmlFor="team-create-name">{m.teams_field_name()}</FieldLabel>
                 <Input
                   {...field}
-                  id="dialog-example-name"
-                  aria-invalid={fieldState.invalid}
+                  id="team-create-name"
+                  {...invalidProps(fieldState.invalid, 'team-create-name')}
                 />
-                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                {fieldState.invalid && (
+                  <FieldError id={errorId('team-create-name')} errors={[fieldState.error]} />
+                )}
               </Field>
             )}
           />
         </FieldGroup>
       </div>
       <DialogFooter>
-        <Button type="submit">Salvar</Button>
+        <Button type="submit" disabled={create.isPending}>
+          {m.common_save()}
+        </Button>
         <DialogClose
           render={
             <Button ref={closeRef} variant="outline" type="button">
-              Cancelar
+              {m.common_cancel()}
             </Button>
           }
         />
@@ -129,227 +185,198 @@ function DialogExampleForm(): React.JSX.Element {
 }
 ```
 
-Dialog que **salva** alguma coisa é a mesma forma acrescida de mutation,
-mapeamento de erro do servidor pros campos e invalidação de cache — regras 7 a 9.
-Se o projeto já tiver um desses (um `*-create-dialog.tsx`), copie dele.
+Os nomes de módulo (`useTeamCreateMutation`, `applyHTTPErrorToForm`, `invalidProps`, `Merge`) são os
+da régua; se o projeto usa outro nome para a mesma peça, use a do projeto e registre o desvio.
 
-## As regras (todas obrigatórias)
+## As regras
 
-1. **Trigger-forward + `ref`.** O componente tipa as props como
-   `React.ComponentProps<typeof DialogTrigger>` — ou
-   `Merge<React.ComponentProps<typeof DialogTrigger>, { ...extras }>` quando
-   houver props próprias —, desestrutura `{ ref, ...rest }` e espalha
-   `<DialogTrigger {...rest} ref={ref} />`. O `<Dialog>` é **uncontrolled**:
-   abre e fecha pela primitiva e pelo `DialogClose`. Nunca `open`/`onOpenChange`,
-   nunca `useState` de abertura.
-2. **Header sempre com `DialogTitle` E `DialogDescription`.** Acessibilidade: a
-   primitiva anuncia os dois, e o `DialogTitle` ausente derruba o leitor de tela.
-   Precisa esconder? `className="sr-only"` — nunca omitir.
-3. **Corpo** em `<div className="grid flex-1 auto-rows-min gap-6 px-4 py-4">`.
-   Campo de formulário usa os componentes de campo do catálogo
-   (`Field`/`FieldGroup`/`FieldLabel`/`FieldError`), mais `InputGroup*` quando
-   houver ícone ou addon.
-4. **Footer** com a ação primária + `DialogClose` no cancelar. Nunca
+### Forma
+
+1. **Uncontrolled.** O `<Dialog>` abre e fecha pela primitiva, pelo `DialogClose` e pelo `handle`.
+   Nunca `open`/`onOpenChange` de estado próprio, nunca `useState` de abertura.
+2. **Gatilho visível: trigger-forward.** Props `Merge<React.ComponentProps<typeof DialogTrigger>, {
+   handle?, ...extras }>`; desestruture `{ ref, handle, render, ...rest }` e renderize
+   `<DialogTrigger {...rest} ref={ref} render={render} />` **só quando há `render`**. Quem chama passa o
+   elemento visível: `<TeamCreateDialog render={<Button>{m.teams_create()}</Button>} />`. Prop que
+   colide com atributo do DOM (`onSubmit`, `title`) sai por `Omit` antes do `Merge`
+   ([[code-pattern]] §5).
+3. **Sem gatilho visível: `handle`.** Abrir de item de menu, linha de tabela, atalho de teclado,
+   outro componente ou parâmetro de URL é `Dialog.createHandle()` (`_doc-lib/base-ui.md#react/components/dialog`).
+   O componente recebe `handle` e não renderiza trigger nenhum; quem abre chama `handle.open(null)` no
+   próprio handler do evento. Ver "Como o caller abre".
+4. **Proibido:** `useEffect` que clica um `ref`, `triggerRef.current?.click()`, gatilho nu sem
+   filho (`<XDialog ref={ref} />`), botão escondido (`hidden`, `sr-only`, `aria-hidden` num
+   gatilho). O clique programático acerta um `<button>` que o Base UI ainda não ligou quando o
+   Dialog monta no mesmo commit, e falha em silêncio; o gatilho nu deixa em cada linha um botão
+   focável, invisível e sem nome.
+5. **Header sempre com `DialogTitle` e `DialogDescription`.** O Popup é rotulado por eles. Precisa
+   esconder: `className="sr-only"`, nunca omitir.
+6. **Corpo** em `<div className="grid flex-1 auto-rows-min gap-6 px-4 py-4">`, campos com o kit
+   `Field`/`FieldGroup`/`FieldLabel`/`FieldError` (+ `InputGroup*` com ícone ou addon).
+7. **Footer:** ação primária + `DialogClose render={<Button … />}` no cancelar. Nunca
    `onClick={() => onOpenChange(false)}`.
-5. **Retorno tipado `React.JSX.Element`.** Se o arquivo não tem React em escopo,
-   `import * as React from 'react'`.
-6. **Estilo de código:** [[code-pattern]]. Sem ternário de controle, sem `any`,
-   sem `as` (use `satisfies`), `type` nunca `interface`, `Merge` no lugar de `&`,
-   lookup object em 3+ casos, `async/await` nunca `.then().catch()`.
+8. **Conteúdo é um componente interno** dentro do `<DialogContent>`. A primitiva monta o conteúdo só
+   aberto: o form se inicializa ao abrir e se descarta ao fechar, sem `useEffect` atrelado a `open`.
+   Componente nunca é declarado dentro de outro componente.
+9. **Estilo:** [[code-pattern]] inteiro. Retorno `React.JSX.Element`, props `readonly`.
 
-## Formulário dentro do Dialog
+### Formulário dentro do Dialog
 
-7. **`useForm` + resolver do validador, sempre.** Campo ligado por `Controller`,
-   nunca por `register`: componentes de catálogo trabalham com
-   `value`/`onValueChange`, não com `ref` de input nativo — `register` só liga em
-   input DOM. `mode: 'onTouched'` para o campo acusar ao sair dele, e não só no
-   submit.
-8. **O schema vem do módulo de validação do projeto**, nunca do pacote cru.
-   Esses módulos costumam configurar um singleton (provider de mensagens, coerção
-   de string vazia para `null`), e um schema criado direto do pacote compila com a
-   configuração errada dependendo da ordem de carga dos módulos. Mensagem
-   traduzida vem do mapa de mensagens, por chave `campo.regra`, nunca inline no
-   campo.
-9. **Erro do servidor volta para o campo.** No `onError` da mutation, mapeie a
-   resposta de validação da API para os campos do form (um helper tipo
-   `applyHTTPErrorToForm({ form, error, fields: X_FIELDS })`). Se ele resolver,
-   terminou. Se não, `5xx` e rede viram `toast.error` com `id` fixo e ação
-   "Tentar de novo"; o resto vira `form.setError('root', ...)`. A lista de campos
-   fica ao lado deles, no `*-form-fields.tsx`.
+10. **`useForm` + `vineResolver(<Validator>)`, sempre.** Campo por `Controller` (ou `AppField`),
+    nunca `register`: o kit trabalha com `value`/`onValueChange`. `mode: 'onTouched'`.
+11. **Schema e tipo vêm de `@<projeto>/shared`.** `resolver: vineResolver(AdministratorTeamCreateValidator)`
+    e `useForm<AdministratorTeamCreatePayload>`, o mesmo validator que o backend usa
+    (`architecture.md` §9–§10). Nunca `vine.create(...)` no componente, nunca `@vinejs/vine` importado
+    direto, nunca `type` redigitado.
+12. **Escrita por `mutation.mutate(vars, { onSuccess, onError })`.** `mutateAsync` só com `await`
+    dentro de `try/catch`; nunca solto, nunca com `.then/.catch`, nunca com `void` na frente
+    (`_doc-lib/tanstack-query.md#guides/mutations`: `mutateAsync` lança). O hook de mutation do
+    módulo devolve a promessa da invalidação no `onSuccess`, então `isPending` cobre o refetch
+    (`#guides/invalidations-from-mutations`).
+13. **Sucesso:** `form.reset()` e depois `close()` (do `useDismissableDialog`, ancorado no Cancelar
+    visível). Sem o reset, o segundo cadastro começa com o texto do primeiro. Proibido
+    `<DialogClose className="hidden" />` só para segurar o ref.
+14. **Erro do servidor:** `applyHTTPErrorToForm` primeiro. Erro com campo listado em
+    `<RECURSO>_FIELDS` vai para o campo (`setError`). **409 e 5xx/rede** viram `toast.error` com `id`
+    fixo e ação "Tentar de novo" (texto por chave) que reenvia mantendo o digitado; **outro 4xx**
+    (validação, autorização) vai para `setError('root')`, sem retry (`frontend.md` §4,
+    `DECISIONS.md` #113 C16). Erro mantém o Dialog aberto.
+15. **Envio único:** o botão fica `disabled` com `isPending`; duplo clique não gera dois requests.
+
+### Texto e acessibilidade
+
+16. **Todo texto por chave i18n** (`m.*()`): título, descrição, rótulo, botão, toast, `aria-label`
+    (`i18n.md` §2). Literal pt-BR no componente é desvio.
+17. **Nome acessível:** gatilho só de ícone leva `aria-label={m.…()}`; ícone decorativo
+    `aria-hidden`. O Base UI dá teclado, foco preso e `role`; o nome é sempre seu
+    (`_doc-lib/base-ui.md#react/overview/accessibility`). Não reimplemente focus trap, `role` nem Esc.
+18. **Foco ao abrir:** formulário foca o primeiro campo pelo `initialFocus` do Popup (o
+    `DialogContent` repassa), não por `autoFocus` nem `useEffect`. Como o campo mora no componente
+    interno, o ref nasce no componente externo e desce por prop até o `Controller` (`ref` do
+    `field` encadeado). Por padrão a primitiva foca o próprio popup, o que obriga um Tab a mais.
+19. **Foco ao fechar volta a quem abriu.** Pelo gatilho é o padrão da primitiva. Aberto por
+    `handle` sem trigger, passe `finalFocus` com o ref do elemento que originou a abertura (o botão
+    do menu da linha), senão o foco se perde no `body` *(comportamento de foco sem trigger: página
+    oficial não conferida)*.
+20. **Erro de campo** com `aria-invalid` + `aria-describedby` pelo par `invalidProps`/`errorId` de
+    `lib/form-a11y.ts`; foco no primeiro campo inválido no submit (`shouldFocusError` ligado, padrão
+    do RHF).
 
 ## Como o caller abre o Dialog
 
-> **REGRA DE OURO — zero botão escondido.** Em lugar nenhum do padrão existe
-> `<button className="hidden">`, `aria-hidden`, `sr-only` num gatilho, nem
-> `render` embrulhando um elemento oculto. Só há dois jeitos de abrir ou fechar:
-> (a) um elemento **visível** via `render`
-> (`<XDialog render={<Button>…</Button>} />`), ou (b) o componente **nu**
-> disparado por `ref` (`<XDialog ref={ref} />`). Se te pegar querendo esconder um
-> botão para segurar um ref, pare: use o nu (abrir) ou ancore o ref no botão
-> visível que já existe (fechar).
+Dois jeitos, e só dois:
 
-10. **Gatilho nu quando abre por `ref`** (menu, linha de tabela, programático).
-    Renderize o componente **nu**: `<XDialog ref={triggerRef} ...props />`,
-    autofechado, sem filhos. O `<DialogTrigger>` sem filho já é o botão que
-    `triggerRef.current?.click()` aciona. Use `render` **só** quando o próprio
-    elemento visível é o gatilho.
-11. **Fechar no sucesso da mutation, sem `useState`.** Um hook
-    `useDismissableDialog()` que devolve `{ closeRef, close }` — se o projeto não
-    tiver, são cinco linhas: um `ref` de botão e um `close()` que clica nele.
-    Ancore o `closeRef` no **botão de fechar visível** do
-    footer (`<DialogClose render={<Button ref={closeRef}>Cancelar</Button>} />`)
-    e chame `close()` no `onSuccess` ou após `await onSubmit`. **PROIBIDO** um
-    `<DialogClose className="hidden" />` só para segurar o ref — reaproveite o
-    Cancelar que já existe; se não houver botão de fechar visível, acrescente um.
-    Erro mantém o Dialog aberto, e o toast reporta.
-    Quando o caller é dono da mutation, o Dialog expõe `onConfirm: (close) => void`
-    e o caller fecha via **`mut.mutateAsync(vars, { onSuccess: close })`** — o
-    callback da própria mutation. Sem argumentos:
-    `mutateAsync(undefined, { onSuccess: close })`. **NUNCA**
-    `mutateAsync(...).then(close).catch(() => {})`, nem `void` na frente.
-12. **Alvo dinâmico aberto de menu ou linha** (qual item). No caller: estado
-    `{ alvo, nonce }` + `triggerRef` + `useEffect` que clica o ref quando muda +
-    `<XDialog key={nonce} ref={triggerRef} … />`. O `key` remonta e evita prop
-    stale; o `nonce` permite reabrir o mesmo item.
-13. **Conteúdo com dado de abertura ou reset por abertura.** Extraia um
-    componente **interno** renderizado dentro do `<DialogContent>` — a primitiva
-    monta o content só quando aberto, então o form self-inicializa e reseta ao
-    fechar, o que dispensa `useEffect` keyado em `open`. Passe `close` para o
-    interno. Depois de salvar, `form.reset()` antes do `close()`, senão o segundo
-    cadastro começa com o texto do primeiro.
-14. **View-only aberto por URL ou estado**, sem gatilho: `<Dialog defaultOpen>` +
-    `DialogClose` no botão; efeito colateral de fechar vai em `onEscapeKeyDown` /
-    `onPointerDownOutside` no `DialogContent`.
-15. **`Merge` intersecta chaves em conflito**, não sobrescreve. Se uma prop colide
-    com atributo DOM do trigger (`onSubmit`, `onError`, `title`…), faça
-    `Omit<React.ComponentProps<typeof DialogTrigger>, 'onSubmit'>` antes do
-    `Merge`. `Merge` vem do módulo de tipos do projeto ([[code-pattern]] §5).
-
-### O caller, em código
-
-O que muda entre bibliotecas é só a prop de composição — **`render`** no Base UI,
-`asChild` no Radix — e o alias de import. O resto da forma é o mesmo.
+- **(a) Um elemento visível é o gatilho:** `render` no próprio componente (regra 2).
+- **(b) Qualquer outro caso:** `handle` (regra 3).
 
 ```tsx
-export function ProductRowActions({
-  product,
+// routes/_private/administrator/teams/-components/row-actions.tsx
+export function TeamRowActions({
+  team,
 }: {
-  product: Product
+  readonly team: AdministratorTeamListItemResponse
 }): React.JSX.Element {
-  const editRef = React.useRef<HTMLButtonElement>(null)
+  // useState com inicializador, nunca escopo de módulo: no SSR um handle de módulo seria um
+  // store único compartilhado entre requisições.
+  const [editHandle] = React.useState(createDialogHandle)
+  const menuTriggerRef = React.useRef<HTMLButtonElement>(null)
 
   return (
     <React.Fragment>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
-            <Button variant="ghost" size="icon">
-              <DotsThreeIcon />
+            <Button ref={menuTriggerRef} variant="ghost" size="icon" aria-label={m.common_actions()}>
+              <DotsThreeIcon aria-hidden />
             </Button>
           }
         />
         <DropdownMenuContent className="w-48">
-          <DropdownMenuItem onClick={() => editRef.current?.click()}>
-            <PencilSimpleIcon />
-            Editar
+          <DropdownMenuItem onClick={() => editHandle.open(null)}>
+            <PencilSimpleIcon aria-hidden />
+            {m.common_edit()}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Gatilho nu, IRMÃO do menu — nunca dentro do DropdownMenuContent. */}
-      <ProductEditDialog ref={editRef} product={product} />
+      {/* Irmão do menu, nunca dentro do DropdownMenuContent: o Content desmonta ao fechar. */}
+      <TeamEditDialog handle={editHandle} team={team} finalFocus={menuTriggerRef} />
     </React.Fragment>
   )
 }
 ```
 
-Numa célula de tabela é o mesmo desenho, com o botão visível no lugar do item:
-
-```tsx
-<TableCell className="text-right">
-  <Button variant="outline" size="sm" onClick={() => editRef.current?.click()}>
-    Ver
-  </Button>
-</TableCell>
-```
-
-16. **Duas ligações válidas, e a escolha decide onde o Dialog mora:**
-    - **Gatilho nu por `ref`** (o de cima): o Dialog é **irmão** do
-      `<DropdownMenu>`, fora do `DropdownMenuContent`. O Content desmonta ao
-      fechar, e um Dialog montado lá dentro morre junto com o menu. O item usa
-      `onClick` normal — o menu fechar depois é o comportamento certo.
-    - **O item É o gatilho** (caso do `ConfirmDialog`, regra 18): aí o componente
-      fica **dentro** do Content mesmo, e o item leva `closeOnClick={false}` —
-      sem isso o menu fecha e leva o gatilho antes do alerta abrir.
-
-    `closeOnClick={false}` **só** na segunda. Na primeira ele deixa o menu aberto
-    por cima do Dialog.
-17. **Um `ref` por Dialog, não por lugar que abre.** Menu e botão da linha
-    apontando para o mesmo Dialog compartilham o mesmo `ref` — duplicar o
-    `<ProductEditDialog>` monta dois Dialogs para um alvo só. Alvos diferentes na
-    mesma tela: regra 12 (`key={nonce}`).
+21. **O Dialog aberto por handle é irmão do `<DropdownMenu>`**, fora do `DropdownMenuContent`. O
+    item usa `onClick` normal e o menu fecha: é o comportamento certo.
+22. **Um handle por Dialog, não por lugar que abre.** Menu e botão da linha chamam o mesmo
+    `handle.open(null)`; duplicar o componente monta dois Dialogs para um alvo.
+23. **Alvo dinâmico** (um Dialog para a tabela inteira, qual linha só se sabe no clique):
+    `handle.openWithPayload({ teamId })`, e o Root lê o payload (`_doc-lib/base-ui.md#react/components/dialog`).
+    Substitui o antigo `{ alvo, nonce }` + `key` + `useEffect`. A forma exata de ler o payload no
+    Root (função como `children`) é *página oficial não conferida*: confira antes de usar.
+    Chamada a `open` sem Root montado com o mesmo handle é ignorada, então o Dialog fica montado
+    (fechado) enquanto a tela existir.
+24. **View-only aberto por URL** (o search param diz que está aberto): o mesmo `handle`, aberto no
+    handler da navegação; efeito colateral de fechar vai no `onOpenChange` do Root lendo o `reason`,
+    nunca em estado espelhado.
 
 ## Confirmação destrutiva é AlertDialog, não Dialog
 
-18. **Toda ação que arquiva, restaura ou remove passa por um `ConfirmDialog`** —
-    o do projeto, se houver; senão `AlertDialog` direto. É `AlertDialog` e não
-    `Dialog`. A diferença que importa: o alerta **não fecha ao clicar fora nem no
-    Esc**, e um clique distraído não pode ser a resposta a "apagar de vez?".
-19. **O título nomeia o registro.** `Remover a categoria Alimentos?`, nunca
-    `Tem certeza?`. Ação sem volta leva `destructive`.
-20. **Não escreva um AlertDialog novo à mão a cada tela.** Um `ConfirmDialog`
-    único serve todas. Se o projeto ainda não tiver esse componente, crie-o na
-    primeira vez.
-21. **O `ConfirmDialog` é compound: o texto vai por slot, não por prop.** Em
-    prop fica só o que a confirmação inteira compartilha — a pendência, o peso
-    (`destructive`) e a ação —, e isso chega às partes por contexto. Título,
-    descrição e o rótulo dos botões são markup, e markup é filho:
+25. **Toda ação que arquiva, restaura ou remove passa pelo `ConfirmDialog`**
+    (`components/common/confirm-dialog/`, kit comum, `frontend.md` §8), que é `AlertDialog`. Não
+    fecha por clique fora: um clique distraído não pode ser a resposta a "apagar de vez?". O Esc é o
+    da primitiva e não se reimplementa *(a entrada `_doc-lib/base-ui.md#react/components/alert-dialog`
+    diz que o AlertDialog não descarta por Esc; página oficial não conferida)*. Quando a remoção é
+    recuperável, prefira desfazer (toast com "Desfazer") à confirmação.
+26. **Um `ConfirmDialog` para o projeto inteiro.** Não existe? Crie na primeira vez, no kit.
+27. **Compound: texto por slot, não por prop.** Em prop fica só o que a confirmação inteira divide
+    (`isPending`, `destructive`, `onConfirm`, `handle`, `finalFocus`); título, descrição e rótulos
+    são filhos:
 
     ```tsx
     <ConfirmDialog
-      ref={triggerRef}
+      handle={removeHandle}
+      finalFocus={menuTriggerRef}
       isPending={remove.isPending}
-      onConfirm={(close) => remove.mutateAsync(id, { onSuccess: close })}
+      onConfirm={(close) => remove.mutate(team.id, { onSuccess: close })}
     >
       <ConfirmDialogHeader>
-        <ConfirmDialogMedia><TrashIcon /></ConfirmDialogMedia>
-        <ConfirmDialogTitle>Remover a categoria Alimentos?</ConfirmDialogTitle>
-        <ConfirmDialogDescription>…</ConfirmDialogDescription>
+        <ConfirmDialogMedia><TrashIcon aria-hidden /></ConfirmDialogMedia>
+        <ConfirmDialogTitle>{m.teams_remove_title({ name: team.name })}</ConfirmDialogTitle>
+        <ConfirmDialogDescription>{m.teams_remove_description()}</ConfirmDialogDescription>
       </ConfirmDialogHeader>
       <ConfirmDialogFooter>
         <ConfirmDialogCancel />
-        <ConfirmDialogConfirm>Remover</ConfirmDialogConfirm>
+        <ConfirmDialogConfirm>{m.teams_remove_confirm()}</ConfirmDialogConfirm>
       </ConfirmDialogFooter>
     </ConfirmDialog>
     ```
 
-    Uma prop de texto por pedaço obriga a tela fora da curva — a que precisa de
-    um `<Alert>` na descrição ou de uma contagem no rodapé — a virar mais uma
-    prop opcional para todas as outras. O slot resolve isso sem API nova.
-22. **O `children` é o conteúdo do alerta, nunca o do gatilho.** O que aparece
-    dentro do botão que abre mora no elemento do `render`
-    (`render={<Button><TrashIcon />Excluir</Button>}`), ou na prop `trigger`,
-    quando o projeto usa essa forma. O gatilho costuma ser um
-    `DropdownMenuItem` com `closeOnClick={false}` — sem isso o menu fecha e leva
-    o gatilho antes do alerta abrir.
-23. **Peça sem estado compartilhado não vira compound.** A própria
-    [[compound-pattern]] avisa: sem estado a dividir entre as partes, o contexto
-    é só sobrecarga. Coleção de widgets ganha barrel, não provider. E há um caso
-    em que o contexto é impossível: a instância genérica do TanStack Table não
-    cabe num `React.Context` sem um `as`/`any` (o `Context` não carrega o
-    genérico de quem o provê), então ela segue por prop.
+28. **O título nomeia ação e registro** ("Remover a equipe Design?"), nunca "Tem certeza?"; botões
+    com verbo + objeto, nunca "Sim/Não/OK". Ação sem volta é `destructive`; "Cancelar" nunca é.
+29. **Handle próprio do AlertDialog:** `AlertDialog.createHandle()` (exportado pelo
+    `confirm-dialog`), nunca o handle de Dialog: o de Dialog faria o alerta fechar no clique fora.
+30. **`children` é o conteúdo do alerta**, nunca o do gatilho. O gatilho visível vai no `render`
+    (`render={<Button><TrashIcon aria-hidden />{m.common_remove()}</Button>}`). Item de menu que é o
+    próprio gatilho fica dentro do `DropdownMenuContent` com `closeOnClick={false}`; aberto por
+    handle, fica irmão do menu (regra 21).
+31. **Peça sem estado compartilhado não vira compound**, e a instância genérica do TanStack Table não
+    cabe em `React.Context` sem `as`: segue por prop (`frontend.md` §6.1).
+
+## Teste
+
+- Componente: Vitest + Testing Library, por papel e nome acessível
+  (`getByRole('dialog', { name: m.teams_create_title() })`), `userEvent` para abrir, preencher e
+  salvar; o nome vem da chave, não do literal (`architecture.md` §8).
+- E2E (Playwright, `e2e/<fluxo>.spec.ts`): abre, Esc/Cancelar fecha sem gravar, inválido acusa o
+  campo, 409/422 volta ao campo, válido grava uma vez com duplo clique, foco volta a quem abriu.
 
 ## Antes de terminar
 
-Releia o diff: props via `React.ComponentProps<typeof DialogTrigger>` (ou
-`Merge<…>`); `{ ref, ...rest }` no `DialogTrigger`; sem `open`/`onOpenChange`;
-header com Title **e** Description; footer com `DialogClose render={…}`; a prop
-de composição da primitiva do projeto (`render` no Base UI, `asChild` no Radix) e
-o alias de import dele; retorno `React.JSX.Element`; **gatilho nu
-`<XDialog ref={ref} />` sem hidden-button**; fechar via `useDismissableDialog`;
-schema vindo do módulo de validação do projeto; **Dialog nu como irmão do
-`<DropdownMenu>`, nunca dentro do `DropdownMenuContent`**; `closeOnClick={false}`
-só quando o item é o gatilho; confirmação destrutiva via `ConfirmDialog`, com o
-texto nas **partes** e não em prop. Depois
-rode o lint e o typecheck do projeto (normalmente `npm run lint` e
-`npx tsc --noEmit`).
+Releia o diff: uncontrolled, sem `open`/`onOpenChange`/`useState` de abertura; trigger só com
+`render`; abertura sem gatilho por `handle` criado em `useState`; nenhum `ref.click()`, `useEffect` de
+abertura, gatilho nu ou botão escondido; Title **e** Description; `DialogClose render` no cancelar;
+form interno com schema e tipo de `@<projeto>/shared`; `mutate` com callbacks; `reset()` antes de
+`close()`; erro por `applyHTTPErrorToForm`, retry só em 409 e 5xx/rede; todo texto por `m.*()`;
+`aria-label` em botão de ícone; `initialFocus` no primeiro campo e `finalFocus` quando abre por
+handle; destrutivo pelo `ConfirmDialog` com texto nas partes. Depois lint e typecheck do projeto.
