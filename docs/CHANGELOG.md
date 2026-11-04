@@ -17,7 +17,9 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
-- Novo visual editorial: fotos de Benjamin Constant, do porto e de Letícia com crédito, títulos em serifa (Fraunces) e a faixa de trançado como divisor entre capítulos, no lugar do céu ilustrado.
+- Os títulos voltam à Raleway, a fonte da marca, no lugar da serifa.
+
+- Novo visual editorial: fotos de Benjamin Constant, do porto e de Letícia com crédito, a faixa de trançado como divisor entre capítulos, no lugar do céu ilustrado.
 - Portfólio com os cinco produtos no ar (ADACAIBS, MatisCraft, Aporta, Curupira e Jogos Estudantis), cada um com a captura real da tela.
 - Diário com quatro artigos novos sobre o trabalho da Maiyu na tríplice fronteira, assinados pela Equipe Maiyu.
 - Carreiras vira banco de talentos por área (desenvolvimento, design de produto, análise e dados), com o jeito de trabalhar da Maiyu no lugar de benefícios.

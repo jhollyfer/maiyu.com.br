@@ -254,8 +254,8 @@ vendor escolhido para aquele projeto). Nunca por garantia.
   em TanStack Start)
 - **Mobile/nativo**: react-native-expert, mobile-native, animate-expo, write-swift
 - **Nx**: nx-generate, nx-run-tasks, nx-workspace, nx-ci-monitor
-- **Deploy de vendor não escolhido**: cloudflare-deploy, netlify-deploy, render-deploy, vercel-deploy,
-  aws-advisor
+- **Deploy de vendor não escolhido**: cloudflare-deploy, netlify-deploy, render-deploy, aws-advisor
+  (a `vercel-deploy` saiu do espelho: a casa não usa Vercel, `DECISIONS.md` #287)
 - **PM de vendor**: jira-assistant, confluence-assistant
 - **Vídeo**: `hyperframes` (vídeo de HTML: `changelog-video`, `pr-to-video`, `product-launch-video`) e
   `remotion-*` (vídeo em React). Só para peça de divulgação, em repositório próprio, nunca dentro do

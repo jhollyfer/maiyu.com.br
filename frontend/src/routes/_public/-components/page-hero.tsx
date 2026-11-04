@@ -13,7 +13,7 @@ type PageHeroProps = {
 }
 
 /**
- * A capa editorial das páginas internas: título grande em Fraunces à
+ * A capa editorial das páginas internas: título grande à
  * esquerda, a frase de apoio e o trançado como fio de base.
  *
  * Sem ilustração: a página abre só com tipografia, e a foto de lugar entra

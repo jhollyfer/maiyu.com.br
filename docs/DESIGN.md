@@ -61,12 +61,9 @@ Contraste conferido (AA), por cálculo de luminância relativa WCAG em 2026-11-0
 ## 3. Tipografia
 
 Famílias servidas do próprio bundle (`@fontsource`), para não depender de domínio de terceiro:
-
-- **Fraunces Variable** (`--font-display`, eixo óptico): h1 e h2, capa e capítulo, peso 560 e
-  `letter-spacing: -0.02em`. Serifa editorial, que segura o tamanho de capa sem virar cartaz.
-- **Raleway Variable** (`--font-sans`, `--font-serif`): voz da marca no corpo, na interface e nos
-  títulos de bloco (h3 a h6, peso 700).
-- **Michroma**: só o wordmark MAIYU. **Geist Mono**: só número e código.
+Raleway Variable (voz da marca, títulos e corpo; h1 e h2 no peso 800, h3 a h6 no 700), Michroma (só o
+wordmark MAIYU) e Geist Mono (número e código). A serifa editorial (Fraunces) que entrou no redesign
+saiu a pedido do dono (`DECISIONS.md` #16).
 
 | Papel | Token | Tamanho | Onde |
 |---|---|---|---|
