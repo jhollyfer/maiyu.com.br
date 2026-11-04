@@ -87,7 +87,7 @@ const BLOCKS: Record<
 }
 
 /**
- * Um artigo do diário, inteiro: capa em Fraunces, foto de lugar com crédito e
+ * Um artigo do diário, inteiro: capa, foto de lugar com crédito e
  * o corpo numa coluna de leitura.
  *
  * O corpo vem de `articles.ts` já nas três línguas, bloco a bloco. Quando o
