@@ -12,7 +12,7 @@ Navegador ──HTTPS──▶ Coolify (proxy) ──▶ Nitro :3000 (TanStack S
                                              │
                                              ├── server.ts: paraglideMiddleware (idioma da URL)
                                              ├── lib/: conteúdo (projects, articles, jobs) em código
-                                             └── /health, /sitemap.xml
+                                             └── /health-check, /sitemap.xml
 ```
 
 Não há API, banco, fila nem storage. O site é só o `frontend/`.
@@ -42,7 +42,7 @@ muda por causa de três idiomas e ausência de API (motivos em `DECISIONS.md`):
 | `src/lib/projects.ts`, `articles.ts`, `jobs.ts` | conteúdo em código no lugar de `integrations/tanstack-query/queries.ts` (`DECISIONS.md` #3) |
 | `src/lib/i18n.ts`, `labels.ts` | `LocalizedText` do conteúdo de registro e rótulos de valor fechado como função |
 | `src/routes/_public/-components/` | peças da vitrine usadas só pela casca pública (`components/common/CLAUDE.md`) |
-| `src/routes/health.ts` | rota de servidor para o healthcheck do container |
+| `src/routes/health-check.ts` | rota de servidor para o healthcheck do container |
 | `src/routes/sitemap[.]xml.ts` | sitemap gerado de `lib/sitemap.ts` |
 
 Ausentes de propósito: `src/start.ts` (`DECISIONS.md` #4) e `integrations/tanstack-query/http.ts`,
@@ -59,7 +59,7 @@ Não se aplica: sem backend. O site tem um grupo de rotas, `_public`.
 | `/blog` e `/blog/$slug` | `blog/index.*`, `blog/$slug.*` | leitor |
 | `/career` | `career.tsx`, `career.lazy.tsx` | candidato |
 | `/contact` | `contact.tsx`, `contact.lazy.tsx` | todos |
-| `/health` | `routes/health.ts` | orquestrador |
+| `/health-check` | `routes/health-check.ts` | orquestrador |
 | `/sitemap.xml` | `routes/sitemap[.]xml.ts` | buscadores |
 | qualquer outra | `_public/$.tsx` | 404 |
 
@@ -109,14 +109,14 @@ Não se aplica: site público, sem login nem papéis.
 | Preview / Homologação | Não se aplica | | | |
 | Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | push na `main` dispara o workflow |
 
-Health check: `GET /health` (resposta `ok`, `no-store`). Desvio do `/health-check` do modelo: o
-padrão do frontend dos irmãos é `/health` (`DECISIONS.md` #5).
+Health check: `GET /health-check` (resposta `{ "status": "ok" }`, `no-store`), o nome exato que a
+régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECISIONS.md` #15).
 
 ### 9.1 O que a plataforma faz e o repositório não
 
 | O quê | Onde se configura | Por quê |
 |---|---|---|
-| Healthcheck do painel em `/health` | painel do Coolify | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira |
+| Healthcheck do painel em `/health-check` | painel do Coolify | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira |
 | Aplicação na imagem Nitro, porta 3000 | painel do Coolify | o site anterior era nginx estático na porta 80 |
 | `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`, `VITE_SITE_URL` | secrets do repositório no GitHub | os workflows do perfil sem backend publicam a imagem `maiyu-app` e chamam o deploy (`DECISIONS.md` #14) |
 | `UUID_APP` e `COOLIFY_URL` do deploy | `.github/workflows/main-deploy-coolify.yml` | o uuid é da aplicação e não da instância; uuid de outro team é aceito e não implanta nada |
