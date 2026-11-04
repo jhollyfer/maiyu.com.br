@@ -3,6 +3,8 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { REVEAL } from './reveal'
 import { PillButton } from './pill-button'
+import { Badge } from '#/components/ui/badge'
+import { Card, CardContent, CardFooter, CardHeader } from '#/components/ui/card'
 import {
   Carousel,
   CarouselContent,
@@ -92,19 +94,19 @@ export function Work(): React.JSX.Element {
           <CarouselContent>
             {projects.map((project, index) => (
               <CarouselItem key={project.slug}>
-                <article
+                <Card
                   className={cn(
-                    'relative overflow-hidden rounded-[1.75rem]',
+                    'relative gap-0 rounded-[1.75rem] py-0 text-body ring-0',
                     CARD_TINTS[index % CARD_TINTS.length],
                   )}
                 >
-                  <div className="flex items-center justify-between px-6 pt-6 text-small text-foreground/60 md:px-10 md:pt-8">
+                  <CardHeader className="flex items-center justify-between px-6 pt-6 text-small text-foreground/60 md:px-10 md:pt-8">
                     <span>{localized(project.client)}</span>
                     <span>
                       {pad(index + 1)} / {pad(projects.length)}
                     </span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-8 p-6 md:grid-cols-12 md:gap-10 md:p-10">
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 gap-8 p-6 md:grid-cols-12 md:gap-10 md:p-10">
                     <div className="flex flex-col justify-between gap-8 md:col-span-6">
                       <div>
                         <h3 className="text-h1">{project.title}</h3>
@@ -112,7 +114,7 @@ export function Work(): React.JSX.Element {
                           “{localized(project.description)}”
                         </p>
                       </div>
-                      <div className="flex flex-wrap items-center gap-3">
+                      <CardFooter className="flex-wrap gap-3 p-0">
                         <PillButton
                           tone="outline"
                           className="rounded-xl"
@@ -129,15 +131,17 @@ export function Work(): React.JSX.Element {
                         />
                         <ul className="flex flex-wrap gap-1.5">
                           {project.tech.slice(0, 3).map((tech) => (
-                            <li
+                            <Badge
                               key={tech}
-                              className="rounded-full bg-surface/60 px-3 py-1 text-micro text-foreground/80"
+                              render={<li />}
+                              variant="secondary"
+                              className="h-auto bg-surface/60 px-3 py-1 text-micro font-normal text-foreground/80"
                             >
                               {tech}
-                            </li>
+                            </Badge>
                           ))}
                         </ul>
-                      </div>
+                      </CardFooter>
                     </div>
                     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl md:col-span-6">
                       <img
@@ -151,8 +155,8 @@ export function Work(): React.JSX.Element {
                         className="absolute inset-0 size-full object-cover"
                       />
                     </div>
-                  </div>
-                </article>
+                  </CardContent>
+                </Card>
               </CarouselItem>
             ))}
           </CarouselContent>

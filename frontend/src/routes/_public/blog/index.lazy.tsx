@@ -5,6 +5,11 @@ import { FIELD } from '../-components/form-style'
 import { PageHero } from '../-components/page-hero'
 import { REVEAL, STAGGER } from '../-components/reveal'
 import { PillButton } from '../-components/pill-button'
+import { AspectRatio } from '#/components/ui/aspect-ratio'
+import { Avatar, AvatarImage } from '#/components/ui/avatar'
+import { Badge } from '#/components/ui/badge'
+import { Card } from '#/components/ui/card'
+import { Field, FieldLabel } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { articles, featuredArticle } from '#/lib/articles'
 import { ARTICLE_CATEGORIES } from '#/lib/entity'
@@ -64,48 +69,53 @@ function RouteComponent(): React.JSX.Element {
           <Link
             to="/blog/$slug"
             params={{ slug: featuredArticle.slug }}
-            className={cn(
-              REVEAL,
-              'group grid grid-cols-1 overflow-hidden rounded-[1.75rem] bg-tint-lime md:grid-cols-12',
-            )}
+            className="group block"
           >
-            <div className="relative aspect-[4/3] overflow-hidden md:col-span-7 md:aspect-auto md:min-h-[480px]">
-              <img
-                src={featuredArticle.image}
-                alt=""
-                className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
-              />
-            </div>
-            <div className="flex flex-col justify-between gap-10 p-6 md:col-span-5 md:p-10">
-              <div>
-                <p className="text-small text-foreground/65">
-                  {m.blog_featured()},{' '}
-                  {ARTICLE_CATEGORY_LABELS[featuredArticle.category]()}
-                </p>
-                <h2 className="mt-3 text-h2">
-                  {localized(featuredArticle.title)}
-                </h2>
-                <p className="mt-5 font-serif text-lead leading-snug text-foreground/85">
-                  {localized(featuredArticle.excerpt)}
-                </p>
-              </div>
-              <div className="flex items-center gap-3">
+            <Card
+              className={cn(
+                REVEAL,
+                'grid grid-cols-1 gap-0 rounded-[1.75rem] bg-tint-lime py-0 text-base ring-0 md:grid-cols-12',
+              )}
+            >
+              <AspectRatio
+                ratio={4 / 3}
+                className="overflow-hidden md:col-span-7 md:aspect-auto md:min-h-[480px]"
+              >
                 <img
-                  src={featuredArticle.authorImg}
+                  src={featuredArticle.image}
                   alt=""
-                  className="size-10 rounded-full object-cover"
+                  className="absolute inset-0 size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
                 />
+              </AspectRatio>
+              <div className="flex flex-col justify-between gap-10 p-6 md:col-span-5 md:p-10">
                 <div>
-                  <p className="text-small font-medium">
-                    {featuredArticle.author}
+                  <p className="text-small text-foreground/65">
+                    {m.blog_featured()},{' '}
+                    {ARTICLE_CATEGORY_LABELS[featuredArticle.category]()}
                   </p>
-                  <p className="text-micro text-foreground/70">
-                    {localized(featuredArticle.role)},{' '}
-                    {localized(featuredArticle.readTime)}
+                  <h2 className="mt-3 text-h2">
+                    {localized(featuredArticle.title)}
+                  </h2>
+                  <p className="mt-5 font-serif text-lead leading-snug text-foreground/85">
+                    {localized(featuredArticle.excerpt)}
                   </p>
                 </div>
+                <div className="flex items-center gap-3">
+                  <Avatar className="size-10">
+                    <AvatarImage src={featuredArticle.authorImg} alt="" />
+                  </Avatar>
+                  <div>
+                    <p className="text-small font-medium">
+                      {featuredArticle.author}
+                    </p>
+                    <p className="text-micro text-foreground/70">
+                      {localized(featuredArticle.role)},{' '}
+                      {localized(featuredArticle.readTime)}
+                    </p>
+                  </div>
+                </div>
               </div>
-            </div>
+            </Card>
           </Link>
         </div>
       </section>
@@ -122,17 +132,22 @@ function RouteComponent(): React.JSX.Element {
                 const active = filter.category === category
 
                 return (
-                  <Link
+                  <Badge
                     key={filter.category ?? 'all'}
-                    to="/blog"
-                    search={{ category: filter.category }}
-                    resetScroll={false}
-                    aria-current={active}
+                    variant="outline"
                     data-active={active}
-                    className="inline-flex min-h-11 items-center rounded-full border border-foreground/20 px-4 text-small font-medium text-foreground/70 transition-colors duration-300 hover:border-foreground/45 hover:text-foreground data-[active=true]:border-foreground data-[active=true]:bg-foreground data-[active=true]:text-background motion-reduce:transition-none"
+                    render={
+                      <Link
+                        to="/blog"
+                        search={{ category: filter.category }}
+                        resetScroll={false}
+                        aria-current={active}
+                      />
+                    }
+                    className="h-auto min-h-11 border-foreground/20 bg-transparent px-4 py-0 text-small font-medium text-foreground/70 transition-colors duration-300 hover:border-foreground/45 hover:text-foreground data-[active=true]:border-foreground data-[active=true]:bg-foreground data-[active=true]:text-background motion-reduce:transition-none"
                   >
                     {filter.label()}
-                  </Link>
+                  </Badge>
                 )
               })}
             </nav>
@@ -157,7 +172,8 @@ function RouteComponent(): React.JSX.Element {
                   params={{ slug: article.slug }}
                   className="group block"
                 >
-                  <div
+                  <AspectRatio
+                    ratio={16 / 11}
                     className={cn(
                       'overflow-hidden rounded-[1.5rem]',
                       TINTS[index % TINTS.length],
@@ -170,9 +186,9 @@ function RouteComponent(): React.JSX.Element {
                       height={440}
                       loading="lazy"
                       decoding="async"
-                      className="aspect-[16/11] w-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
+                      className="size-full object-cover transition-transform duration-700 ease-out-expo group-hover:scale-[1.03] motion-reduce:transition-none"
                     />
-                  </div>
+                  </AspectRatio>
                   <p className="mt-5 text-small text-muted-foreground">
                     {ARTICLE_CATEGORY_LABELS[article.category]()},{' '}
                     {localized(article.readTime)}
@@ -221,20 +237,22 @@ function Newsletter(): React.JSX.Element {
             onSubmit={submit}
             className="mt-10 flex w-full max-w-md flex-col gap-3 sm:flex-row"
           >
-            <label htmlFor="newsletter-email" className="sr-only">
-              {m.contactPage_emailLabel()}
-            </label>
-            <Input
-              id="newsletter-email"
-              type="email"
-              required
-              autoComplete="email"
-              placeholder={m.blog_emailPlaceholder()}
-              className={cn(
-                FIELD,
-                'flex-1 rounded-full border-foreground/25 bg-background/70 px-5 placeholder:text-foreground/55',
-              )}
-            />
+            <Field className="flex-1">
+              <FieldLabel htmlFor="newsletter-email" className="sr-only">
+                {m.contactPage_emailLabel()}
+              </FieldLabel>
+              <Input
+                id="newsletter-email"
+                type="email"
+                required
+                autoComplete="email"
+                placeholder={m.blog_emailPlaceholder()}
+                className={cn(
+                  FIELD,
+                  'rounded-full border-foreground/25 bg-background/70 px-5 placeholder:text-foreground/55',
+                )}
+              />
+            </Field>
             <PillButton type="submit">{m.blog_subscribe()}</PillButton>
           </form>
         </div>

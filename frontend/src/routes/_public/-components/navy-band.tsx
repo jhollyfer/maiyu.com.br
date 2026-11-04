@@ -11,6 +11,15 @@ import type { Icon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
+import { Badge } from '#/components/ui/badge'
+import { Card } from '#/components/ui/card'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemTitle,
+} from '#/components/ui/item'
 import { articles } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
@@ -103,21 +112,23 @@ export function NavyBand(): React.JSX.Element {
           {ROLES.map((role, index) => (
             <li
               key={index}
-              className={cn(
-                REVEAL,
-                'flex flex-col gap-10 rounded-[1.75rem] p-7 text-foreground md:p-9',
-                index === 1 && 'md:-translate-y-8',
-                role.tint,
-              )}
+              className={cn(REVEAL, index === 1 && 'md:-translate-y-8')}
               style={{ animationDelay: `${index * STAGGER}ms` }}
             >
-              <role.icon size={28} />
-              <div>
-                <h3 className="text-h3">{role.title()}</h3>
-                <p className="mt-3 text-body text-foreground/75">
-                  {role.description()}
-                </p>
-              </div>
+              <Card
+                className={cn(
+                  'h-full gap-10 rounded-[1.75rem] p-7 text-body text-foreground ring-0 md:p-9',
+                  role.tint,
+                )}
+              >
+                <role.icon size={28} />
+                <div>
+                  <h3 className="text-h3">{role.title()}</h3>
+                  <p className="mt-3 text-body text-foreground/75">
+                    {role.description()}
+                  </p>
+                </div>
+              </Card>
             </li>
           ))}
         </ul>
@@ -170,29 +181,38 @@ export function NavyBand(): React.JSX.Element {
             </Link>
           </div>
 
-          <ul className="border-t border-on-navy/15">
+          <ItemGroup className="gap-0 border-t border-on-navy/15">
             {articles.slice(0, JOURNAL_SIZE).map((article) => (
-              <li key={article.slug} className="border-b border-on-navy/15">
+              <Item
+                key={article.slug}
+                render={<li />}
+                className="rounded-none border-0 border-b border-on-navy/15 p-0 text-body"
+              >
                 <Link
                   to="/blog/$slug"
                   params={{ slug: article.slug }}
-                  className="group flex items-center justify-between gap-6 py-5"
+                  className="group flex w-full items-center justify-between gap-6 py-5"
                 >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-body-lg transition-opacity group-hover:opacity-75">
+                  <ItemContent className="flex-row flex-wrap items-center gap-3">
+                    <ItemTitle className="line-clamp-none text-body-lg transition-opacity group-hover:opacity-75">
                       {localized(article.title)}
-                    </span>
-                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-foreground">
+                    </ItemTitle>
+                    <Badge
+                      variant="secondary"
+                      className="h-auto rounded-md bg-tint-green px-2 py-0.5 text-micro font-normal text-foreground"
+                    >
                       {localized(article.readTime)}
+                    </Badge>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">
+                      <ArrowRightIcon size={16} />
                     </span>
-                  </div>
-                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">
-                    <ArrowRightIcon size={16} />
-                  </span>
+                  </ItemActions>
                 </Link>
-              </li>
+              </Item>
             ))}
-          </ul>
+          </ItemGroup>
         </div>
       </div>
     </section>

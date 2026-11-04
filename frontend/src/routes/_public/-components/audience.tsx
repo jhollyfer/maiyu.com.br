@@ -1,6 +1,13 @@
 import type * as React from 'react'
 
 import { REVEAL, STAGGER } from './reveal'
+import {
+  Item,
+  ItemContent,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from '#/components/ui/item'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
@@ -37,21 +44,31 @@ export function Audience(): React.JSX.Element {
         </div>
 
         <div className="md:col-span-7">
-          <ul className="divide-y divide-border border-y border-border">
+          <ItemGroup className="gap-0 divide-y divide-border border-y border-border">
             {AUDIENCES.map((label, index) => (
-              <li
+              <Item
                 key={index}
-                className={cn(REVEAL, 'flex items-center gap-5 py-5')}
+                render={<li />}
+                className={cn(
+                  REVEAL,
+                  'flex-nowrap gap-5 rounded-none border-0 px-0 py-5 text-body',
+                )}
                 style={{ animationDelay: `${index * STAGGER}ms` }}
               >
-                <span
-                  aria-hidden="true"
-                  className="size-2.5 shrink-0 rotate-45 bg-urucum"
-                />
-                <span className="text-h4">{label()}</span>
-              </li>
+                <ItemMedia>
+                  <span
+                    aria-hidden="true"
+                    className="size-2.5 shrink-0 rotate-45 bg-urucum"
+                  />
+                </ItemMedia>
+                <ItemContent>
+                  <ItemTitle className="line-clamp-none text-h4">
+                    {label()}
+                  </ItemTitle>
+                </ItemContent>
+              </Item>
             ))}
-          </ul>
+          </ItemGroup>
           <p
             className={cn(
               REVEAL,

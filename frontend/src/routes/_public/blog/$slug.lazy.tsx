@@ -13,6 +13,16 @@ import { PillButton } from '../-components/pill-button'
 import { SkyBackdrop } from '#/components/common/sky'
 import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
+import { AspectRatio } from '#/components/ui/aspect-ratio'
+import { Avatar, AvatarImage } from '#/components/ui/avatar'
+import { Badge } from '#/components/ui/badge'
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+} from '#/components/ui/breadcrumb'
+import { Card } from '#/components/ui/card'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
@@ -73,18 +83,29 @@ function RouteComponent(): React.JSX.Element {
       >
         <SkyBackdrop />
         <div className={cn(REVEAL, 'relative mx-auto max-w-3xl px-4 md:px-8')}>
-          <Link
-            to="/blog"
-            className="group inline-flex min-h-11 items-center gap-2 text-small text-foreground/70 transition-colors hover:text-foreground"
-          >
-            <ArrowLeftIcon
-              size={14}
-              className="transition-transform duration-300 group-hover:-translate-x-0.5 motion-reduce:transition-none"
-            />
-            {m.blogArticle_backToJournal()}
-          </Link>
-          <p className="mt-10 text-small text-foreground/70">
-            {ARTICLE_CATEGORY_LABELS[article.category]()},{' '}
+          <Breadcrumb>
+            <BreadcrumbList className="text-small">
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  render={<Link to="/blog" />}
+                  className="group inline-flex min-h-11 items-center gap-2 text-foreground/70 hover:text-foreground"
+                >
+                  <ArrowLeftIcon
+                    size={14}
+                    className="transition-transform duration-300 group-hover:-translate-x-0.5 motion-reduce:transition-none"
+                  />
+                  {m.blogArticle_backToJournal()}
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+          <p className="mt-10 flex flex-wrap items-center gap-3 text-small text-foreground/70">
+            <Badge
+              variant="outline"
+              className="h-auto border-foreground/20 bg-transparent px-3 py-1 text-micro text-foreground/80"
+            >
+              {ARTICLE_CATEGORY_LABELS[article.category]()}
+            </Badge>
             <time dateTime={article.date}>{article.date}</time>
           </p>
           <h1 className="mt-4 text-h1 md:text-display">
@@ -94,11 +115,9 @@ function RouteComponent(): React.JSX.Element {
             {localized(article.excerpt)}
           </p>
           <div className="mt-10 flex items-center gap-4">
-            <img
-              src={article.authorImg}
-              alt=""
-              className="size-11 rounded-full object-cover"
-            />
+            <Avatar className="size-11">
+              <AvatarImage src={article.authorImg} alt="" />
+            </Avatar>
             <div>
               <p className="text-body font-medium">{article.author}</p>
               <p className="text-small text-foreground/70">
@@ -110,19 +129,20 @@ function RouteComponent(): React.JSX.Element {
       </header>
 
       <div className="mx-auto max-w-6xl px-4 md:px-8">
-        <div
+        <AspectRatio
+          ratio={16 / 9}
           className={cn(
             REVEAL,
-            'overflow-hidden rounded-[1.75rem] bg-tint-mist delay-200 zoom-in-95 duration-1000',
+            'overflow-hidden rounded-[1.75rem] bg-tint-mist delay-200 zoom-in-95 duration-1000 md:aspect-[21/10]',
           )}
         >
           <img
             src={article.image}
             alt=""
             fetchPriority="high"
-            className="aspect-[16/9] w-full object-cover md:aspect-[21/10]"
+            className="size-full object-cover"
           />
-        </div>
+        </AspectRatio>
       </div>
 
       <article className="mx-auto max-w-2xl px-4 py-20 md:px-8 md:py-28">
@@ -151,7 +171,7 @@ function RouteComponent(): React.JSX.Element {
 
       <section data-slot="article-cta" className="pb-24 md:pb-32">
         <div className={cn(REVEAL, 'mx-auto max-w-5xl px-4 md:px-8')}>
-          <div className="flex flex-col items-start gap-8 rounded-[1.75rem] bg-tint-mint p-8 md:flex-row md:items-end md:justify-between md:p-14">
+          <Card className="flex-col items-start gap-8 rounded-[1.75rem] bg-tint-mint p-8 text-base ring-0 md:flex-row md:items-end md:justify-between md:p-14">
             <div>
               <h2 className="text-h1">{m.blogArticle_ctaTitle()}</h2>
               <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
@@ -166,7 +186,7 @@ function RouteComponent(): React.JSX.Element {
                 </Link>
               }
             />
-          </div>
+          </Card>
         </div>
       </section>
     </>
