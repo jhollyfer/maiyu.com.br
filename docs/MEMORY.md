@@ -23,6 +23,11 @@ idiomas, `areaServed` no JSON-LD, tema mais quente (fibra, mata, rio barrento, u
 trançado na faixa escura da home e as seções "Somos indígenas" (`Roots`) e "Para quem construímos" (`Audience`). Build, lint, typecheck, testes, prettier e ciclos de chunk verdes;
 conferido no navegador em claro, escuro e celular. Os workflows viraram cópia exata do modelo, como nos irmãos, e o `sync --check` sai limpo; o CI e o deploy reprovam enquanto não houver `backend/` (`DECISIONS.md` #6).
 
+Depois, o registry inteiro do shadcn foi instalado (`DECISIONS.md` #11) e as telas passaram a usar o
+`ui/` onde há encaixe: Card, Item, Badge, Breadcrumb, Avatar, AspectRatio, Empty, Field. Ficaram feitos à
+mão, por não terem equivalente: os painéis de `process.tsx`, a `dl` de `roots.tsx`, o passo a passo de
+`vision.tsx`, os pontos do carrossel e a grade do rodapé.
+
 ## Próximos passos
 
 1. Abrir o PR da branch quando o dono pedir.
