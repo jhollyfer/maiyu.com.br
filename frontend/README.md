@@ -51,7 +51,6 @@ node dist/server/index.mjs
 
 The build output is a self-contained Nitro server. Production runs it as a Docker image on Coolify: see `AGENTS.md`, "Produção", and `docs/ARCHITECTURE.md` §9.
 
-
 # Paraglide i18n
 
 This add-on wires up ParaglideJS for localized routing and message formatting.
