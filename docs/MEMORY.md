@@ -19,8 +19,8 @@
 ## Parou em
 
 Tarefa 2.1 (`TASKS.md`) feita na branch `feat/vitrine-posicionamento-indigena`: copy nova nos três
-idiomas, `areaServed` no JSON-LD, tema mais quente (fibra, mata, rio barrento, urucum, açaí, terra) e o
-trançado na faixa escura da home. Build, lint, typecheck, testes, prettier e ciclos de chunk verdes;
+idiomas, `areaServed` no JSON-LD, tema mais quente (fibra, mata, rio barrento, urucum, açaí, terra) o
+trançado na faixa escura da home e as seções "Somos indígenas" (`Roots`) e "Para quem construímos" (`Audience`). Build, lint, typecheck, testes, prettier e ciclos de chunk verdes;
 conferido no navegador em claro, escuro e celular. Os workflows viraram cópia exata do modelo, como nos irmãos, e o `sync --check` sai limpo; o CI e o deploy reprovam enquanto não houver `backend/` (`DECISIONS.md` #6).
 
 ## Próximos passos

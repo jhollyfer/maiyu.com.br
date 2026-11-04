@@ -61,6 +61,13 @@ export function Hero(): React.JSX.Element {
             'mt-auto flex flex-col items-start gap-6 pt-10 delay-500 md:ml-auto md:max-w-md',
           )}
         >
+          <p className="flex items-center gap-3 text-small font-semibold text-foreground/75">
+            <span
+              aria-hidden="true"
+              className="size-2 shrink-0 rotate-45 bg-urucum"
+            />
+            {m.home_heroPlace()}
+          </p>
           <p className="font-serif text-lead leading-snug text-foreground/85">
             {m.home_heroDescription()}
           </p>
