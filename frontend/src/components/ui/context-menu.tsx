@@ -2,8 +2,7 @@
 
 import * as React from 'react'
 import { ContextMenu as ContextMenuPrimitive } from '@base-ui/react/context-menu'
-
-import { cn } from '#/lib/utils.ts'
+import { cn } from '#/lib/utils'
 import { CaretRightIcon, CheckIcon } from '@phosphor-icons/react'
 
 function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
@@ -245,7 +244,7 @@ function ContextMenuShortcut({
     <span
       data-slot="context-menu-shortcut"
       className={cn(
-        'ml-auto text-2xs tracking-widest text-muted-foreground group-focus/context-menu-item:text-accent-foreground',
+        'ml-auto text-[0.625rem] tracking-widest text-muted-foreground group-focus/context-menu-item:text-accent-foreground',
         className,
       )}
       {...props}

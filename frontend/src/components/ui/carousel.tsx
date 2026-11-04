@@ -1,9 +1,9 @@
 import * as React from 'react'
+import { cn } from '#/lib/utils'
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from 'embla-carousel-react'
 
-import { cn } from '#/lib/utils.ts'
 import { Button } from '#/components/ui/button.tsx'
 import { CaretLeftIcon, CaretRightIcon } from '@phosphor-icons/react'
 

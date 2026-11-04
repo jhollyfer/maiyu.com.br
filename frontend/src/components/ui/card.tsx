@@ -1,8 +1,5 @@
 import * as React from 'react'
-import { mergeProps } from '@base-ui/react/merge-props'
-import { useRender } from '@base-ui/react/use-render'
-
-import { cn } from '#/lib/utils.ts'
+import { cn } from '#/lib/utils'
 
 function Card({
   className,
@@ -35,44 +32,24 @@ function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {
   )
 }
 
-/*
- * Título e descrição são polimórficos, como `Badge` e `Item` deste mesmo
- * registry: `render={<h2 />}` e o cartão entra na árvore de cabeçalhos.
- *
- * O padrão continua sendo `div` - trocá-lo mudaria todo cartão já escrito -,
- * mas sem a saída o título de um cartão de conteúdo só existia como `div`, e um
- * leitor de tela não achava a seção.
- */
-function CardTitle({
-  className,
-  render,
-  ...props
-}: useRender.ComponentProps<'div'>) {
-  return useRender({
-    defaultTagName: 'div',
-    props: mergeProps<'div'>(
-      { className: cn('text-sm font-medium', className) },
-      props,
-    ),
-    render,
-    state: { slot: 'card-title' },
-  })
+function CardTitle({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-title"
+      className={cn('text-sm font-medium', className)}
+      {...props}
+    />
+  )
 }
 
-function CardDescription({
-  className,
-  render,
-  ...props
-}: useRender.ComponentProps<'div'>) {
-  return useRender({
-    defaultTagName: 'div',
-    props: mergeProps<'div'>(
-      { className: cn('text-xs/relaxed text-muted-foreground', className) },
-      props,
-    ),
-    render,
-    state: { slot: 'card-description' },
-  })
+function CardDescription({ className, ...props }: React.ComponentProps<'div'>) {
+  return (
+    <div
+      data-slot="card-description"
+      className={cn('text-xs/relaxed text-muted-foreground', className)}
+      {...props}
+    />
+  )
 }
 
 function CardAction({ className, ...props }: React.ComponentProps<'div'>) {

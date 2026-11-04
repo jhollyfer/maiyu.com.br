@@ -1,6 +1,6 @@
 import * as React from 'react'
+import { cn } from '#/lib/utils'
 
-import { cn } from '#/lib/utils.ts'
 import { Button } from '#/components/ui/button.tsx'
 import {
   CaretLeftIcon,

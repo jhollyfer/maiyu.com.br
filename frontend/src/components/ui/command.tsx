@@ -1,9 +1,7 @@
-'use client'
-
 import * as React from 'react'
 import { Command as CommandPrimitive } from 'cmdk'
+import { cn } from '#/lib/utils'
 
-import { cn } from '#/lib/utils.ts'
 import {
   Dialog,
   DialogContent,
@@ -172,7 +170,7 @@ function CommandShortcut({
     <span
       data-slot="command-shortcut"
       className={cn(
-        'ml-auto text-2xs tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground',
+        'ml-auto text-[0.625rem] tracking-widest text-muted-foreground group-data-selected/command-item:text-foreground',
         className,
       )}
       {...props}
