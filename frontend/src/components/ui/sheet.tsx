@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { Dialog as SheetPrimitive } from '@base-ui/react/dialog'
+import { cn } from '#/lib/utils'
 
-import { cn } from '#/lib/utils.ts'
 import { Button } from '#/components/ui/button.tsx'
 import { XIcon } from '@phosphor-icons/react'
 
@@ -26,7 +26,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        'fixed inset-0 z-50 bg-overlay transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs',
+        'fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 data-ending-style:opacity-0 data-starting-style:opacity-0 supports-backdrop-filter:backdrop-blur-xs',
         className,
       )}
       {...props}
@@ -61,14 +61,10 @@ function SheetContent({
           <SheetPrimitive.Close
             data-slot="sheet-close"
             render={
-              // `size-11` sobre o `icon-lg`, no mesmo espírito do gatilho que
-              // abre o painel: fechar é a única saída por toque, e os 28px do
-              // `icon-sm` erram debaixo do polegar. 44px é o mínimo da WCAG
-              // 2.5.5.
               <Button
                 variant="ghost"
-                className="absolute top-4 right-4 size-11"
-                size="icon-lg"
+                className="absolute top-4 right-4"
+                size="icon-sm"
               />
             }
           >

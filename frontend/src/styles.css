@@ -3,9 +3,11 @@
 @import 'shadcn/tailwind.css';
 
 /*
- * As três famílias, servidas do próprio bundle.
+ * As quatro famílias, servidas do próprio bundle.
  *
- * Raleway é a voz da marca, títulos e corpo. Michroma só existe para o
+ * Fraunces é a voz editorial dos títulos grandes (h1 e h2): serifa com eixo
+ * óptico, que segura o tamanho de capa sem virar letreiro. Raleway é a voz da
+ * marca no corpo, na interface e nos títulos menores. Michroma só existe para o
  * wordmark MAIYU, o lettering do logo; Geist Mono fica com número e código.
  *
  * Do pacote e não do Google Fonts: o site antigo já tinha trocado para o
@@ -14,6 +16,7 @@
  * às vezes não chega.
  */
 @import '@fontsource-variable/raleway';
+@import '@fontsource-variable/fraunces/opsz.css';
 @import '@fontsource/michroma';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
@@ -48,19 +51,19 @@
   --radius: 1rem;
   color-scheme: light;
 
-  --background: #fafafa;
-  --surface: #ffffff;
+  --background: #f6f2ea;
+  --surface: #fffdf8;
   --foreground: #01111b;
 
-  --card: #ffffff;
+  --card: #fffdf8;
   --card-foreground: #01111b;
-  --popover: #ffffff;
+  --popover: #fffdf8;
   --popover-foreground: #01111b;
 
   --primary: #01111b;
   --primary-foreground: #88ff9a;
 
-  --secondary: #eef2f4;
+  --secondary: #ede6d8;
   --secondary-foreground: #01111b;
   --secondary-hover: color-mix(
     in oklab,
@@ -68,8 +71,8 @@
     var(--foreground)
   );
 
-  --muted: #eef2f4;
-  --muted-foreground: #403937;
+  --muted: #ede6d8;
+  --muted-foreground: #4a3f36;
 
   --accent: #88ff9a;
   --accent-foreground: #01111b;
@@ -77,8 +80,8 @@
   --destructive: #d6336c;
   --destructive-foreground: #ffffff;
 
-  --border: rgba(1, 17, 27, 0.1);
-  --input: rgba(1, 17, 27, 0.16);
+  --border: rgba(58, 40, 24, 0.12);
+  --input: rgba(58, 40, 24, 0.2);
   --ring: #01111b;
   --overlay: rgba(1, 17, 27, 0.4);
 
@@ -89,61 +92,62 @@
   --highlight: #0bafc7;
   --highlight-bar: #88ff9a;
 
-  --tint-mint: #c2f7ec;
-  --tint-peach: #fdd3e9;
-  --tint-mist: #ddd0fb;
-  --tint-lime: #ccffd4;
-  --tint-green: #ccffd4;
-  --tint-peach-soft: #e3fce8;
+  --tint-mint: #d3eee0;
+  --tint-peach: #f7d9c8;
+  --tint-mist: #ead6e6;
+  --tint-lime: #dcefc8;
+  --tint-green: #dcefc8;
+  --tint-peach-soft: #f3e8d2;
 
   --navy: #01111b;
   --navy-2: #0b1e2b;
   --on-navy: #e8f6ff;
 
-  /* O céu e a mata do fundo: dia na Amazônia. */
-  --sky-top: #ddf8fc;
-  --sky-mid: #f1fcf5;
-  --sky-low: #d3f8de;
-  --sky-glow: rgba(49, 225, 247, 0.2);
-  --forest-back: #b4e6d2;
-  --forest-mid: #86d4aa;
-  --forest-front: #4fb283;
-  --river: #bdeff6;
-  --river-glint: rgba(255, 255, 255, 0.85);
+  /* A mata: o verde da frase de alcance e dos losangos do trançado. */
+  --forest-front: #2c7652;
+
+  /*
+   * A terra da região: o urucum da pintura, o açaí e o barro do Solimões, que
+   * é rio de água branca. A terra é o `--clay` do aporta, a mesma região.
+   * Só para o trançado e detalhes, nunca superfície.
+   */
+  --urucum: #b5402a;
+  --acai: #4b1f45;
+  --terra: #a8643d;
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
-  --badge-neutral: #eef2f4;
+  --badge-neutral: #ede6d8;
   --badge-neutral-fg: #01111b;
-  --badge-info: #c2f7ec;
+  --badge-info: #d3eee0;
   --badge-info-fg: #01111b;
-  --badge-success: #ccffd4;
+  --badge-success: #dcefc8;
   --badge-success-fg: #01111b;
-  --badge-warning: #fdd3e9;
+  --badge-warning: #f7d9c8;
   --badge-warning-fg: #01111b;
 }
 
-/* O mesmo site à noite: navy profundo e céu estrelado. */
+/* O mesmo site à noite: a mata escura. */
 .dark {
   color-scheme: dark;
 
-  --background: #080c14;
-  --surface: #0f1520;
+  --background: #07120e;
+  --surface: #0e1a15;
   --foreground: #e8f6ff;
 
-  --card: #0f1520;
+  --card: #0e1a15;
   --card-foreground: #e8f6ff;
-  --popover: #0f1520;
+  --popover: #0e1a15;
   --popover-foreground: #e8f6ff;
 
   --primary: #88ff9a;
   --primary-foreground: #01111b;
 
-  --secondary: #151d2a;
+  --secondary: #14241e;
   --secondary-foreground: #e8f6ff;
 
-  --muted: #151d2a;
-  --muted-foreground: #9aa7b4;
+  --muted: #14241e;
+  --muted-foreground: #a6b5aa;
 
   --accent: #88ff9a;
   --accent-foreground: #01111b;
@@ -159,32 +163,27 @@
   --highlight: #31e1f7;
   --highlight-bar: #88ff9a;
 
-  --tint-mint: #0d1f22;
-  --tint-peach: #1e1522;
-  --tint-mist: #17172e;
-  --tint-lime: #0e221a;
-  --tint-green: #0e221a;
-  --tint-peach-soft: #0e2a22;
+  --tint-mint: #0c211b;
+  --tint-peach: #24140f;
+  --tint-mist: #1e1220;
+  --tint-lime: #122214;
+  --tint-green: #122214;
+  --tint-peach-soft: #1d1a10;
+  --forest-front: #03100a;
 
-  --sky-top: #01111b;
-  --sky-mid: #062630;
-  --sky-low: #0a2a1e;
-  --sky-glow: rgba(49, 225, 247, 0.22);
-  --forest-back: #0c2328;
-  --forest-mid: #0a1e18;
-  --forest-front: #04110c;
-  --river: #0a2230;
-  --river-glint: rgba(232, 246, 255, 0.35);
+  --urucum: #e0704f;
+  --acai: #c58bc0;
+  --terra: #c08a5c;
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
-  --badge-neutral: #151d2a;
+  --badge-neutral: #14241e;
   --badge-neutral-fg: #e8f6ff;
-  --badge-info: #0d1f22;
+  --badge-info: #0c211b;
   --badge-info-fg: #e8f6ff;
-  --badge-success: #0e221a;
+  --badge-success: #122214;
   --badge-success-fg: #e8f6ff;
-  --badge-warning: #1e1522;
+  --badge-warning: #24140f;
   --badge-warning-fg: #e8f6ff;
 }
 
@@ -226,6 +225,10 @@
   --color-tint-lime: var(--tint-lime);
   --color-tint-green: var(--tint-green);
   --color-tint-peach-soft: var(--tint-peach-soft);
+  --color-forest: var(--forest-front);
+  --color-urucum: var(--urucum);
+  --color-acai: var(--acai);
+  --color-terra: var(--terra);
   --color-navy: var(--navy);
   --color-navy-2: var(--navy-2);
   --color-on-navy: var(--on-navy);
@@ -249,7 +252,7 @@
   --color-brand-black: #272221;
   --color-brand-dark: #403937;
 
-  --font-display: 'Raleway Variable', Raleway, system-ui, sans-serif;
+  --font-display: 'Fraunces Variable', Georgia, 'Times New Roman', serif;
   --font-sans: 'Raleway Variable', Raleway, system-ui, sans-serif;
   --font-serif: 'Raleway Variable', Raleway, system-ui, sans-serif;
   --font-brand: Michroma, 'Raleway Variable', system-ui, sans-serif;
@@ -276,7 +279,7 @@
   --text-h1--line-height: 1.02;
   --text-display: clamp(3rem, 2.2rem + 4.2vw, 5.75rem);
   --text-display--line-height: 1;
-  --text-display-xl: clamp(3.25rem, 2.2rem + 5.4vw, 7.25rem);
+  --text-display-xl: clamp(3.25rem, 2.2rem + 4.6vw, 6rem);
   --text-display-xl--line-height: 0.98;
 
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
@@ -303,17 +306,28 @@
   h4,
   h5,
   h6 {
-    font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.012em;
     text-wrap: balance;
     overflow-wrap: break-word;
   }
 
+  /*
+   * Capa e capítulo em Fraunces, no peso médio e com o eixo óptico solto:
+   * serifa pesada em 6rem vira cartaz, e o editorial quer jornal.
+   */
+  h1,
+  h2 {
+    font-family: var(--font-display);
+    font-weight: 560;
+    font-optical-sizing: auto;
+    letter-spacing: -0.02em;
+  }
+
+  /* Título de bloco é interface: Raleway, que é a voz da marca. */
   h3,
   h4,
   h5,
   h6 {
+    font-family: var(--font-sans);
     font-weight: 700;
     letter-spacing: -0.005em;
   }
@@ -385,25 +399,26 @@
   background: var(--highlight-bar);
 }
 
-/* O céu: ciano no alto, verde no horizonte, que é a superfície da marca. */
-@utility sky {
-  background:
-    radial-gradient(
-      ellipse 50% 40% at 85% 0%,
-      var(--sky-glow) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 45% at 50% 100%,
-      var(--sky-low) 0%,
-      transparent 70%
-    ),
-    linear-gradient(
-      180deg,
-      var(--sky-top) 0%,
-      var(--sky-mid) 55%,
-      var(--sky-low) 100%
-    );
+/*
+ * O trançado: a faixa de cestaria que costura uma seção na outra. Losangos de
+ * fibra em urucum, terra e mata, desenhados em SVG com as cores do tema, e não
+ * o grafismo de um povo específico: grafismo tem dono, e só entra aqui com a
+ * autorização de quem o pinta.
+ */
+@utility trancado {
+  height: 0.875rem;
+  background-color: var(--terra);
+  background-image:
+    linear-gradient(135deg, var(--urucum) 25%, transparent 25%),
+    linear-gradient(225deg, var(--urucum) 25%, transparent 25%),
+    linear-gradient(315deg, var(--forest-front) 25%, transparent 25%),
+    linear-gradient(45deg, var(--forest-front) 25%, transparent 25%);
+  background-size: 1.75rem 0.875rem;
+  background-position:
+    0 0,
+    0 0,
+    0.875rem 0,
+    0.875rem 0;
 }
 
 /* Os dois fios verticais que emolduram o conteúdo como página pautada. */
@@ -420,32 +435,8 @@
     min(calc(100% - 1rem), calc(50% + 40rem)) 0;
 }
 
-@utility bg-gradient-green {
-  background-image: linear-gradient(120deg, #77eed7 0%, #88ff9a 100%);
-}
-
-@utility text-gradient-green {
-  background-image: linear-gradient(100deg, #77eed7 0%, #88ff9a 100%);
-  background-clip: text;
-  color: transparent;
-}
-
-@utility text-gradient-blue {
-  background-image: linear-gradient(100deg, #31e1f7 0%, #3168f7 100%);
-  background-clip: text;
-  color: transparent;
-}
-
 @utility marquee {
   animation: marquee 40s linear infinite;
-}
-
-@utility float {
-  animation: float 7s ease-in-out infinite;
-}
-
-@utility twinkle {
-  animation: twinkle 6s ease-in-out infinite;
 }
 
 @utility vision-pulse {
@@ -464,54 +455,6 @@
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/*
- * O rótulo pequeno acima de um título de seção. Raro: só onde o título sozinho
- * não situa, como no academy.
- */
-@utility eyebrow {
-  margin-bottom: 1rem;
-  font-size: var(--text-small);
-  opacity: 0.6;
-}
-
-@utility birds {
-  animation: glide 26s ease-in-out infinite alternate;
-}
-
-/*
- * O dia (sol e araras) só no claro; a galáxia só à noite. Por classe e não por
- * JS: o tema escuro chega pelo script do `next-themes` antes da hidratação, e
- * decidir em React desenharia o céu errado no primeiro quadro.
- */
-.dark .day {
-  display: none;
-}
-
-.galaxy {
-  opacity: 0;
-  transition: opacity 600ms ease;
-}
-
-.dark .galaxy {
-  opacity: 1;
-  background:
-    radial-gradient(
-      ellipse 40% 30% at 22% 28%,
-      rgba(164, 128, 245, 0.14) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 35% 25% at 70% 18%,
-      rgba(49, 225, 247, 0.1) 0%,
-      transparent 70%
-    ),
-    radial-gradient(
-      ellipse 60% 18% at 50% 40%,
-      rgba(119, 238, 215, 0.08) 0%,
-      transparent 70%
-    );
 }
 
 /*
@@ -542,21 +485,6 @@
   }
 }
 
-@keyframes float {
-  50% {
-    transform: translate3d(0, -10px, 0) rotate(-2deg);
-  }
-}
-
-@keyframes glide {
-  from {
-    transform: translate3d(-6%, 0, 0);
-  }
-  to {
-    transform: translate3d(18%, -12%, 0);
-  }
-}
-
 @keyframes vision-pulse {
   0% {
     transform: scale(0.6);
@@ -571,11 +499,5 @@
 @keyframes vision-draw {
   to {
     stroke-dashoffset: 0;
-  }
-}
-
-@keyframes twinkle {
-  50% {
-    opacity: 0.25;
   }
 }

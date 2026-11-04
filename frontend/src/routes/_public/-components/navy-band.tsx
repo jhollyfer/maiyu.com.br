@@ -1,24 +1,23 @@
 import type * as React from 'react'
 import { Link } from '@tanstack/react-router'
-import {
-  ArrowRightIcon,
-  ArrowUpRightIcon,
-  ChartLineUpIcon,
-  CodeIcon,
-  PenNibIcon,
-} from '@phosphor-icons/react'
-import type { Icon } from '@phosphor-icons/react'
+import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
+import { Badge } from '#/components/ui/badge'
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemGroup,
+  ItemTitle,
+} from '#/components/ui/item'
 import { articles } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 type Role = {
-  icon: Icon
-  tint: string
   title: () => string
   description: () => string
 }
@@ -29,20 +28,14 @@ type Role = {
  */
 const ROLES: ReadonlyArray<Role> = [
   {
-    icon: CodeIcon,
-    tint: 'bg-tint-mint',
     title: () => m.home_role1Title(),
     description: () => m.home_role1Desc(),
   },
   {
-    icon: PenNibIcon,
-    tint: 'bg-tint-peach',
     title: () => m.home_role2Title(),
     description: () => m.home_role2Desc(),
   },
   {
-    icon: ChartLineUpIcon,
-    tint: 'bg-tint-lime',
     title: () => m.home_role3Title(),
     description: () => m.home_role3Desc(),
   },
@@ -78,38 +71,39 @@ export function NavyBand(): React.JSX.Element {
       data-slot="home-navy-band"
       className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32"
     >
+      <div
+        aria-hidden="true"
+        className="trancado absolute inset-x-0 top-0 opacity-90"
+      />
+      <div
+        aria-hidden="true"
+        className="trancado absolute inset-x-0 bottom-0 opacity-90"
+      />
       <div className="absolute inset-0 -z-10 [--border:rgba(49,225,247,0.12)]">
         <div className="rails size-full" />
       </div>
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className={cn(REVEAL, 'mx-auto max-w-2xl text-center')}>
-          <h2 className="text-h2">{m.home_teamTitle()}</h2>
-          <span aria-hidden="true" className="brand-bar mx-auto mt-5" />
-          <p className="mx-auto mt-5 max-w-[48ch] font-serif text-lead text-on-navy/75">
+        <div className={cn(REVEAL, 'max-w-4xl')}>
+          <h2 className="text-display tracking-[-0.015em]">
+            {m.home_teamTitle()}
+          </h2>
+          <p className="mt-6 max-w-[56ch] font-serif text-lead text-on-navy/80">
             {m.home_teamDesc()}
           </p>
         </div>
 
-        <ul className="mx-auto mt-14 grid max-w-5xl grid-cols-1 gap-4 md:grid-cols-3">
+        <ul className="mt-14 grid grid-cols-1 gap-10 border-t border-on-navy/15 pt-10 md:grid-cols-3 md:gap-12">
           {ROLES.map((role, index) => (
             <li
               key={index}
-              className={cn(
-                REVEAL,
-                'flex flex-col gap-10 rounded-[1.75rem] p-7 text-foreground md:p-9',
-                index === 1 && 'md:-translate-y-8',
-                role.tint,
-              )}
+              className={cn(REVEAL)}
               style={{ animationDelay: `${index * STAGGER}ms` }}
             >
-              <role.icon size={28} />
-              <div>
-                <h3 className="text-h3">{role.title()}</h3>
-                <p className="mt-3 text-body text-foreground/75">
-                  {role.description()}
-                </p>
-              </div>
+              <h3 className="text-h3">{role.title()}</h3>
+              <p className="mt-3 max-w-[36ch] font-serif text-body-lg text-on-navy/75">
+                {role.description()}
+              </p>
             </li>
           ))}
         </ul>
@@ -130,7 +124,7 @@ export function NavyBand(): React.JSX.Element {
           </ul>
         </div>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-10 flex">
           <PillButton
             tone="neon"
             className="rounded-xl"
@@ -151,8 +145,7 @@ export function NavyBand(): React.JSX.Element {
             )}
           >
             <div>
-              <p className="eyebrow">{m.nav_blog()}</p>
-              <h2 className="text-h3">{m.home_notesTitle()}</h2>
+              <h2 className="text-h1">{m.home_notesTitle()}</h2>
             </div>
             <Link
               to="/blog"
@@ -162,29 +155,38 @@ export function NavyBand(): React.JSX.Element {
             </Link>
           </div>
 
-          <ul className="border-t border-on-navy/15">
+          <ItemGroup className="gap-0 border-t border-on-navy/15">
             {articles.slice(0, JOURNAL_SIZE).map((article) => (
-              <li key={article.slug} className="border-b border-on-navy/15">
+              <Item
+                key={article.slug}
+                render={<li />}
+                className="rounded-none border-0 border-b border-on-navy/15 p-0 text-body"
+              >
                 <Link
                   to="/blog/$slug"
                   params={{ slug: article.slug }}
-                  className="group flex items-center justify-between gap-6 py-5"
+                  className="group flex w-full items-center justify-between gap-6 py-5"
                 >
-                  <div className="flex flex-wrap items-center gap-3">
-                    <span className="text-body-lg transition-opacity group-hover:opacity-75">
+                  <ItemContent className="flex-row flex-wrap items-center gap-3">
+                    <ItemTitle className="line-clamp-none text-body-lg transition-opacity group-hover:opacity-75">
                       {localized(article.title)}
-                    </span>
-                    <span className="rounded-md bg-tint-green px-2 py-0.5 text-micro text-foreground">
+                    </ItemTitle>
+                    <Badge
+                      variant="secondary"
+                      className="h-auto rounded-md bg-tint-green px-2 py-0.5 text-micro font-normal text-foreground"
+                    >
                       {localized(article.readTime)}
+                    </Badge>
+                  </ItemContent>
+                  <ItemActions>
+                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">
+                      <ArrowRightIcon size={16} />
                     </span>
-                  </div>
-                  <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">
-                    <ArrowRightIcon size={16} />
-                  </span>
+                  </ItemActions>
                 </Link>
-              </li>
+              </Item>
             ))}
-          </ul>
+          </ItemGroup>
         </div>
       </div>
     </section>

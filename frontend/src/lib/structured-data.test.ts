@@ -15,6 +15,16 @@ describe('organizationJsonLd', () => {
 
     expect(data.telephone).toBe('+5597984317149')
   })
+
+  it('declara a tríplice fronteira como área atendida', () => {
+    const data = organizationJsonLd('Consultoria')
+
+    expect(data.areaServed).toEqual([
+      { '@type': 'Country', name: 'Brasil' },
+      { '@type': 'Country', name: 'Peru' },
+      { '@type': 'Country', name: 'Colombia' },
+    ])
+  })
 })
 
 describe('breadcrumbListJsonLd', () => {

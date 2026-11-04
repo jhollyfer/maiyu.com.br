@@ -2,7 +2,6 @@ import * as React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
 
-import { SkyBackdrop } from '#/components/common/sky'
 import { Button } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { cn } from '#/lib/utils'
@@ -24,9 +23,11 @@ type NotFoundPageProps = Merge<
  * A página de saída: endereço que não existe, e também erro não tratado.
  *
  * A mesma API compound do academy (`Title`, `Subtitle`, `Description`,
- * `Actions`, `HomeButton`), com a cara da Maiyu no lugar do painel preto e do
- * astronauta: céu, mata e a pílula navy com o código. Sem children, escreve o
- * 404 genérico; a fronteira de erro troca as partes que quiser.
+ * `Actions`, `HomeButton`), em tipografia: o código num marcador de losango
+ * de urucum, o título em serifa de exibição, texto à esquerda e a faixa
+ * trançada no pé. Sem céu nem mata: a ilustração competia com a única coisa
+ * que a pessoa precisa ler, que é como sair daqui. Sem children, escreve o 404
+ * genérico; a fronteira de erro troca as partes que quiser.
  */
 export function NotFoundPage({
   className,
@@ -37,29 +38,32 @@ export function NotFoundPage({
   return (
     <section
       data-slot="not-found-page"
-      className={cn(
-        'relative flex min-h-dvh items-center overflow-hidden px-4 pt-16',
-        className,
-      )}
+      className={cn('flex min-h-dvh flex-col pt-16', className)}
       {...props}
     >
-      <SkyBackdrop />
-      <div className="relative mx-auto flex max-w-3xl flex-col items-center pb-[clamp(140px,17vw,240px)] text-center">
-        <span className="mb-7 inline-flex items-center rounded-full bg-navy px-3.5 py-1.5 text-micro font-bold text-brand-green dark:border dark:border-brand-green/50 dark:bg-brand-green/5">
-          {code}
-        </span>
-        {children ?? (
-          <>
-            <NotFoundPageTitle>{m.notFound_title()}</NotFoundPageTitle>
-            <NotFoundPageDescription>
-              {m.notFound_description()}
-            </NotFoundPageDescription>
-            <NotFoundPageActions>
-              <NotFoundPageHomeButton />
-            </NotFoundPageActions>
-          </>
-        )}
+      <div className="mx-auto flex w-full max-w-7xl flex-1 items-center px-4 py-24 md:px-8">
+        <div className="flex max-w-3xl flex-col items-start text-balance">
+          <p className="mb-7 flex items-center gap-3 text-small font-medium text-muted-foreground">
+            <span
+              aria-hidden="true"
+              className="size-2 shrink-0 rotate-45 bg-urucum"
+            />
+            {code}
+          </p>
+          {children ?? (
+            <>
+              <NotFoundPageTitle>{m.notFound_title()}</NotFoundPageTitle>
+              <NotFoundPageDescription>
+                {m.notFound_description()}
+              </NotFoundPageDescription>
+              <NotFoundPageActions>
+                <NotFoundPageHomeButton />
+              </NotFoundPageActions>
+            </>
+          )}
+        </div>
       </div>
+      <div aria-hidden="true" className="trancado" />
     </section>
   )
 }
@@ -98,7 +102,7 @@ export function NotFoundPageDescription({
     <p
       data-slot="not-found-page-description"
       className={cn(
-        'mt-7 max-w-[44ch] text-lead text-foreground/80',
+        'mt-7 max-w-[62ch] text-lead text-foreground/80',
         className,
       )}
       {...props}
@@ -119,7 +123,7 @@ export function NotFoundPageActions({
     // segmentado.
     <ButtonGroup
       data-slot="not-found-page-actions"
-      className={cn('mt-10 flex-wrap items-center justify-center', className)}
+      className={cn('mt-10 flex-wrap items-center', className)}
       {...props}
     >
       {React.Children.map(children, (action) => {

@@ -1,11 +1,6 @@
 import { m } from '#/paraglide/messages'
 
-import type {
-  ArticleCategory,
-  JobLocation,
-  JobPosition,
-  JobType,
-} from './entity'
+import type { ArticleCategory, JobPosition } from './entity'
 
 /**
  * Os rótulos de cada valor do vocabulário, no idioma da requisição.
@@ -21,22 +16,13 @@ import type {
  */
 
 export const JOB_POSITION_LABELS: Record<JobPosition, () => string> = {
-  frontend: () => m.career_selectFrontend(),
-  designer: () => m.career_selectDesigner(),
-  qa: () => m.career_selectQa(),
-  backend: () => m.career_selectBackend(),
+  development: () => m.career_area_development(),
+  design: () => m.career_area_design(),
+  data: () => m.career_area_data(),
 }
 
 export const ARTICLE_CATEGORY_LABELS: Record<ArticleCategory, () => string> = {
   tech: () => m.blog_category_tech(),
   design: () => m.blog_category_design(),
   marketing: () => m.blog_category_marketing(),
-}
-
-export const JOB_LOCATION_LABELS: Record<JobLocation, () => string> = {
-  remote: () => m.career_jobLocation_remote(),
-}
-
-export const JOB_TYPE_LABELS: Record<JobType, () => string> = {
-  fulltime: () => m.career_jobType_fulltime(),
 }

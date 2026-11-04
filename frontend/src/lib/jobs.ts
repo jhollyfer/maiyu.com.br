@@ -1,40 +1,41 @@
 import { m } from '#/paraglide/messages'
 
-import type { JobLocation, JobType } from './entity'
+import type { JobPosition } from './entity'
+import { JOB_POSITION_LABELS } from './labels'
 
 /**
- * As vagas em destaque na página de carreiras.
+ * As áreas do banco de talentos, na página de carreiras.
  *
- * Conteúdo em código, como `projects.ts` e `articles.ts`: não há painel nem
- * API, e a lista muda quando a Maiyu abre ou fecha uma vaga, não a cada visita.
+ * A Maiyu não publica vaga: ela guarda o contato de quem trabalha em cada
+ * área e chama quando um projeto pede. Listar cargo e benefício que a empresa
+ * não oferece seria inventar o que o site promete, então o registro descreve
+ * só o ofício.
  *
- * O título é função pela razão de `labels.ts`: lido no render, no idioma de
- * quem visita.
+ * Conteúdo em código, como `projects.ts`: não há painel nem API. O texto é
+ * função pela razão de `labels.ts`, lido no render, no idioma de quem visita.
+ * O `id` é o mesmo valor do `Select` do formulário, para o rótulo vir de um
+ * lugar só.
  */
-export type Job = {
-  id: string
+export type TalentArea = {
+  id: JobPosition
   title: () => string
-  location: JobLocation
-  type: JobType
+  description: () => string
 }
 
-export const JOBS: ReadonlyArray<Job> = [
+export const TALENT_AREAS: ReadonlyArray<TalentArea> = [
   {
-    id: 'senior-frontend',
-    title: () => m.career_job1Title(),
-    location: 'remote',
-    type: 'fulltime',
+    id: 'development',
+    title: JOB_POSITION_LABELS.development,
+    description: () => m.career_area_developmentDesc(),
   },
   {
-    id: 'product-designer',
-    title: () => m.career_job2Title(),
-    location: 'remote',
-    type: 'fulltime',
+    id: 'design',
+    title: JOB_POSITION_LABELS.design,
+    description: () => m.career_area_designDesc(),
   },
   {
-    id: 'data-analyst',
-    title: () => m.career_job3Title(),
-    location: 'remote',
-    type: 'fulltime',
+    id: 'data',
+    title: JOB_POSITION_LABELS.data,
+    description: () => m.career_area_dataDesc(),
   },
 ]

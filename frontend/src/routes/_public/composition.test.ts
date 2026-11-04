@@ -48,4 +48,17 @@ describe('composição da home', () => {
     // depois se interessa pelo que ela pensa.
     expect(sectionOrder().indexOf('Work')).toBe(1)
   })
+
+  it('diz de onde a Maiyu vem logo depois da prova', () => {
+    // O diferencial (indígena, da tríplice fronteira) vem antes da tese: é o
+    // que separa a Maiyu de qualquer outra software house, e quem lê rápido
+    // precisa encontrá-lo na segunda rolagem.
+    expect(sectionOrder().indexOf('Roots')).toBe(2)
+  })
+
+  it('diz para quem constrói depois do que faz', () => {
+    const order = sectionOrder()
+
+    expect(order.indexOf('Audience')).toBe(order.indexOf('Capabilities') + 1)
+  })
 })

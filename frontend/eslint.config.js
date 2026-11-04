@@ -37,7 +37,13 @@ export default [
     // `no-shadow` reclama do `{ className, ...props }` desestruturado dentro de
     // um componente que já tem `props` no escopo, que é a forma que o próprio
     // registry escreve.
-    files: ['src/components/ui/**'],
+    // O hook e o carregador do shiki chegam junto com o `code-block` e o
+    // `trace` do registry, e o `shadcn add` os reescreve do mesmo jeito.
+    files: [
+      'src/components/ui/**',
+      'src/hooks/use-highlighted-code.ts',
+      'src/lib/highlighter.tsx',
+    ],
     rules: {
       '@typescript-eslint/no-unnecessary-condition': 'off',
       'no-shadow': 'off',
@@ -67,6 +73,8 @@ export default [
       'src/routeTree.gen.ts',
       'src/paraglide/**',
       'src/components/ui/**',
+      'src/hooks/use-highlighted-code.ts',
+      'src/lib/highlighter.tsx',
     ],
     rules: {
       // regra 1: sem ternário como control flow. `??`, `?.` e `&&` seguem livres.

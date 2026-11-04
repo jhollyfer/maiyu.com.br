@@ -3,7 +3,8 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 import { getArticleBySlug } from '#/lib/articles'
 import { pageHead } from '#/lib/head'
 import { localized, localizedUrl } from '#/lib/i18n'
-import { SITE_TITLE } from '#/lib/site'
+import { PHOTOS } from '#/lib/photos'
+import { SITE_TITLE, absoluteUrl } from '#/lib/site'
 import {
   blogPostingJsonLd,
   breadcrumbListJsonLd,
@@ -37,13 +38,14 @@ export const Route = createFileRoute('/_public/blog/$slug')({
     const path = '/blog/'.concat(params.slug)
     const title = localized(loaderData.title)
     const description = localized(loaderData.excerpt)
+    const image = absoluteUrl(`${PHOTOS[loaderData.photo].src}-1280.webp`)
 
     return {
       ...pageHead({
         path,
         title,
         description,
-        image: loaderData.image,
+        image,
         type: 'article',
       }),
       scripts: [
@@ -52,8 +54,9 @@ export const Route = createFileRoute('/_public/blog/$slug')({
             title,
             description,
             url: localizedUrl(path),
-            image: loaderData.image,
-            author: loaderData.author,
+            image,
+            // A autoria é da Maiyu como organização, não de uma pessoa.
+            author: SITE_TITLE,
             publishedAt: loaderData.date,
           }),
         ),

@@ -25,9 +25,9 @@ export const projects: ReadonlyArray<Project> = [
     slug: 'adacaibs',
     title: 'ADACAIBS',
     client: {
-      en: 'Indigenous association · Benjamin Constant',
-      'pt-BR': 'Associação indígena · Benjamin Constant',
-      es: 'Asociación indígena · Benjamin Constant',
+      en: 'Ticuna association · Belém do Solimões',
+      'pt-BR': 'Associação Ticuna · Belém do Solimões',
+      es: 'Asociación Ticuna · Belém do Solimões',
     },
     summary: {
       en: 'Association management platform for an indigenous community.',
@@ -35,10 +35,10 @@ export const projects: ReadonlyArray<Project> = [
       es: 'Plataforma de gestión para una asociación indígena.',
     },
     description: {
-      en: 'A full-stack association management platform for the indigenous community of Benjamin Constant. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
+      en: 'A full-stack association management platform for the Ticuna association of the Belém do Solimões village. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
       'pt-BR':
-        'Plataforma full-stack de gestão para a associação da comunidade indígena de Benjamin Constant. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
-      es: 'Plataforma full-stack de gestión para la asociación de la comunidad indígena de Benjamin Constant. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
+        'Plataforma full-stack de gestão para a associação do povo Ticuna da aldeia Belém do Solimões. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
+      es: 'Plataforma full-stack de gestión para la asociación del pueblo Ticuna de la aldea Belém do Solimões. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
     },
     image: '/images/adacaibs.webp',
     focus: 'left center',
@@ -71,6 +71,79 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['React', 'Fastify', 'Prisma', 'PostgreSQL', 'Tailwind CSS'],
     url: 'https://matis.maiyu.com.br',
     year: '2024',
+  },
+  {
+    slug: 'aporta',
+    title: 'Aporta',
+    client: {
+      en: 'Housing and city guide · Benjamin Constant',
+      'pt-BR': 'Moradia e guia da cidade · Benjamin Constant',
+      es: 'Vivienda y guía de la ciudad · Benjamin Constant',
+    },
+    summary: {
+      en: 'Find a place to live in Benjamin Constant, straight from the owner.',
+      'pt-BR': 'Onde morar em Benjamin Constant, direto com o dono.',
+      es: 'Dónde vivir en Benjamin Constant, directo con el dueño.',
+    },
+    description: {
+      en: 'Houses, flats, kitnets, rooms and hotels with direct WhatsApp contact with the owner, for UFAM freshmen, public servants, travellers and festival visitors, plus a city guide. Before it, listings vanished in group chats; now they stay findable by neighbourhood, price and period.',
+      'pt-BR':
+        'Casas, apartamentos, kitnets, quartos e hotéis com contato direto com o dono pelo WhatsApp, para calouros da UFAM, servidores, viajantes e quem vem para o festival, e um guia da cidade. Antes o anúncio sumia nos grupos; agora fica achável por bairro, preço e período.',
+      es: 'Casas, apartamentos, kitnets, habitaciones y hoteles con contacto directo con el dueño por WhatsApp, para estudiantes de la UFAM, servidores, viajeros y visitantes del festival, y una guía de la ciudad. Antes el anuncio se perdía en los grupos; ahora se encuentra por barrio, precio y período.',
+    },
+    image: '/images/aporta.webp',
+    tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'Leaflet'],
+    url: 'https://aporta.maiyu.com.br',
+    year: '2026',
+  },
+  {
+    slug: 'curupira',
+    title: 'Curupira',
+    client: {
+      en: 'Public service · Benjamin Constant',
+      'pt-BR': 'Serviço público · Benjamin Constant',
+      es: 'Servicio público · Benjamin Constant',
+    },
+    summary: {
+      en: 'Waste collection schedule and anonymous environmental reports.',
+      'pt-BR': 'Coleta de lixo por bairro e denúncia ambiental anônima.',
+      es: 'Recolección de basura por barrio y denuncia ambiental anónima.',
+    },
+    description: {
+      en: 'Residents check when collection passes in their neighbourhood and report fires, illegal dumping and deforestation with a photo and a map pin, without exposing themselves, then follow it by protocol. The municipal team gets one panel to handle reports and publish notices. Installable app, in Portuguese, Spanish and English.',
+      'pt-BR':
+        'O morador consulta quando a coleta passa no seu bairro e denuncia queimada, descarte irregular e desmatamento com foto e ponto no mapa, sem se expor, e acompanha pelo protocolo. A gestão municipal ganha um painel só para tratar as ocorrências e publicar avisos. App instalável, em português, espanhol e inglês.',
+      es: 'El vecino consulta cuándo pasa la recolección en su barrio y denuncia quemas, botaderos ilegales y deforestación con foto y punto en el mapa, sin exponerse, y sigue el caso por protocolo. La gestión municipal tiene un solo panel para atender los casos y publicar avisos. App instalable, en portugués, español e inglés.',
+    },
+    image: '/images/curupira.webp',
+    tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'PWA'],
+    url: 'https://curupira.maiyu.com.br',
+    year: '2026',
+  },
+  {
+    slug: 'interclasse',
+    title: 'Jogos Estudantis',
+    client: {
+      en: 'School games · CMEI Cosme Jean',
+      'pt-BR': 'Jogos escolares · CMEI Cosme Jean',
+      es: 'Juegos escolares · CMEI Cosme Jean',
+    },
+    summary: {
+      en: 'Athlete sign-up, draw, fixtures and live standings for the school games.',
+      'pt-BR':
+        'Inscrição, sorteio, tabela e classificação dos jogos da escola.',
+      es: 'Inscripción, sorteo, tabla y clasificación de los juegos escolares.',
+    },
+    description: {
+      en: 'The school games used to live on paper and spreadsheets. Now teachers sign up their classes, the organisers run the draw and the scores in one system, and students and families follow the next match and the standings on an open site.',
+      'pt-BR':
+        'Os jogos da escola viviam em papel e planilha. Agora o professor inscreve a turma, a organização faz o sorteio e lança o placar num sistema só, e alunos e famílias acompanham o próximo jogo e a classificação num site aberto.',
+      es: 'Los juegos de la escuela vivían en papel y planillas. Ahora el profesor inscribe al curso, la organización hace el sorteo y carga el marcador en un solo sistema, y alumnos y familias siguen el próximo partido y la clasificación en un sitio abierto.',
+    },
+    image: '/images/interclasse.webp',
+    tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
+    url: 'https://interclass.maiyu.com.br',
+    year: '2026',
   },
 ]
 

@@ -3,8 +3,8 @@
 import * as React from 'react'
 import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 import { Menubar as MenubarPrimitive } from '@base-ui/react/menubar'
+import { cn } from '#/lib/utils'
 
-import { cn } from '#/lib/utils.ts'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -211,7 +211,7 @@ function MenubarShortcut({
     <DropdownMenuShortcut
       data-slot="menubar-shortcut"
       className={cn(
-        'ml-auto text-2xs tracking-widest text-muted-foreground group-focus/menubar-item:text-accent-foreground',
+        'ml-auto text-[0.625rem] tracking-widest text-muted-foreground group-focus/menubar-item:text-accent-foreground',
         className,
       )}
       {...props}

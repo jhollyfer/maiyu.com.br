@@ -31,8 +31,8 @@ import { m } from '#/paraglide/messages'
 /**
  * O cabeçalho flutuante.
  *
- * Transparente no topo, e ganha fundo, aro e sombra quando a página rola: é a
- * pílula que acompanha a leitura sem cobrir o céu do hero na chegada. O estado
+ * Transparente no topo, e ganha fundo e um fio embaixo quando a página rola:
+ * uma barra de jornal que acompanha a leitura sem cobrir a capa na chegada. O estado
  * vem de `useScrolled`, e o desenho de cada estado mora em classes
  * `data-[scrolled=true]:`, sem ternário.
  *
@@ -46,12 +46,10 @@ export function Header(): React.JSX.Element {
   return (
     <header
       data-slot="site-header"
-      className="fixed inset-x-0 top-0 z-50 px-3 pt-3"
+      data-scrolled={scrolled}
+      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-500 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background/85 data-[scrolled=true]:backdrop-blur-xl motion-reduce:transition-none"
     >
-      <div
-        data-scrolled={scrolled}
-        className="mx-auto grid h-14 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 rounded-2xl border border-transparent bg-transparent pr-2 pl-4 transition-[max-width,background-color,border-color,box-shadow] duration-700 ease-out-expo motion-reduce:transition-none data-[scrolled=true]:max-w-5xl data-[scrolled=true]:border-foreground/[0.08] data-[scrolled=true]:bg-surface/80 data-[scrolled=true]:shadow-[0_8px_30px_-12px_var(--shadow-tint)] data-[scrolled=true]:backdrop-blur-xl lg:grid-cols-[auto_1fr_auto]"
-      >
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 md:px-8 lg:grid-cols-[auto_1fr_auto]">
         <Link
           to="/"
           aria-label={m.a11y_home()}

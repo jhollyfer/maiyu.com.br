@@ -1,5 +1,6 @@
 import type * as React from 'react'
 
+import { Button } from '#/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,12 +40,17 @@ export function LanguageSwitcher(): React.JSX.Element {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        data-slot="language-switcher"
-        aria-label={m.a11y_changeLanguage()}
-        className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-foreground/70 uppercase transition-[color,border-color] duration-500 ease-out-expo hover:border-foreground/30 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring motion-reduce:transition-none"
-      >
-        {current.label}
-      </DropdownMenuTrigger>
+        render={
+          <Button
+            data-slot="language-switcher"
+            variant="outline"
+            aria-label={m.a11y_changeLanguage()}
+            className="min-h-9 gap-1.5 rounded-full border-border bg-transparent px-3 py-1.5 text-[11px] font-medium tracking-[0.18em] text-foreground/70 uppercase transition-[color,border-color] duration-500 ease-out-expo hover:border-foreground/30 hover:bg-transparent hover:text-foreground motion-reduce:transition-none"
+          >
+            {current.label}
+          </Button>
+        }
+      />
       <DropdownMenuContent
         align="end"
         sideOffset={10}
