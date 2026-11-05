@@ -44,7 +44,6 @@ const ROLES: ReadonlyArray<Role> = [
 /** A stack que a Maiyu usa, em fita. */
 const STACK = [
   'React',
-  'React Native',
   'TanStack Start',
   'AdonisJS',
   'Fastify',

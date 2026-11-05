@@ -32,10 +32,6 @@ const SERVICES: ReadonlyArray<Service> = [
     description: () => m.home_serviceWebDesc(),
   },
   {
-    title: () => m.home_serviceMobile(),
-    description: () => m.home_serviceMobileDesc(),
-  },
-  {
     title: () => m.home_serviceBackend(),
     description: () => m.home_serviceBackendDesc(),
   },
