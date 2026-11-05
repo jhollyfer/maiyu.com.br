@@ -326,9 +326,9 @@ export const articles: ReadonlyArray<Article> = [
         kind: 'paragraph',
         text: {
           'pt-BR':
-            'O ADACAIBS é uma associação indígena Ticuna. A plataforma que fizemos com ela cuida da gestão do dia a dia: cadastro de membros, documentos, relatórios internos e ferramentas de governança, pensada desde o começo para ser mantida pela própria comunidade.',
-          en: 'ADACAIBS is a Ticuna indigenous association. The platform we built with it handles day to day management: member registry, documents, internal reports and governance tools, designed from the start to be maintained by the community itself.',
-          es: 'ADACAIBS es una asociación indígena Ticuna. La plataforma que hicimos con ella cuida la gestión del día a día: registro de miembros, documentos, informes internos y herramientas de gobernanza, pensada desde el comienzo para ser mantenida por la propia comunidad.',
+            'A ADACAIBS é a associação do povo Ticuna da aldeia Belém do Solimões. A plataforma que fizemos com ela cuida da gestão do dia a dia: cadastro de membros, documentos, relatórios internos e ferramentas de governança, pensada desde o começo para ser mantida pela própria comunidade.',
+          en: 'ADACAIBS is the association of the Ticuna people of the Belém do Solimões village. The platform we built with it handles day to day management: member registry, documents, internal reports and governance tools, designed from the start to be maintained by the community itself.',
+          es: 'ADACAIBS es la asociación del pueblo Ticuna de la aldea Belém do Solimões. La plataforma que hicimos con ella cuida la gestión del día a día: registro de miembros, documentos, informes internos y herramientas de gobernanza, pensada desde el comienzo para ser mantenida por la propia comunidad.',
         },
       },
       {
@@ -438,9 +438,9 @@ export const articles: ReadonlyArray<Article> = [
         kind: 'paragraph',
         text: {
           'pt-BR':
-            'A Maiyu é feita por indígenas e por gente originária do Alto Solimões: engenheiros, designers e analistas. Isso não é enfeite de apresentação. Significa conhecer a língua, o jeito de conversar com uma liderança, o que se pergunta antes de pedir um dado e o que não se pergunta.',
-          en: 'Maiyu is made by indigenous people and by people from the Alto Solimões: engineers, designers and analysts. That is not presentation decoration. It means knowing the language, the way to talk with a community leader, what to ask before requesting data and what not to ask.',
-          es: 'Maiyu está hecha por indígenas y por gente originaria del Alto Solimões: ingenieros, diseñadores y analistas. Eso no es un adorno de presentación. Significa conocer la lengua, la forma de conversar con un líder, lo que se pregunta antes de pedir un dato y lo que no se pregunta.',
+            'A Maiyu é feita por indígenas e por gente originária do Alto Solimões: engenheiros, designers e analistas. Na prática, isso significa conhecer a língua, o jeito de conversar com uma liderança, o que se pergunta antes de pedir um dado e o que não se pergunta.',
+          en: 'Maiyu is made by indigenous people and by people from the Alto Solimões: engineers, designers and analysts. In practice, that means knowing the language, the way to talk with a community leader, what to ask before requesting data and what not to ask.',
+          es: 'Maiyu está hecha por indígenas y por gente originaria del Alto Solimões: ingenieros, diseñadores y analistas. En la práctica, eso significa conocer la lengua, la forma de conversar con un líder, lo que se pregunta antes de pedir un dato y lo que no se pregunta.',
         },
       },
       {
@@ -473,9 +473,9 @@ export const articles: ReadonlyArray<Article> = [
         kind: 'paragraph',
         text: {
           'pt-BR':
-            'Ser a primeira vem com responsabilidade. Não pelo título, mas porque outras pessoas daqui vão olhar o que fazemos para decidir se vale tentar. Queremos que a resposta seja sim.',
-          en: 'Being first comes with responsibility. Not because of the title, but because other people here will look at what we do to decide whether it is worth trying. We want the answer to be yes.',
-          es: 'Ser la primera viene con responsabilidad. No por el título, sino porque otras personas de aquí van a mirar lo que hacemos para decidir si vale la pena intentarlo. Queremos que la respuesta sea sí.',
+            'Ser a primeira traz uma responsabilidade: outras pessoas daqui vão olhar o que fazemos para decidir se vale tentar. Queremos que a resposta seja sim.',
+          en: 'Being first carries a responsibility: other people here will look at what we do to decide whether it is worth trying. We want the answer to be yes.',
+          es: 'Ser la primera trae una responsabilidad: otras personas de aquí van a mirar lo que hacemos para decidir si vale la pena intentarlo. Queremos que la respuesta sea sí.',
         },
       },
     ],
