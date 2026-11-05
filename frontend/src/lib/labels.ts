@@ -1,6 +1,6 @@
 import { m } from '#/paraglide/messages'
 
-import type { ArticleCategory, JobPosition } from './entity'
+import type { ArticleCategory, JobPosition, ProjectStatus } from './entity'
 
 /**
  * Os rótulos de cada valor do vocabulário, no idioma da requisição.
@@ -19,6 +19,11 @@ export const JOB_POSITION_LABELS: Record<JobPosition, () => string> = {
   development: () => m.career_area_development(),
   design: () => m.career_area_design(),
   data: () => m.career_area_data(),
+}
+
+export const PROJECT_STATUS_LABELS: Record<ProjectStatus, () => string> = {
+  production: () => m.project_status_production(),
+  validation: () => m.project_status_validation(),
 }
 
 export const ARTICLE_CATEGORY_LABELS: Record<ArticleCategory, () => string> = {

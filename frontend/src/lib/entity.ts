@@ -11,6 +11,15 @@
  * código que só precisa do vocabulário importa **deste** arquivo.
  */
 
+/**
+ * Onde cada projeto está: no ar para o público, ou ainda em validação com quem
+ * vai usar. O portfólio diz isso na tela para não vender como pronto o que a
+ * prefeitura, a escola ou o morador ainda estão testando.
+ */
+export const PROJECT_STATUSES = ['production', 'validation'] as const
+
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number]
+
 /** As áreas do banco de talentos: o que o formulário de cadastro aceita. */
 export const JOB_POSITIONS = ['development', 'design', 'data'] as const
 
