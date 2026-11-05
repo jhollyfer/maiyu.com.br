@@ -5,6 +5,7 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import { PageHero } from './-components/page-hero'
 import { PillButton } from './-components/pill-button'
 import { REVEAL, STAGGER } from './-components/reveal'
+import { ProjectStatusBadge } from './-components/project-status'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
@@ -135,8 +136,12 @@ function RouteComponent(): React.JSX.Element {
             </div>
             <div className="mt-12 grid grid-cols-1 gap-x-8 gap-y-10 md:grid-cols-12">
               <div className="md:col-span-5">
+                <ProjectStatusBadge status={featuredProject.status} />
                 <h2
-                  className={cn(REVEAL, 'text-display leading-none delay-200')}
+                  className={cn(
+                    REVEAL,
+                    'mt-4 text-display leading-none delay-200',
+                  )}
                 >
                   {featuredProject.title}
                 </h2>
@@ -181,6 +186,10 @@ function RouteComponent(): React.JSX.Element {
                     <ProjectShot project={project} />
                   </div>
                   <div className={cn('flex flex-col gap-6', side.text)}>
+                    <ProjectStatusBadge
+                      status={project.status}
+                      className="self-start"
+                    />
                     <h2 className="text-h1 leading-none">{project.title}</h2>
                     <p className="font-serif text-lead leading-snug text-foreground/85">
                       {localized(project.summary)}

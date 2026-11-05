@@ -1,3 +1,4 @@
+import type { ProjectStatus } from './entity'
 import type { LocalizedText } from './i18n'
 
 /**
@@ -17,6 +18,8 @@ export type Project = {
   tech: string[]
   url: string
   year: string
+  /** No ar ou ainda em validação com quem vai usar (`PROJECT_STATUSES`). */
+  status: ProjectStatus
   featured?: boolean
 }
 
@@ -45,6 +48,7 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['React', 'AdonisJS', 'TanStack Query', 'PostgreSQL', 'Tailwind CSS'],
     url: 'https://adacaibs.com.br',
     year: '2024',
+    status: 'production',
     featured: true,
   },
   {
@@ -70,6 +74,7 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
     url: 'https://academy.maiyu.com.br',
     year: '2026',
+    status: 'production',
   },
   {
     slug: 'aporta',
@@ -94,6 +99,7 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'Leaflet'],
     url: 'https://aporta.maiyu.com.br',
     year: '2026',
+    status: 'validation',
   },
   {
     slug: 'curupira',
@@ -118,6 +124,7 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'PWA'],
     url: 'https://curupira.maiyu.com.br',
     year: '2026',
+    status: 'validation',
   },
   {
     slug: 'interclasse',
@@ -143,6 +150,7 @@ export const projects: ReadonlyArray<Project> = [
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
     url: 'https://interclass.maiyu.com.br',
     year: '2026',
+    status: 'validation',
   },
 ]
 

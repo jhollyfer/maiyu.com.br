@@ -3,6 +3,7 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 
 import { REVEAL, STAGGER } from './reveal'
 import { PillButton } from './pill-button'
+import { ProjectStatusBadge } from './project-status'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
@@ -107,7 +108,8 @@ export function Work(): React.JSX.Element {
           <Shot project={lead} className="md:order-2 md:col-span-7" />
           <div className="flex flex-col justify-between gap-8 md:col-span-5">
             <div>
-              <h3 className="text-h1">{lead.title}</h3>
+              <ProjectStatusBadge status={lead.status} />
+              <h3 className="mt-4 text-h1">{lead.title}</h3>
               <p className="mt-5 max-w-[48ch] font-serif text-body-lg text-foreground/80">
                 {localized(lead.description)}
               </p>
@@ -131,7 +133,8 @@ export function Work(): React.JSX.Element {
             >
               <Shot project={project} className="md:col-span-3" />
               <div className="md:col-span-6">
-                <h3 className="text-h3">{project.title}</h3>
+                <ProjectStatusBadge status={project.status} />
+                <h3 className="mt-3 text-h3">{project.title}</h3>
                 <p className="mt-3 max-w-[56ch] font-serif text-body-lg text-foreground/80">
                   {localized(project.summary)}
                 </p>

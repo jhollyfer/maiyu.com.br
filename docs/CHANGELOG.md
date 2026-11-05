@@ -17,6 +17,8 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- Cada projeto mostra se está no ar ou em validação: Aporta, Curupira e Jogos Estudantis aparecem como "Em validação", e ADACAIBS e Maiyu Academy como "No ar".
+
 - O Maiyu Academy, plataforma gratuita de ensino de tecnologia da própria Maiyu, entra no portfólio e na home entre os projetos no ar.
 
 - O espanhol do site passa a tratar o visitante sempre por "usted", inclusive nas mensagens de erro dos formulários, e o inglês ganha contrações e frases mais naturais.
