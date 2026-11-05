@@ -267,7 +267,7 @@ export const articles: ReadonlyArray<Article> = [
     },
     excerpt: {
       'pt-BR':
-        'A associação é dona do site, dos dados e do código. O que isso muda na forma de construir, com o ADACAIBS como exemplo.',
+        'A associação é dona do site, dos dados e do código. O que isso muda na forma de construir, com a ADACAIBS como exemplo.',
       en: 'The association owns the site, the data and the code. What that changes in how we build, with ADACAIBS as the example.',
       es: 'La asociación es dueña del sitio, de los datos y del código. Qué cambia eso en la forma de construir, con ADACAIBS como ejemplo.',
     },

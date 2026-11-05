@@ -45,13 +45,13 @@ const ROLES: ReadonlyArray<Role> = [
 const STACK = [
   'React',
   'React Native',
-  'Next.js',
+  'TanStack Start',
   'AdonisJS',
   'Fastify',
   'Node.js',
   'PostgreSQL',
-  'Prisma',
   'TypeScript',
+  'Tailwind CSS',
   'Figma',
 ]
 

@@ -20,6 +20,26 @@ export function localized(text: LocalizedText): string {
 }
 
 /**
+ * Uma data de registro (`AAAA-MM-DD`) escrita por extenso no idioma da
+ * requisição, como "8 de setembro de 2026".
+ *
+ * `timeZone: 'UTC'` porque a data do registro não tem hora: lida no fuso do
+ * servidor ou do navegador, `2026-09-08` viraria 7 de setembro a oeste de
+ * Greenwich, e o SSR e a hidratação desenhariam dias diferentes.
+ */
+export function localizedDate(
+  iso: string,
+  locale: Locale = getLocale(),
+): string {
+  return new Intl.DateTimeFormat(locale, {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+    timeZone: 'UTC',
+  }).format(new Date(iso))
+}
+
+/**
  * O idioma em formato de `og:locale`, que usa sublinhado e não hífen.
  *
  * Lookup e não `replace('-', '_')`: `en` e `es` não têm região, e o cartão de

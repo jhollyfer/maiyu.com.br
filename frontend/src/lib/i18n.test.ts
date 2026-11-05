@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest'
 
-import { alternateLinks, localizedUrl } from './i18n'
+import { alternateLinks, localizedUrl, localizedDate } from './i18n'
+
+describe('localizedDate', () => {
+  it('escreve a data por extenso no idioma pedido, sem andar de dia por fuso', () => {
+    expect(localizedDate('2026-09-08', 'pt-BR')).toBe('8 de setembro de 2026')
+    expect(localizedDate('2026-09-08', 'en')).toBe('September 8, 2026')
+    expect(localizedDate('2026-09-08', 'es')).toBe('8 de septiembre de 2026')
+  })
+})
 
 describe('localizedUrl', () => {
   it('não prefixa o idioma base', () => {

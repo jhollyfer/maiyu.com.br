@@ -35,10 +35,10 @@ export const projects: ReadonlyArray<Project> = [
       es: 'Plataforma de gestión para una asociación indígena.',
     },
     description: {
-      en: 'A full-stack association management platform for the Ticuna association of the Belém do Solimões village. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
+      en: 'An association management platform for the Ticuna association of the Belém do Solimões village. Member registry, document handling, internal reporting and governance tooling, built to be maintained by the community itself.',
       'pt-BR':
-        'Plataforma full-stack de gestão para a associação do povo Ticuna da aldeia Belém do Solimões. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
-      es: 'Plataforma full-stack de gestión para la asociación del pueblo Ticuna de la aldea Belém do Solimões. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
+        'Plataforma de gestão para a associação do povo Ticuna da aldeia Belém do Solimões. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
+      es: 'Plataforma de gestión para la asociación del pueblo Ticuna de la aldea Belém do Solimões. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
     },
     image: '/images/adacaibs.webp',
     focus: 'left center',
