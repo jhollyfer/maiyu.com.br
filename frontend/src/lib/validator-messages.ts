@@ -39,13 +39,13 @@ export const RULE_MESSAGES: Record<Locale, Record<string, string>> = {
     maxLength: 'Enter at most {{ max }} characters',
   },
   es: {
-    required: 'Ingresa {{ field }}',
-    string: 'Ingresa {{ field }}',
-    enum: 'Selecciona {{ field }}',
-    email: 'Ingresa un correo válido',
-    url: 'Ingresa un enlace válido',
-    minLength: 'Ingresa al menos {{ min }} caracteres',
-    maxLength: 'Ingresa como máximo {{ max }} caracteres',
+    required: 'Ingrese {{ field }}',
+    string: 'Ingrese {{ field }}',
+    enum: 'Seleccione {{ field }}',
+    email: 'Ingrese un correo válido',
+    url: 'Ingrese un enlace válido',
+    minLength: 'Ingrese al menos {{ min }} caracteres',
+    maxLength: 'Ingrese como máximo {{ max }} caracteres',
   },
 }
 
@@ -76,13 +76,13 @@ export const FIELD_LABELS: Record<Locale, Record<string, string>> = {
     linkedin: 'your LinkedIn or portfolio',
   },
   es: {
-    firstName: 'tu nombre',
-    lastName: 'tu apellido',
-    name: 'tu nombre',
-    email: 'tu correo',
+    firstName: 'su nombre',
+    lastName: 'su apellido',
+    name: 'su nombre',
+    email: 'su correo',
     message: 'un mensaje',
     position: 'un área',
-    linkedin: 'tu LinkedIn o portafolio',
+    linkedin: 'su LinkedIn o portafolio',
   },
 }
 

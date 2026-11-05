@@ -39,7 +39,7 @@ export const articles: ReadonlyArray<Article> = [
     category: 'tech',
     title: {
       'pt-BR': 'Software que funciona quando a internet não ajuda',
-      en: 'Software that works when the internet does not help',
+      en: "Software that works when the internet doesn't help",
       es: 'Software que funciona cuando internet no ayuda',
     },
     excerpt: {
@@ -78,7 +78,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'A primeira decisão é o peso. Cada imagem, cada fonte e cada biblioteca entram na conta de quem paga pelo dado e espera o download. Por isso as páginas da Maiyu saem do servidor já montadas, carregam só o que a tela precisa e deixam o resto para depois. Foto grande só chega acompanhada de versões menores, para o aparelho que não precisa dela inteira.',
-          en: 'The first decision is weight. Every image, every font and every library lands on the bill of whoever pays for data and waits for the download. That is why Maiyu pages leave the server already assembled, load only what the screen needs and leave the rest for later. A large photo only ships with smaller versions, for the device that does not need all of it.',
+          en: "The first decision is weight. Every image, every font and every library lands on the bill of whoever pays for data and waits for the download. That's why Maiyu pages leave the server already assembled, load only what the screen needs and leave the rest for later. A large photo only ships with smaller versions, for the device that doesn't need all of it.",
           es: 'La primera decisión es el peso. Cada imagen, cada fuente y cada biblioteca entran en la cuenta de quien paga por los datos y espera la descarga. Por eso las páginas de Maiyu salen del servidor ya armadas, cargan solo lo que la pantalla necesita y dejan el resto para después. Una foto grande solo llega con versiones menores, para el aparato que no la necesita entera.',
         },
       },
@@ -104,7 +104,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Nem todo produto pode funcionar sem rede, e não adianta fingir que pode. Onde faz sentido, o produto é instalável no aparelho e guarda o que já carregou. O Curupira, que reúne o cronograma da coleta de lixo e a denúncia ambiental, é um app instalável por esse motivo: o morador não precisa começar do zero a cada vez que o sinal volta.',
-          en: 'Not every product can work without a network, and pretending otherwise does not help. Where it makes sense, the product can be installed on the device and keeps what it already loaded. Curupira, which brings together the waste collection schedule and environmental reporting, is an installable app for that reason: residents do not have to start from scratch every time the signal returns.',
+          en: "Not every product can work without a network, and pretending otherwise doesn't help. Where it makes sense, the product can be installed on the device and keeps what it already loaded. Curupira, which brings together the waste collection schedule and environmental reporting, is an installable app for that reason: residents don't have to start from scratch every time the signal returns.",
           es: 'No todo producto puede funcionar sin red, y no sirve fingir que sí. Donde tiene sentido, el producto se instala en el aparato y guarda lo que ya cargó. Curupira, que reúne el calendario de recolección de basura y la denuncia ambiental, es una app instalable por ese motivo: el vecino no empieza de cero cada vez que vuelve la señal.',
         },
       },
@@ -113,7 +113,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Onde não dá, o cuidado é outro: dizer com clareza o que aconteceu. Um formulário que falha precisa guardar o que a pessoa digitou e explicar o que fazer em seguida. Um botão não pode girar para sempre sem dizer nada.',
-          en: 'Where it cannot, the care is different: say clearly what happened. A form that fails has to keep what the person typed and explain what to do next. A button cannot spin forever without saying anything.',
+          en: "Where it can't, the care is different: say clearly what happened. A form that fails has to keep what the person typed and explain what to do next. A button can't spin forever without saying anything.",
           es: 'Donde no se puede, el cuidado es otro: decir con claridad lo que pasó. Un formulario que falla tiene que guardar lo que la persona escribió y explicar qué hacer a continuación. Un botón no puede girar para siempre sin decir nada.',
         },
       },
@@ -130,7 +130,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Testamos em tela pequena, com processador modesto e rede estrangulada, porque é assim que muita gente vai usar. Contraste alto, alvo de toque grande e texto legível ao sol entram na mesma conta, já que o celular costuma estar na rua.',
-          en: 'We test on small screens, modest processors and throttled networks, because that is how many people will use it. High contrast, large touch targets and text readable in the sun belong to the same list, since the phone is usually outdoors.',
+          en: "We test on small screens, modest processors and throttled networks, because that's how many people will use it. High contrast, large touch targets and text readable in the sun belong to the same list, since the phone is usually outdoors.",
           es: 'Probamos en pantalla pequeña, con procesador modesto y red limitada, porque así lo va a usar mucha gente. Contraste alto, áreas de toque grandes y texto legible al sol entran en la misma cuenta, ya que el celular suele estar en la calle.',
         },
       },
@@ -139,7 +139,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Nada disso é tecnologia rara. É escolha: gastar o tempo de engenharia onde o usuário sente, e não onde o portfólio brilha. Quem vive com a rede lenta sabe o valor de uma página leve, e a nossa equipe, feita de gente daqui, projeta assim desde o primeiro rascunho.',
-          en: 'None of this is rare technology. It is a choice: spend engineering time where the user feels it, not where the portfolio shines. People who live with a slow network know the value of a light page, and our team, made of people from here, designs this way from the first sketch.',
+          en: "None of this is rare technology. It's a choice: spend engineering time where the user feels it, not where the portfolio shines. People who live with a slow network know the value of a light page, and our team, made of people from here, designs this way from the first sketch.",
           es: 'Nada de esto es tecnología rara. Es una elección: gastar el tiempo de ingeniería donde el usuario lo siente, y no donde brilla el portafolio. Quien vive con la red lenta sabe el valor de una página liviana, y nuestro equipo, hecho de gente de aquí, diseña así desde el primer borrador.',
         },
       },
@@ -189,7 +189,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Os sites e sistemas da Maiyu nascem em três línguas. Não é um botão que passa o texto por um tradutor automático. Cada frase é escrita ou revisada na língua em que será lida, porque o tom de uma instrução muda de uma língua para outra, e uma mensagem de erro mal traduzida confunde mais do que ajuda.',
-          en: 'Maiyu sites and systems are born in three languages. It is not a button that runs the text through an automatic translator. Each sentence is written or reviewed in the language in which it will be read, because the tone of an instruction changes from one language to another, and a badly translated error message confuses more than it helps.',
+          en: "Maiyu sites and systems are born in three languages. It isn't a button that runs the text through an automatic translator. Each sentence is written or reviewed in the language in which it will be read, because the tone of an instruction changes from one language to another, and a badly translated error message confuses more than it helps.",
           es: 'Los sitios y sistemas de Maiyu nacen en tres lenguas. No es un botón que pasa el texto por un traductor automático. Cada frase se escribe o se revisa en la lengua en que será leída, porque el tono de una instrucción cambia de una lengua a otra, y un mensaje de error mal traducido confunde más de lo que ayuda.',
         },
       },
@@ -198,7 +198,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'A língua também aparece no endereço. Cada idioma tem o seu caminho, a página diz em qual língua está, e quem compartilha um link compartilha na língua certa. Parece detalhe, mas é o que faz a pessoa voltar à mesma página no mesmo idioma.',
-          en: 'The language also shows up in the address. Each language has its own path, the page says which language it is in, and whoever shares a link shares it in the right language. It sounds like a detail, but it is what brings a person back to the same page in the same language.',
+          en: "The language also shows up in the address. Each language has its own path, the page says which language it's in, and whoever shares a link shares it in the right language. It sounds like a detail, but it's what brings a person back to the same page in the same language.",
           es: 'La lengua también aparece en la dirección. Cada idioma tiene su propia ruta, la página dice en qué lengua está, y quien comparte un enlace lo comparte en la lengua correcta. Parece un detalle, pero es lo que hace que la persona vuelva a la misma página en el mismo idioma.',
         },
       },
@@ -232,7 +232,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Há línguas que não cabem nessas três. Os povos da região têm língua própria, e muitos avisos, documentos e nomes pedem espaço nela. Não colocamos uma língua indígena num produto por enfeite, e também não a traduzimos por conta própria.',
-          en: 'Some languages do not fit in those three. The peoples of the region have their own languages, and many notices, documents and names ask for room in them. We do not put an indigenous language in a product as decoration, and we do not translate it on our own either.',
+          en: "Some languages don't fit in those three. The peoples of the region have their own languages, and many notices, documents and names ask for room in them. We don't put an indigenous language in a product as decoration, and we don't translate it on our own either.",
           es: 'Hay lenguas que no caben en esas tres. Los pueblos de la región tienen lengua propia, y muchos avisos, documentos y nombres piden espacio en ella. No ponemos una lengua indígena en un producto como adorno, y tampoco la traducimos por cuenta propia.',
         },
       },
@@ -344,7 +344,7 @@ export const articles: ReadonlyArray<Article> = [
         kind: 'heading',
         text: {
           'pt-BR': 'Respeito não é adjetivo',
-          en: 'Respect is not an adjective',
+          en: "Respect isn't an adjective",
           es: 'El respeto no es un adjetivo',
         },
       },
@@ -353,7 +353,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Respeito à cultura, à língua e aos dados de cada povo é prática: perguntar antes, mostrar o que vai ser feito, aceitar o não e ajustar. Quando uma imagem, um nome ou um texto envolve um povo, quem decide é o povo. Por isso não usamos rosto de pessoa indígena em foto de banco: quem aparece precisa ter consentido.',
-          en: 'Respect for the culture, language and data of each people is practice: ask first, show what will be done, accept a no and adjust. When an image, a name or a text involves a people, the people decide. That is why we do not use the faces of indigenous people from stock photos: whoever appears must have consented.',
+          en: "Respect for the culture, language and data of each people is practice: ask first, show what will be done, accept a no and adjust. When an image, a name or a text involves a people, the people decide. That's why we don't use the faces of indigenous people from stock photos: whoever appears must have consented.",
           es: 'El respeto a la cultura, la lengua y los datos de cada pueblo es práctica: preguntar antes, mostrar lo que se va a hacer, aceptar el no y ajustar. Cuando una imagen, un nombre o un texto involucra a un pueblo, quien decide es el pueblo. Por eso no usamos rostros de personas indígenas de bancos de fotos: quien aparece tiene que haber consentido.',
         },
       },
@@ -362,7 +362,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Tecnologia feita com os povos dá mais trabalho no começo. É também a única que continua de pé depois que a gente vai embora.',
-          en: 'Technology made with peoples takes more work at the start. It is also the only kind that is still standing after we leave.',
+          en: "Technology made with peoples takes more work at the start. It's also the only kind that's still standing after we leave.",
           es: 'La tecnología hecha con los pueblos da más trabajo al comienzo. Es también la única que sigue en pie después de que nos vamos.',
         },
       },
@@ -396,7 +396,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Quando dizemos que somos a primeira consultoria e desenvolvedora de software sob demanda da tríplice fronteira, a pergunta que vem é: por que aqui? A resposta curta é que o problema está aqui, e quem o conhece mora aqui.',
-          en: 'When we say we are the first consultancy and on-demand software developer on the triple border, the question that follows is: why here? The short answer is that the problem is here, and the people who know it live here.',
+          en: "When we say we're the first consultancy and on-demand software developer on the triple border, the question that follows is: why here? The short answer is that the problem is here, and the people who know it live here.",
           es: 'Cuando decimos que somos la primera consultora y desarrolladora de software a pedido de la triple frontera, la pregunta que sigue es: ¿por qué aquí? La respuesta corta es que el problema está aquí, y quien lo conoce vive aquí.',
         },
       },
@@ -448,7 +448,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Significa também que quem quer trabalhar com tecnologia não precisa sair da região para isso. Uma empresa de software aqui abre um caminho de trabalho para quem quer ficar.',
-          en: 'It also means that people who want to work in technology do not have to leave the region to do it. A software company here opens a path of work for those who want to stay.',
+          en: "It also means that people who want to work in technology don't have to leave the region to do it. A software company here opens a path of work for those who want to stay.",
           es: 'Significa también que quien quiere trabajar con tecnología no necesita salir de la región para hacerlo. Una empresa de software aquí abre un camino de trabajo para quien quiere quedarse.',
         },
       },
@@ -474,7 +474,7 @@ export const articles: ReadonlyArray<Article> = [
         text: {
           'pt-BR':
             'Ser a primeira traz uma responsabilidade: outras pessoas daqui vão olhar o que fazemos para decidir se vale tentar. Queremos que a resposta seja sim.',
-          en: 'Being first carries a responsibility: other people here will look at what we do to decide whether it is worth trying. We want the answer to be yes.',
+          en: "Being first carries a responsibility: other people here will look at what we do to decide whether it's worth trying. We want the answer to be yes.",
           es: 'Ser la primera trae una responsabilidad: otras personas de aquí van a mirar lo que hacemos para decidir si vale la pena intentarlo. Queremos que la respuesta sea sí.',
         },
       },
