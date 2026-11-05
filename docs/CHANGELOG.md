@@ -17,6 +17,9 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- Endereço que não existe passa a responder 404 de verdade, mantendo a tela "Você saiu da trilha" com menu e rodapé.
+- Saem da vitrine o serviço de aplicativos, que nenhum produto do portfólio usa, e a caixa de newsletter do diário, que não enviava e-mail.
+
 - Cada projeto mostra se está no ar ou em validação: Aporta, Curupira e Jogos Estudantis aparecem como "Em validação", e ADACAIBS e Maiyu Academy como "No ar".
 
 - O Maiyu Academy, plataforma gratuita de ensino de tecnologia da própria Maiyu, entra no portfólio e na home entre os projetos no ar.
