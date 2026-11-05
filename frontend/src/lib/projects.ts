@@ -48,31 +48,6 @@ export const projects: ReadonlyArray<Project> = [
     featured: true,
   },
   {
-    slug: 'matiscraft',
-    title: 'MatisCraft',
-    client: {
-      en: 'Matis artisans cooperative',
-      'pt-BR': 'Cooperativa de artesãos Matis',
-      es: 'Cooperativa de artesanos Matis',
-    },
-    summary: {
-      en: 'E-commerce for indigenous handcraft from the Matis people.',
-      'pt-BR': 'E-commerce de artesanato indígena do povo Matis.',
-      es: 'E-commerce de artesanía indígena del pueblo Matis.',
-    },
-    description: {
-      en: 'An e-commerce platform for indigenous handcraft from the Matis people. Product catalogue, cart, order management and a back-office the artisans themselves can operate, direct market access, no middle layer.',
-      'pt-BR':
-        'Plataforma de e-commerce para artesanato indígena do povo Matis. Catálogo de produtos, carrinho, gestão de pedidos e back-office que os próprios artesãos operam, acesso direto ao mercado, sem camada intermediária.',
-      es: 'Plataforma de e-commerce para artesanía indígena del pueblo Matis. Catálogo de productos, carrito, gestión de pedidos y back-office que los propios artesanos operan, acceso directo al mercado, sin capa intermedia.',
-    },
-    image: '/images/matis.webp',
-    focus: 'left bottom',
-    tech: ['React', 'Fastify', 'Prisma', 'PostgreSQL', 'Tailwind CSS'],
-    url: 'https://matis.maiyu.com.br',
-    year: '2024',
-  },
-  {
     slug: 'aporta',
     title: 'Aporta',
     client: {
