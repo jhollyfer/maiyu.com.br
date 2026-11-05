@@ -42,14 +42,7 @@ export function Hero(): React.JSX.Element {
             'mt-10 grid gap-8 delay-300 md:grid-cols-12 md:gap-12',
           )}
         >
-          <p className="flex items-start gap-3 text-small font-semibold text-foreground/75 md:col-span-4">
-            <span
-              aria-hidden="true"
-              className="mt-1.5 size-2 shrink-0 rotate-45 bg-urucum"
-            />
-            {m.home_heroPlace()}
-          </p>
-          <div className="flex flex-col items-start gap-6 md:col-span-8">
+          <div className="flex flex-col items-start gap-6 md:col-span-8 md:col-start-5">
             <p className="max-w-[48ch] font-serif text-lead leading-snug text-foreground/85">
               {m.home_heroDescription()}
             </p>
