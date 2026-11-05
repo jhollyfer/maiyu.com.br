@@ -48,6 +48,30 @@ export const projects: ReadonlyArray<Project> = [
     featured: true,
   },
   {
+    slug: 'academy',
+    title: 'Maiyu Academy',
+    client: {
+      en: 'A Maiyu initiative · Free technology education',
+      'pt-BR': 'Iniciativa da Maiyu · Ensino gratuito de tecnologia',
+      es: 'Iniciativa de Maiyu · Enseñanza gratuita de tecnología',
+    },
+    summary: {
+      en: 'Free technology courses, taught by people native to the Amazon.',
+      'pt-BR': 'Ensino gratuito de tecnologia, dado por quem é da Amazônia.',
+      es: 'Enseñanza gratuita de tecnología, a cargo de gente de la Amazonía.',
+    },
+    description: {
+      en: 'Our own initiative: a free platform for learning robotics and programming logic, for Indigenous and non-Indigenous students, in Portuguese, Spanish and English. Lessons stay open online, and in-person classes run in the Upper Solimões. The team that builds the platform is the one that teaches.',
+      'pt-BR':
+        'Uma iniciativa da própria Maiyu: plataforma gratuita para aprender robótica e lógica de programação, para indígenas e não indígenas, em português, espanhol e inglês. As aulas ficam abertas na plataforma, e as turmas presenciais acontecem no Alto Solimões. Quem constrói a plataforma é quem dá aula.',
+      es: 'Una iniciativa de la propia Maiyu: plataforma gratuita para aprender robótica y lógica de programación, para indígenas y no indígenas, en portugués, español e inglés. Las clases quedan abiertas en la plataforma, y los grupos presenciales funcionan en el Alto Solimões. Quien construye la plataforma es quien da clase.',
+    },
+    image: '/images/academy.webp',
+    tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
+    url: 'https://academy.maiyu.com.br',
+    year: '2026',
+  },
+  {
     slug: 'aporta',
     title: 'Aporta',
     client: {

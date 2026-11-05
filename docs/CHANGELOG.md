@@ -17,6 +17,8 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- O Maiyu Academy, plataforma gratuita de ensino de tecnologia da própria Maiyu, entra no portfólio e na home entre os projetos no ar.
+
 - O espanhol do site passa a tratar o visitante sempre por "usted", inclusive nas mensagens de erro dos formulários, e o inglês ganha contrações e frases mais naturais.
 
 - As datas do diário aparecem por extenso no idioma da página (8 de setembro de 2026), e não mais como 2026-09-08.
