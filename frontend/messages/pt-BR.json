@@ -131,7 +131,6 @@
   "error_retry": "Tentar de novo",
   "meta_description": "Software sob demanda e consultoria em tecnologia em Benjamin Constant, na tríplice fronteira com Tabatinga e Letícia. Feito por indígenas.",
   "meta_title": "Maiyu: software sob demanda no Alto Solimões",
-  "home_heroPlace": "Benjamin Constant, Amazonas. Tríplice fronteira Brasil, Peru e Colômbia.",
   "home_rootsTitle": "Somos indígenas e originários do Alto Solimões.",
   "home_rootsDesc": "A Maiyu nasceu em Benjamin Constant, onde o Brasil encontra o Peru e a Colômbia. Quem projeta, programa e atende aqui é gente da região: crescemos entre o rio, a mata e as aldeias, e levamos esse contexto para cada sistema que construímos.",
   "home_rootsFact1Title": "A primeira",
@@ -183,7 +182,6 @@
   "blogArticle_author": "Equipe Maiyu",
   "blogArticle_moreTitle": "Continue lendo",
   "blog_readArticle": "Ler o artigo",
-  "portfolio_clientLabel": "Cliente",
   "portfolio_yearLabel": "Ano",
   "portfolio_stackLabel": "Tecnologias"
 }

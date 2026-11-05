@@ -131,7 +131,6 @@
   "error_retry": "Try again",
   "meta_description": "Custom software and tech consulting in Benjamin Constant, on the triple border near Tabatinga and Leticia. Built by Indigenous people.",
   "meta_title": "Maiyu: custom software in the Upper Solimões",
-  "home_heroPlace": "Benjamin Constant, Amazonas. The triple border of Brazil, Peru and Colombia.",
   "home_rootsTitle": "We are Indigenous and native to the Upper Solimões.",
   "home_rootsDesc": "Maiyu was born in Benjamin Constant, where Brazil meets Peru and Colombia. The people who design, code and answer here are from the region: we grew up between the river, the forest and the villages, and we bring that context to every system we build.",
   "home_rootsFact1Title": "The first",
@@ -183,7 +182,6 @@
   "blogArticle_author": "Maiyu team",
   "blogArticle_moreTitle": "Keep reading",
   "blog_readArticle": "Read the article",
-  "portfolio_clientLabel": "Client",
   "portfolio_yearLabel": "Year",
   "portfolio_stackLabel": "Stack"
 }

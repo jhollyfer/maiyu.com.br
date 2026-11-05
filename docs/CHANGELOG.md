@@ -17,6 +17,8 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- A capa deixa de mostrar a linha de lugar, e os projetos deixam de mostrar o rótulo de cliente.
+
 - Os títulos voltam à Raleway, a fonte da marca, no lugar da serifa.
 
 - Novo visual editorial: fotos de Benjamin Constant, do porto e de Letícia com crédito, a faixa de trançado como divisor entre capítulos, no lugar do céu ilustrado.

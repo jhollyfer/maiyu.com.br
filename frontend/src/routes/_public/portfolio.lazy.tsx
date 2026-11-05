@@ -55,12 +55,10 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
   )
 }
 
-/** Cliente, ano e tecnologias: a ficha que acompanha todo projeto. */
+/** Ano e tecnologias: a ficha que acompanha todo projeto. */
 function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
   return (
     <dl className="grid grid-cols-[5.5rem_1fr] gap-x-6 gap-y-4 border-t border-border pt-6 text-small">
-      <dt className="text-muted-foreground">{m.portfolio_clientLabel()}</dt>
-      <dd>{localized(project.client)}</dd>
       <dt className="text-muted-foreground">{m.portfolio_yearLabel()}</dt>
       <dd className="flex items-center gap-2">
         <span aria-hidden="true" className="size-2 rotate-45 bg-urucum" />
