@@ -37,6 +37,9 @@ Maiyu), carreiras como banco de talentos sem vaga nem benefício inventado, tít
 por rota e a `og-image.png` nova. A foto da foz do Javari não baixou (o Commons limitou e depois
 respondeu 404), e ficou de fora.
 
+Depois do redesign, a vitrine perdeu o serviço de aplicativos e a newsletter, que prometiam o que a Maiyu não
+entrega, e a rota-curinga passou a responder 404 de verdade (`routes/_public/$.tsx`).
+
 ## Próximos passos
 
 1. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
