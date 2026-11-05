@@ -13,7 +13,7 @@ import { Input } from '#/components/ui/input'
 import { articles, featuredArticle } from '#/lib/articles'
 import { ARTICLE_CATEGORIES } from '#/lib/entity'
 import type { ArticleCategory } from '#/lib/entity'
-import { localized } from '#/lib/i18n'
+import { localized, localizedDate } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
@@ -89,7 +89,7 @@ function RouteComponent(): React.JSX.Element {
                 />
                 {ARTICLE_CATEGORY_LABELS[featuredArticle.category]()}
                 <time dateTime={featuredArticle.date}>
-                  {featuredArticle.date}
+                  {localizedDate(featuredArticle.date)}
                 </time>
               </p>
               <h2 className="text-h1 text-balance">
@@ -173,7 +173,9 @@ function RouteComponent(): React.JSX.Element {
                   <p className="text-small text-muted-foreground md:col-span-3">
                     {ARTICLE_CATEGORY_LABELS[article.category]()}
                     <span className="mt-1 block">
-                      <time dateTime={article.date}>{article.date}</time>
+                      <time dateTime={article.date}>
+                        {localizedDate(article.date)}
+                      </time>
                       {', '}
                       {localized(article.readTime)}
                     </span>

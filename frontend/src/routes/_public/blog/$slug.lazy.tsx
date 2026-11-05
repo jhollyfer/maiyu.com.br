@@ -23,7 +23,7 @@ import {
 } from '#/components/ui/breadcrumb'
 import { articles } from '#/lib/articles'
 import type { ArticleBlock } from '#/lib/articles'
-import { localized } from '#/lib/i18n'
+import { localized, localizedDate } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
@@ -150,7 +150,7 @@ function RouteComponent(): React.JSX.Element {
               <span className="block text-body font-medium text-foreground">
                 {m.blogArticle_author()}
               </span>
-              <time dateTime={article.date}>{article.date}</time>
+              <time dateTime={article.date}>{localizedDate(article.date)}</time>
               {', '}
               {localized(article.readTime)}
             </p>
