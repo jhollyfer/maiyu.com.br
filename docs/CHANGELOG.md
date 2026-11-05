@@ -17,6 +17,8 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- Textos do site revisados nos três idiomas: menos repetição, sem frases de efeito vazias, e o MatisCraft sai do portfólio.
+
 - A capa deixa de mostrar a linha de lugar, e os projetos deixam de mostrar o rótulo de cliente.
 
 - Os títulos voltam à Raleway, a fonte da marca, no lugar da serifa.
