@@ -49,6 +49,7 @@
     "#commands/*": "./commands/*.js",
     "#database/*": "./database/*.js",
     "#tests/*": "./tests/*.js",
+    "#scripts/*": "./scripts/*.js",
     "#start/*": "./start/*.js",
     "#config/*": "./config/*.js"
   },

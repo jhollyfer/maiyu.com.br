@@ -31,6 +31,9 @@ RB.1 começou: o sync gravou o kit do backend em `backend/` (`@maiyu/backend`), 
 `.prettierignore` e o `@swc/core` liberado no `allowBuilds`. O backend ainda não compila: o kit importa
 peças que não traz (entidade e repository de usuário, model e migration de `storages`, factories,
 fixtures de teste, `config/openapi.ts`, `pattern-check.config.ts`), listadas à regente.
+Já escritos os pontos de extensão do contrato (`config/openapi.ts`, `app/core/openapi/response.ts`,
+`scripts/pattern-check.config.ts`, alias `#scripts/*`), o `docker-compose.yml` nas portas 5440, 9016 e
+9017, o `.env.example` com os valores do projeto e `docs/ENV.md` e `docs/ARCHITECTURE.md` com a API.
 
 Antes, a vitrine perdeu o serviço de aplicativos e a newsletter, e a rota-curinga passou a responder
 404 de verdade (`routes/_public/$.tsx`).
