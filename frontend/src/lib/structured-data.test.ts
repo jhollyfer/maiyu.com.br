@@ -71,4 +71,18 @@ describe('jsonLdScript', () => {
       children: '{"@type":"Thing"}',
     })
   })
+
+  it('escapa o fechamento de script vindo de um campo do registro', () => {
+    const { children } = jsonLdScript({
+      '@type': 'Thing',
+      name: '</script><script>alert(1)</script>',
+    })
+
+    expect(children).not.toContain('</script')
+    expect(children).not.toContain('<')
+    expect(JSON.parse(children)).toEqual({
+      '@type': 'Thing',
+      name: '</script><script>alert(1)</script>',
+    })
+  })
 })

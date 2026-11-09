@@ -179,6 +179,10 @@ export function jsonLdScript(data: JsonLd): {
 } {
   return {
     type: 'application/ld+json',
-    children: JSON.stringify(data),
+    // JSON.stringify does not escape `<`, so a record field holding
+    // `</script>` would close the tag early and let the rest run as HTML.
+    // `\u003c` is the same character to a JSON parser and inert to the HTML one
+    // (_standards/frontend.md §9.7).
+    children: JSON.stringify(data).replaceAll('<', '\\u003c'),
   }
 }
