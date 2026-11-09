@@ -153,7 +153,7 @@ régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECIS
 | O quê | Onde se configura | Por quê |
 |---|---|---|
 | Recurso da API: *Base Directory* `/`, *Dockerfile Location* `/backend/Dockerfile-production`, *Watch Paths* `backend/**`, `shared/**`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` | painel do Coolify | a imagem constrói da raiz para ver o `shared/` e o lockfile único |
-| *Post-deployment command* da API: `node ace migration:run --force && node ace db:seed --force`; *Pre-deployment* vazio | painel do Coolify | o *Pre-deployment* roda no container que sai; o seed do dono é `firstOrCreate` e pode rodar a cada deploy |
+| *Post-deployment command* da API: `node ace migration:run --force && node ace db:seed` (o Lucid recusa `--force` no seed, `_standards/DECISIONS.md` #372); *Pre-deployment* vazio | painel do Coolify | o *Pre-deployment* roda no container que sai; o seed do dono é `firstOrCreate` e pode rodar a cada deploy |
 | Healthcheck da API: campo vazio no painel, vale o `HEALTHCHECK` da imagem em `/health-check` | painel do Coolify | `_standards/tooling.md` §8.3 |
 | Variáveis de runtime da API (`APP_KEY`, `DATABASE_URL`, `CORS_ORIGINS`, `COOKIE_DOMAIN`, `TRUSTED_PROXIES`, `STORAGE_*`, `SEED_OWNER_*`) | recurso da API no Coolify | nunca no repositório (`ENV.md` §1.1) |
 | Postgres sem porta pública, URL interna no `DATABASE_URL` | recurso de banco do Coolify | `_standards/tooling.md` §8.3 |

@@ -27,7 +27,7 @@ export const ACCESS_TOKEN_TABLE = 'auth_access_tokens'
  * time) come together from the mixin: split, they leave a creation path that saves the
  * plain-text password.
  */
-const AuthFinder = withAuthFinder(() => hash.use('scrypt'), {
+const AuthFinder = withAuthFinder(() => hash.use('argon'), {
   uids: ['email'],
   passwordColumnName: 'password',
 })

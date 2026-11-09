@@ -8,15 +8,15 @@ import {
 } from './storage.repository.ts'
 
 import { Storage, type StorageProps } from '#domain/storage/storage.entity'
-import { MemoryPagination } from '#core/memory-pagination'
+import MemoryRows from '#core/memory-rows'
 
 /** The sign of the comparison by sort direction. */
 const SIGN = { asc: 1, desc: -1 } satisfies Record<SortDirection, number>
 
 /**
  * The second real implementation, for the use case unit test
- * (`_standards/domain.md` §5.3). It keeps copies: the test does not change the "database"
- * by reference.
+ * (`_standards/domain.md` §5.3). It keeps copies that keep the class (`MemoryRows.copy`):
+ * the test does not change the "database" by reference.
  */
 export class StorageMemoryRepository extends StorageRepository {
   private readonly rows = new Map<string, StorageProps>()
@@ -32,7 +32,7 @@ export class StorageMemoryRepository extends StorageRepository {
     const props = this.rows.get(id)
     if (!props || props.deletedAt) return null
 
-    return Storage.restore(structuredClone(props))
+    return Storage.restore(MemoryRows.copy(props))
   }
 
   async detail(id: string): Promise<StorageFileRead | null> {
@@ -69,7 +69,7 @@ export class StorageMemoryRepository extends StorageRepository {
   }
 
   async save(storage: Storage): Promise<void> {
-    this.rows.set(storage.id, structuredClone(storage.snapshot()))
+    this.rows.set(storage.id, MemoryRows.copy(storage.snapshot()))
   }
 
   async delete(storage: Storage): Promise<void> {
@@ -93,7 +93,7 @@ export class StorageMemoryRepository extends StorageRepository {
           ),
       )
       .sort((a, b) => sign * this.compare(a, b, criteria.sort))
-    const page = MemoryPagination.slice(all, criteria.page, criteria.perPage)
+    const page = MemoryRows.slice(all, criteria.page, criteria.perPage)
 
     return {
       meta: page.meta,
