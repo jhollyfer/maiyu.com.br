@@ -25,3 +25,6 @@ allowBuilds:
   # Native compiler of `@poppinss/ts-exec`, which runs the backend TypeScript in development,
   # in the tests and in `node ace build`. Without the platform binary no `ace` command boots.
   '@swc/core': true
+  # Native build of the Argon2id hash that `config/hash.ts` uses for the owner's password
+  # (`_standards/tooling.md` §0.1); without the compiled binding the hasher does not load.
+  argon2: true
