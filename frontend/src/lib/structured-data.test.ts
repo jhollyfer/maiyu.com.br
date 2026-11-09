@@ -33,17 +33,23 @@ describe('breadcrumbListJsonLd', () => {
   })
 
   it('numera a partir de um, com a home no primeiro degrau', () => {
-    const [list] = breadcrumbListJsonLd(HOME, [
+    const data = breadcrumbListJsonLd(HOME, [
       { name: 'Diário', url: 'https://maiyu.com.br/blog' },
     ])
 
-    expect(list.itemListElement).toEqual([
-      { '@type': 'ListItem', position: 1, name: 'Início', item: HOME.url },
+    // Na lista inteira, e não em `data[0]`: `toMatchObject` com array confere também que é um
+    // bloco só, e o índice tiparia `undefined` com `noUncheckedIndexedAccess`.
+    expect(data).toMatchObject([
       {
-        '@type': 'ListItem',
-        position: 2,
-        name: 'Diário',
-        item: 'https://maiyu.com.br/blog',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Início', item: HOME.url },
+          {
+            '@type': 'ListItem',
+            position: 2,
+            name: 'Diário',
+            item: 'https://maiyu.com.br/blog',
+          },
+        ],
       },
     ])
   })

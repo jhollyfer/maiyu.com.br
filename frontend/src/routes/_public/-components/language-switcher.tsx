@@ -8,19 +8,22 @@ import {
   DropdownMenuTrigger,
 } from '#/components/ui/dropdown-menu'
 import { m } from '#/paraglide/messages'
-import { getLocale, setLocale } from '#/paraglide/runtime'
+import { getLocale, locales, setLocale } from '#/paraglide/runtime'
 import type { Locale } from '#/paraglide/runtime'
 
 /**
  * As três línguas do site. `native` fica no próprio idioma, e não traduzido:
  * quem procura o espanhol procura a palavra "Español", não "Espanhol".
+ *
+ * Lookup por `Locale`, e não lista com `find`: a chave é o idioma, então o atual
+ * sai sem busca nem fallback, e um idioma novo no `project.inlang` sem rótulo
+ * aqui reprova no `satisfies`. A ordem do menu é a de `locales`.
  */
-const OPTIONS: ReadonlyArray<{ code: Locale; label: string; native: string }> =
-  [
-    { code: 'pt-BR', label: 'PT', native: 'Português' },
-    { code: 'en', label: 'EN', native: 'English' },
-    { code: 'es', label: 'ES', native: 'Español' },
-  ]
+const OPTIONS = {
+  'pt-BR': { label: 'PT', native: 'Português' },
+  en: { label: 'EN', native: 'English' },
+  es: { label: 'ES', native: 'Español' },
+} satisfies Record<Locale, { label: string; native: string }>
 
 /**
  * Troca o idioma do site.
@@ -35,7 +38,7 @@ const OPTIONS: ReadonlyArray<{ code: Locale; label: string; native: string }> =
  */
 export function LanguageSwitcher(): React.JSX.Element {
   const locale = getLocale()
-  const current = OPTIONS.find((option) => option.code === locale) ?? OPTIONS[0]
+  const current = OPTIONS[locale]
 
   return (
     <DropdownMenu>
@@ -56,16 +59,16 @@ export function LanguageSwitcher(): React.JSX.Element {
         sideOffset={10}
         className="min-w-[180px] rounded-2xl border border-border bg-background/95 p-1.5 backdrop-blur-xl"
       >
-        {OPTIONS.map((option) => (
+        {locales.map((code) => (
           <DropdownMenuItem
-            key={option.code}
-            data-current={option.code === locale}
-            onClick={() => setLocale(option.code)}
+            key={code}
+            data-current={code === locale}
+            onClick={() => setLocale(code)}
             className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[current=true]:bg-foreground/5 data-[current=true]:text-foreground"
           >
-            <span>{option.native}</span>
+            <span>{OPTIONS[code].native}</span>
             <span className="text-[10px] font-medium tracking-[0.22em] uppercase">
-              {option.label}
+              {OPTIONS[code].label}
             </span>
           </DropdownMenuItem>
         ))}

@@ -3,13 +3,7 @@
   // runtime não resolvem - passo documentado em `examples/vite-nitro-plugin`.
   "extends": "nitro/tsconfig",
 
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "eslint.config.js",
-    "prettier.config.js",
-    "vite.config.js"
-  ],
+  "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js"],
 
   "compilerOptions": {
     "target": "ES2022",
@@ -28,7 +22,10 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "allowJs": true,
-    "verbatimModuleSyntax": true,
+    // Desligada por ordem do TanStack Start: ligada, ela pode vazar o bundle de servidor no do
+    // cliente (_doc-lib/tanstack-start.md#build-from-scratch). É a única flag do piso que o
+    // perfil frontend desliga (_standards/tooling.md §3).
+    "verbatimModuleSyntax": false,
     "noEmit": true,
 
     /* Linting */
@@ -37,6 +34,9 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
     "noUncheckedSideEffectImports": true
   }
 }

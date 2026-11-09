@@ -28,7 +28,7 @@ const ITEMS = [
 ] as const
 
 /** O índice como passo tipado, para a cena só aceitar o que existe. */
-const STEPS: ReadonlyArray<VisionStep> = [0, 1, 2]
+const STEPS: readonly [VisionStep, ...VisionStep[]] = [0, 1, 2]
 
 /**
  * "A visão": três passos numerados à esquerda e o palco navy à direita, preso
@@ -45,7 +45,7 @@ const STEPS: ReadonlyArray<VisionStep> = [0, 1, 2]
  */
 export function Vision(): React.JSX.Element {
   const ref = React.useRef<HTMLElement>(null)
-  const step = STEPS[useScrollStep(ref, ITEMS.length)]
+  const step = useScrollStep(ref, STEPS)
   const current = ITEMS[step]
 
   return (
