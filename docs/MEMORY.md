@@ -32,7 +32,9 @@ frontend virou `@maiyu/frontend` e o pnpm subiu para a 12. O sync gravou o kit d
 5440, 9016 e 9017 e o `.env.example` com os valores do projeto. Os dois pacotes esperam a próxima
 leva do kit: o `check` do `shared/` reprova em três testes do próprio kit, e o backend não compila
 porque o kit importa peças que não traz (lacunas 1 a 16, com a regente geral). Por ordem da regente,
-nenhuma lacuna se escreve no projeto.
+nenhuma lacuna se escreve no projeto. O RB.3 fica no que o kit traz (seeder do dono e as três rotas de
+sessão); rota de conta é domínio e vai para a R2.10. O MinIO local da sessão é ambiente declarado: e2e
+de storage rodada contra ele não conta como prova de PR até a régua escolher o substituto.
 
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
