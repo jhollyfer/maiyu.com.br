@@ -54,6 +54,75 @@ reescrever o que ele já faz — e é o erro que a seção "Integração" abaixo
 **Skills:** `vite-bundle-optimization`, `perf-web-optimization`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 Estão marcados como tal.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Vite: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### TypeScript
+
+- **`isolatedModules: true` no `compilerOptions`.** A página exige a flag para o TS avisar do que não funciona em transpilação isolada, que é como o Vite transpila. [`#features`](https://vite.dev/guide/features)
+- **Import e export só de tipo usam `import type`/`export type`.** Evita tipo empacotado por engano no bundle. [`#features`](https://vite.dev/guide/features)
+- **Checagem de tipo fica fora do pipeline do Vite: `tsc --noEmit` no build/CI, e em dev num processo à parte.** O Vite só transpila; a página recomenda separar a análise estática. [`#features`](https://vite.dev/guide/features)
+- **`compilerOptions.types` lista os tipos globais (`vite/client` incluído).** Recomendado desde o TS 5.9; com a lista, só esses pacotes entram no escopo global. [`#features`](https://vite.dev/guide/features)
+- **`vite-env.d.ts` não tem `import`.** Import quebra o augmentation de `ImportMetaEnv`. [`#env-and-mode`](https://vite.dev/guide/env-and-mode)
+
+### Config
+
+- **Config em ESM (arquivo que o Node detecta como ESM) com `defineConfig`.** É o formato pedido para usar sintaxe de módulo e ter IntelliSense. [`#config`](https://vite.dev/config/)
+- **Em config condicional, compare `isSsrBuild` e `isPreview` explicitamente com `true`/`false`.** Algumas ferramentas que carregam o config passam `undefined`. [`#config`](https://vite.dev/config/)
+- **`loadEnv` no config só quando o `.env` precisa mudar o próprio config (porta, plugin, `define`).** Para só expor valor à aplicação nada precisa ser chamado. [`#config`](https://vite.dev/config/)
+- **Config CommonJS que dá `require` no Vite troca por `import()` dinâmico.** O Vite é ESM e o `require` falha. [`#troubleshooting`](https://vite.dev/guide/troubleshooting)
+- **Versão do Vite de dependência transitiva se força por `overrides` do gerenciador (pnpm overrides), não por `resolutions`.** É o mecanismo que a página recomenda, suportado por todos os gerenciadores. [`#índice`](https://vite.dev/guide/), [`#troubleshooting`](https://vite.dev/guide/troubleshooting)
+
+### Variáveis de ambiente
+
+- **Variável `VITE_*` nunca leva segredo (chave de API, token), e variável que não deve chegar ao cliente não leva o prefixo.** Tudo com o prefixo vai para o bundle do cliente. [`#env-and-mode`](https://vite.dev/guide/env-and-mode)
+- **Valor de `import.meta.env` é string: converta para o tipo certo antes de usar.** O Vite não converte. [`#env-and-mode`](https://vite.dev/guide/env-and-mode)
+- **`*.local` entra no `.gitignore`.** São os arquivos de ambiente locais, que não vão para o git. [`#env-and-mode`](https://vite.dev/guide/env-and-mode)
+- **Código só de dev fica atrás de `import.meta.env.DEV`/`PROD`.** O ramo morto sai no tree-shaking do build de produção. [`#env-and-mode`](https://vite.dev/guide/env-and-mode)
+
+### Imports, assets e pré-bundle
+
+- **`import.meta.glob` recebe só literal, com caminho relativo (`./`), absoluto (`/`) ou alias.** O padrão é analisado em build. [`#features`](https://vite.dev/guide/features)
+- **Import dinâmico com variável começa com `./`, `../` ou `#`, termina com extensão e, na própria pasta, traz um prefixo de nome.** Fora disso não é empacotado. [`#features`](https://vite.dev/guide/features)
+- **Worker se cria com `new Worker(new URL('./w.js', import.meta.url), { type: 'module' })`.** É a forma recomendada, mais próxima do padrão. [`#features`](https://vite.dev/guide/features)
+- **CSS como string usa `?inline`.** O import padrão de CSS não devolve o conteúdo. [`#features`](https://vite.dev/guide/features)
+- **CSS Modules com Lightning CSS se configura em `css.lightningcss.cssModules`, não em `css.modules`.** `css.modules` é do PostCSS. [`#features`](https://vite.dev/guide/features)
+- **Pré-processador de CSS usado é instalado como dependência.** O Vite não traz o compilador. [`#features`](https://vite.dev/guide/features), [`#api-javascript`](https://vite.dev/guide/api-javascript)
+- **Asset de `public/` se referencia por caminho absoluto da raiz (`/icon.png`).** A pasta é servida na raiz, sem hash. [`#assets`](https://vite.dev/guide/assets)
+- **`new URL(..., import.meta.url)` recebe string estática.** Senão o código fica como está e pode falhar em runtime. [`#assets`](https://vite.dev/guide/assets)
+- **Dependência grande ou CommonJS entra em `optimizeDeps.include`; pequena e já ESM pode ir para `exclude`.** É o critério que a página dá para o pré-bundle. [`#dep-pre-bundling`](https://vite.dev/guide/dep-pre-bundling)
+- **Evite módulo do Node no código do navegador.** O Vite o externaliza e o bundle cresce com polyfill. [`#troubleshooting`](https://vite.dev/guide/troubleshooting)
+- **Import respeita a caixa exata do nome do arquivo.** Caixa errada passa em sistema case-insensitive e quebra no Linux. [`#troubleshooting`](https://vite.dev/guide/troubleshooting)
+
+### Desempenho
+
+- **Evite barrel file: importe a API direto do arquivo dela.** Barrel carrega arquivos além do necessário e deixa a página inicial mais lenta. [`#performance`](https://vite.dev/guide/performance)
+- **Dependência grande usada só em caso específico entra por import dinâmico.** Reduz o tempo de partida. [`#performance`](https://vite.dev/guide/performance)
+- **SVG se importa como string ou URL, não como componente de UI; CSS puro antes de Sass/Less.** Menos transformação para o dev server. [`#performance`](https://vite.dev/guide/performance)
+- **`server.warmup` só para arquivo usado com frequência.** Aquecer demais sobrecarrega o dev server na partida. [`#performance`](https://vite.dev/guide/performance)
+- **Lista de `resolve.extensions` reduzida continua cobrindo o `node_modules`.** A página manda conferir antes de cortar. [`#performance`](https://vite.dev/guide/performance)
+
+### Build, deploy e SSR
+
+- **`vite preview` não é servidor de produção.** Serve só para conferir o build localmente. [`#cli`](https://vite.dev/guide/cli), [`#static-deploy`](https://vite.dev/guide/static-deploy)
+- **O HTML de entrada sai com `Cache-Control: no-cache`.** Depois de um deploy, HTML em cache aponta para chunk antigo já apagado e o import falha. [`#build`](https://vite.dev/guide/build)
+- **Aplicação com SSR usa um framework ou plugin de SSR de alto nível, não o setup manual.** A página manda olhar essas ferramentas primeiro quando o objetivo é aplicação. [`#ssr`](https://vite.dev/guide/ssr)
+- **`build.rollupOptions` e `worker.rollupOptions` viraram `rolldownOptions`; `manualChunks` em forma de função está depreciado.** O Vite 8 usa Rolldown. [`#migration`](https://vite.dev/guide/migration)
+- **Opções e funções de esbuild (`esbuild`, `optimizeDeps.esbuildOptions`, `transformWithEsbuild`, `build.minify: 'esbuild'`) estão depreciadas: use Oxc (`oxc`, `transformWithOxc`) e `optimizeDeps.rolldownOptions`.** Serão removidas. [`#migration`](https://vite.dev/guide/migration), [`#api-javascript`](https://vite.dev/guide/api-javascript)
+- **`vite optimize` está depreciado.** O pré-bundle roda sozinho. [`#cli`](https://vite.dev/guide/cli)
+- **Environment API não é para adoção em aplicação ainda; o ambiente `client` se configura pelas opções de topo.** A página não recomenda a troca e mantém o cliente no topo para não mudar ao somar ambientes. [`#api-environment`](https://vite.dev/guide/api-environment)
+
+### HMR e plugin próprio
+
+- **Todo uso de `import.meta.hot` fica dentro de `if (import.meta.hot)`.** Assim o código sai no tree-shaking de produção. [`#api-hmr`](https://vite.dev/guide/api-hmr)
+- **`import.meta.hot.accept` é chamado mesmo quando se vai chamar `invalidate` logo depois, e `accept` recebe id, não URL.** Sem o `accept` o cliente para de ouvir o módulo; URL deixou de ser aceita. [`#api-hmr`](https://vite.dev/guide/api-hmr), [`#migration`](https://vite.dev/guide/migration)
+- **Plugin próprio tem `name`, prefixo `vite-plugin-` (ou `rolldown-plugin-` se for compatível com Rolldown) e evento customizado com prefixo.** Evita colisão com outros plugins. [`#api-plugin`](https://vite.dev/guide/api-plugin)
+- **Hooks `config`, `configResolved` e `buildStart` não fazem trabalho longo.** Atrasam a partida do servidor. [`#performance`](https://vite.dev/guide/performance)
+- **Config em forma de função é chamado antes de passar para `mergeConfig`.** `mergeConfig` recebe objeto. [`#api-javascript`](https://vite.dev/guide/api-javascript)
+
 ---
 
 ## Fundamentos

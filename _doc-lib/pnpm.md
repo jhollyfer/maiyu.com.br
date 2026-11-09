@@ -74,6 +74,48 @@ pnpm --filter ./backend --prod deploy /out  # imagem: só o app e o shared
 (install e `check` são portão), `gh-fix-ci` (CI vermelho no install). Dispare junto com a leitura
 da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com pnpm: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Lockfile e instalação
+
+- **`pnpm-lock.yaml` sempre commitado.** Trava as dependências e evita atualização inesperada. [`#git`](https://pnpm.io/git), [`#supply-chain-security`](https://pnpm.io/supply-chain-security)
+- **Em CI e na imagem, `pnpm install --frozen-lockfile`; lockfile desatualizado é erro.** Em CI o pnpm já entra em modo frozen e falha se o lockfile precisar de atualização; lockfile de major mais nova também falha. [`#cli/install`](https://pnpm.io/cli/install), [`#continuous-integration`](https://pnpm.io/continuous-integration), [`#docker`](https://pnpm.io/docker)
+- **`shamefully-hoist` não se usa.** A doc o desaconselha fortemente (`node_modules` achatado como o do npm). [`#cli/install`](https://pnpm.io/cli/install)
+- **Configuração do pnpm mora em `pnpm-workspace.yaml`, não no campo `pnpm` do `package.json`.** O pnpm não lê mais esse campo. [`#package_json`](https://pnpm.io/package_json)
+- **Workspace tem `pnpm-workspace.yaml` na raiz, com `packages` listando os projetos, e sem dependência cíclica entre eles.** Com ciclo o pnpm não garante a ordem topológica dos scripts. [`#workspaces`](https://pnpm.io/workspaces)
+- **O `pnpm-workspace.yaml` entra no `COPY` antes do install na imagem.** Sem ele a instalação muda ou o install frozen falha. [`#docker`](https://pnpm.io/docker)
+
+### Segurança da cadeia de dependências
+
+- **Script de build de dependência só roda se liberado nominalmente em `allowBuilds`; nada de `dangerouslyAllowAllBuilds`.** Pacote comprometido costuma agir no `postinstall`, e a doc recomenda revisar e liberar cada build. [`#supply-chain-security`](https://pnpm.io/supply-chain-security), [`#settings/build`](https://pnpm.io/settings/build), [`#cli/add`](https://pnpm.io/cli/add)
+- **Atualizar pacote liberado com `postinstall` pede cautela.** O pacote confiável pode ter sido comprometido. [`#supply-chain-security`](https://pnpm.io/supply-chain-security)
+- **`minimumReleaseAge` atrasa versão recém-publicada; exceção vai em `minimumReleaseAgeExclude`.** Reduz a janela de instalar versão maliciosa antes da detecção; o `audit --fix` já inclui a correção na exclusão. [`#supply-chain-security`](https://pnpm.io/supply-chain-security), [`#settings/dependency-resolution`](https://pnpm.io/settings/dependency-resolution), [`#cli/audit`](https://pnpm.io/cli/audit)
+- **Token de registry não fica no `.npmrc` do projeto; vai em variável de ambiente ou na config global.** O `.npmrc` vem com o repositório e um repositório malicioso mandaria o token para um registry dele. [`#npmrc`](https://pnpm.io/npmrc)
+- **URL de registry dinâmica (com variável) e opções de máquina (`storeDir`, credenciais, chaves) só na config global ou na CLI.** Repositório clonado não é raiz de confiança e o pnpm recusa essas opções no `pnpm-workspace.yaml`. [`#settings`](https://pnpm.io/settings), [`#settings/build`](https://pnpm.io/settings/build)
+- **Cache do store e de metadados só é gravável por job ou build confiável.** Cache escrito por build não confiável e reaproveitado por um confiável contamina a instalação. [`#continuous-integration`](https://pnpm.io/continuous-integration), [`#docker`](https://pnpm.io/docker)
+- **Com mais de um registry, pacote que tem origem fixa usa alias de `namedRegistries`.** Garante que ele não venha do registry errado. [`#supply-chain-security`](https://pnpm.io/supply-chain-security)
+- **Vulnerabilidade de `pnpm audit` se corrige com `pnpm update` (ou `--fix=update`); ignorar só por `audit.ignore`.** `auditLevel` e `auditConfig.ignoreGhsas` são nomes deprecated. [`#cli/audit`](https://pnpm.io/cli/audit)
+
+### Versões e resolução
+
+- **Dependência transitiva se fixa por `overrides`, não por `pnpm update`.** Não há onde o update grave a versão da transitiva. [`#cli/update`](https://pnpm.io/cli/update), [`#settings/dependency-resolution`](https://pnpm.io/settings/dependency-resolution)
+- **Override de convergência recebe versão exata.** Faixa, dist-tag ou remoção falham com `ERR_PNPM_INVALID_CONVERGENCE_OVERRIDE`. [`#settings/dependency-resolution`](https://pnpm.io/settings/dependency-resolution)
+- **`peerDependencyRules` está deprecated; `update.ignoreDeps` substitui `updateConfig.ignoreDependencies`.** O primeiro só cala o aviso sem mudar o peer; o nome antigo ainda funciona. [`#settings/peer-dependencies`](https://pnpm.io/settings/peer-dependencies), [`#settings/dependency-resolution`](https://pnpm.io/settings/dependency-resolution)
+- **`engines` declara Node e pnpm; versão de pnpm diferente da declarada falha no desenvolvimento local.** Como dependência instalada, `engines` só avisa, a menos que `engineStrict` esteja ligado. [`#package_json`](https://pnpm.io/package_json)
+
+### Scripts, filtros e deploy
+
+- **Opções do `pnpm run` vêm antes do nome do script; script que depende de POSIX roda por `pnpm run`, não `node --run`.** Depois do nome tudo vai para o script; o `node --run` não emula shell. [`#cli/run`](https://pnpm.io/cli/run)
+- **Seletor regex do `pnpm run` é literal entre barras e entre aspas.** Sem aspas o shell estraga a expressão; string sem barras é nome literal. [`#cli/run`](https://pnpm.io/cli/run)
+- **`pnpm exec` com variável de ambiente no comando usa `--shell-mode` (`-c`).** Sem shell a variável não expande. [`#cli/exec`](https://pnpm.io/cli/exec)
+- **No zsh, o `!` de filtro de exclusão é escapado (`\!`).** O shell interpreta o `!`. [`#filtering`](https://pnpm.io/filtering)
+- **`pnpm deploy` seleciona exatamente um projeto e, com build feito antes, usa `--prod`.** Nenhum ou vários projetos falham; `--prod` pula as devDependencies. [`#cli/deploy`](https://pnpm.io/cli/deploy), [`#docker`](https://pnpm.io/docker)
+- **`package.json` do pacote implantado lista em `files` o que o `deploy` copia.** É o campo que o `deploy` respeita. [`#cli/deploy`](https://pnpm.io/cli/deploy)
+
 ---
 
 ## Workspace

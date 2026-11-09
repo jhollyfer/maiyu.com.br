@@ -36,7 +36,7 @@ Vale para o projeto que tiver o item; cada linha aponta a regra dona.
 | tipo `I<Nome>`, enum `E_<NOME>` (ex.: `E_AREA_CAPABILITY` no lowcodejs) | sem prefixo: `AreaCapability`, `AREA_CAPABILITY` | `typescript.md` §4 |
 | enum em `lib/entity.ts` ou `core/entity.ts` | `shared/src/enums/<nome>.ts`; rótulo em `lib/labels.ts` | `typescript.md` §4 |
 | `lib/utils.ts` com `cn()` | `lib/cn.ts`, só com `cn()` | `typescript.md` §6 |
-| `src/validators/`, `lib/validator.ts` no frontend e script `validators:check` de paridade | validator único em `shared/`; o script sai | `architecture.md` §9 |
+| `src/validators/`, `lib/validator.ts` no frontend e script `validators:check` de paridade | validator único em `shared/`; o `validators:check` do **frontend** sai; o do backend Adonis fica (paridade entre `app/validators/` e o shared, `DECISIONS.md` #326, #359) | `architecture.md` §9 |
 | tipo de resposta montado pelo model ou redigitado no frontend | schema `…Response` em `shared/src/responses/` e presenter no backend | `architecture.md` §10 |
 | `ensureQueryData` no loader | `context.queryClient.query()` com a fábrica de `queryOptions` | `frontend.md` §1.3 |
 | `data-test-id` | `data-testid`, só quando não há papel e nome acessível | `frontend.md` §11 |
@@ -45,10 +45,10 @@ Vale para o projeto que tiver o item; cada linha aponta a regra dona.
 | E2E `<ação>.spec.ts` | `<ação>.e2e.spec.ts` | `architecture.md` §3 |
 | `<nome>-contract.service.ts` | `<nome>.contract.ts`; contrato só para I/O externo, o resto vira classe concreta | `solid.md` §2 |
 | hook em `backend/.husky` | `.husky/` na raiz, um para o repositório | `tooling.md` §6 |
-| `npx commitlint@N` no CI | `pnpm exec commitlint`, versão da devDependency da raiz | `tooling.md` §7 |
-| espera do MinIO por `sleep` no CI | espera pelo estado (o bucket existe e responde) | `tooling.md` §7 |
-| deploy sem `deployment_uuid` ou sem smoke test de revisão | deploy que espera o `deployment_uuid` e confere a revisão | `tooling.md` §8.3 |
-| action por tag móvel (`@v4`) | action pinada por SHA com a versão em comentário | `tooling.md` §9 |
+| `npx commitlint@N` em hook ou script | `pnpm exec commitlint`, versão da devDependency da raiz | `tooling.md` §6 |
+| espera do MinIO por `sleep` | espera pelo estado (o bucket existe e responde) | `tooling.md` §7 |
+| deploy por workflow (`main.yml`, `main-docker-*`, `main-deploy-coolify.yml`, imagem no Docker Hub) | recurso do Coolify que constrói do Git com *Auto Deploy* e healthcheck em `/health-check`; secrets de deploy apagados do Actions (#290) | `tooling.md` §8.3 |
+| qualquer `.github/workflows/` (CI de PR, push, imagem, deploy) | nada: hook local, rodada de suítes antes do PR e *Auto Deploy* do Coolify; o sync apaga a pasta e a proteção de branch perde o check do Actions (#298) | `tooling.md` §7, §8.1, §9 |
 | `docs/adr/`, `<projeto>-threat-model.md`, `.specs/STATE.md` (`AD-xxx`), `LESSONS.md` | `docs/DECISIONS.md`, `docs/SECURITY.md` §2, `docs/MEMORY.md` | `documentation.md` §1 |
 
 
@@ -62,8 +62,7 @@ Vale para todos: `.claude/settings.json` ganha `enabledPlugins` com `superpowers
 
 Vale para todos: data só por Luxon e ícone só por Phosphor (`tooling.md` §0.1). `date-fns` sai dos
 frontends de simple-hub, adacaibs, matiscraft, academy, lowcodejs e manganga e dos backends de
-matiscraft e lowcodejs; `lucide-react` sai do matiscraft (e do `frontend-old` do manganga, que
-deve ser removido); `zod` deixa de ser proibido (`DECISIONS.md` #241): fica no matiscraft (Fastify), onde já é o schema, e entra no frontend e no `shared/` de todos. O `frontend-old` do manganga sai pelo motivo acima, não pelo `zod`.
+matiscraft e lowcodejs; `lucide-react` sai do matiscraft (o `frontend-old` do manganga já saiu, em `e7bdde2`); `zod` deixa de ser proibido (`DECISIONS.md` #241): fica no matiscraft (Fastify), onde já é o schema, e entra no frontend e no `shared/` de todos.
 
 Vale para todos, schema (`DECISIONS.md` #241): Zod no frontend e em `shared/`, em qualquer projeto;
 VineJS só no backend Adonis (simple-hub, adacaibs, interclasse, academy). No Fastify (lowcodejs,
@@ -80,8 +79,8 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 | adacaibs | `/health-check` | `/health-check` | Nada |
 | interclasse | `/health-check` | `/health-check` | Nada |
 | lowcodejs | `/health-check` | `/health-check` | Nada |
-| academy | `/health-check` + `GET /health` (revisão da imagem) | `/health-check` + alias `src/routes/health.ts` | Revisão vai para `/revision.txt` (`tooling.md` §8); remover `/health` dos dois lados e trocar o probe do deploy e do `main-docker-backend.yml` |
-| manganga | (API em `jhollyfer/manganga.api`, não auditada) | `src/routes/health.ts` | Renomear para `health-check.ts`; `Dockerfile-production` e deploy apontam para `/health-check` |
+| academy | `/health-check` + `GET /health` (revisão da imagem) | `/health-check` + alias `src/routes/health.ts` | Remover `/health` dos dois lados e apontar o healthcheck do recurso no Coolify para `/health-check`; a prova de revisão saiu com o deploy por workflow (`tooling.md` §8.3, #290) |
+| manganga | sem rota (`backend-old/` em Fastify; nasce no `backend/` Adonis) | `src/routes/health.ts` | Criar no `backend/`; renomear a do front para `health-check.ts`; `Dockerfile-production` e deploy apontam para `/health-check` |
 | matiscraft | **sem rota**; o compose de produção sonda `/health-check` e o container nunca fica saudável | sem rota; o compose sonda `/` | Criar as duas rotas; probe do frontend para `/health-check` |
 
 ---
@@ -104,18 +103,23 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 
 ### Migração estrutural — simple-hub
 
-| Atual | Alvo (`architecture.md`) | Como |
+Plano canônico de 2026-11 (`DECISIONS.md` #362; fases **0** segurança, **1** stack, **2** árvore e
+camadas, **3** kit, **4** testes e infra; P até meio dia, M um a três dias, G mais que isso). Passo F da
+ordem entre projetos.
+
+| Fase | Item | Tam. |
 |---|---|---|
-| Ação como par de arquivos no recurso: `app/features/<módulo>/<recurso>/<verbo>.{controller,use-case}.ts` | Pasta por ação: `app/features/<módulo>/<recurso>/<ação>/<ação>.{controller,use-case,unit.spec,e2e.spec}.ts` | `git mv` por recurso; `start/routes.ts` aponta para `#features/.../<ação>/<ação>.controller`; import do use-case irmão continua relativo (`./<ação>.use-case.ts`) |
-| Validators num arquivo só: `app/core/validator.ts` | Backend continua VineJS (nativo do Adonis), um validator por recurso com o mesmo caminho e nome do schema Zod de `shared/src/validators/<módulo>/<recurso>.validator.ts`; regras compartilhadas, `PAGINATION` e mensagens nos três idiomas ficam em `app/core/validator.ts` (`architecture.md` §3, §9; `DECISIONS.md` #241) | Quebrar por recurso; spec de paridade VineJS × Zod confere os campos dos dois lados; a meta-spec varre os dois antes do corte |
-| Mensagens do provider em `start/validator.ts` | `app/core/validator.ts` | Mover; `start/` só registra o provider no boot |
-| Specs em `tests/functional/<tema>.spec.ts` | `<ação>/<ação>.e2e.spec.ts` (e `<ação>.unit.spec.ts`) ao lado da ação; transversais ao lado do que cobrem (`app/core/validator.unit.spec.ts`, `app/middleware/<nome>.middleware.e2e.spec.ts`); `tests/` só fixtures | Quebrar cada spec de recurso por ação; suítes do Japa `unit` (`app/**/*.unit.spec.ts`) e `functional` (`app/**/*.e2e.spec.ts`), `architecture.md` §3.2 |
-| Middleware e policy em snake_case: `app/middleware/<nome>_middleware.ts`, `app/policies/<entidade>_policy.ts` | `app/middleware/<nome>.middleware.ts`, `app/policies/<entidade>.policy.ts` | Renomear + atualizar `start/kernel.ts` e imports `#middleware/*`/`#policies/*` |
-| Model em snake_case, se houver | `app/models/<entidade>.ts` em kebab-case | Renomear |
-| Service solto: `app/services/<nome>.service.ts` | `app/services/<nome>/<nome>.service.ts` (+ `<nome>.contract.ts` e `<nome>.fake.ts`, só se I/O externo) | Mover; subpath import `#services/*` cobre a profundidade nova |
-| `CLAUDE.md` por camada/módulo/recurso + `docs:sync`/`docs:check` | Só `/CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md`; operação documentada pelo OpenAPI | Apagar os `CLAUDE.md` internos depois de mover para comentário de use-case o porquê que não está no OpenAPI |
-| `PADRAO-BACKEND.md` local + `padrao.manifest.json`/`sync:check` entre irmãos | `_standards/`, `_doc-lib/` e skills via `node scripts/sync-to-project.mjs <dir>`; `--check` à mão a partir do `maiyu-pattern`, nunca no CI | Remover o manifesto e o `PADRAO-BACKEND.md`; `softDeleteExempt` e a lista de ENV fora do leitor vão para a config do `pattern:check` |
-| Validators do frontend num arquivo só (`src/lib/validator.ts`) | Zod em `shared/src/validators/<módulo>/<recurso>.validator.ts`, com par de caminho e nome no validator VineJS do backend; `z.config` com as mensagens pt-BR/es/en, formulário por `zodResolver` (`architecture.md` §9; `DECISIONS.md` #241; `_doc-lib/zod.md#error-customization`) | Reescrever cada validator em Zod no `shared/`; apagar a cópia local e trocar `vineResolver` por `zodResolver` (`@hookform/resolvers/zod`); o spec de paridade substitui o script antigo |
+| 0 | `start.ts` com CSRF; shield sem cookie XSRF inútil; SEC-24 (janela de regravação) | P |
+| 1 | **`shared/` de VineJS para Zod**: 38 validators reescritos, `@vinejs/vine` sai de `shared/package.json` e do frontend; `app/validators/<m>/<r>.validator.ts` criados em VineJS; `core/validator.ts` deixa de reexportar do shared; `validators:check` liga (#326) | G |
+| 1 | hash scrypt para Argon2 (rehash); `@tanstack/*query*` em versão exata; Tuyau como transporte do `request()` e `@tuyau/core` na mesma versão nos dois lados (#324) | M |
+| 2 | criar `shared/src/merge.ts`, `core/trusted-proxies.ts` (kit), `features/health-check.controller.e2e.spec.ts`; `repositories/unit-of-work/transaction-context.ts` para `core/`; `repositories/memory-page.ts` para `core/memory-rows.ts` | M |
+| 2 | presenters escondidos em `features/_shared.{order,product,category,subcategory,address,storage,company,review}.ts` viram `_shared.<e>.presenter.ts` (#341); `_shared` em classe | M |
+| 2 | `providers/repositories.provider.ts` para `repository.provider.ts`; specs de service renomeados (#342); `rating.unit.spec.ts` para `rating.value-object.unit.spec.ts`; `database/demo.e2e.spec.ts` para `seeders/dev/demo.e2e.spec.ts`; `shared/src/responses/{columns,text-enum}.ts` para `records/` e `enums/`; `validators.test.ts` por arquivo | M |
+| 2 | `hash.verify` importado nos use-cases (4) vira `PasswordContract`; `origin.middleware` sem `#start/env` (config); `features/authentication/session` para `sessions` | M |
+| 2 | `scripts/depcruise-resolve.mjs` para `scripts/depcruise.config.ts` | P |
+| 3 | 43 `common/*/index.ts` e 7 de `-components/` saem; kit inteiro (table, confirm-dialog, form-shell, page-shell sem `borderBottom`, empty-state com `reason`, image-field com upload por prop, option-combobox compound, filters, row-actions, bulk-archive, route-status, theme; `copy-id-menu-item` some; `currency-input` e `basis-points-input` viram `FieldMask` ou `FieldNumber`, #325); telas: 20 `table.tsx`, 15 `form-edit`, 12 `form-create`, 19 `row-actions`, 12 `bulk-actions` | G |
+| 3 | `invalidate.ts`; `new.tsx` só onde há loader (#356); `routes/{artesao.$slug,organizacao.$slug,carrinho,authentication.*}.ts` viram server routes de redirect em `_public/`; `routes/-theme.ts` para `integrations/theme/get-theme.ts`; `router-register.d.ts` e `query-register.d.ts` para `router.tsx` e `http.ts`; `lib/interfaces.ts` e `lib/async-handler.ts` redistribuídos; `http.ts:185`; usar o `_schema` que hoje é ignorado (`http.ts:524-532`) | M |
+| 4 | `tsr.config.json` sai; `paraglide.config.ts`; `.env.production`; `.env.example` (back e front) pelo modelo; `.github/workflows/` (10) e secrets saem; `docs/ARCHITECTURE.md` atualizado; e2e com três viewports, `touch-targets`, `responsive`, `pages`; `afterEach(cleanup)` nos 13 `.test.tsx` | M |
 
 ### Versões — simple-hub
 
@@ -149,7 +153,7 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 | `!` sem narrowing em código sem `Either` | `app/services/cookie.service.ts:162-163` (`accessToken.value!.release()`, `refreshToken.value!.release()`) | typescript.md §1 | `if (!accessToken.value) throw new Error(...)` antes do `.release()` |
 | `!` sem narrowing em teste | `tests/helpers.ts:49-50` | backend.md §2 + typescript.md §1 | `if (!cookie) throw new Error('cookie ausente na resposta de sign-in')` |
 | `whereNotNull('deletedAt')` escrito à mão (7 arquivos, `unarchive.use-case.ts`) | `app/features/administrator/{albums,events,notices,podcasts,testimonials,users,videos}/unarchive.use-case.ts` | backend.md §4.8 | Criar `static onlyDeleted = scope(...)` por model, usar `withScopes` |
-| idem, em `paginate.use-case.ts` (7 arquivos) | mesmos módulos, `paginate.use-case.ts:25` | backend.md §4.8 | `applyTrashed(query, mode)` de `_shared.trashed` |
+| idem, em `paginate.use-case.ts` (7 arquivos) | mesmos módulos, `paginate.use-case.ts:25` | backend.md §4.8 | scope `trashed(mode)` no model (`_shared` não modifica query) |
 | `pattern-check.ts` só cobre `whereNull`, não `whereNotNull` | `scripts/pattern-check.ts:525` (módulo congelado, espelhado nos 4 repos) | backend.md §10 | Estender o regex nos quatro repositórios (régua §11) |
 | `padrao.manifest.json::softDeleteExempt` com entradas de outro projeto | `padrao.manifest.json` | backend.md §4.8 | Reduzir à lista real deste repositório, ou nomear por projeto |
 | `VITE_API_URL` lido direto por `import.meta.env`, sem `env.ts` | `frontend/src/integrations/tanstack-query/http.ts:143` (idem em maiyu.com.br) | frontend.md §3 | Extrair para `src/env.ts` (`architecture.md` §4) com checagem explícita |
@@ -246,7 +250,7 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 | `@vinejs/vine` | ^4.4.0 | sai (`DECISIONS.md` #241) |
 | `bullmq` | ^6.3.2 | 6.3.12 |
 | `socket.io` | ^4.8.3 | 4.8.4 |
-| `isolated-vm` | ^7.0.1 | 7.0.1 |
+| `isolated-vm` | ^7.0.1 | 6.x enquanto o Node for 24: a 7.x é para o Node 26 (_doc-lib/isolated-vm.md#compatibility) |
 | `vitest` (backend) | ^5.0.0 | 5.0.3 |
 | `react-hook-form` | ^7.68.0 | 7.89.0 |
 | `@hookform/resolvers` | ^5.2.2 | 5.9.1 |
@@ -268,7 +272,7 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 | Item | Onde | Regra | Correção |
 |---|---|---|---|
 | `!` sem narrow (5 pontos, mesmos do padrão canônico) | `cookie-access-tokens.guard.ts:17` (tipo `A & B`), `account/show.controller.ts:20`, `account/update.controller.ts:32`, `account/update.use-case.ts:64`, `administrator/users/update.controller.ts:40`, `cookie.service.ts:162-163` | typescript.md §1 | `Merge<A,B>` no guard; `if (!value)` nos demais |
-| `whereNotNull('deletedAt')` à mão | `administrator/users/unarchive.use-case.ts:25`, `paginate.use-case.ts:33` | backend.md §4.8 | `onlyDeleted` + `withScopes`/`applyTrashed` |
+| `whereNotNull('deletedAt')` à mão | `administrator/users/unarchive.use-case.ts:25`, `paginate.use-case.ts:33` | backend.md §4.8 | `onlyDeleted` com `withScopes`, ou o scope `trashed(mode)` no model |
 | `as unknown as X` em frontend | `hooks/use-resource-form.ts:196`, `http.ts:407`, `components/ui/sonner.tsx:19`, `components/ui/sidebar.tsx:167,223,666` | typescript.md §1 | Tipar na origem; `sidebar.tsx` é saída de shadcn, baixa prioridade |
 | Ternário em teste (não isento aqui) | `validator-messages.test.ts:61,84`, `http.test.ts:38` | backend.md §2 (vale para `tests/`) | Extrair variável com `if` antes |
 | `PADRAO-BACKEND.md` local ~119 linhas atrás da régua canônica | `/PADRAO-BACKEND.md` | — (meta, `sync-check.ts`) | Copiar a versão atual (onlyDeleted, docs:check, `actor`, §4.6 Bouncer) |
@@ -347,21 +351,131 @@ independente criam o seu (`architecture.md` §7, obrigatório). Estado em 2026-1
 
 ## academy
 
-Backend AdonisJS + Lucid, mesma forma dos outros projetos Adonis; sem mapa em `_map/`, então só
-a migração estrutural.
+Backend AdonisJS com Lucid; o roteiro sai do mapa canônico de 2026-11 (`_map/canon-2026-11/`).
 
 ### Migração estrutural — academy
 
-| Atual | Alvo (`architecture.md`) | Como |
-|---|---|---|
-| Ação como par de arquivos no recurso: `app/features/<módulo>/<recurso>/<verbo>.{controller,use-case}.ts` | Pasta por ação: `app/features/<módulo>/<recurso>/<ação>/<ação>.{controller,use-case,unit.spec,e2e.spec}.ts` | `git mv` por recurso; `start/routes.ts` aponta para `#features/.../<ação>/<ação>.controller`; import do use-case irmão continua relativo (`./<ação>.use-case.ts`) |
-| Validators num arquivo só: `app/core/validator.ts` | Backend continua VineJS (nativo do Adonis), um validator por recurso com o mesmo caminho e nome do schema Zod de `shared/src/validators/<módulo>/<recurso>.validator.ts`; regras compartilhadas, `PAGINATION` e mensagens nos três idiomas ficam em `app/core/validator.ts` (`architecture.md` §3, §9; `DECISIONS.md` #241) | Quebrar por recurso; spec de paridade VineJS × Zod confere os campos dos dois lados; a meta-spec varre os dois antes do corte |
-| Mensagens do provider em `start/validator.ts` | `app/core/validator.ts` | Mover; `start/` só registra o provider no boot |
-| Specs em `tests/functional/<tema>.spec.ts` | `<ação>/<ação>.e2e.spec.ts` (e `<ação>.unit.spec.ts`) ao lado da ação; transversais ao lado do que cobrem (`app/core/validator.unit.spec.ts`, `app/middleware/<nome>.middleware.e2e.spec.ts`); `tests/` só fixtures | Quebrar cada spec de recurso por ação; suítes do Japa `unit` (`app/**/*.unit.spec.ts`) e `functional` (`app/**/*.e2e.spec.ts`), `architecture.md` §3.2 |
-| Middleware e policy em snake_case: `app/middleware/<nome>_middleware.ts`, `app/policies/<entidade>_policy.ts` | `app/middleware/<nome>.middleware.ts`, `app/policies/<entidade>.policy.ts` | Renomear + atualizar `start/kernel.ts` e imports `#middleware/*`/`#policies/*` |
-| Model em snake_case, se houver | `app/models/<entidade>.ts` em kebab-case | Renomear |
-| Service solto: `app/services/<nome>.service.ts` | `app/services/<nome>/<nome>.service.ts` (+ `<nome>.contract.ts` e `<nome>.fake.ts`, só se I/O externo) | Mover; subpath import `#services/*` cobre a profundidade nova |
-| `CLAUDE.md` por camada/módulo/recurso + `docs:sync`/`docs:check` | Só `/CLAUDE.md`, `backend/CLAUDE.md`, `frontend/CLAUDE.md`; operação documentada pelo OpenAPI | Apagar os `CLAUDE.md` internos depois de mover para comentário de use-case o porquê que não está no OpenAPI |
-| `PADRAO-BACKEND.md` local + `padrao.manifest.json`/`sync:check` entre irmãos | `_standards/`, `_doc-lib/` e skills via `node scripts/sync-to-project.mjs <dir>`; `--check` à mão a partir do `maiyu-pattern`, nunca no CI | Remover o manifesto e o `PADRAO-BACKEND.md`; `softDeleteExempt` e a lista de ENV fora do leitor vão para a config do `pattern:check` |
-| Validators do frontend num arquivo só (`src/lib/validator.ts`) | Zod em `shared/src/validators/<módulo>/<recurso>.validator.ts`, com par de caminho e nome no validator VineJS do backend; `z.config` com as mensagens pt-BR/es/en, formulário por `zodResolver` (`architecture.md` §9; `DECISIONS.md` #241; `_doc-lib/zod.md#error-customization`) | Reescrever cada validator em Zod no `shared/`; apagar a cópia local e trocar `vineResolver` por `zodResolver` (`@hookform/resolvers/zod`); o spec de paridade substitui o script antigo |
+Plano canônico de 2026-11 (`DECISIONS.md` #362; fases e tamanhos como em simple-hub). Passo G: o mais
+longe entre os Adonis (sem `shared/`, sem `domain/`, 152 imports de model), feito com a régua estável.
 
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | SEC-2, SEC-4, SEC-5 (handler 500, throttle da troca de senha, oráculo do cadastro); `same-site` inválido devolve `lax`; `origin` pela forma canônica; `verify-email` por `POST`; limiters de refresh, export, convite e sala; CSP da API | M |
+| 1 | criar `shared/` (Zod, responses, enums, `either.ts`) e ligar ao workspace da raiz; tirar lockfile e `pnpm-workspace.yaml` do frontend; `@vinejs/vine` sai do front | G |
+| 1 | Markdown das aulas para JSON do Tiptap por `MarkdownManager.parse` no backend (#323), antes de trocar a tela; `react-markdown` e `rehype` saem; Paraglide 3 confirmado como o da casa ou volta a 2 (ler `#/changelog`) | G |
+| 1 | `next-themes` sai (tema por cookie); Argon2; Tuyau como transporte do `request()` (#324) | M |
+| 2 | `domain/` e `repositories/` para os 24 models; tirar 152 imports de `#models/*` de `features/` e 33 de `services/`; `services` para `features` (27) | G |
+| 2 | 32 `features/<m>/<r>/<r>.validator.ts` para `app/validators/<m>/<r>.validator.ts` e o par Zod (#326) | M |
+| 2 | 124 `<ação>.spec.ts` para `<ação>.e2e.spec.ts` e `<ação>.unit.spec.ts` novos; `services/<n>/<n>-contract.service.ts` (7) para `<n>.contract.ts` e `.fake.ts`; specs de middleware e core renomeados | G |
+| 2 | `core/{either,entity,aggregate}.ts` saem; `core/locale.ts` e `request-locale.ts` viram middleware de idioma e `I18n` injetado (#334); `start/{mail,scheduler,transmit}.ts` ficam (#351); `scripts/{lessons-import,quiz-reorder}.ts` viram comandos (#348); `check-report.ts` vira o do kit; `database/*.spec.ts` para o lado do seeder; `database/content/` para `database/data/` (#354) | G |
+| 2 | serviços de domínio de e-mail (`notification`, `token-link-mail`) viram composição no use-case com `MailContract` | M |
+| 3 | 20 `index.ts`; 33 peças soltas em pasta; `rich-editor` (Markdown, prefixo `I`, `IMerge`) vira o do kit; `rich-text` do kit; `empty-state` (hoje `section-card`); `masked-input` vira `FieldMask` (#325); `queries.ts` e `mutations.ts` únicos viram um por módulo; `invalidate.ts`; `integrations/response.ts` sai | G |
+| 3 | rotas: `validateSearch` inline para `-search.ts`; `new/index(.lazy).tsx` para `new(.lazy).tsx`; `$id/edit/index` para `$id/edit`; `routes/authentication/` vira server route em `_public/`; `routeFileIgnorePattern` para os testes em `routes/`; `lib/` com `form-a11y`, `load-or-not-found`, `local-store` | M |
+| 4 | `.cta.json`, `.cursorrules`, `.vscode/`, `.idea/`, `tsr.config.json` saem; `.dockerignore` na raiz; `tmp/.gitkeep` sai; fixture de erros no e2e; porta pela tabela de `tooling.md` §8.4 | P |
+
+---
+
+## Todos os projetos: regras de 2026-11-08 sem projeto aplicando
+
+Entram como item na fase 1 ou 2 de cada projeto abaixo e dos de cima, onde ainda faltarem.
+
+| Regra | Onde ela mora |
+|---|---|
+| nome do cookie de sessão com prefixo `__Host-` ou `__Secure-` (`DECISIONS.md` #320) | `backend.md` §4.10 |
+| hash de senha Argon2, com rehash no login (`DECISIONS.md` #314) | `backend.md` §5.6, item 6 |
+| `keepAliveTimeout` acima do timeout do proxy | `backend.md` §5.6, item 7 |
+| log do use-case pelo `ctx.logger` (`DECISIONS.md` #314) | `backend.md` §4.2 |
+| `disableRollbacksInProduction` (`DECISIONS.md` #291) | `backend.md` §4.13 |
+| `verbatimModuleSyntax: false` no frontend (`DECISIONS.md` #319) | `tooling.md` §3 |
+| teste de contrato com as implementações como dataset (`DECISIONS.md` #316) | `domain.md` §5.4 |
+
+Ordem entre projetos: adacaibs, interclasse, curupira, aporta, simple-hub, academy, lowcodejs,
+manganga, matiscraft. Passa ao próximo só com `sync-to-project.mjs <dir> --check`
+limpo no anterior, `pnpm check` verde, suítes pesadas uma vez antes do PR e deploy com healthcheck
+verde.
+
+---
+
+## curupira
+
+Mesma origem do interclasse: os itens da seção dele valem aqui, mais estes.
+
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | upload anônimo da denúncia: decisão do dono, exceção nomeada com limite forte ou dono técnico (`DECISIONS.md` #363) | P e dono |
+| 0 | `Dockerfile-production:52-55`: `STORAGE_SECRET` sai do `ENV`; `start.ts` com CSRF; CSP da API | P |
+| 2 | itens do interclasse (6 entity specs, 7 refusals, core, specs soltos, scripts extras, `sync-check.ts`) | M |
+| 2 | `domain/neighborhood/nearest-neighborhood.ts` (função solta) vira classe `neighborhood.<conceito>.ts`; `core/{cors-origins,instant,local-day,report-photo-key,semaphore}.ts` conferidos pelo critério de `core/<tema>.ts` (#340); `report-photo-key` para `domain/report/` ou `services/storage/` | M |
+| 2 | `database/seeders/assets/` para `database/data/<n>/` (#354) | P |
+| 3 | 26 `index.ts`; `table/` reduzida vira a do kit; `option-select/` monta `OptionCombobox`; `_private/management/layout.tsx` (guard de área) no lugar dos 3 por recurso; `-schema.ts` x2 para o shared | M |
+| 4 | e2e do interclasse; porta nova pela tabela de `tooling.md` §8.4 (colidia com aporta em 9006/9007) | P |
+
+## aporta
+
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | `.dockerignore` com `**/` (kit); se alguma imagem saiu para registry, rotacionar o que o `backend/.env` tinha | P e dono |
+| 0 | criar `src/start.ts` (CSRF e `requestScope`) e `http.server.test.ts`; `env.ts` com `throw`, sem `localhost` | P |
+| 1 | `@tanstack/react-table` entra com a primeira listagem do kit; Argon2; tema por cookie (`integrations/theme/get-theme.ts`, hoje `lib/theme.ts`); Tuyau como transporte do `request()` (#324) | M |
+| 2 | presenters `_shared.{listing,place,profile}.presenter.ts` ficam (#341); `_shared.storage-orphans.e2e.spec.ts`, `storage.e2e.spec.ts` e `storefront.e2e.spec.ts` viram spec das ações; `listing.repository.ownership.e2e.spec.ts` vira casos no spec de contrato; `tests/listing-repository-subject.ts` fundido em `listing-fixtures.ts` | M |
+| 2 | arquivar por `PATCH :id/archive` (hoje `DELETE :id`), status pela tabela (#345); `unit-of-work/` com 0 usos sai até a primeira transação | M |
+| 2 | upload pela canônica (multipart em `storage`, `content-length`, claim); `staff-create` vira o comando canônico de criar o primeiro admin | M |
+| 3 | 35 `index.ts`; `confirm-dialog`, `empty-state`, `not-found-page`, `modal-dialog`, `pagination-nav`, `search-pill`, `queue-search`, `segmented-filter`, `filter-bar`, `action-button`, `pill-button`, `field`, `form-notice` trocados por peça do kit ou `ui/` | G |
+| 3 | `invalidate.ts` com `DEPENDENTS`; `-components/use-enter-session.ts` para `-use-enter-session.ts`; `lib/*-failure.ts` (x5), `*-form.ts` e `zod-jitless.ts` para `-<tema>.ts` das rotas; `paraglide.config.ts`; `.env.production` | M |
+| 4 | `tmp/.gitkeep` sai; `styles.css` com `.dark` e escala `--z-*`; `docs/` sem Docker Hub e workflows | P |
+
+## manganga
+
+Monorepo da casa desde `e7bdde2` (#365): o antigo `jhollyfer/manganga.api` (Fastify com Prisma) está em
+`backend-old/` e migra para `backend/` em Adonis com Lucid; o front é `frontend/`.
+
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | backend: refresh aceito como access (conferir `type`); refresh sem verificação; hash na resposta (presenter); `role()` em `administrator/*`; log de headers; tempo e limite no login; tetos de `perPage` e `page` | M |
+| 0 | backend: dono: `backend-old/prisma/seeders/{users,members,responsibles}.csv` (CPF, RG, nascimento) fora do repositório e do histórico do manganga e do antigo `jhollyfer/manganga.api` | P e dono |
+| 0 | frontend: `env.ts` com `throw` (nada de `localhost` em build); `server.ts` com cabeçalhos; `start.ts` com CSRF; pedido sem CPF no `localStorage` (ou com validade) | P |
+| 1 | backend: Adonis 7, Lucid, VineJS, Argon2 e `@adonisjs/auth`; `xlsx` não migra (avaliar o export) | G |
+| 1 | frontend: `package.json` na raiz e workspace `backend/`, `frontend/` e `shared/` (#365); `@vinejs/vine` sai; `date-fns` para Luxon; `next-themes` para tema por cookie; `@base-ui/react` e `@tanstack/react-table` sobem | M |
+| 2 | backend: `app/controllers` e `app/use-case` para `features/<m>/<r>/<ação>/`; `get-by-id` para `show`, `list-paginated` para `paginate`; `dashboard` para `administrator/dashboard/show/`; `welcome` para `health-check.controller.ts`; validators para `app/validators/` com o Zod no `shared/`; `domain/`, `repositories/`, `models/`, `database/migrations/` (de `prisma/schema.prisma`), `providers/`, `tests/`; `backend-old/` sai quando o `backend/` cobrir as rotas dele | G |
+| 2 | frontend: `routes/health.ts` para `health-check.ts`; `robots[.]txt.ts` (sai o `public/robots.txt`); `http.ts` canônico e `http.server.ts`; `queries.ts` e `mutations.ts` em pastas; `_query-keys.ts`, `invalidate.ts`; hooks em `-components/use-*.ts` (4) para `-use-<nome>.ts`; `lib/{utils,entity,interfaces,model,validator}.ts` redistribuídos; `lib/store/` para `lib/store-<tema>.ts`; `_private/painel/layout.tsx` (guard de área quando a API tiver papel) | M |
+| 3 | frontend: recebe o kit inteiro (hoje 5 peças); `brand-mark`, `not-found-page` e `theme-toggle` viram as do kit; `scenery` fica; crédito em `lib/site.ts` vira `MaiyuCredit`; `components/common/CLAUDE.md` sai; os 35 arquivos de `ui/` sem consumidor ficam (registry inteiro, #299) | M |
+| 3 | frontend: i18n: `paraglide.config.ts`, `inlang check`, chaves em snake; renomear as 503 chaves é decisão do dono (#197) | M e dono |
+| 4 | backend: `.env.example` do modelo (sem `JWT_*`, `ADMIN_*` para `SEED_OWNER_*`, sem credencial `hydra`); `credential-generator.sh` sai; compose e Dockerfile da casa | M |
+| 4 | frontend: `e2e/` inteiro (config, `support/test.ts`, `pages.spec.ts` da vitrine); `.cta.json`, `.vscode/` e `tsr.config.json` saem; workflows e secrets saem | M |
+
+## matiscraft
+
+Fastify com Prisma, migra para Adonis com Lucid e tem o front refeito: o maior risco, por último, sobre
+a régua já provada.
+
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | **antes de tudo, no código atual**: `jwtVerify` (S1); dono rotaciona chave RSA e Mailtrap, workflow sai, histórico limpo (S2) | P e dono |
+| 0 | `password` fora das respostas (S3, SEC-2); `PermissionMiddleware` nega sem usuário (S4); upload e delete com sessão e posse (S5); IDOR (S6); listagem pública só de aprovados, com DTO (S7); rascunho filtrado (S8); upload com allowlist e sem SVG inline (SEC-1); `rehypeRaw` sai da vitrine (XSS) | M |
+| 0 | QueryClient por requisição (S9); guard de papel no front (S10); rate limit registrado com `trustProxy` (S11, SEC-7); helmet (SEC-8); enumeração (S12, SEC-3, SEC-4); cookie `maxAge` e sign-out (S13, S14); seeder de faker com guarda (SEC-9); tetos (SEC-10, SEC-16); doc fora de produção (SEC-17) | M |
+| 1 | Adonis 7, Lucid, VineJS, `@adonisjs/auth` e Argon2 (rehash ou reset); front: Radix (26) para Base UI, axios para o `request()` sobre Tuyau (#324), zustand sai, `react-markdown` para o renderer estático do Tiptap com o dado migrado para JSON, `jsonwebtoken`, `@modelcontextprotocol/sdk`, `@t3-oss/env-core`, `next-themes` e `vite-tsconfig-paths` saem, i18n para Paraglide | G |
+| 2 | `application/` para `app/`; `resources/<m>/<r>/<a>/` para `features/<m>/<r>/<a>/`, toda ação com módulo; 69 `.schema.ts` para `app/validators/` (Vine) com o Zod no shared, deduplicados (approve x6, `SectionSchema` x5); 76 `.doc.ts` para `defineDocs`; `repositories/<e>-repository/*` para `repositories/<e>/*` com spec de contrato; `domain/` a partir de `core/entities.ts`; migrations a partir do `schema.prisma`; seeders para `database/seeders/` e `dev/demo.ts`; `services/email` para `services/mail`; presenters (#315) | G |
+| 3 | `common/` reescrito no kit (36 soltos); front refeito por rota (par `.lazy`, `-components/`, layouts de área, `start.ts`, `server.ts`, `http.ts`, `invalidate.ts`); `dialog-*-report.tsx` e `edit-*-profile-sheet.tsx` ficam como domínio sobre o kit; PDF no servidor | G |
+| 4 | `package.json` na raiz (o sync não roda sem); pnpm no lugar de `package-lock.json`; `Dockerfile-production`, `prettier.config.js`, `vitest.config.ts`, `check-chunk-cycles.mjs`; `e2e/` inteiro; `.cta.json`, `.vscode/`, `.prettierrc` e `dockerfile-development` saem; 7 workflows saem | G |
+
+## jhollyfer.com.br
+
+Portfólio pessoal, só frontend com `shared/` mínimo (#361), hoje em Next.js 15 com publicação por Actions e
+Docker Hub. Achados com ID em `_findings/jhollyfer.com.br.md`.
+
+| Fase | Item | Tam. |
+|---|---|---|
+| 0 | sync da régua; `AGENTS.md` do modelo, `CLAUDE.md` com `@AGENTS.md`, `docs/` da casa (DOC-1 a DOC-14, ARV-20 a ARV-24) | M |
+| 0 | `.github/workflows/` sai e o README perde Vercel e Actions (SEC-1, INF-10, INF-17, #369); secrets e Coolify com o dono (INF-9) | P e dono |
+| 0 | cabeçalhos de segurança, `poweredByHeader` desligado, limite e honeypot no contato, `.max(254)` no e-mail (SEC-2, SEC-4 a SEC-6) | P |
+| 0 | `Dockerfile-production` multi-stage no molde do academy, `USER node`, digest, `/health-check` com `HEALTHCHECK` (INF-1 a INF-5, INF-11, INF-12); troca pelo do kit quando chegar | M |
+| 0 | "Enviar outra" sem os campos em erro (FRM-5) | P |
+| 0 | dono: destino do contato (SEC-3), CV (TST-3), autoria (INF-8), `.claude/settings.json` (TST-12) | dono |
+| 1 | linha de base E2E no site atual antes de qualquer troca (TST-2) | M |
+| 1 | workspace pnpm `frontend/` e `shared/`, Node 24, TypeScript, tsconfig, ESLint, Prettier, husky, commitlint, scripts de check (STK-7 a STK-17, TST-8 a TST-10, INF-7, INF-13, INF-16) | G |
+| 1 | TanStack Start, Paraglide (pt-BR, en, es; `en-US` vira `en` com o dono), Phosphor, Base UI via shadcn, `motion/react`, Luxon, tema por cookie (STK-1 a STK-6, STK-18 a STK-21, ARV-1, ARV-2, ARV-11, ARV-14, ARV-16 a ARV-19, RTA-1 a RTA-3, I18N-1 a I18N-3, I18N-6, I18N-8, I18N-14, CMP-12 a CMP-15, TS-8) | G |
+| 2 | árvore da régua: `templates/` para `-components/`, `lib/` redistribuído, `shared/src/{enums,records,validators}`, `LocalizedText` no conteúdo (ARV-3 a ARV-10, ARV-13, ARV-15, ARV-25 a ARV-28, I18N-4, I18N-5, I18N-7, I18N-11, I18N-12) | G |
+| 2 | tipos: sem `interface`, `as`, ternário, função solta; `readonly`; enums pela trinca (TS-1 a TS-14) | M |
+| 2 | SEO: canonical, hreflang, sitemap, robots, `X-Robots-Tag` fora de produção, JSON-LD (RTA-4 a RTA-6, RTA-9, RTA-10) | M |
+| 3 | kit inteiro e #366: `ui/` do shadcn, seletor de idioma, abas, tema, gaveta como Sheet, links como Button, `Picture`, ícones locais, `MaiyuCredit`, `brand-mark`, `route-status`, formulário com RHF e `AppField` (CMP-1 a CMP-11, CMP-16 a CMP-20, FRM-1 a FRM-10, RTA-7, SEC-11, I18N-10, I18N-13, TS-12) | G |
+| 4 | Vitest e Playwright com axe, `.env.e2e.example`, `pnpm audit`, Dockerfile do kit, `docs/ARCHITECTURE.md` §9.1 (TST-1, TST-5 a TST-7, TST-16 a TST-18, STK-12, STK-23, DOC-12) | M |

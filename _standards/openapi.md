@@ -3,13 +3,14 @@
 Gerador de documentação da API, próprio do repositório. Não é biblioteca de terceiro.
 
 > **Padrão, não biblioteca.** Descreve o gerador de contrato de todo backend da casa. Os caminhos
-> seguem `architecture.md`: o que roda em produção (tipos, registro, correções de schema) mora em
-> `app/core/openapi/`; o que só roda em desenvolvimento e CI (introspecção, emissão, verificação)
-> mora em `scripts/openapi/`. Os exemplos de código usam o adaptador Fastify (o `schema` da rota é
+> seguem `architecture.md`: o que roda em produção (tipos, registro, correções de schema) e os
+> conversores (`vine-schema`, `zod-schema`, `field-patches`) moram em `app/core/openapi/`, porque a
+> meta-spec importa deles; o que só roda em desenvolvimento e na conferência (introspecção, emissão)
+> mora em `scripts/openapi/` (`DECISIONS.md` #357). Os exemplos de código usam o adaptador Fastify (o `schema` da rota é
 > consumido pelo framework); no Adonis os scripts são chamados por um comando ace
-> (`commands/openapi-generate.ts`) e o documento é servido pela rota de documentação
+> (`commands/openapi-generate.command.ts`) e o documento é servido pela rota de documentação
 > (`backend.md` §4.1 e §10). A regra vale nos dois: o contrato é **derivado** do código e conferido
-> por `openapi:check` no CI, nunca redigido à mão. O corpo de cada resposta vem do schema Zod
+> por `openapi:check` no `check`, nunca redigido à mão. O corpo de cada resposta vem do schema Zod
 > de `shared/src/responses/` (`architecture.md` §10); o gerador não lê model.
 
 **O que é:** um par de scripts que lê o AST dos controllers, dos use-cases e dos middlewares, mais os
@@ -27,16 +28,16 @@ commitado e diffável, sem manter documentação em paralelo ao código. A alter
 
 ```bash
 pnpm openapi:generate           # reescreve os dois artefatos
-pnpm openapi:check              # CI: sai 1 se algum estiver desatualizado
+pnpm openapi:check              # no `check`: sai 1 se algum estiver desatualizado
 pnpm openapi:generate --strict  # trata aviso como erro
-pnpm openapi:verify             # só no Fastify: a resposta muda ao ser serializada?
 pnpm check                      # tsc + os de cima + pattern:check + authz:check (backend.md §10)
 ```
 
-`openapi:verify` existe **só no perfil Fastify**, onde o `response` da rota é whitelist de
-serialização e o `fast-json-stringify` coage em silêncio (#verificacao-de-serializacao). No Adonis o
-schema de resposta não passa por serializador, e o `--strict` do `openapi:check` mais a
-`openapi.spec.ts` cobrem o caso (`backend.md` §10).
+`openapi:verify` não existe em nenhum perfil. No Fastify a resposta passa pelo `setSerializerCompiler`
+do `fastify-type-provider-zod` (`backend-fastify.md` §2), que valida pelo schema Zod publicado, e o
+verificador não teria o que comparar (`DECISIONS.md` #360). No Adonis o schema de resposta não passa
+por serializador, e o `--strict` do `openapi:check` mais a meta-spec `app/core/openapi/openapi.e2e.spec.ts`
+cobrem o caso (`backend.md` §10).
 
 Scripts fora da suite de teste precisam de `NODE_ENV=test` para achar o `.env.test`; sem isso morrem
 com `Invalid environment variables` antes de chegar ao gerador.
@@ -58,17 +59,17 @@ documentação na próxima geração.
 resposta em produção. A derivação descreve o contrato; ela não tem autoridade para apagar um campo
 que não enxergou.
 
-**Links:** 14 (todos internos, apontando para arquivos do repositório).
+**Links:** 13 (todos internos, apontando para arquivos do repositório).
 
 ---
 
 ## Uso
 
 #### fluxo-de-trabalho
-código: `scripts/openapi/generate.ts`
+código: `scripts/openapi/generate.ts` (Fastify); no Adonis, `commands/openapi-generate.command.ts`
 
 **O que é:** o script `openapi:generate`, com `--check` e `--strict`.
-**Para que serve:** produzir os dois artefatos e recusar um contrato desatualizado no CI.
+**Para que serve:** produzir os dois artefatos e recusar um contrato desatualizado no `check`.
 **Quando usar:** depois de qualquer mudança em rota, validator, use-case, middleware ou schema de
 resposta.
 **Sempre commite os dois artefatos junto com a mudança que os alterou** — é o que faz o contrato
@@ -76,7 +77,7 @@ aparecer no diff do PR.
 
 ```bash
 NODE_ENV=test pnpm openapi:generate   # desenvolvimento
-NODE_ENV=test pnpm openapi:check      # CI: falha se alguém esqueceu de regerar
+NODE_ENV=test pnpm openapi:check      # no `check`: falha se alguém esqueceu de regerar
 ```
 
 A geração é determinística: rodar duas vezes produz bytes idênticos, e é isso que faz o `--check`
@@ -102,8 +103,10 @@ que o usam **sem alterar um byte** do `schema.generated.ts`: o `--check` passari
 sairia vazio. O documento commitado é
 o que fecha isso, e é também o que permite gerar cliente tipado sem subir o servidor.
 
-Ele **não vai para o build**: `/openapi.json` é servido em memória pelo `@fastify/swagger`, e nada
-lê o arquivo do disco.
+*(Fastify)* Ele **não vai para o build**: `/openapi.json` é servido em memória pelo `@fastify/swagger`,
+e nada lê o arquivo do disco. *(Adonis)* O arquivo vai para o build por `metaFiles` no `adonisrc.ts`, e
+a ação de documentação o lê do disco a cada requisição; sem o `metaFiles`, a rota responde 500 no
+servidor construído (_doc-lib/adonisjs.md#reference/adonisrc-rcfile, `DECISIONS.md` #357).
 
 O caminho é `app/core/openapi/schema.generated.ts` (`architecture.md` §3.3), não
 `start/schema.generated.ts`: `start/` guarda só boot (ENV, kernel). Projeto com o artefato em
@@ -132,6 +135,9 @@ export default class {
   async handle(request: FastifyRequest, response: FastifyReply): Promise<void> { /* … */ }
 }
 ```
+
+Nome da rota é `<módulo>.<recurso>.<ação>`, igual à pasta, e o `operationId` sai dele; caminho sem
+prefixo de versão (`/v1`); prosa da operação em pt-BR (`backend.md` §4.8, `DECISIONS.md` #345).
 
 O `@Controller()` aceita um `route` que prefixa as rotas da classe
 (`@Controller({ route: 'users' })`); sem ele o `url` de cada método é o caminho inteiro. O gerador
@@ -170,6 +176,7 @@ novo ao gerador. **É o coração do sistema** — se algo não foi derivado, é
 | `body` / `querystring` / `params` | o `<Módulo><Recurso><Ação>Validator` de `@<projeto>/shared` que o handler chama |
 | status e corpo vazio | `response.status(N).send(X)` |
 | erros de domínio | `HTTPException.<Fábrica>(t('<chave>'), '<CODE>')` do use-case, da tabela de tradução de fatos (`domain.md` §2) e do `_shared.<recurso>-refusal.ts` que ele importa |
+| 429 | o limitador da rota (`start/limiter.ts` no Adonis, `@fastify/rate-limit` ou o limitador próprio no Fastify) (`DECISIONS.md` #357) |
 | 400 / 500 | `app/exceptions/handler.ts` |
 | envelope da resposta | `type Response = Either<HTTPException, X>` |
 | corpo da resposta | o registro, pela chave do diretório da ação, apontando o schema de `shared/src/responses/` |
@@ -241,7 +248,8 @@ código: `scripts/openapi/emit.ts`
 **Para que serve:** `security`, 401, 403 e qual barreira barrou, sem declarar.
 **Quando usar:** ao mover uma rota de grupo, ou ao trocar um middleware por outro.
 
-O esquema de segurança é `apiKey` em cookie `accessToken`, não `bearer`: o middleware lê o cookie e
+O esquema de segurança é `apiKey` em cookie, com o nome lido da constante de `config/session-token.ts`
+(já com o prefixo `__Host-` ou `__Secure-`, `DECISIONS.md` #320, #357), não `bearer`: o middleware lê o cookie e
 não tem fallback para o header `Authorization`. Documentar bearer faria o "Test Request" do Scalar
 falhar sempre. `apiKey`/`in: cookie` é tipo real da spec OpenAPI 3
 (swagger.io/docs/specification/authentication/api-keys/ — `securitySchemes` aceita
@@ -279,8 +287,9 @@ export const RESPONSES = {
 A chave é o caminho da ação sob `app/features/` e a busca **sobe**:
 `administrator/users/update` tenta a chave inteira, depois `administrator/users`. Uma entrada cobre
 as ações do recurso que devolvem a mesma forma; a que foge da forma ganha a própria chave, sem caso
-especial no gerador. O mesmo schema tipa o `Either` do use-case e o `queryOptions` do frontend: se o
-registro e o use-case apontam schemas diferentes, o `openapi.spec.ts` reprova.
+especial no gerador. O mesmo schema tipa o `Either` do use-case e o `queryOptions` do frontend. A
+conferência de que registro e use-case apontam o mesmo schema ainda não existe em nenhum projeto, e
+não se promete até existir (`DECISIONS.md` #357).
 
 #### prosa-no-controller
 código: `app/core/openapi/types.ts`
@@ -290,12 +299,18 @@ código: `app/core/openapi/types.ts`
 **Quando usar:** só quando houver o que dizer. **Rota sem `docs` sai documentada do mesmo jeito.**
 
 ```ts
+// Fastify: export no módulo do controller
 export const docs = defineDocs({
   handle: {
     description: 'Cria uma nova conta de usuário com nome, email e grupo.',
   },
 });
+
+// Adonis: propriedade estática do controller
+static docs = defineDocs({ handle: { description: 'Cria uma nova conta de usuário com nome, email e grupo.' } })
 ```
+
+A prosa é em pt-BR (`DECISIONS.md` #357).
 
 É chaveado pelo nome do método porque o adaptador permite mais de uma rota por classe; com uma
 pasta por ação (`architecture.md` §3), a chave é quase sempre `handle`.
@@ -365,35 +380,6 @@ schema gerado e precisa ser reintroduzido aqui.
 
 ---
 
-## A guarda contra coerção
-
-#### verificacao-de-serializacao
-código: `scripts/openapi/verify.ts` (só no perfil Fastify)
-
-**O que é:** monta a resposta de cada ação a partir de dado real (factory ou fixture, passado pelo
-presenter do recurso), serializa pelo schema que a rota publica e **compara com a entrada**.
-**Para que serve:** pegar o campo que muda de tipo ou de valor no caminho.
-**Quando usar:** sempre que o `openapi:verify` reclamar, no `check` do perfil Fastify. **O caminho é
-corrigir o schema de resposta ou o presenter, não silenciar o teste.**
-
-Existe porque o `fast-json-stringify` **coage em silêncio**: `type: 'string'` sobre um documento
-populado vira `"[object Object]"`, `type: 'object'` sobre uma lista vira `{"0": …}`, `type: 'number'`
-sobre `null` vira `0`. Nada disso falha — sai errado e ninguém vê.
-
-Os dois casos em que o schema e a resposta se separam:
-
-- **o presenter transforma o campo no caminho.** Um campo texto que sai como lista, partida por `;`,
-  quebra a tela que confiou no schema. Conserto: o schema de resposta declara a lista, e o presenter
-  é tipado por ele, então o compilador acusa a divergência antes do `verify`.
-- **a relação é populada em algumas ações do recurso e não em outras.** O `author` de `posts` vindo
-  populado só no `paginate`; um schema só para o recurso inteiro faz o `show` prometer um objeto onde
-  chega o id em texto. Conserto: um schema por forma de resposta e uma chave por ação no registro.
-
-O `verify` não mantém mapa próprio de transformações: ele passa pelo mesmo presenter que a rota usa.
-Entrada à mão no script para "acertar" a comparação é sinal de que a resposta divergiu do schema.
-
----
-
 ## Saída
 
 #### documento-e-referencia
@@ -407,7 +393,7 @@ dos mesmos schemas — o documento não é construído duas vezes.
 ```ts
 components: {
   securitySchemes: {
-    cookieAuth: { type: 'apiKey', in: 'cookie', name: 'accessToken' },
+    cookieAuth: { type: 'apiKey', in: 'cookie', name: SESSION_COOKIE },   // config/session-token.ts
   },
 },
 ```

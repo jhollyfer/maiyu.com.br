@@ -90,6 +90,34 @@ module.exports = {
 antes de escrever regra), `setup-ts-deep-modules` (dependency-cruiser por camada, `SKILLS-MAP.md`).
 Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com dependency-cruiser: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e configuração
+
+- **Instale o dependency-cruiser como dependência local de desenvolvimento, não global nem só por `npx`.** A FAQ recomenda assim para que o transpilador (`typescript`) seja o mesmo do projeto. [`#doc/faq.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/faq.md)
+- **`typescript` precisa estar instalado no mesmo lugar que o dependency-cruiser.** Ele usa o compilador já disponível para ler `.ts`; sem ele as dependências TypeScript não aparecem. [`#doc/faq.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/faq.md) [`#doc/options-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/options-reference.md)
+- **Arquivo de regras fora do nome padrão (`.dependency-cruiser.{js,cjs,mjs,ts,cts,mts,json}`) entra por `--config <arquivo>`, e o diretório a varrer vem depois de `--`.** Sem o `--`, `--config src` interpreta `src` como arquivo de regras. [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md)
+- **Passe o `tsconfig` em `options.tsConfig` (ou `--ts-config`) para resolver alias de `paths`.** Sem ele o dependency-cruiser não conhece o mapeamento do projeto. [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md) [`#doc/options-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/options-reference.md)
+- **Ligue `tsPreCompilationDeps` para enxergar import só de tipo.** Por padrão a dependência que some na compilação para JavaScript fica fora do grafo; ligada, a varredura também fica mais rápida. [`#doc/options-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/options-reference.md) [`#doc/faq.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/faq.md)
+- **Use `doNotFollow` para `node_modules`, não `exclude`.** O módulo externo continua no grafo (e nas regras de pacote), só não é seguido adiante. [`#doc/options-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/options-reference.md)
+- **Globs na linha de comando vão entre aspas.** Assim quem expande é o dependency-cruiser e não o shell, e o resultado é igual em toda plataforma. [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md)
+
+### Regras
+
+- **Toda regra tem `name` e `severity`; `forbidden` proíbe, `allowed` lista o que pode, `required` exige dependência.** Sem `name` a regra vira `unnamed` no relatório, a severidade padrão é `warn` e o código de saída conta só as violações `error`. [`#doc/rules-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md) [`#doc/rules-tutorial.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-tutorial.md) [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md)
+- **Isolamento entre features se escreve com captura de grupo (`from.path` entre parênteses e `$1` em `to.pathNot`).** A doc mostra o padrão "uma feature não depende de outra" e exige que o trecho comparado fique entre parênteses. [`#doc/rules-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md) [`#doc/rules-tutorial.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-tutorial.md)
+- **Caminho em regra usa barra normal (`/`), em qualquer sistema.** O dependency-cruiser representa todo caminho assim internamente. [`#doc/rules-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md)
+- **Exceção temporária a uma regra vira regra própria com `severity: "warn"` (ou `info`) e a lista das exceções conhecidas, não desligamento da regra.** O tutorial usa esse formato para não quebrar o build sem esconder o problema. [`#doc/rules-tutorial.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-tutorial.md) [`#doc/rules-reference.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/rules-reference.md)
+
+### Violações conhecidas
+
+- **Baseline de violações se cria com `--baseline` e se aplica com `--ignore-known`.** Desde a 18.3.0 é o caminho recomendado, no lugar de `depcruise-baseline` e do reporter `baseline`. [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md)
+- **Para só encolher o baseline, use `--baseline-mode shrink-only`.** Esse modo só remove violações corrigidas e nunca acrescenta novas. [`#doc/cli.md`](https://github.com/sverweij/dependency-cruiser/blob/main/doc/cli.md)
+
 ---
 
 ## Começo

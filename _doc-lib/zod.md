@@ -149,6 +149,52 @@ campos entre os dois (`architecture.md` §9).
 `env.ts`, schema de rota no Fastify), `maiyu-frontend` (formulário, `shared/`). Dispare junto com a
 leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Zod: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Configuração
+
+- **`strict: true` no `tsconfig.json` é obrigatório para usar Zod.** A página de instalação diz que é requisito e boa prática para todo projeto TypeScript. [`#index`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/index.mdx)
+- **Use o Zod clássico (`zod`), não o `zod/mini`, salvo restrição incomum de tamanho de bundle.** A doc diz que o tempo de ida ao servidor supera de longe os 10 kB a mais, e o Mini não carrega locale (toda mensagem vira `Invalid input`). [`#packages/mini`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/packages/mini.mdx) [`#v4/index`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/index.mdx) [`#error-customization`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/error-customization.mdx)
+- **Em ambiente com CSP sem `eval`, ligue `z.config({ jitless: true })` antes de usar `zod/compile`.** A compilação usa `new Function`, indisponível sob CSP; `import "zod/compile"` precisa vir antes dos módulos que definem schemas. [`#compile`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/compile.mdx)
+
+### Parse
+
+- **Use `.safeParse()` para receber resultado sem `try/catch`.** Devolve objeto com o dado ou o `ZodError`, em vez de lançar. [`#basics`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/basics.mdx)
+- **Schema com refinement ou transform assíncrono exige `.parseAsync()`/`.safeParseAsync()`.** Com o parse síncrono o Zod lança erro. [`#basics`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/basics.mdx) [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx)
+- **Função de `.refine()` e de `.transform()` nunca lança; sinaliza falha devolvendo falsy (ou `ctx.issues`/`z.NEVER`).** Erro lançado não é capturado pelo Zod. [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx)
+- **`.default()` recebe valor do tipo de saída; para valor que deve passar pelo parse, use `.prefault()`.** O default curto-circuita o parse quando a entrada é `undefined`. [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Campo `z.coerce.*` que pode faltar declara `.default()` explícito.** Na v4 a chave ausente com coerce passa a dar erro. [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Não use `z.promise()`: faça `await` no valor antes do parse.** A API está deprecada. [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+
+### APIs deprecadas na v4
+
+- **Formato de string é função de topo (`z.email()`, `z.uuid()`, `z.url()`), não método (`z.string().email()`).** As formas de método estão deprecadas. [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx) [`#v4/index`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/index.mdx)
+- **Enum é `z.enum()` (array literal ou `as const`); `z.nativeEnum()` está deprecado e `enum` do TypeScript não é recomendado.** `z.enum()` aceita o objeto tipo enum diretamente. [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Composição de objeto é `.extend()` ou spread de `.shape`, nunca `.merge()`.** `.merge()` está deprecado; o spread deixa a strictness visível. [`#api`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/api.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Objeto estrito ou solto é `z.strictObject()`/`z.looseObject()`, não `.strict()`/`.passthrough()`.** Os métodos foram substituídos pelas funções de topo. [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Refinamento com várias issues é `.check()`, não `.superRefine()`.** `.superRefine()` está deprecado. [`#packages/zod`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/packages/zod.mdx)
+- **Inteiro é `z.int()`, não `z.number().safe()`.** A doc manda trocar. [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+
+### Erros e mensagens
+
+- **Mensagem customizada vai no parâmetro `error`, não em `message`, `required_error`, `invalid_type_error` ou `errorMap`.** `message` está deprecado e os outros foram removidos na v4. [`#error-customization`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/error-customization.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+- **Mapa global de erro e locale se definem com `z.config()` (`z.config(pt())` de `zod/locales`).** Mensagem global tem precedência menor que a do schema e a do parse; devolver `undefined` cai no próximo mapa. [`#error-customization`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/error-customization.mdx)
+- **Formate `ZodError` com `z.treeifyError()`/`z.prettifyError()`, não com `.format()` nem `.flatten()`.** Os dois métodos estão deprecados; ao ler a árvore use `?.`. [`#error-formatting`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/error-formatting.mdx) [`#v4/changelog`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/v4/changelog.mdx)
+
+### Metadados e JSON Schema
+
+- **Metadado é `.meta()`; `.describe()` só continua por compatibilidade.** A doc recomenda `.meta()`, e o metadado fica preso à instância, que é imutável. [`#metadata`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/metadata.mdx)
+- **Schema sem equivalente em JSON (tipo não representável) não vai para `z.toJSONSchema`: ajuste o schema.** O default de `unrepresentable` é lançar, e a doc chama a conversão de insegura. [`#json-schema`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/json-schema.mdx)
+- **Todo schema de registry exportado para JSON Schema tem `id` registrado.** A doc marca como importante para gerar `$defs` e referências. [`#json-schema`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/json-schema.mdx)
+
+### Codecs
+
+- **Codecs comuns (string para data e afins) se copiam para o projeto, não esperam API de primeira classe.** A doc diz para copiar e adaptar as implementações da página. [`#codecs`](https://raw.githubusercontent.com/colinhacks/zod/main/packages/docs/content/codecs.mdx)
+
 ---
 
 ## Começo

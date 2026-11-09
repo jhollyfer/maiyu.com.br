@@ -93,6 +93,72 @@ não renderiza gráfico no servidor (`frontend.md` §9).
 `impeccable`, `react-render-optimization` (dado grande, `dataKey` estável). Dispare junto com a
 leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Recharts: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Tipos
+
+- **Todo gráfico tem o genérico do dado (`<Area<MyData, number>>`) ou nasce de `createHorizontalChart` / `createVerticalChart`.** Sem genérico, `data` e `dataKey` caem em `any` e o `dataKey` errado passa no typecheck (genérico desde a 3.8). [`#en-US/guide/typescript`](https://recharts.github.io/en-US/guide/typescript/) [`#createHorizontalChart`](https://recharts.github.io/en-US/api/createHorizontalChart/) [`#createVerticalChart`](https://recharts.github.io/en-US/api/createVerticalChart/)
+- **Os tipos vêm no próprio pacote `recharts`.** A doc diz que não é preciso instalar pacote adicional. [`#en-US/guide/typescript`](https://recharts.github.io/en-US/guide/typescript/)
+- **Os helpers `createHorizontalChart` e `createVerticalChart` tiram `layout` das opções dos componentes gerados.** Assim ninguém sobrescreve a orientação do gráfico por engano. [`#createHorizontalChart`](https://recharts.github.io/en-US/api/createHorizontalChart/) [`#createVerticalChart`](https://recharts.github.io/en-US/api/createVerticalChart/)
+
+### Cor e tema
+
+- **`Bar` e `Scatter` não têm cor padrão: sem tema, passe `fill`.** Sem `fill` eles saem pretos, e a doc diz que isso não é bug. [`#en-US/guide/theming`](https://recharts.github.io/en-US/guide/theming/)
+- **Prop explícita sempre vence o tema; cor repetida em todo gráfico vai para o tema.** Tema descreve o visual geral, prop descreve aquele gráfico. [`#en-US/guide/customize`](https://recharts.github.io/en-US/guide/customize/) [`#en-US/guide/theming`](https://recharts.github.io/en-US/guide/theming/)
+- **Tema próprio parte de um tema embutido (spread).** Só `graphicalItems` é obrigatório no tipo, mas seção omitida renderiza sem estilo. [`#en-US/guide/theming`](https://recharts.github.io/en-US/guide/theming/)
+- **O valor do tema chega ao DOM sem mudança, então `var(--token)` funciona como cor.** É o caminho que a doc dá para trocar tema por variável CSS. [`#en-US/guide/theming`](https://recharts.github.io/en-US/guide/theming/)
+- **`light-dark()` no tema exige Chrome 123, Firefox 120 ou Safari 17.5.** Navegador mais velho ignora o valor e o gráfico cai no preto padrão do SVG, sem cor no Tooltip e na Legend. [`#en-US/guide/theming`](https://recharts.github.io/en-US/guide/theming/)
+
+### Animação
+
+- **`isAnimationActive` fica em `'auto'`; `true` é proibido.** `'auto'` respeita `prefers-reduced-motion`, e `true` anima sempre, ignorando a preferência do sistema. [`#en-US/guide/animations`](https://recharts.github.io/en-US/guide/animations/)
+- **Dado que entra e sai do gráfico usa `animationMatchBy` com `matchByDataKey`.** O casamento padrão é por índice, e por chave cada ponto mantém a identidade e desliza para a posição nova. [`#en-US/guide/animations`](https://recharts.github.io/en-US/guide/animations/) [`#matchByDataKey`](https://recharts.github.io/en-US/api/matchByDataKey/)
+
+### Tamanho
+
+- **Gráfico que acompanha o contêiner usa a prop `responsive` da v3, não o `ResponsiveContainer`.** A prop usa regras de CSS comuns; o `ResponsiveContainer` é o caminho de versão antiga. [`#en-US/guide/sizes`](https://recharts.github.io/en-US/guide/sizes/) [`#AreaChart`](https://recharts.github.io/en-US/api/AreaChart/) [`#BarChart`](https://recharts.github.io/en-US/api/BarChart/) [`#LineChart`](https://recharts.github.io/en-US/api/LineChart/) [`#ComposedChart`](https://recharts.github.io/en-US/api/ComposedChart/) [`#ScatterChart`](https://recharts.github.io/en-US/api/ScatterChart/) [`#FunnelChart`](https://recharts.github.io/en-US/api/FunnelChart/)
+- **O pai de `ResponsiveContainer` tem tamanho definido.** A doc exige isso, e o componente depende de `ResizeObserver` (polyfill em navegador sem a API). [`#en-US/guide/sizes`](https://recharts.github.io/en-US/guide/sizes/) [`#ResponsiveContainer`](https://recharts.github.io/en-US/api/ResponsiveContainer/)
+
+### Acessibilidade
+
+- **`accessibilityLayer` é `true` por padrão na v3 e dá suporte a teclado e leitor de tela.** A API dos gráficos documenta o padrão e o efeito. [`#AreaChart`](https://recharts.github.io/en-US/api/AreaChart/) [`#BarChart`](https://recharts.github.io/en-US/api/BarChart/) [`#LineChart`](https://recharts.github.io/en-US/api/LineChart/) [`#ComposedChart`](https://recharts.github.io/en-US/api/ComposedChart/) [`#ScatterChart`](https://recharts.github.io/en-US/api/ScatterChart/) [`#FunnelChart`](https://recharts.github.io/en-US/api/FunnelChart/)
+
+### Componentes obsoletos e personalização
+
+- **Não use `Cell`; personalize por `shape` ou `content`.** `Cell` está obsoleto e sai na Recharts 4.0, e a doc pede refatorar o uso existente. [`#en-US/guide/cell`](https://recharts.github.io/en-US/guide/cell/) [`#Cell`](https://recharts.github.io/en-US/api/Cell/)
+- **Não use `Customized`; renderize o componente direto no gráfico.** Na v3 todo gráfico renderiza elemento arbitrário e o wrapper ficou obsoleto. [`#en-US/guide/customize`](https://recharts.github.io/en-US/guide/customize/) [`#Customized`](https://recharts.github.io/en-US/api/Customized/)
+- **Use `XAxis` ou `YAxis`, não `CartesianAxis`.** A página do `CartesianAxis` manda usar os eixos. [`#CartesianAxis`](https://recharts.github.io/en-US/api/CartesianAxis/)
+- **Barra individual não responde a mouse por padrão; passe `activeBar` para o `shape` receber `isActive`.** É uma otimização para gráfico grande. [`#en-US/guide/customize`](https://recharts.github.io/en-US/guide/customize/) [`#Bar`](https://recharts.github.io/en-US/api/Bar/)
+- **`content` de `Legend` e de `Tooltip` devolve HTML, não SVG.** A API dos dois pede elementos HTML no retorno. [`#Legend`](https://recharts.github.io/en-US/api/Legend/) [`#DefaultLegendContent`](https://recharts.github.io/en-US/api/DefaultLegendContent/) [`#Tooltip`](https://recharts.github.io/en-US/api/Tooltip/)
+- **Em `Label` e `LabelList`, componente próprio entra pela prop `content`.** A prop de texto só aceita o que o `Text` renderiza. [`#Label`](https://recharts.github.io/en-US/api/Label/) [`#LabelList`](https://recharts.github.io/en-US/api/LabelList/)
+- **Um `Tooltip` só por gráfico.** A doc avisa que vários no mesmo gráfico causam comportamento estranho. [`#useIsTooltipActive`](https://recharts.github.io/en-US/api/useIsTooltipActive/) [`#useActiveTooltipCoordinate`](https://recharts.github.io/en-US/api/useActiveTooltipCoordinate/)
+
+### Dados e eixos
+
+- **Cada item de `data` é um objeto.** A API de todos os gráficos exige isso. [`#AreaChart`](https://recharts.github.io/en-US/api/AreaChart/) [`#BarChart`](https://recharts.github.io/en-US/api/BarChart/) [`#LineChart`](https://recharts.github.io/en-US/api/LineChart/) [`#ComposedChart`](https://recharts.github.io/en-US/api/ComposedChart/) [`#ScatterChart`](https://recharts.github.io/en-US/api/ScatterChart/) [`#FunnelChart`](https://recharts.github.io/en-US/api/FunnelChart/) [`#PieChart`](https://recharts.github.io/en-US/api/PieChart/) [`#RadarChart`](https://recharts.github.io/en-US/api/RadarChart/) [`#RadialBarChart`](https://recharts.github.io/en-US/api/RadialBarChart/) [`#Treemap`](https://recharts.github.io/en-US/api/Treemap/) [`#Sankey`](https://recharts.github.io/en-US/api/Sankey/) [`#SunburstChart`](https://recharts.github.io/en-US/api/SunburstChart/) [`#Area`](https://recharts.github.io/en-US/api/Area/) [`#Bar`](https://recharts.github.io/en-US/api/Bar/) [`#Line`](https://recharts.github.io/en-US/api/Line/) [`#Scatter`](https://recharts.github.io/en-US/api/Scatter/) [`#Funnel`](https://recharts.github.io/en-US/api/Funnel/) [`#Pie`](https://recharts.github.io/en-US/api/Pie/)
+- **`dataMin` / `dataMax` na função de `baseValue` leem o domínio do eixo, não o dado.** A doc avisa que o domínio costuma ser estendido automaticamente e por isso difere do dado. [`#AreaChart`](https://recharts.github.io/en-US/api/AreaChart/) [`#BarChart`](https://recharts.github.io/en-US/api/BarChart/) [`#LineChart`](https://recharts.github.io/en-US/api/LineChart/) [`#ComposedChart`](https://recharts.github.io/en-US/api/ComposedChart/) [`#ScatterChart`](https://recharts.github.io/en-US/api/ScatterChart/) [`#FunnelChart`](https://recharts.github.io/en-US/api/FunnelChart/) [`#Area`](https://recharts.github.io/en-US/api/Area/)
+- **`domain` do eixo tem dois valores; a função recebe `[dataMin, dataMax]` e devolve `[min, max]`.** A lib valida os valores do domínio. [`#XAxis`](https://recharts.github.io/en-US/api/XAxis/) [`#YAxis`](https://recharts.github.io/en-US/api/YAxis/) [`#ZAxis`](https://recharts.github.io/en-US/api/ZAxis/) [`#PolarAngleAxis`](https://recharts.github.io/en-US/api/PolarAngleAxis/) [`#PolarRadiusAxis`](https://recharts.github.io/en-US/api/PolarRadiusAxis/)
+- **Em eixo `type="number"`, `ticks` são números.** Só eixo de categoria aceita tick de qualquer tipo. [`#XAxis`](https://recharts.github.io/en-US/api/XAxis/) [`#YAxis`](https://recharts.github.io/en-US/api/YAxis/)
+- **Com mais de um eixo X ou Y, `xAxisId` / `yAxisId` é obrigatório nos itens.** A API marca o id como obrigatório nesse caso. [`#Area`](https://recharts.github.io/en-US/api/Area/) [`#Bar`](https://recharts.github.io/en-US/api/Bar/) [`#Line`](https://recharts.github.io/en-US/api/Line/) [`#Scatter`](https://recharts.github.io/en-US/api/Scatter/) [`#CartesianGrid`](https://recharts.github.io/en-US/api/CartesianGrid/) [`#ReferenceLine`](https://recharts.github.io/en-US/api/ReferenceLine/) [`#ReferenceDot`](https://recharts.github.io/en-US/api/ReferenceDot/) [`#ReferenceArea`](https://recharts.github.io/en-US/api/ReferenceArea/)
+- **Marca posicionada pelo dado usa `ReferenceLine`, `ReferenceDot` ou `ReferenceArea`; por pixel, `Dot` ou `Rectangle`.** As `Reference*` recebem valor do domínio, não pixel. [`#ReferenceLine`](https://recharts.github.io/en-US/api/ReferenceLine/) [`#ReferenceDot`](https://recharts.github.io/en-US/api/ReferenceDot/) [`#ReferenceArea`](https://recharts.github.io/en-US/api/ReferenceArea/) [`#Dot`](https://recharts.github.io/en-US/api/Dot/) [`#Rectangle`](https://recharts.github.io/en-US/api/Rectangle/)
+- **Handler que chama `preventDefault()` ou `stopPropagation()` não entra em `throttledEvents`.** Evento da lista perde o acesso síncrono, e aí não dá mais para cancelá-lo. [`#AreaChart`](https://recharts.github.io/en-US/api/AreaChart/) [`#BarChart`](https://recharts.github.io/en-US/api/BarChart/) [`#LineChart`](https://recharts.github.io/en-US/api/LineChart/) [`#ComposedChart`](https://recharts.github.io/en-US/api/ComposedChart/) [`#ScatterChart`](https://recharts.github.io/en-US/api/ScatterChart/) [`#FunnelChart`](https://recharts.github.io/en-US/api/FunnelChart/) [`#PieChart`](https://recharts.github.io/en-US/api/PieChart/) [`#RadarChart`](https://recharts.github.io/en-US/api/RadarChart/) [`#RadialBarChart`](https://recharts.github.io/en-US/api/RadialBarChart/) [`#Treemap`](https://recharts.github.io/en-US/api/Treemap/) [`#Sankey`](https://recharts.github.io/en-US/api/Sankey/) [`#SunburstChart`](https://recharts.github.io/en-US/api/SunburstChart/)
+
+### Hooks e camadas
+
+- **Hook de gráfico (`useOffset`, `usePlotArea`, escalas) e `ZIndexLayer` só dentro do contexto do gráfico.** Fora dele os hooks devolvem `undefined`. [`#ZIndexLayer`](https://recharts.github.io/en-US/api/ZIndexLayer/) [`#useOffset`](https://recharts.github.io/en-US/api/useOffset/) [`#usePlotArea`](https://recharts.github.io/en-US/api/usePlotArea/) [`#useCartesianScale`](https://recharts.github.io/en-US/api/useCartesianScale/) [`#useXAxisScale`](https://recharts.github.io/en-US/api/useXAxisScale/) [`#useYAxisScale`](https://recharts.github.io/en-US/api/useYAxisScale/) [`#useXAxisInverseScale`](https://recharts.github.io/en-US/api/useXAxisInverseScale/) [`#useYAxisInverseScale`](https://recharts.github.io/en-US/api/useYAxisInverseScale/) [`#useXAxisInverseDataSnapScale`](https://recharts.github.io/en-US/api/useXAxisInverseDataSnapScale/) [`#useYAxisInverseDataSnapScale`](https://recharts.github.io/en-US/api/useYAxisInverseDataSnapScale/) [`#useXAxisInverseTickSnapScale`](https://recharts.github.io/en-US/api/useXAxisInverseTickSnapScale/) [`#useYAxisInverseTickSnapScale`](https://recharts.github.io/en-US/api/useYAxisInverseTickSnapScale/)
+- **`ErrorBar` é filho de um item gráfico.** A API exige essa posição. [`#ErrorBar`](https://recharts.github.io/en-US/api/ErrorBar/)
+
+### Desempenho
+
+- **Objeto e função passados como prop têm referência estável (`useMemo`, `useCallback` ou definidos fora do componente), sobretudo o `dataKey` função.** `dataKey` novo a cada render faz a lib recalcular todos os pontos daquele item. [`#en-US/guide/performance`](https://recharts.github.io/en-US/guide/performance/)
+- **Componente que muda com frequência fica isolado no próprio componente.** Só ele renderiza de novo e o resto do gráfico fica estático. [`#en-US/guide/performance`](https://recharts.github.io/en-US/guide/performance/)
+- **Atualização por movimento do mouse passa por throttle ou debounce.** Redesenhar só depois que o usuário para de mover é a saída simples que a doc indica. [`#en-US/guide/performance`](https://recharts.github.io/en-US/guide/performance/)
+- **Conjunto grande de pontos vira resumo (histograma, distribuição acumulada, metadados).** A doc questiona mostrar 50.000 pontos que ninguém lê. [`#en-US/guide/performance`](https://recharts.github.io/en-US/guide/performance/)
+
 ---
 
 ## Guia

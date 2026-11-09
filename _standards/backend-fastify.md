@@ -66,7 +66,9 @@ export default class AdministratorUserCreateController {
   schema. Ele **não** é escrito à mão: sai do gerador, indexado por `"MÉTODO /caminho"`
   (`openapi.md` #rota-nova), que só monta o objeto com os schemas do `shared/`.
   _doc-lib/fastify-plugins.md#fastify-type-provider-zod,
-  _doc-lib/fastify.md#Reference/Validation-and-Serialization (`DECISIONS.md` #241).
+  _doc-lib/fastify.md#Reference/Validation-and-Serialization (`DECISIONS.md` #241). Com o
+  serializer do Zod, a resposta já sai pelo schema publicado, e `openapi:verify` não tem o que
+  verificar: o script sai (`DECISIONS.md` #360).
 - Entrada lida uma vez, pelo validator Zod de `shared/` (`architecture.md` §10): o use-case recebe a
   saída do validator, nunca `request.body` cru nem espalhado (`backend.md` §4.1).
 
@@ -113,12 +115,15 @@ guard acusar. Vale para qualquer scanner por convenção deste perfil.
 **`new X()` nunca** em código de produção, para `X` terminado em `Service`, `UseCase`, `Policy`,
 `Controller`, `Repository` ou `Seeder` (`backend.md` §2.1; regra de ESLint em `tooling.md` §4).
 Composition root de verdade (`start/kernel.ts`, `bin/server.ts`, o boot de um worker de fila) é a
-exceção nomeada, nunca um callback de request. `*.unit.spec.ts` pode usar `new` (§8).
+exceção nomeada, nunca um callback de request. `*.unit.spec.ts` monta o service por
+`configureServiceTest` e só usa `new` em classe sem dependência (§8).
 
 **Autorização** *(opinião da casa)*. Fastify não tem biblioteca oficial de autorização, nada
 equivalente ao Bouncer do AdonisJS. A `Policy` é classe `@Service()` concreta, chamada no
-use-case com `(actor, target)`; a regra (incluindo 404 uniforme para registro de outro dono) é a
-de `backend.md` §4.6.
+use-case com `(actor, target | null)`; o método é síncrono e devolve `AuthorizationDecision`
+(`{ allowed: true } | { allowed: false; status: 403 | 404; code }`), e o use-case traduz a recusa
+pela tabela de refusal (`DECISIONS.md` #358). A regra (incluindo 404 uniforme para registro de outro
+dono) é a de `backend.md` §4.6.
 
 **`actor` vem do token, validado pelo schema** (`backend.md` §4.3, `DECISIONS.md` #115). O
 middleware de autenticação verifica o JWT, valida as claims contra o `ActorSchema` de `shared/`
@@ -170,7 +175,9 @@ linha "classe base de template method").
   achar o que faltou *(opinião da casa)*.
 - **Recusa de service é fato, não `HTTPException`.** Service de I/O devolve `Either<Fato, T>` e
   nunca importa `HTTPException`; a tradução fato → HTTP é a de `domain.md` §2
-  (`_shared.<recurso>-refusal.ts` quando várias ações a repetem).
+  (`_shared.<entidade>-refusal.ts` quando várias ações a repetem).
+- **Lixeira no Mongo é `trashed`/`trashedAt`**, não `deletedAt`: exceção do lowcodejs ao vocabulário
+  de `backend.md` §4.8, que vale para o resto (`DECISIONS.md` #354).
 
 ---
 
@@ -216,6 +223,9 @@ pelo frontend, nunca o texto da `message`. Envio via `this.http.sendError(reply,
 
 Log pelo logger do Fastify (`request.log`, ou o logger injetado no service), nunca `console.*`,
 nunca o corpo inteiro da requisição. _doc-lib/fastify.md#Reference/Logging.
+
+`uncaughtException` registrado no `bin/server.ts`: loga o erro e sai com `process.exitCode = 1`,
+sem tentar seguir servindo com estado desconhecido (`DECISIONS.md` #360).
 
 ---
 
@@ -265,15 +275,16 @@ perfil:
 | Arquivo | `<x>.unit.spec.ts`, ao lado do que cobre | `<x>.e2e.spec.ts`, ao lado do que cobre |
 | Config | `vitest.unit.config.ts` | `vitest.e2e.config.ts` |
 | Sobe banco/kernel? | Não | Sim: MongoDB real em container, um database por suíte |
-| Como obtém o objeto | `new`, com a implementação em memória do repository e o `.fake.ts` do service (`DECISIONS.md` #116) | do container: `fromContainer(Impl)` / `getInstanceByToken(Impl)`, nunca `new` |
+| Como obtém o objeto | `configureServiceTest({ service, mocks: [provide(Contract, fake)] })`, com a implementação em memória do repository e o `.fake.ts` do service, como _doc-lib/fastify-decorators.md#Testing impõe; `new` só para classe sem dependência (`DECISIONS.md` #331) | do container: `fromContainer(Impl)` / `getInstanceByToken(Impl)`, nunca `new` |
 | Runner | `forks`, paralelo | `forks`, `maxWorkers: 1` |
 
 _doc-lib/vitest.md#config/pool, #config/maxworkers.
 
 **Por quê separar**: `*.unit.spec.ts` que sobe Mongo é lento e esconde a regressão de regra atrás de
 setup de banco. No E2E, `new` deixaria o teste passar com um objeto meio construído quando o
-construtor ganha uma dependência; o container quebra na hora. No unitário o risco não existe: o
-construtor recebe tudo explícito, e o compilador acusa o que faltar.
+construtor ganha uma dependência; o container quebra na hora. No unitário a doc do
+fastify-decorators manda `configureServiceTest`, que monta o service pelo container com os mocks
+declarados, e o que faltar quebra ali mesmo.
 
 **Teste de contrato do repository** (`<entidade>.repository.e2e.spec.ts`): os mesmos casos na
 implementação Mongo e na de memória, com `describe.each` (`domain.md` §5.4).
@@ -309,7 +320,9 @@ Migration standalone, spec de script de guard-rail e suíte E2E sequencial: `bac
   §3 (linha "socket").
 - **BullMQ**: fila sobre Redis + worker **in-process**, iniciado junto do servidor principal
   (processo separado só se o volume justificar). Job persiste no Redis: restart do worker retoma
-  sozinho, sem lógica de retomada escrita à mão. _doc-lib/bullmq.md#guide/architecture.
+  sozinho, sem lógica de retomada escrita à mão. _doc-lib/bullmq.md#guide/architecture. O
+  produtor liga `enableOfflineQueue: false`, para a requisição falhar rápido quando o Redis cai em
+  vez de esperar (_doc-lib/bullmq.md#patterns/failing-fast-when-redis-is-down).
 - **Payload de job tem validator.** O dado do job trafega como JSON e chega ao worker como
   `unknown` na prática: instância de classe vira objeto puro, `undefined` some
   (_doc-lib/bullmq.md#guide/jobs/job-data). O contrato da fila
@@ -321,6 +334,16 @@ Migration standalone, spec de script de guard-rail e suíte E2E sequencial: `bac
   nunca para isolar lógica interna da própria aplicação. Timeout curto (segundos, não minutos) e
   heap limitado são obrigatórios; sem os dois, um script do usuário é negação de serviço contra o
   próprio processo. _doc-lib/isolated-vm.md#security.
+
+---
+
+### 9.1 Comando de CLI
+
+Comando de operação (o que o cron do orquestrador repete, `backend.md` §4.12) é
+`commands/<recurso>-<verbo>.command.ts`: módulo Node com uma classe de `static run(argv)`, que lê as
+flags por `parseArgs` (`node:util`), resolve o use-case pelo `DiRegistry` (nunca `new`) e fecha a
+conexão do banco no `finally`, dê certo ou não. `--dry-run` segue a regra de `backend.md` §4.12
+(`DECISIONS.md` #348).
 
 ---
 
@@ -347,12 +370,12 @@ Fastify. Tudo registrado **uma vez**, no kernel (§5), nesta ordem *(opinião da
 
 | # | Peça | Configuração da casa | Doc |
 |---|---|---|---|
-| 1 | fábrica `Fastify({ … })` | `trustProxy` com o número de saltos ou a sub-rede do proxy real (`TRUSTED_PROXIES` no ENV), nunca `true` às cegas; `bodyLimit` explícito; logger com `redact` de `password`, `*.password`, `token`, `*.token`, `refreshToken`, `req.headers.authorization`, `req.headers.cookie`, `res.headers["set-cookie"]` e documento (CPF/CNPJ) | _doc-lib/fastify.md#Reference/Server, #Reference/Logging |
+| 1 | fábrica `Fastify({ … })` | `trustProxy` com a sub-rede do proxy real (`TRUSTED_PROXIES` no ENV, IP/CIDR ou lista), nunca `true` às cegas nem número de saltos, que o Fastify desativou porque não valida o vizinho imediato (_doc-lib/fastify.md#Reference/Server); `bodyLimit` explícito; logger com `redact` de `password`, `*.password`, `token`, `*.token`, `refreshToken`, `req.headers.authorization`, `req.headers.cookie`, `res.headers["set-cookie"]` e documento (CPF/CNPJ) | _doc-lib/fastify.md#Reference/Server, #Reference/Logging |
 | 2 | `@fastify/helmet` | na raiz; API que só serve JSON fica no default. HSTS no default, sem `preload` nem `includeSubDomains` sem decisão registrada | _doc-lib/fastify-plugins.md#@fastify/helmet |
 | 3 | `@fastify/cors` | origens explícitas do ENV e `credentials: true`; nunca `origin: '*'` nem refletir `Origin` sem conferir; métodos e `exposedHeaders` só os usados | _doc-lib/fastify-plugins.md#@fastify/cors |
-| 4 | `@fastify/rate-limit` | global desligado ou alto; limite por rota em toda escrita sem sessão (login, cadastro, recuperação de senha, reenvio de e-mail, upload anônimo); login com chave IP + e-mail normalizado; contador em Redis com mais de uma instância; 429 com `code` estável | _doc-lib/fastify-plugins.md#@fastify/rate-limit |
-| 5 | `@fastify/cookie` | atributos num ponto só, o service de cookie: `httpOnly`, `sameSite` (`backend.md` §4.10), `path: '/'`, `secure` pelo getter de ENV (§7), `domain` de `COOKIE_DOMAIN` | _doc-lib/fastify-plugins.md#@fastify/cookie |
-| 6 | `@fastify/jwt` | RS256 com chave privada e pública do ENV, sem default; verificação fixa o algoritmo (`RS256`) *(página oficial não conferida para o nome exato da opção)*; access token curto, refresh com estado no banco, apagado em logout, troca de senha e mudança de papel | _doc-lib/fastify-plugins.md#@fastify/jwt |
+| 4 | `@fastify/rate-limit` | exceção lowcodejs: limitador próprio em Redis, com Lua atômico e `failClosed` (`DECISIONS.md` #360). Fora dele: global desligado ou alto; limite por rota em toda escrita sem sessão (login, cadastro, recuperação de senha, reenvio de e-mail, upload anônimo); login com chave IP + e-mail normalizado; contador em Redis com mais de uma instância; 429 com `code` estável no envelope, pelo `errorResponseBuilder` (o padrão do plugin é `{ statusCode, error, message }`, `backend.md` §4.5) | _doc-lib/fastify-plugins.md#@fastify/rate-limit |
+| 5 | `@fastify/cookie` | atributos lidos dos getters de `start/env.ts` por `services/session/`, com prefixo `__Secure-` quando há `COOKIE_DOMAIN` (`DECISIONS.md` #339): `httpOnly`, `sameSite` (`backend.md` §4.10), `path: '/'`, `secure` pelo getter de ENV (§7), `domain` de `COOKIE_DOMAIN`, nome com prefixo `__Host-` (host-only) ou `__Secure-` (com `Domain`) (`backend.md` §4.10) | _doc-lib/fastify-plugins.md#@fastify/cookie |
+| 6 | `@fastify/jwt` | RS256 com chave privada e pública do ENV, sem default; verificação fixa o algoritmo em `verify: { algorithms: ['RS256'] }`, porque sem ele o `@fastify/jwt` aceita qualquer algoritmo (_doc-lib/fastify-plugins.md, `@fastify/jwt`); access token curto, refresh com estado no banco, apagado em logout, troca de senha e mudança de papel | _doc-lib/fastify-plugins.md#@fastify/jwt |
 | 7 | `@fastify/multipart` | `limits` de tamanho, quantidade de arquivos e de campos; processamento por stream | _doc-lib/fastify-plugins.md#@fastify/multipart |
 | 8 | hook `onRequest` de origem | CSRF por `Origin` (ou `Sec-Fetch-Site`) contra a mesma allowlist do CORS em todo método que não é `GET`/`HEAD`; nenhum `GET` altera estado | _doc-lib/fastify-plugins.md#@fastify/csrf-protection (o `SameSite=Lax` cobre a maior parte; a checagem de origem cobre subdomínio irmão) |
 | 9 | hook `onRequest` de idioma | §12 | `i18n.md` §3 |
@@ -389,7 +412,9 @@ Regra em `i18n.md`. No Fastify não há `_doc-lib` de i18n (não coberto) *(opin
 
 Completa `backend.md` §5.7 com o que só existe neste perfil. `DECISIONS.md` #230.
 
-1. **Socket.IO** (§9). `cors.origin` = `CORS_ORIGINS`; entrar na sala de um recurso exige a policy do
+1. **Socket.IO** (§9). `cors.origin` = `CORS_ORIGINS`, e `allowRequest` confere o `Origin` contra a
+   mesma lista: o CORS só vale para navegador e para o long-polling, não para a conexão WebSocket
+   (_doc-lib/socket-io.md#handling-cors, #server-options); entrar na sala de um recurso exige a policy do
    actor sobre o id dela; logout e troca de papel chamam `disconnectSockets()` na sala do usuário,
    porque o middleware de handshake roda uma vez só. *(CLIENT-SIDE.md, Cross-site WebSocket;
    PROTOCOLS-RPC-AND-MESSAGING.md, Streaming authorization.)*

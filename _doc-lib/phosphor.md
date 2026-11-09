@@ -79,6 +79,41 @@ Projeto com outra biblioteca de ícones migra (`_standards/MIGRATIONS.md`), come
 `impeccable` (escolha e consistência de ícone). Dispare junto com a leitura da entrada; a entrada é
 o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Phosphor (React): projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Pacote e import
+
+- **O pacote é `@phosphor-icons/react`, não o legado `phosphor-react`.** O novo tem desempenho melhor e bundle bem menor, sem mudança de API. [`#react#installation`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Importe só os ícones usados, pelo nome (`import { HeartIcon } from "@phosphor-icons/react"`).** O pacote suporta tree-shaking e o bundle leva apenas os ícones importados. [`#react#usage`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Evite `import * as Icon`.** Conforme o bundler, isso impede o tree-shaking e aumenta o bundle. [`#react#imports`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Se o dev server ficar lento, importe pelo caminho do arquivo (`@phosphor-icons/react/dist/csr/<Nome>`).** Importar do módulo principal faz alguns bundlers transpilarem os mais de 9.000 módulos do pacote. [`#react#import-performance-optimization`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+
+### SSR e contexto
+
+- **Ambiente sem Context API (React Server Component) importa de `@phosphor-icons/react/ssr`.** A doc indica esse submódulo para SSR, RSC ou qualquer ambiente que não permita Context. [`#react#react-server-components-and-ssr`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Ícone de `/ssr` não herda estilo de `IconContext`.** Essas variantes não usam React Context. [`#react#react-server-components-and-ssr`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Estilo padrão de todos os ícones sai de um `IconContext.Provider` acima deles; vale o contexto mais próximo.** O contexto também repassa props de SVG (ex.: `aria-label`, `className`) a cada ícone. [`#react#context`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+
+### Props e acessibilidade
+
+- **Ícone é estilizado por `color`, `size`, `weight` e `mirrored`, e aceita qualquer prop de `<svg>`.** São as props principais de estilo que a doc lista. [`#react#props`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Texto alternativo de ícone vai em `alt`.** É a prop que a doc define para alt text acessível. [`#react#props`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Ícone em idioma RTL usa `mirrored` onde a orientação normal não serve.** A prop vira o ícone na horizontal. [`#react#props`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+
+### Ícone próprio
+
+- **Ícone customizado nasce num grid de 256x256, achatado só em `path` e sem `fill`/`stroke`, renderizado por `IconBase` com um `Map` de pesos.** Cor e traço passam a vir do wrapper, como nos ícones da lib. [`#react#custom-icons`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Ícone customizado usado em Server Component renderiza por `SSRBase`, não `IconBase`.** `IconBase` depende de Context. [`#react#custom-icons`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+- **Filho de SVG passado a um ícone fica no espaço de coordenadas 256x256 do `viewBox`, e só elemento SVG válido é renderizado.** Os filhos ficam abaixo do conteúdo do ícone. [`#react#composability`](https://raw.githubusercontent.com/phosphor-icons/react/master/README.md)
+
+### Troca de biblioteca no shadcn
+
+- **Troca de biblioteca de ícones nos componentes do shadcn é `npx shadcn@latest migrate icons` (`--from`/`--to`), rodado no projeto inteiro.** O comando reescreve imports e JSX de `ui/` e atualiza `iconLibrary` no `components.json`; rodada restrita a arquivos não atualiza o `components.json`, e ícone sem equivalente fica intocado e é relatado. [`#docs/cli#migrate-icons`](https://ui.shadcn.com/docs/cli.md)
+
 ---
 
 ## Começo

@@ -114,6 +114,32 @@ valida e presenter que devolve objeto simples), `superpowers:brainstorming` ou `
 adotar, por ser decisão de arquitetura. Dispare junto com a leitura da entrada; a entrada é o
 contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Tuyau: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e tipos compartilhados
+
+- **Frontend e backend usam a mesma versão de `@tuyau/core`.** Desde a 1.2.3 o registry codifica os tokens de rota num formato que cliente antigo não lê. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **O nome do pacote importado pelo frontend é o `name` do `package.json` do backend.** É por esse nome que o frontend acha o registry gerado. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **O `tsconfig.json` do frontend inclui o código do backend e liga `experimentalDecorators`.** O registry referencia controllers, validators e transformers do backend, que usam decorator. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **`baseUrl` do cliente vem de variável de ambiente.** Assim desenvolvimento e produção apontam para APIs diferentes. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+
+### Chamadas e tipos
+
+- **Chamada por nome de rota com a sintaxe de proxy é o caminho recomendado.** É a forma que a doc recomenda sobre as funções por método HTTP. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **Com `get`/`post`/... o padrão é idêntico ao do registry, com barra inicial e placeholders.** O Tuyau substitui os `params` no padrão exato. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **Controller valida com `request.validateUsing()`.** Sem isso o Tuyau não infere o corpo e o tipo do frontend cai em `any`. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **O tipo de resposta reflete a serialização JSON: `Date` chega como string.** Tipo rico só sobrevive com `@tuyau/superjson`, cujas receitas ficam num arquivo compartilhado importado pelos dois lados. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **Erro do cliente é sempre `TuyauError`; `.safe()` devolve tupla em vez de lançar.** Um só formato cobre falha HTTP e de rede. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+
+### Upload
+
+- **Chave do `body` com arquivo é igual à chave do validator VineJS.** Ela vira o nome do campo do FormData. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+- **Campo de arquivo opcional é omitido, nunca enviado como `undefined` ou `null`.** No FormData esses valores podem virar string literal. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client)
+
 ---
 
 ## Repositório

@@ -20,8 +20,8 @@ A classe declara no construtor do que precisa; o container entrega pronto.
 |---|---|---|
 | Marcar injetável | `@inject()` | `@Service()` |
 | Resolver | pelo tipo do parâmetro (`emitDecoratorMetadata`) | idem, ou `@Inject(Token)` |
-| Trocar no teste unitário | `new UseCase(new PostMemoryRepository(), new MailerFake())` em `*.unit.spec.ts` (#116) | idem |
-| Trocar no E2E | `app.container.swap(MailerContract, () => fake)` | `configureServiceTest({ mocks: [...] })` / `fromContainer` (`backend-fastify.md` §8) |
+| Trocar no teste unitário | `new UseCase(new PostMemoryRepository(), new MailerFake())` em `*.unit.spec.ts` (#116) | `configureServiceTest({ service, mocks })` (_doc-lib/fastify-decorators.md#Testing, #331) |
+| Trocar no E2E | `app.container.swap(MailerContract, () => fake)` | `provide(Contract, impl)` / `fromContainer` (`backend-fastify.md` §8) |
 | Doc | `_doc-lib/adonisjs.md` → `guides/concepts/dependency-injection` | `_doc-lib/fastify-decorators.md` → services e DI |
 
 No unitário, o construtor tipado é a proteção: dependência nova quebra a compilação do teste, que
@@ -77,6 +77,7 @@ Vale **nos dois perfis**, igual (`DECISIONS.md` #113, C20):
 | Dependência | Contrato? |
 |---|---|
 | I/O externo: e-mail, storage, fila, pagamento, API de terceiro, relógio, gerador de id | **Sim.** É onde o teste troca e onde o fornecedor muda |
+| aleatório, ENV lido em runtime, CPU lenta (hash de senha) | **Sim, quando o teste precisa trocar** (`DECISIONS.md` #358) |
 | Service interno sem I/O próprio (`SlugService`, montador de schema, type guard) | **Não.** Classe concreta injetada pela própria classe (`@inject()` / `@Service()`); o registry do Fastify não cria contrato para ela |
 | Persistência (model/driver de banco) | **Sim**, pelo repository: contrato `abstract class` + implementação do ORM + implementação em memória (`domain.md` §5, `DECISIONS.md` #111) |
 

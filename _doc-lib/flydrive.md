@@ -40,6 +40,45 @@ provedor sem reescrever a feature. Se o app grava um único arquivo local e nunc
 
 **Skills:** `maiyu-backend`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com FlyDrive: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Chave e segurança
+
+- **Chave de objeto não é caminho do Node: `..` e certos caracteres são recusados.** A FlyDrive normaliza a chave como nos provedores de nuvem e lança `E_PATH_TRAVERSAL_DETECTED` em sequência de path traversal. [`#key_concepts`](https://flydrive.dev/docs/key_concepts), [`#introduction`](https://flydrive.dev/docs/introduction)
+- **Arquivo privado se lê por URL temporária (que expira) ou servido pela aplicação com `disk.get`/`disk.getStream`.** Arquivo privado não tem acesso público. [`#key_concepts`](https://flydrive.dev/docs/key_concepts)
+- **Código não depende de symlink, watch, permissão Unix nem diretório real.** Provedores de nuvem guardam chave e valor e não têm esses conceitos. [`#introduction`](https://flydrive.dev/docs/introduction), [`#key_concepts`](https://flydrive.dev/docs/key_concepts)
+- **No driver `fs`, `visibility` não tem efeito; servir o arquivo local é decisão da aplicação.** A flag só vale nos provedores. [`#services/fs`](https://flydrive.dev/docs/services/fs)
+
+### Leitura, erro e metadados
+
+- **Erro do driver se inspeciona por `error.cause`.** A FlyDrive embrulha o erro do driver numa exceção unificada. [`#key_concepts`](https://flydrive.dev/docs/key_concepts)
+- **Leitura parcial usa `range` em `getBytes` ou `getStream`, nunca em `get`.** Cortar em byte arbitrário quebraria o UTF-8 de `get`; `start` e `end` são inteiros não negativos dentro do tamanho do arquivo. [`#disk_api`](https://flydrive.dev/docs/disk_api)
+- **Metadado novo exige nova instância por `disk.file`.** A instância de `DriveFile` da listagem guarda o metadado lido na hora. [`#file_api`](https://flydrive.dev/docs/file_api)
+
+### Drive Manager e testes
+
+- **Todo serviço usado em algum ambiente (dev e produção) é registrado em `services`.** É assim que o manager troca de disco sem mudar a lógica. [`#drive_manager`](https://flydrive.dev/docs/drive_manager), [`#introduction`](https://flydrive.dev/docs/introduction)
+- **Fake de teste tem pasta configurada e é desfeito com `drive.restore` ao fim do teste.** No modo fake tudo vai para o disco local, mesmo com provedor remoto. [`#drive_manager`](https://flydrive.dev/docs/drive_manager)
+
+### S3, R2 e compatíveis
+
+- **Pacotes peer do driver (`@aws-sdk/client-s3` e `@aws-sdk/s3-request-presigner`) instalados no projeto.** O driver não os traz. [`#services/s3`](https://flydrive.dev/docs/services/s3), [`#services/r2`](https://flydrive.dev/docs/services/r2)
+- **`supportsACL: false` no R2 e em todo serviço S3 compatível sem ACL.** O R2 não implementa os comandos de ACL por objeto. [`#services/s3`](https://flydrive.dev/docs/services/s3)
+- **`cdnUrl` aponta para o CDN (ex.: CloudFront) que serve os arquivos públicos.** É a base das URLs públicas geradas. [`#services/s3`](https://flydrive.dev/docs/services/s3)
+- **No R2, `endpoint` da conta sempre definido e sem o nome do bucket, e `region: 'auto'`.** São opções obrigatórias do R2. [`#services/r2`](https://flydrive.dev/docs/services/r2)
+- **No R2, URL pública exige domínio próprio do bucket registrado como `cdnUrl`.** Sem ele não há URL pública. [`#services/r2`](https://flydrive.dev/docs/services/r2)
+- **No R2, a credencial é a chave de acesso S3 compatível, não o token do R2.** O driver fala o protocolo S3. [`#services/r2`](https://flydrive.dev/docs/services/r2)
+- **No DigitalOcean Spaces, `endpoint` sempre definido e sem o nome do bucket.** É opção obrigatória do serviço. [`#services/digital_ocean`](https://flydrive.dev/docs/services/digital_ocean)
+- **No Supabase, `endpoint` sempre definido, `cdnUrl` com o bucket e barra final, e gravação por `put`, não `putStream`.** O Supabase não aceita stream na criação do arquivo. [`#services/supabase`](https://flydrive.dev/docs/services/supabase)
+
+### Driver próprio
+
+- **Driver próprio lista com `paginationToken` (ou `undefined` sem paginação) e não normaliza chave nem lança exceção unificada.** O `Disk` já entrega a chave normalizada e embrulha o erro do driver; apagar arquivo ou pasta inexistente não lança. [`#advanced/custom_drivers`](https://flydrive.dev/docs/advanced/custom_drivers)
+
 ---
 
 ## Fundamentos

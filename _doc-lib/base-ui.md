@@ -54,6 +54,86 @@ componentes não têm par no shadcn e estão marcados.
 **Skills:** `shadcn`, `maiyu-frontend`, `compound-pattern`, `react-composition-patterns`, `dialog-pattern`, `sheet-pattern`, `accessibility`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 `overview/releases`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Base UI: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Pacote e setup
+
+- **O pacote é `@base-ui/react`; `@base-ui-components/react` é o nome antigo.** A doc manda usar o nome novo em todo import e instalação. [`#llms.txt`](https://base-ui.com/llms.txt) [`#react/overview/accessibility`](https://base-ui.com/react/overview/accessibility.md)
+- **A raiz do layout da aplicação leva `isolation: isolate`.** Cria um contexto de empilhamento próprio, para que os popups em portal fiquem sempre acima da página e nenhum `z-index` interfira. [`#react/overview/quick-start`](https://base-ui.com/react/overview/quick-start.md)
+- **Backdrop de dialog usa `position: absolute`, com `body { position: relative; }` no CSS global.** No iOS 26+ o `fixed` não cobre a viewport visual inteira. [`#react/overview/quick-start`](https://base-ui.com/react/overview/quick-start.md)
+- **Com CSP, envolva a aplicação em `CSPProvider` com `nonce`; o provider não cobre atributos `style` inline.** O `nonce` é obrigatório quando algum componente usa script inline, e o atributo `style` é regido por `style-src-attr`. [`#react/utils/csp-provider`](https://base-ui.com/react/utils/csp-provider.md)
+- **`DirectionProvider` não basta para RTL: `dir="rtl"` no HTML (ou `direction: rtl`) é da aplicação.** O provider só ajusta o comportamento dos componentes. [`#react/utils/direction-provider`](https://base-ui.com/react/utils/direction-provider.md)
+
+### Acessibilidade
+
+- **Foco visível é responsabilidade da aplicação (`:focus-visible`).** O Base UI gerencia o foco, mas não o indica visualmente. [`#react/overview/accessibility`](https://base-ui.com/react/overview/accessibility.md)
+- **Contraste mínimo entre cada elemento e seu fundo.** A doc exige cumprir o mínimo de contraste ao estilizar. [`#react/overview/accessibility`](https://base-ui.com/react/overview/accessibility.md)
+- **Todo controle de formulário tem nome acessível: `Field.Label` ou `<label>` nativo nos controles de input; `Select.Label`/`Combobox.Label`/`Slider.Label` nos de gatilho; `aria-label` no controle quando não há rótulo visível.** Sem nome a tecnologia assistiva não reconhece o controle. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md) [`#react/components/input`](https://base-ui.com/react/components/input.md) [`#react/components/select`](https://base-ui.com/react/components/select.md) [`#react/components/combobox`](https://base-ui.com/react/components/combobox.md) [`#react/components/slider`](https://base-ui.com/react/components/slider.md) [`#react/components/number-field`](https://base-ui.com/react/components/number-field.md) [`#react/components/otp-field`](https://base-ui.com/react/components/otp-field.md) [`#react/components/autocomplete`](https://base-ui.com/react/components/autocomplete.md)
+- **Grupo de checkbox ou radio: rótulo do grupo em `Fieldset.Legend` e cada opção envolvida no próprio `Field.Item`; slider de vários thumbs leva `aria-label` em cada thumb.** Cada controle precisa do próprio rótulo e descrição. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md) [`#react/components/checkbox-group`](https://base-ui.com/react/components/checkbox-group.md) [`#react/components/radio-group`](https://base-ui.com/react/components/radio-group.md)
+- **Checkbox, radio e switch dentro de `<label>` usam o `render` para que o input oculto fique fora do label.** Evita HTML inválido. [`#react/components/checkbox`](https://base-ui.com/react/components/checkbox.md) [`#react/components/switch`](https://base-ui.com/react/components/switch.md)
+- **`Field.Label` que não renderiza `<label>` (ex.: rotulando um controle de botão) recebe `nativeLabel={false}`.** Evita herdar comportamento de label, como hover e clique repassado ao botão. [`#react/components/field`](https://base-ui.com/react/components/field.md)
+
+### Composição
+
+- **Trocar o elemento ou compor com componente próprio é pela prop `render`; o componente próprio repassa o `ref` e espalha todas as props no nó DOM.** Sem isso a parte perde comportamento e acessibilidade. [`#react/handbook/composition`](https://base-ui.com/react/handbook/composition.md)
+- **Trocar o elemento padrão só caso a caso.** Cada componente já renderiza o elemento mais adequado. [`#react/handbook/composition`](https://base-ui.com/react/handbook/composition.md)
+- **No `render`, classes se somam, `style` se mescla, os dois handlers rodam e os refs se mantêm; `disabled` e afins são lidos por cada parte.** É a regra de merge documentada. [`#react/handbook/composition`](https://base-ui.com/react/handbook/composition.md)
+- **`mergeProps` guarda só o `ref` mais à direita e roda handlers da direita para a esquerda; handler anterior encadeado é chamado à mão.** O `render` mantém todos os refs, o `mergeProps` não. [`#react/utils/merge-props`](https://base-ui.com/react/utils/merge-props.md) [`#react/handbook/composition`](https://base-ui.com/react/handbook/composition.md)
+- **Componente próprio que oferece `render` usa `useRender`.** É o hook da lib para isso. [`#react/utils/use-render`](https://base-ui.com/react/utils/use-render.md)
+
+### Eventos e customização
+
+- **Para impedir uma mudança de estado, `eventDetails.cancel()` no handler de mudança; para pular o handler interno de um evento React, `event.preventBaseUIHandler()`.** Permite manter o componente não controlado. [`#react/handbook/customization`](https://base-ui.com/react/handbook/customization.md)
+- **`preventBaseUIHandler` é saída de emergência, só onde ainda não há prop para o comportamento.** Em vários casos a lib usa evento nativo e o método não tem efeito. [`#react/handbook/customization`](https://base-ui.com/react/handbook/customization.md)
+
+### Animação
+
+- **Entrada e saída por `transition` com `[data-starting-style]`/`[data-ending-style]`, preferidas a `@keyframes`.** A transição pode ser cancelada no meio sem salto. [`#react/handbook/animation`](https://base-ui.com/react/handbook/animation.md)
+- **Animação de saída que a lib não detecta (sem `opacity`) termina por desmontagem manual.** A lib só detecta animação CSS e animação do Motion com `opacity`. [`#react/handbook/animation`](https://base-ui.com/react/handbook/animation.md)
+- **Saída com Motion: popup controlado por `open`, `keepMounted` no `Portal` e `motion.div` pelo `render`.** Sem isso a lib remove o popup antes da animação. [`#react/handbook/animation`](https://base-ui.com/react/handbook/animation.md)
+- **Ao animar tamanho por CSS, use as variáveis de altura/largura que o popup expõe.** A doc marca isso como importante. [`#react/components/menu`](https://base-ui.com/react/components/menu.md) [`#react/components/popover`](https://base-ui.com/react/components/popover.md)
+
+### Formulário
+
+- **`name` no `Field.Root` (ou no controle) para o valor entrar no envio do formulário e a bolha nativa de validação apontar para o lugar certo.** O componente usa input oculto no envio nativo. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md)
+- **Com React Hook Form, `Controller` repassa `name`, `field` e `fieldState` às partes, e o `ref` chega ao componente Base UI (`inputRef` ou `ref` do input).** Sem o ref o RHF não foca o campo inválido. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md)
+- **`Field.Error` com `match` controlado pela lib externa (`match={!!error}`) quando a validação é externa.** `true` mostra sempre e entrega a visibilidade à lib. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md) [`#react/components/field`](https://base-ui.com/react/components/field.md)
+- **Erro devolvido pelo servidor entra pela prop `errors` do `Form` (nome do campo para mensagem).** O erro é mesclado ao estado do campo e some quando o valor muda. [`#react/handbook/forms`](https://base-ui.com/react/handbook/forms.md) [`#react/components/form`](https://base-ui.com/react/components/form.md)
+- **`validate` assíncrono não impede o envio em `validationMode="onSubmit"`.** A doc avisa a limitação. [`#react/components/field`](https://base-ui.com/react/components/field.md)
+- **`Button` de envio precisa de `type="submit"` explícito.** Diferente do `<button>` nativo, o padrão não é submit. [`#react/components/button`](https://base-ui.com/react/components/button.md)
+
+### Escolha de componente
+
+- **Lista grande que pede filtro é `Combobox`, não `Select`; sem input renderizado é `Select`; busca com texto livre é `Autocomplete`.** `Select` não filtra, `Combobox` não aceita texto livre e `Autocomplete` não guarda seleção. [`#react/components/select`](https://base-ui.com/react/components/select.md) [`#react/components/combobox`](https://base-ui.com/react/components/combobox.md) [`#react/components/autocomplete`](https://base-ui.com/react/components/autocomplete.md)
+- **`Select` com `placeholder` não se limpa pelo próprio select; valor que precisa ser limpável ganha item nulo.** A doc avisa a limitação do placeholder. [`#react/components/select`](https://base-ui.com/react/components/select.md)
+- **`Button` nunca para link; link com cara de botão é `<a>` estilizado.** `Button` impõe semântica de botão e o link tem a dele. [`#react/components/button`](https://base-ui.com/react/components/button.md)
+- **Botão que entra em carregamento usa `focusableWhenDisabled`, e o texto que muda é anunciado por `aria-labelledby`.** O foco fica no botão e nem todo leitor anuncia texto de descendente. [`#react/components/button`](https://base-ui.com/react/components/button.md)
+- **Painel lateral sem gesto é `Dialog` posicionado; `Drawer` só quando precisa de gesto, snap point ou indent.** `Drawer` estende `Dialog` só com isso. [`#react/components/dialog`](https://base-ui.com/react/components/dialog.md) [`#react/components/drawer`](https://base-ui.com/react/components/drawer.md)
+- **Em toolbar horizontal, no máximo um input, sempre o último.** As setas movem tanto o cursor do texto quanto o foco entre controles. [`#react/components/toolbar`](https://base-ui.com/react/components/toolbar.md)
+- **Gatilho de submenu fica dentro do `SubmenuRoot`.** A doc exige essa estrutura. [`#react/components/menu`](https://base-ui.com/react/components/menu.md)
+- **Menu de contexto nunca é o único caminho para uma ação; toda ação dele tem controle visível.** Toque e tecnologia assistiva podem não abri-lo. [`#react/components/context-menu`](https://base-ui.com/react/components/context-menu.md)
+- **`navigation-menu` com conteúdo que transiciona usa `ScrollArea` em vez de scrollbar nativa.** A scrollbar nativa aparece na transição e descentra a seta. [`#react/components/navigation-menu`](https://base-ui.com/react/components/navigation-menu.md)
+
+### Tooltip, preview card e toast
+
+- **Tooltip só como rótulo visual suplementar; o gatilho tem `aria-label` equivalente ao texto do tooltip.** Tooltip não chega a toque nem a leitor de tela e é desligado no toque. [`#react/components/tooltip`](https://base-ui.com/react/components/tooltip.md)
+- **Informação importante nunca só no tooltip: texto inline ou `Popover`; ícone de info abre `Popover` com `openOnHover`.** Se o gatilho existe para abrir o popup, é popover. [`#react/components/tooltip`](https://base-ui.com/react/components/tooltip.md)
+- **Retorno contextual de ação é `Toast` ancorado, não tooltip.** O toast é anunciado ao leitor de tela. [`#react/components/tooltip`](https://base-ui.com/react/components/tooltip.md)
+- **Conteúdo de `PreviewCard` é suplementar e também está na página de destino; o link é a única interface acessível.** O preview não navega por toque, teclado nem leitor de tela. [`#react/components/preview-card`](https://base-ui.com/react/components/preview-card.md)
+- **`Toast.Provider` envolve a aplicação inteira; toast disparado fora do React usa `createToastManager` passado ao provider.** Todos os toasts saem na mesma viewport, que o F6 alcança pelo teclado. [`#react/components/toast`](https://base-ui.com/react/components/toast.md)
+- **Elemento do toast que não deve disparar o swipe recebe `data-base-ui-swipe-ignore`.** Interativo já é excluído sozinho. [`#react/components/toast`](https://base-ui.com/react/components/toast.md)
+
+### Outros
+
+- **`loopFocus` do `Accordion` está obsoleto e não faz nada.** Saiu pela atualização do APG que removeu o roving focus. [`#react/components/accordion`](https://base-ui.com/react/components/accordion.md)
+- **Imagem e fallback do `Avatar` empilhados se escondem com `visibility`/`opacity`, nunca `display: none`.** Sem caixa o `loading="lazy"` nunca baixa a imagem. [`#react/components/avatar`](https://base-ui.com/react/components/avatar.md)
+- **Em `ScrollArea` com fade, filhos herdam as variáveis só com `inherit` explícito.** A herança para filhos é desligada. [`#react/components/scroll-area`](https://base-ui.com/react/components/scroll-area.md)
+- **`Toast.Content` não é dimensionado pela altura da raiz (`height: 100%`).** Redimensionar junto cancela a transição de altura. [`#react/components/toast`](https://base-ui.com/react/components/toast.md)
+
 ---
 
 ## Visão geral

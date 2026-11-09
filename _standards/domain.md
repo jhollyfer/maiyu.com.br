@@ -96,14 +96,18 @@ compilador cobra que todo fato tenha tradução:
 
 ```ts
 // app/domain/post/post.errors.ts
+export type PostSlugTaken = { readonly code: 'POST_SLUG_TAKEN' }   // what save() may return (§5.1)
+
 export type PostError =
   | { readonly code: 'POST_TITLE_EMPTY' }
+  | PostSlugTaken
   | { readonly code: 'POST_ALREADY_ARCHIVED' }
   | { readonly code: 'POST_HAS_COMMENTS'; readonly count: number }
 
 // features/administrator/posts/archive/archive.use-case.ts
 private static readonly HTTP = {
   POST_TITLE_EMPTY: () => HTTPException.BadRequest(t('posts.title_empty'), 'POST_TITLE_EMPTY'),
+  POST_SLUG_TAKEN: () => HTTPException.Conflict(t('posts.slug_taken'), 'POST_SLUG_TAKEN'),
   POST_ALREADY_ARCHIVED: () => HTTPException.Conflict(t('posts.already_archived'), 'POST_ALREADY_ARCHIVED'),
   POST_HAS_COMMENTS: () => HTTPException.Conflict(t('posts.has_comments'), 'POST_HAS_COMMENTS'),
 } satisfies Record<PostError['code'], () => HTTPException>
@@ -172,7 +176,7 @@ export type PostListCriteria = {
 export abstract class PostRepository {
   abstract findById(id: string): Promise<Post | null>
   abstract existsBySlug(slug: Slug): Promise<boolean>
-  abstract save(post: Post): Promise<void>
+  abstract save(post: Post): Promise<Either<PostSlugTaken, void>>
   abstract delete(post: Post): Promise<void>
   abstract paginate(criteria: PostListCriteria): Promise<Paginated<PostListItem>>
 }
@@ -182,6 +186,9 @@ export abstract class PostRepository {
   _doc-lib/adonisjs.md#guides/concepts/dependency-injection; _doc-lib/fastify-decorators.md).
 - Poucos métodos, um por intenção. Proibido `find(where)` genérico (vaza o ORM) e método por
   combinação de filtro: filtro de listagem é critério tipado.
+- **`save` devolve só o fato de domínio de unicidade** (`Either<<Fato de unicidade>, void>`); falha de
+  I/O não vira `RepositoryFailure` no retorno: sobe para o `catch` do use-case (`DECISIONS.md` #352).
+  Sem chave única, `save` devolve `Promise<void>`.
 - Caminho de escrita devolve **entidade**. Listagem e detalhe sem regra devolvem o tipo de
   `shared/src/responses/` direto da query, sem hidratar entidade (leitura leve).
 - Model nunca atravessa o contrato. Soft delete continua por query scope (`backend.md` §4.8),
@@ -209,8 +216,13 @@ export class PostLucidRepository extends PostRepository {
     return this.toEntity(row)
   }
 
-  async save(post: Post): Promise<void> {
-    await PostModel.updateOrCreate({ id: post.id }, this.toRow(post), { client: this.transaction.client() })
+  async save(post: Post): Promise<Either<PostSlugTaken, void>> {
+    const client = this.transaction.client()
+    const row = await PostModel.find(post.id, { client })
+    // updateOrCreate rewrites updatedAt and loses the entity's own timestamp
+    if (row) await row.merge(this.toRow(post)).save()
+    else await PostModel.create(this.toRow(post), { client })
+    return right(undefined)
   }
 
   private toEntity(row: PostModel): Post { /* coluna → prop, primitivo → VO */ }
@@ -223,10 +235,16 @@ persistência, e nenhuma função fica solta (`typescript.md` §6). `{ client }`
 para a query usar a transação (_doc-lib/lucid.md#transactions). No Fastify,
 `post.mongo.repository.ts` sobre o driver `mongodb` (_doc-lib/mongodb.md).
 
+O `save` busca e depois faz `merge().save()` ou `create`, nunca `updateOrCreate`: este reescreve
+`updatedAt` e perde o carimbo da entidade (_doc-lib/lucid.md#crud-operations, `DECISIONS.md` #332). A
+violação de unicidade do banco vira o fato pelo `core/unique-conflict.ts` (o exemplo omite o `try`).
+
 ### 5.3 Implementação em memória
 
 `PostMemoryRepository extends PostRepository` guarda um `Map<string, PostProps>` e grava e devolve
-`structuredClone` do `snapshot()`, para o teste não alterar o "banco" por referência. É uma segunda
+uma cópia do `snapshot()` que preserva a classe, para o teste não alterar o "banco" por referência:
+cópia rasa por campo, porque o `DateTime` do Luxon é imutável e o `structuredClone` perde o protótipo
+(_doc-lib/luxon.md). `structuredClone` só no campo sem classe, como o texto rico (`DECISIONS.md` #332). É uma segunda
 implementação de verdade, não um mock: é ela que o teste unitário do use-case usa.
 
 ### 5.4 Teste de contrato
@@ -235,20 +253,27 @@ implementação de verdade, não um mock: é ela que o teste unitário do use-ca
 garante que o unitário do use-case não passa contra um dublê que mente (Liskov).
 
 ```ts
-const IMPLEMENTATIONS = {
-  lucid: () => app.container.make(PostLucidRepository),
-  memory: async () => new PostMemoryRepository(),
-} satisfies Record<string, () => Promise<PostRepository>>
+const IMPLEMENTATIONS = [
+  { name: 'lucid', make: () => app.container.make(PostLucidRepository) },
+  { name: 'memory', make: async () => new PostMemoryRepository() },
+] satisfies Array<{ name: string; make: () => Promise<PostRepository> }>
 
-for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
-  test.group(`PostRepository (${name})`, (group) => {
-    group.each.setup(() => testUtils.db().withGlobalTransaction())
-    test('save then findById returns the same entity', async ({ assert }) => { /* … */ })
-  })
-}
+// one group per file: the implementations are a dataset, not a group each (japa filtering-tests)
+test.group('PostRepository', (group) => {
+  group.each.setup(() => testUtils.db().withGlobalTransaction())
+
+  test('save then findById returns the same entity ({name})')
+    .with(IMPLEMENTATIONS)
+    .run(async ({ assert }, implementation) => {
+      const posts = await implementation.make()
+      /* … */
+    })
+})
 ```
 
-No Fastify, a mesma tabela com `describe.each` do Vitest.
+Um grupo por arquivo, com as implementações como dataset: a doc do Japa manda organizar por pasta e
+arquivo em vez de vários grupos num arquivo só (_doc-lib/japa.md#docs/filtering-tests,
+#docs/datasets). No Fastify, a mesma tabela com `describe.each` do Vitest.
 
 ## 6. Transação
 
@@ -299,7 +324,7 @@ export default class AdministratorPostArchiveUseCase {
       await this.posts.save(archived.value)
       return right(PostPresenter.show(archived.value))
     } catch (error) {
-      logger.error({ err: error }, '[administrator/posts > archive][error]')
+      HttpContext.getOrFail().logger.error({ err: error }, '[administrator/posts > archive][error]')
       return left(HTTPException.InternalServerError(t('errors.internal'), 'ADMINISTRATOR_POST_ARCHIVE_ERROR'))
     }
   }
@@ -317,7 +342,7 @@ A tabela de quem importa quem está em `architecture.md` §2. A cobrança autom�
 - **dependency-cruiser** só com as regras de camada daquela tabela e `no-circular`. Regra nova só
   entra depois de provar que reprova um import proibido. Toda regra de `forbidden` leva
   `severity: 'error'`: o padrão é `warn`, e o código de saída é o número de violações `error`, então
-  regra sem severidade passa o CI verde (_doc-lib/dependency-cruiser.md#doc/rules-reference.md,
+  regra sem severidade passa verde (_doc-lib/dependency-cruiser.md#doc/rules-reference.md,
   #doc/cli.md). `options.tsPreCompilationDeps: true` e `tsConfig` do app: sem a opção, o `import type`
   some do grafo e a camada pode depender de outra só por tipo sem ninguém ver
   (_doc-lib/dependency-cruiser.md#doc/options-reference.md). Barrel de pacote fica fora: o Adonis
@@ -349,7 +374,7 @@ Abstraction com `legacy-migration-planner` (`backend.md` §11.1). Os pontos de t
 | Ponto | Teste | Dublês |
 |---|---|---|
 | entidade, value object | unitário puro: toda invariante e transição, `left` e `right` | nenhum |
-| use-case | unitário: cada ramo do `Either` e cada tradução | `new` com repository em memória e `.fake.ts` (`DECISIONS.md` #116) |
+| use-case | unitário: cada ramo do `Either` e cada tradução | `new` com repository em memória e `.fake.ts` (`DECISIONS.md` #116); Fastify: `configureServiceTest` (`DECISIONS.md` #331) |
 | repository | contrato nas duas implementações | banco real em container |
 | service externo | unitário da implementação com o cliente dublado | dublê só na fronteira |
 | ação | E2E: sucesso, 401, 403, 404, 409, 422 e o estado no banco | `mail.fake()`, `drive.fake()` (_doc-lib/adonisjs.md#guides/testing/test-doubles) |
@@ -368,8 +393,8 @@ Abstraction com `legacy-migration-planner` (`backend.md` §11.1). Os pontos de t
   (`o sistema SHALL …`), `WHEN` (evento), `WHILE` (estado), `WHERE` (capacidade opcional) e
   `IF … THEN` (erro). Percentil, média e uptime não são critério, porque nenhuma execução de teste
   os decide: o comportamento vira critério e o alvo vai para a observabilidade. O teste deriva do
-  critério, nunca do código, e o título começa pelo ID do requisito:
-  `test('POST-03: archiving an archived post returns 409')`.
+  critério, nunca do código, e o título segue `backend.md` §7 (prefixo do requisito só onde o
+  projeto tem requisitos numerados, `DECISIONS.md` #350).
 
 ```
 IF the post is already archived THEN the system SHALL respond 409 with code POST_ALREADY_ARCHIVED
@@ -436,8 +461,13 @@ const STORAGE_DRIVERS = {
   s3: S3StorageService,
 } satisfies Record<StorageDriver, new (...args: never[]) => StorageContract>
 
-this.app.container.bind(StorageContract, () => this.app.container.make(STORAGE_DRIVERS[env.get('STORAGE_DRIVER')]))
+// the driver comes from config/storage.ts, which reads STORAGE_DRIVER: ENV is read only in config/
+const driver = this.app.config.get<StorageDriver>('storage.driver')
+this.app.container.bind(StorageContract, () => this.app.container.make(STORAGE_DRIVERS[driver]))
 ```
+
+A variável de ambiente se lê só em `config/` (e em `start/env.ts`), nunca em provider, controller
+ou service: o config é a fonte única (_doc-lib/adonisjs.md#configuration).
 
 Escolha que muda por requisição (configuração do tenant) é um service resolvedor injetado com o
 mesmo mapa, nunca `new` dentro do use-case.
@@ -471,10 +501,10 @@ de seguir).
   (`app/jobs/`) ou por outbox com decisão própria em `DECISIONS.md`.
 - Evento não é canal entre features: o que uma ação precisa de outra sobe para domínio, repository
   ou service.
-- A casa do listener ainda não está na árvore de `architecture.md` §3.1; até entrar, não se cria.
-  A doc já fixa o lugar: `node ace make:listener` grava em `app/listeners/`, e o registro fica em
-  `start/events.ts` (`_doc-lib/adonisjs.md#guides/digging-deeper/emitter`, conferida em 2026-10-14).
-  Falta só a decisão (`final-review.md` §5, item 5).
+- Listener mora em `app/listeners/<nome>.listener.ts`, gerado por `node ace make:listener`, e o
+  registro fica em `start/events.ts` (`architecture.md` §3.2,
+  `_doc-lib/adonisjs.md#guides/digging-deeper/emitter`, `DECISIONS.md` #351). Nasce com o primeiro
+  evento, não antes.
 
 **Observer no frontend é o cache.** Nada de event bus próprio, `window.dispatchEvent` de evento da
 aplicação ou `Observable` feito à mão: dado do servidor propaga por `invalidateQueries`/

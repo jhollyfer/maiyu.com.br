@@ -75,6 +75,85 @@ scroll-driven, View Transitions) não resolve. Adoção é decisão do projeto, 
 `framer-motion`), `maiyu-frontend`, `impeccable`, `web-accessibility`. Dispare junto com a leitura
 da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Motion (React): projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Bundle
+
+- **Use o componente `m` dentro de `LazyMotion` em vez de `motion`, carregando só o pacote de features necessário (`domAnimation` ou `domMax`).** O `motion` traz todas as features no bundle; `m` com `LazyMotion` deixa escolher o que entra e carregar sob demanda. [`#react-reduce-bundle-size`](https://motion.dev/docs/react-reduce-bundle-size.md) [`#react-lazy-motion`](https://motion.dev/docs/react-lazy-motion.md)
+- **`LazyMotion` leva `strict`.** Com ele, um `motion` renderizado dentro lança erro lembrando de usar `m`, porque misturar os dois quebra o ganho do code-splitting. [`#react-reduce-bundle-size`](https://motion.dev/docs/react-reduce-bundle-size.md) [`#react-lazy-motion`](https://motion.dev/docs/react-lazy-motion.md)
+- **No lazy loading, o import dinâmico devolve o export específico que contém o pacote de features.** A doc marca isso no exemplo como obrigatório. [`#react-reduce-bundle-size`](https://motion.dev/docs/react-reduce-bundle-size.md)
+
+### Acessibilidade e reduced motion
+
+- **`MotionConfig` na raiz com `reducedMotion="user"`.** O default é `"never"` (ignora a preferência); com `"user"` todo componente desliga transform e layout e mantém opacidade e cor. [`#react-accessibility`](https://motion.dev/docs/react-accessibility.md) [`#react-motion-config`](https://motion.dev/docs/react-motion-config.md)
+- **`"always"`/`"never"` só como escolha do usuário no perfil, ou para depurar.** A doc os apresenta como override por usuário e forçar para debug. [`#react-accessibility`](https://motion.dev/docs/react-accessibility.md) [`#react-motion-config`](https://motion.dev/docs/react-motion-config.md)
+- **Com reduced motion, troque deslocamento `x`/`y` por `opacity`, pare autoplay de vídeo de fundo e parallax (`useReducedMotion`).** A doc manda manter as transições que educam e evitar o que causa enjoo. [`#react-accessibility`](https://motion.dev/docs/react-accessibility.md) [`#react-use-reduced-motion`](https://motion.dev/docs/react-use-reduced-motion.md)
+- **Com CSP de `nonce`, passe o mesmo `nonce` ao `MotionConfig`.** É assim que os blocos `style` gerados pelo Motion passam pela política. [`#react-motion-config`](https://motion.dev/docs/react-motion-config.md)
+- **Texto dividido em letras mantém o texto original como `aria-label` do container.** Sem rótulo, o leitor de tela lê uma sequência de caracteres soltos; `splitText` já faz isso. [`#text-animation`](https://motion.dev/docs/text-animation.md)
+- **Elemento com evento de tap fica focável e dispara com `Enter`.** A doc define isso como o comportamento acessível dos gestos de tap. [`#react-gestures`](https://motion.dev/docs/react-gestures.md)
+
+### Componente motion
+
+- **Componente passado a `motion.create()` repassa o `ref` ao elemento animado.** Sem o ref o Motion não acha o elemento. [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md)
+- **Nunca chame `motion.create()` dentro da função de render.** A doc proíbe explicitamente. [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md)
+- **Valor que muda a cada frame passa por motion value no `style`, não por estado React.** Motion value evita re-render. [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md) [`#react-svg-animation`](https://motion.dev/docs/react-svg-animation.md)
+- **Prefira motion value a animar variável CSS.** Animar o valor de variável CSS sempre dispara paint. [`#react-animation`](https://motion.dev/docs/react-animation.md)
+- **`times` tem o mesmo número de itens que os keyframes, com valores de 0 a 1.** A doc exige a correspondência. [`#react-transitions`](https://motion.dev/docs/react-transitions.md) [`#react-animation`](https://motion.dev/docs/react-animation.md)
+
+### AnimatePresence e saída
+
+- **Filhos diretos de `AnimatePresence` têm `key` única e estável (id do item); o elemento que sai é filho direto.** É assim que ele acompanha presença e saída. [`#react-animate-presence`](https://motion.dev/docs/react-animate-presence.md) [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md)
+- **`AnimatePresence` fica fora do código que desmonta: o condicional vai dentro dele.** Se o próprio `AnimatePresence` desmonta, não há animação de saída. [`#react-animate-presence`](https://motion.dev/docs/react-animate-presence.md)
+- **Em `mode="popLayout"`, filho direto que é componente próprio repassa o `ref` ao nó DOM.** A doc exige o `forwardRef`; no React 19 o `ref` chega como prop. [`#react-animate-presence`](https://motion.dev/docs/react-animate-presence.md) [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md)
+- **Com `usePresence`, chame `safeToRemove` quando a saída manual terminar.** É o callback que libera a remoção do DOM. [`#react-animate-presence`](https://motion.dev/docs/react-animate-presence.md)
+- **Saída animada em componente do Base UI que controla a própria montagem (`Popover`, `ContextMenu`): eleve o `open`, ponha `keepMounted` no `Portal` e renderize o `Portal` condicional dentro de `AnimatePresence`, com o `motion` pelo `render`.** São os três passos que a doc exige. [`#base-ui`](https://motion.dev/docs/base-ui.md)
+
+### Layout
+
+- **Em animação de layout, a mudança vai por `style` ou `className`, não por `animate`/`whileHover`.** A prop `layout` cuida da animação. [`#react-layout-animations`](https://motion.dev/docs/react-layout-animations.md)
+- **Container rolável que contém layout animado recebe `layoutScroll`.** Sem ele a medição sai errada. [`#react-layout-animations`](https://motion.dev/docs/react-layout-animations.md) [`#react-motion-component`](https://motion.dev/docs/react-motion-component.md)
+- **`borderRadius` e `boxShadow` de elemento com layout vão no `style` ou na prop de animação; o elemento não é `display: inline`.** A correção de distorção só vale assim, e o navegador não aplica `transform` em inline. [`#react-layout-animations`](https://motion.dev/docs/react-layout-animations.md)
+- **SVG não usa layout animation: anime atributos (`cx`...) direto.** SVG não tem sistema de layout. [`#react-layout-animations`](https://motion.dev/docs/react-layout-animations.md)
+- **Componentes que não re-renderizam juntos mas afetam o layout um do outro ficam num `LayoutGroup`.** É para isso que ele existe. [`#react-layout-group`](https://motion.dev/docs/react-layout-group.md) [`#react-layout-animations`](https://motion.dev/docs/react-layout-animations.md)
+- **Micro-interação usa layout animation, não view transition.** View transition não é interrompível; layout animation responde na hora. [`#react-animate-view`](https://motion.dev/docs/react-animate-view.md)
+- **`name` de shared element em `AnimateView` é único por view e omitido quando não há par.** A doc exige a unicidade. [`#react-animate-view`](https://motion.dev/docs/react-animate-view.md)
+
+### Gestos, arraste e reordenação
+
+- **Elemento que inicia arraste por `useDragControls` tem `touch-action: none`.** Sem isso o toque não funciona. [`#react-use-drag-controls`](https://motion.dev/docs/react-use-drag-controls.md)
+- **Pai com `transform` animado sob item arrastável é dirigido por motion value.** Senão cada frame vira mudança de layout nos filhos. [`#react-drag`](https://motion.dev/docs/react-drag.md)
+- **Para cortar a propagação de um gesto use a prop `propagate`.** É o mecanismo da doc para isso. [`#react-gestures`](https://motion.dev/docs/react-gestures.md)
+- **`Reorder.Group` recebe o array em `values` e `onReorder` atualiza esse estado; cada `Reorder.Item` casa com um item do array.** Sem atualizar `values` nada reordena. [`#react-reorder`](https://motion.dev/docs/react-reorder.md)
+- **Lógica de reordenação não depende de `onDragStart`/`onDrag`/`onDragEnd` do `Reorder`.** No teclado esses callbacks não disparam, porque não há ponteiro. [`#react-reorder`](https://motion.dev/docs/react-reorder.md)
+- **Hover via `whileHover`/`onHover`/`hover()` em vez de `:hover` quando o estado precisa ser confiável no toque.** O `:hover` do CSS deixa estado preso em toque. [`#react-hover-animation`](https://motion.dev/docs/react-hover-animation.md)
+
+### Scroll e viewport
+
+- **`useScroll` com conteúdo que muda de tamanho usa `trackContentSize: true`.** Sem isso ele só atualiza no próximo evento de scroll. [`#react-use-scroll`](https://motion.dev/docs/react-use-scroll.md)
+- **Em iframe de outra origem, `margin` de `useInView`/`whileInView` exige `root` explícito.** Por segurança do navegador a margem não vale sem ele. [`#react-use-in-view`](https://motion.dev/docs/react-use-in-view.md)
+
+### Motion values e hooks
+
+- **`.on()` de motion value dentro de componente vai em `useEffect` (ou use `useMotionValueEvent`).** Assim o handler segue o ciclo de vida do componente. [`#react-motion-value`](https://motion.dev/docs/react-motion-value.md) [`#react-use-motion-value-event`](https://motion.dev/docs/react-use-motion-value-event.md)
+- **`useTransform`: faixas de entrada e saída do mesmo tamanho, entrada sempre crescente ou decrescente, saída do mesmo tipo.** A doc exige as três condições. [`#react-use-transform`](https://motion.dev/docs/react-use-transform.md)
+- **Fonte de `useSpring` é número ou string com unidade.** A doc exige esse tipo. [`#react-use-spring`](https://motion.dev/docs/react-use-spring.md)
+- **O `scope` de `useAnimate` vai num elemento HTML/SVG ou num componente `motion`.** A doc exige esse alvo. [`#react-use-animate`](https://motion.dev/docs/react-use-animate.md)
+
+### Texto e número
+
+- **Contador, preço e contagem regressiva animam o número e formatam na saída (`Intl.NumberFormat`), não dividem em spans de caractere.** Quebrar em caracteres joga fora a informação do número. [`#text-animation`](https://motion.dev/docs/text-animation.md)
+- **Em texto dividido, anime `transform` e `opacity`; evite `blur` alto.** Blur em camadas pequenas sobrepostas fica caro de GPU. [`#text-animation`](https://motion.dev/docs/text-animation.md)
+
+### Motion+
+
+- **Token do Motion+ nunca vai em `package.json`, lockfile ou outro arquivo commitado; fica em variável de ambiente.** O token é segredo. [`#react-motion-ui-installation`](https://motion.dev/docs/react-motion-ui-installation.md)
+- **No pnpm 11+, o token sai de `pnpm config set "//api.motion.dev/npm/:_authToken" "$MOTION_TOKEN"` (config de usuário), não de `_authToken` no `.npmrc` do projeto.** O pnpm recusa expandir a variável no `.npmrc` commitado e responde 401. [`#react-motion-ui-installation`](https://motion.dev/docs/react-motion-ui-installation.md)
+- **`Gallery.Image` e `Gallery.Video` exigem `alt` (`""` para imagem decorativa; no vídeo vira `aria-label`).** É prop obrigatória. [`#react-gallery`](https://motion.dev/docs/react-gallery.md)
+
 ---
 
 ## Começo
