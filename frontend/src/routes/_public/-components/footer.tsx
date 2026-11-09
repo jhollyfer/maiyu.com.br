@@ -5,6 +5,7 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 import { Button } from '#/components/ui/button'
+import { currentYear } from '#/lib/i18n'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
@@ -17,7 +18,7 @@ import { m } from '#/paraglide/messages'
  * de 0.9, engolia o clique.
  */
 export function Footer(): React.JSX.Element {
-  const year = new Date().getFullYear()
+  const year = currentYear()
 
   return (
     <footer
