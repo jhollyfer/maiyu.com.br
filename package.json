@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "pnpm --filter ./frontend dev",
     "check": "pnpm --recursive check",
-    "test:unit": "pnpm --recursive test:unit"
+    "test:unit": "pnpm --recursive test:unit",
+    "prepare": "node .husky/install.mjs"
   },
   "type": "module",
   "devEngines": {
@@ -17,5 +18,10 @@
   },
   "engines": {
     "node": ">=24"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
+    "husky": "^9.1.7"
   }
 }

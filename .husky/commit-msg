@@ -1,0 +1,14 @@
+# Conventional Commits and single author, checked at commit time (`_standards/tooling.md` §6,
+# DECISIONS.md #214): agent tools add a co-author trailer by default, so a written rule is not
+# enough. `grep -v '^#'` drops the comment lines of git's message template, which quote trailers
+# as examples.
+pnpm exec commitlint --edit "$1" || exit 1
+if grep -v '^#' "$1" | grep -qiE '^(co-authored-by|claude-session):|generated with|noreply@anthropic\.com|anthropic\.com/claude'; then
+  echo "commit-msg: trailer ou marca de agente na mensagem; o autor é só o dono do repositório" >&2
+  exit 1
+fi
+author=$(git var GIT_AUTHOR_IDENT)
+case "$author" in
+  *"<jhollyfer.fr@gmail.com>"*) ;;
+  *) echo "commit-msg: autor fora do permitido: $author" >&2; exit 1 ;;
+esac

@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (todos a fazer); atualizado 2026-11-09
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (1 feito, 1 em revisão, 8 bloqueados, 37 a fazer); atualizado 2026-11-09
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -72,7 +72,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 |---|---|---|---|---|
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | A fazer | `sync --check` |
 | R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Em revisão | branch `feat/backend-inicial`; pnpm 12; três testes do kit do `shared/` reprovam por lacuna do modelo, levada à regente |
-| R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | A fazer | `tooling.md` §6 |
+| R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
 | R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | A fazer | `tooling.md` §0.1 |
