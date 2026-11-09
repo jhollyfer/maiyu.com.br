@@ -1,18 +1,52 @@
-# Segredos. O `frontend/.gitignore` cobre o projeto, mas a raiz não cobria nada,
-# e um `.env` criado aqui por engano entraria no commit sem ninguém notar.
-.env
-.env.local
+# Ignorados da raiz, um bloco por motivo (`_standards/tooling.md` §9). O `frontend/.gitignore`
+# guarda só o que é do toolchain do frontend; o que vale para o repositório inteiro mora aqui.
 
-# IDE da JetBrains.
-.idea/
-
+# Dependências: o `pnpm install` reconstrói a partir do `pnpm-lock.yaml`, e a pasta pesa centenas de
+# megabytes que nenhuma revisão lê.
 node_modules/
 
-# Build solto na raiz. O site é `frontend/`, e o build dele sai em
-# `frontend/.output/`, que o `frontend/.gitignore` já cobre.
+# Saída de build. O Nitro escreve em `frontend/.output/`; `dist/` e `build/` cobrem build solto. Um
+# artefato velho commitado mascara o build do código atual.
+.output/
 dist/
-
-# Backend build output that every build regenerates: `node ace build` writes `build/`,
-# and the Adonis runtime writes `tmp/`.
-backend/build/
+build/
+# O runtime do Adonis escreve em `backend/tmp/`: arquivo temporário, não fonte.
 backend/tmp/
+
+# Arquivos de ambiente. Um `.env` com segredo, criado por engano em qualquer pasta, entraria no
+# commit sem ninguém notar. Escapam os modelos sem segredo (`.env.example` e `.env.e2e.example`,
+# placeholders que dizem quais chaves existem,
+# `_standards/_map/canon-2026-11/SINTESE/ARVORE.md` §4), o `.env.test` (valor fixo de teste,
+# versionado pela régua, `_standards/tooling.md` §9) e o `frontend/.env.production`, que leva apenas
+# valor público de `VITE_*` para o build (`_standards/tooling.md` §8.2).
+.env
+.env.*
+!.env.example
+!.env.e2e.example
+!.env.test
+!frontend/.env.production
+
+# Mensagens compiladas do Paraglide. São geradas do `messages/` pelo `paraglide-js compile` (e pelo
+# build); commitadas, divergiriam da fonte em silêncio. O compilador escreve um `.gitignore` próprio
+# na pasta, mas a regra fica aqui para não depender de um arquivo gerado.
+frontend/src/paraglide/
+
+# Relatórios de teste e de Playwright: saída de execução local, não fonte.
+coverage/
+playwright-report/
+test-results/
+
+# Metadado de pasta que o Finder do macOS escreve sozinho em todo diretório aberto: não é do projeto.
+.DS_Store
+
+# Configuração de IDE: preferência de cada máquina, fora da árvore da régua
+# (`_standards/_map/canon-2026-11/SINTESE/ARVORE.md`).
+.idea/
+.vscode/
+
+# Worktrees de agente: cópias do próprio repositório, que voltariam para dentro dele.
+.claude/worktrees/
+
+# Relatório de varredura de segurança traz cenário de exploração e não vai para o histórico
+# (`_standards/tooling.md` §10.4).
+CLAUDE-SECURITY-*/

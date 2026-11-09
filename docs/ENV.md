@@ -80,9 +80,12 @@ desenvolvimento nenhuma variável é necessária; para a API, `backend/.env` cop
 
 ## 3. Segredo fora do Git
 
-O `.gitignore` da raiz ignora `.env` em qualquer pasta, e o do `frontend/` ignora `.env` e `.env.*`, com
-exceção do `.env.example`. Do backend se versionam só o `.env.example` e o `.env.test`. As variáveis
-de runtime da API de produção se cadastram no recurso do Coolify (`_standards/tooling.md` §8.3). Os segredos do
+O `.gitignore` da raiz ignora `.env` e `.env.*` em qualquer pasta, com quatro exceções:
+os modelos `.env.example` e `.env.e2e.example` (só placeholder), o `.env.test` (valor fixo de teste)
+e o `frontend/.env.production` (só valor público de `VITE_*`, `_standards/tooling.md` §8.2). O `.gitleaks.toml` da raiz é o da régua, para a varredura de segredo
+antes do PR (`_standards/tooling.md` §7). Do backend se versionam só o `.env.example` e o
+`.env.test`; as variáveis de runtime da API de produção se cadastram no recurso do Coolify
+(`_standards/tooling.md` §8.3). Os segredos do
 CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL` (`DECISIONS.md` #14). `VITE_SITE_URL` em `https://`, sem barra no fim; vazios, o build de publicação reprova
 (`ARCHITECTURE.md` §9.1).
 

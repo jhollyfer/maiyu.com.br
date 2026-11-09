@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-09 | Migração para a régua | R1.2 em revisão | Em desenvolvimento · backend inicial |
+| 2026-11-09 | Migração para a régua | 2 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -18,37 +18,37 @@
 
 ## Parou em
 
-Migração para a régua, frente do backend (itens R1.2 e RB.1 a RB.4 de `TASKS.md`), na branch
-`feat/backend-inicial`. Feito o R1.2: o workspace lista `backend`, `frontend` e `shared` pelo modelo
-(`failIfNoMatch`, `allowBuilds` do projeto mantido), o `shared/` nasceu como `@maiyu/shared` com o kit
-de `_templates/code/shared`, Zod e Tiptap, e o frontend passou a se chamar `@maiyu/frontend`. O pnpm
-subiu para a 12 (`devEngines`), e o `minimumReleaseAgeExclude` do `@inlang` saiu: as versões já
-passaram da idade mínima. O `check` do `shared/` reprova em três pontos do próprio kit (teste do
-`actor` com um papel `EDITOR` que o site não tem, teste do envelope que pede mais de 40 respostas,
-ordem de import dos testes do kit), levados à regente como lacuna do modelo.
+A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
+upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o
+R0.2 (JSON-LD com `<` escapado) e o R0.4 (`.gitignore` da raiz pela régua, `.gitleaks.toml` do
+modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) está pronto na branch
+`fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
 
-RB.1 começou: o sync gravou o kit do backend em `backend/` (`@maiyu/backend`), com `.env.test`,
-`.prettierignore` e o `@swc/core` liberado no `allowBuilds`. O backend ainda não compila: o kit importa
-peças que não traz (entidade e repository de usuário, model e migration de `storages`, factories,
-fixtures de teste, `config/openapi.ts`, `pattern-check.config.ts`), listadas à regente.
-Por ordem da regente, nenhuma lacuna do kit se escreve no projeto: as peças que faltam (inclusive
-`config/openapi.ts`, `app/core/openapi/response.ts`, `scripts/pattern-check.config.ts` e o alias
-`#scripts/*`) chegam na próxima leva do upstream. Ficam o `docker-compose.yml` nas portas 5440, 9016 e
-9017, o `.env.example` com os valores do projeto e `docs/ENV.md` e `docs/ARCHITECTURE.md` com a API.
+Frente do backend (R1.2 e RB.1 a RB.4), na branch `feat/backend-inicial`. O R1.2 está montado: o
+workspace lista `backend`, `frontend` e `shared` pelo modelo (`failIfNoMatch`, `allowBuilds` mantido),
+o `shared/` nasceu como `@maiyu/shared` com o kit de `_templates/code/shared`, Zod e Tiptap, o
+frontend virou `@maiyu/frontend` e o pnpm subiu para a 12. O sync gravou o kit do backend em
+`backend/` (`@maiyu/backend`), com `.env.test`, `.prettierignore`, `docker-compose.yml` nas portas
+5440, 9016 e 9017 e o `.env.example` com os valores do projeto. Os dois pacotes esperam a próxima
+leva do kit: o `check` do `shared/` reprova em três testes do próprio kit, e o backend não compila
+porque o kit importa peças que não traz (lacunas 1 a 16, com a regente geral). Por ordem da regente,
+nenhuma lacuna se escreve no projeto.
 
-Antes, a vitrine perdeu o serviço de aplicativos e a newsletter, e a rota-curinga passou a responder
-404 de verdade (`routes/_public/$.tsx`).
+Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
+aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
 
 ## Próximos passos
 
-1. RB.1 a RB.4: `backend/` AdonisJS 7 pelo kit, quando a regente responder sobre as lacunas.
-2. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
+1. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
+   anunciar envio que não acontece.
+2. Fase 1 da migração (R1.1 em diante, `TASKS.md`); R1.2 e RB.1 a RB.4 esperam a leva do kit.
+3. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
    sem passar pelo crivo de quem é da Maiyu.
-3. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
-4. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
+4. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
+5. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
    `maiyu.com.br`.
-5. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
-6. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
+6. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
+7. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
    de quem o pinta (`DESIGN.md` §2).
 
 ## Contexto importante
@@ -76,7 +76,7 @@ Antes, a vitrine perdeu o serviço de aplicativos e a newsletter, e a rota-curin
 
 | Problema | Onde | Contorno |
 |---|---|---|
-| `sync --check` acusa `workflow-diverge` | `.github/workflows/` | aguardar decisão do dono (`DECISIONS.md` #6) |
+| `sync --check` acusa `workflow-diverge` | `.github/workflows/` | a #6 foi substituída: o sync resolve o resto no R1.1, e os workflows saem no R4.1, na PR do Dockerfile (`DECISIONS.md` #371 do upstream) |
 | `.env.example` com chaves que o site não usa | `frontend/.env.example` | `ENV.md` explica; ajuste no upstream (`DECISIONS.md` #9) |
 
 ## Links úteis

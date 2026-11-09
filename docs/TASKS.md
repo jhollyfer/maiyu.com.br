@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (todos a fazer); atualizado 2026-11-09
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (2 feitos, 9 bloqueados, 36 a fazer); atualizado 2026-11-09
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -60,10 +60,10 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | A fazer | SEGURANCA.md; ARVORE.md |
-| R0.2 | JSON-LD serializado com `<` escapado | P | A fazer | SEGURANCA.md |
+| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; bloqueado por R1.4 (a CSP recusa o VineJS no navegador) |
+| R0.2 | JSON-LD serializado com `<` escapado | P | Feita | `frontend.md` §9.7; `docs/SECURITY.md` |
 | R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | A fazer | dono decide o destino (R2.10); até lá, sem coletar dado pessoal à toa |
-| R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | A fazer | `tooling.md` §6, KIT.md §3.3 |
+| R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | Feita | `tooling.md` §9 e §7, KIT.md §3.3 |
 | R0.5 | `.claude/settings.json` com `attribution` vazio e guarda `PreToolUse` | P | Bloqueada | dono: agente não edita `settings.json` |
 
 ### Régua 1 · Stack e tooling
@@ -71,7 +71,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | A fazer | `sync --check` |
-| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Em revisão | branch `feat/backend-inicial`; pnpm 12; três testes do kit do `shared/` reprovam por lacuna do modelo, levada à regente |
+| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Bloqueada | montado em `feat/backend-inicial`; o `check` do `shared/` reprova em três testes do kit: espera a leva do upstream |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | A fazer | `tooling.md` §6 |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
@@ -86,10 +86,10 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Em andamento | kit gravado pelo sync; peças que o kit importa e não traz, levadas à regente |
+| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Bloqueada | kit gravado pelo sync em `feat/backend-inicial`; não compila sem as peças que o kit importa e não traz (lacunas 1 a 16) |
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | A fazer | depois de RB.1 |
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | A fazer | roteiro do simple-hub |
-| RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | A fazer | |
+| RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Em andamento | `.env.example` com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017; `Dockerfile-production` é o do kit |
 | RB.5 | Tuyau dentro do `request()` no frontend | M | A fazer | #324; depois de RB.1 |
 
 ### Régua 2 · Árvore e camadas

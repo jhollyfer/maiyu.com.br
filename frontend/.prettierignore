@@ -18,3 +18,7 @@ project.inlang/cache
 # próxima execução da ferramenta reabre.
 project.inlang/.meta.json
 project.inlang/README.md
+
+# Saída do build do Nitro. O `.gitignore` da raiz a ignora, mas o Prettier só lê o `.gitignore`
+# da pasta onde roda (`frontend/`), e sem esta linha o `format:check` cobraria o bundle compilado.
+.output
