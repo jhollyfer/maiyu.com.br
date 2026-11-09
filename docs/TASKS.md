@@ -86,7 +86,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Bloqueada | aguarda a leva 2 do modelo (esqueleto, user, seeder) |
+| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Em andamento | kit gravado pelo sync; peças que o kit importa e não traz, levadas à regente |
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | A fazer | depois de RB.1 |
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | A fazer | roteiro do simple-hub |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | A fazer | |

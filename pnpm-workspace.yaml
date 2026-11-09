@@ -22,3 +22,6 @@ allowBuilds:
   # Resolver of eslint-plugin-import-x. The postinstall only checks the platform's
   # precompiled binary and downloads the fallback when it is missing.
   unrs-resolver: true
+  # Native compiler of `@poppinss/ts-exec`, which runs the backend TypeScript in development,
+  # in the tests and in `node ace build`. Without the platform binary no `ace` command boots.
+  '@swc/core': true

@@ -27,6 +27,11 @@ passaram da idade mínima. O `check` do `shared/` reprova em três pontos do pr�
 `actor` com um papel `EDITOR` que o site não tem, teste do envelope que pede mais de 40 respostas,
 ordem de import dos testes do kit), levados à regente como lacuna do modelo.
 
+RB.1 começou: o sync gravou o kit do backend em `backend/` (`@maiyu/backend`), com `.env.test`,
+`.prettierignore` e o `@swc/core` liberado no `allowBuilds`. O backend ainda não compila: o kit importa
+peças que não traz (entidade e repository de usuário, model e migration de `storages`, factories,
+fixtures de teste, `config/openapi.ts`, `pattern-check.config.ts`), listadas à regente.
+
 Antes, a vitrine perdeu o serviço de aplicativos e a newsletter, e a rota-curinga passou a responder
 404 de verdade (`routes/_public/$.tsx`).
 
