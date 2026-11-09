@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (1 feito, 8 bloqueados, 38 a fazer); atualizado 2026-11-09
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (2 feitos, 9 bloqueados, 36 a fazer); atualizado 2026-11-09
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -60,10 +60,10 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | A fazer | `frontend.md` §3.3, #356 |
+| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; bloqueado por R1.4 (a CSP recusa o VineJS no navegador) |
 | R0.2 | JSON-LD serializado com `<` escapado | P | Feita | `frontend.md` §9.7; `docs/SECURITY.md` |
 | R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | A fazer | dono decide o destino (R2.10); até lá, sem coletar dado pessoal à toa |
-| R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | A fazer | `tooling.md` §9 e §7, KIT.md §3.3 |
+| R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | Feita | `tooling.md` §9 e §7, KIT.md §3.3 |
 | R0.5 | `.claude/settings.json` com `attribution` vazio e guarda `PreToolUse` | P | Bloqueada | dono: agente não edita `settings.json` |
 
 ### Régua 1 · Stack e tooling

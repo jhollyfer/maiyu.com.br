@@ -1,16 +1,12 @@
-node_modules
-.DS_Store
-dist
-dist-ssr
-*.local
-.env
+# Só o que o toolchain do frontend escreve dentro de `frontend/`. Dependências, `.output/`, arquivos
+# de ambiente, `src/paraglide/`, IDE e arquivo de sistema ficam no `.gitignore` da raiz, para valer
+# no repositório inteiro.
+
+# Pastas de trabalho que o `vite dev` e o `vite build` recriam a cada execução: `.nitro` (servidor
+# do Nitro) e `.tanstack` (temporários do plugin do TanStack Start). Commitadas, carregariam o estado
+# de uma máquina para a outra.
 .nitro
 .tanstack
-.wrangler
-.output
-.vinxi
-__unconfig*
-todos.json
 
 # O carimbo de revisão, escrito pelo CI antes do build. Não é fonte, e um valor
 # de build local commitado viraria a revisão anunciada em produção.
