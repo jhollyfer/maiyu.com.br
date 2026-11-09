@@ -1,8 +1,9 @@
 # Maiyu: instruções para agentes
 
-Site institucional da Maiyu, consultoria e desenvolvimento de software sob demanda de Benjamin Constant/AM (Alto Solimões), na tríplice fronteira Brasil, Peru e Colômbia, construída por indígenas e pessoas originárias da região. Três idiomas (português, inglês e espanhol), sem backend.
-
-Um workspace pnpm com um pacote só, `frontend/` (TanStack Start sobre Vite e Nitro), e um `pnpm-lock.yaml` na raiz, como nos irmãos (`_standards/tooling.md` §1). Não há `backend/` nem `shared/`: o site não tem API.
+Site institucional da Maiyu, consultoria e desenvolvimento de software sob demanda de Benjamin
+Constant/AM (Alto Solimões), na tríplice fronteira Brasil, Peru e Colômbia, feita por indígenas e
+pessoas originárias da região, para organizações de qualquer setor, povos e organizações indígenas e
+quem quer trabalhar na Maiyu, em português (pt-BR), inglês (en) e espanhol (es).
 
 ## O padrão Maiyu é seguido estritamente
 
@@ -21,9 +22,36 @@ e se corrige, não se documenta como escolha. Regra que não serve ao projeto mu
 - Branch `<tipo>/<escopo>-<assunto>` e título de PR em Conventional Commits (`feat(escopo): ...`,
   `fix`, `refactor`...). Nunca `claude`, `anthropic` ou outro agente no nome da branch, no título ou
   no corpo do PR; branch criada com prefixo de agente é renomeada antes do push (`_standards/tooling.md` §6).
+- Sem GitHub Actions; testes antes do PR; deploy pelo Coolify a partir da `main`: o hook local roda
+  `check`, unitário e commitlint; as suítes funcional e E2E rodam na sessão antes de abrir o PR, com
+  o resultado no corpo do PR. Toda mudança entra por PR com merge do dono, em commit de merge com a
+  mensagem padrão do git (`merge:` o commitlint reprova). O merge na `main` dispara o Coolify, que
+  constrói cada app pelo `Dockerfile-production`; a `develop` não tem deploy. Pronto é a rodada
+  antes do PR verde e, depois do merge, o deploy concluído com o healthcheck verde e a conferência
+  em produção (`_standards/tooling.md` §6, §7, §8, §10.1, `DECISIONS.md` #298).
+- Kit único: componente, `lib/`, integração, código comum do backend e checks que vêm de
+  `_templates/code/` do upstream são o mesmo arquivo em todo projeto e não se editam aqui. Peça do kit
+  liga por parte e por prop de dado; I/O do projeto entra por prop (`DECISIONS.md` #343). Cliente da
+  API: Tuyau dentro do `request()`, validado pelo schema do `shared/` (`DECISIONS.md` #324).
+- Segurança antes de padrão: a fase 0 é a lista de segurança do `_findings` do projeto no upstream;
+  segredo commitado e dado pessoal versionado se tratam com o dono antes de qualquer PR
+  (`DECISIONS.md` #363).
 - `docs/` é deste projeto: cada arquivo completo, no escopo do produto e em dia com o código. Mas
   nenhum deles define padrão, organização, estrutura ou arquitetura; isso é do `maiyu-pattern`, e
   em conflito a régua vence (`_standards/documentation.md`, "Quem manda em quê").
+
+## O que é do projeto
+
+Nome fixo, conteúdo deste projeto (o resto vem do kit e não se edita):
+
+- `shared/`: `src/enums/user-role.ts` (`USER_ROLE`, `STAFF_USER_ROLES`) e `src/records/demo-accounts.ts`
+  (`DEMO_ACCOUNTS`);
+- backend: `providers/repository.provider.ts`, `start/routes.ts`, `start/limiter.ts`, `config/openapi.ts`,
+  `scripts/pattern-check.config.ts`, `app/core/openapi/authz-baseline.json`, `app/core/openapi/response.ts`
+  e os blocos opcionais ligados em `start/env.ts`;
+- frontend: `src/lib/areas.ts`, `src/lib/labels.ts`, `invalidate.ts`, `_query-keys.ts`, `queries/`,
+  `mutations/`, o tema (`src/styles.css`, `src/assets/brand/*`, `public/*`) e as chaves de
+  `messages/<locale>.json` fora de `kit_*`.
 
 ## Antes de qualquer tarefa
 
@@ -35,10 +63,10 @@ e se corrige, não se documenta como escolha. Regra que não serve ao projeto mu
    - variável de ambiente ou deploy: `docs/ENV.md` e `docs/ARCHITECTURE.md` §9;
    - auth, papel, upload ou dado pessoal: `docs/SECURITY.md`;
    - teste: `docs/TEST-PLAN.md`;
-   - escolha difícil de desfazer: `docs/DECISIONS.md` (as divergências deliberadas dos irmãos estão lá).
+   - escolha difícil de desfazer: `docs/DECISIONS.md`.
 4. O padrão da casa: `_standards/` e `_doc-lib/`, na ordem de `maiyu-standards`.
-5. Tarefa no `frontend/`: `frontend/AGENTS.md`, quando houver instrução própria
-   (`_standards/documentation.md` §3).
+5. Tarefa só no backend ou só no frontend: `backend/AGENTS.md` ou `frontend/AGENTS.md`, quando o
+   app tem instrução própria (`_standards/documentation.md` §3).
 
 **A `_doc-lib/` é contrato, obrigatório antes de toda decisão e de toda implementação.** Ler o
 `.md` não basta: ache a entrada do assunto em `_doc-lib/<lib>.md` e **abra o link oficial dela**
@@ -49,100 +77,13 @@ não conferida" ao lado da decisão e não trate o resumo como contrato.
 
 Leia pela seção (`grep -n '^## ' docs/ARCHITECTURE.md`), não o arquivo inteiro.
 
-## A regra zero
-
-**A referência é a régua, e o código dela vence a documentação sobre ela.** Antes de escrever um
-arquivo, abra o equivalente em `../academy/frontend` (o irmão mais próximo: também é vitrine pública
-da Maiyu) ou em `../simple-hub/frontend` e leia inteiro.
-
-Divergência deliberada vai para o JSDoc do arquivo, não só para o commit, e para `docs/DECISIONS.md`.
-As que existem hoje têm o mesmo par de motivos (o site fala três línguas e não tem API) e estão
-listadas lá.
-
-## Comandos
-
-Os scripts estão no `package.json` da raiz e do `frontend/`. O que o `package.json` não diz:
-
-- `pnpm build` regenera `routeTree.gen.ts` (commitado) e `src/paraglide` (não commitado). Antes de
-  `lint`, `typecheck` e `test` num clone novo, compile as mensagens:
-  `pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/paraglide`.
-- `pnpm check-cycles` lê `.output/`, então roda depois do build.
-- `node scripts/generate-icons.mjs` gera `favicon.ico`, `apple-touch` e os ícones do manifesto.
-
-## Neste projeto
-
-- **Rotas em par**: `rota.tsx` com `head`, `loader` e `validateSearch`; `rota.lazy.tsx` com a tela.
-  `$.tsx` fica sem `.lazy`, como no academy.
-- **`getRouteApi('/rota')` no escopo do módulo**, nunca importar o `Route` de volta do arquivo de
-  rota: o ciclo de chunk devolve `undefined` no primeiro SSR, e `check-chunk-cycles.mjs` reprova.
-- **Estado de listagem na URL**: o filtro do diário é `?category=`, validado à mão em
-  `lib/blog-search.ts` (o `validateSearch` é síncrono, o VineJS não).
-- **404 de negócio é `notFound()` no loader**, e a rota de detalhe declara o `notFoundComponent`
-  próprio (`blog/$slug`).
-- **Formulários**: react-hook-form + VineJS, `mode: 'onTouched'`, `Controller` e nunca `register`.
-  Todo campo usa `{...invalidProps(fieldState.invalid, name)}` e `<FieldError id={errorId(name)}>`.
-- **Idioma**: mensagem de interface em `messages/{locale}.json`, lida como `m.chave()` no render.
-  Conteúdo de registro (título de artigo, resumo de projeto) mora no próprio registro como
-  `LocalizedText`. Rótulo de valor fechado é função em `lib/labels.ts`, nunca string resolvida no módulo.
-- **Animação é CSS**: `REVEAL` e `STAGGER` de `_public/-components/reveal.ts`, com `motion-reduce:`
-  em tudo. O `motion` fica no `package.json` por paridade com o academy, e nada o importa.
-- **`components/common/` mede o ancestral comum dos consumidores**, não o nível hierárquico. O
-  critério está em `src/components/common/CLAUDE.md`.
-- **`components/ui/` é território do shadcn**: nunca editar à mão.
-
-## Estilo de código
-
-Quatro regras cobradas pelo ESLint, iguais nos irmãos: `no-ternary`, `no-explicit-any`,
-`consistent-type-assertions: never` (nada de `as`), `consistent-type-definitions: type` (nunca
-`interface`). Combine tipos com `Merge`, não com `&`. Prefira lookup object a cadeia de `if`. O resto
-está na skill `code-pattern`.
-
-Comentário explica **por quê**, não o quê, e de preferência com o defeito que ele evita.
-
-## Redes que cobram o que ninguém lembra
-
-| Teste | O que reprova |
-| --- | --- |
-| `lib/messages.test.ts` | chave faltando num idioma, mensagem vazia, chave que nada usa |
-| `lib/validator-messages.test.ts` | campo sem rótulo em algum idioma, regra sem mensagem, texto sem teto |
-| `routes/_public/composition.test.ts` | a home fora da ordem que ela defende |
-| `routes/_public/vitrine-contract.test.ts` | `motion-reduce` apagado, `motion` de volta, painel do celular mudo |
-| `check-chunk-cycles.mjs` | ciclo de chunk que quebra o SSR |
-
-## Produção
-
-O detalhe está em `docs/ARCHITECTURE.md` §9 e §9.1. O que precisa estar na cabeça de quem mexe no deploy:
-
-- A aplicação no Coolify é a imagem Nitro na porta 3000, e não mais o nginx estático da porta 80 do
-  site anterior.
-- O healthcheck no painel precisa apontar para `/health-check` (régua, `DECISIONS.md` #15). O painel sobrepõe o `HEALTHCHECK` do
-  `Dockerfile-production`, e em `/` ele mediria a renderização da home inteira.
-- Os workflows são o perfil sem backend do modelo do upstream (`DECISIONS.md` #14). Secrets do
-  repositório: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`
-  e `VITE_SITE_URL`.
-- O deploy sai por `POST` no Coolify, e o smoke test espera `VITE_SITE_URL` + `/revision.txt`
-  responder o sha do commit. **Não volte para `GET`**: a rota
-  responde 405 desde a v4.2.
-
-## Escrita
-
-Vale para todo commit, PR, documento e comentário de código deste repositório, as mesmas regras do
-simple-hub.
-
-Commits em Conventional Commits, **em português**, com escopo de domínio: `feat(vitrine):`,
-`fix(idioma):`, `ci(frontend):`. O assunto diz o efeito, não o arquivo. Sempre
-`git commit -- <pathspec>` explícito.
-
-**Sem emoji** e **sem travessão** em texto versionado. Trocar travessão por hífen não resolve:
-reescreva com vírgula, dois-pontos, ponto ou parênteses.
-
 ## Ao terminar
 
 No mesmo commit da mudança (`_standards/documentation.md` §5):
 
 - status em `docs/TASKS.md`;
 - "Parou em" e "Próximos passos" em `docs/MEMORY.md`;
-- `docs/ENV.md` + `frontend/.env.example` se mexeu em variável;
+- `docs/ENV.md` + `backend/.env.example` (ou `frontend/.env.example`) se mexeu em variável;
 - `docs/DECISIONS.md` se decidiu algo difícil de desfazer;
 - `docs/CHANGELOG.md` em `[Não lançado]` se o usuário percebe a mudança.
 
