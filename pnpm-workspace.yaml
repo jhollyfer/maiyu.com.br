@@ -1,7 +1,17 @@
-# One repository, one product: the site lives in `frontend/`, with one `pnpm-lock.yaml` at the
-# root (`_standards/tooling.md` §1). There is no `backend/` nor `shared/`: the site has no API.
+# One repository, one product: backend, frontend and shared in a single workspace, with one
+# `pnpm-lock.yaml` at the root (`_standards/tooling.md` §1). `shared/` keeps what both sides read
+# the same way (Zod validators, enums, responses; `architecture.md` §9).
 packages:
+  - backend
   - frontend
+  - shared
+
+# A filter path that matches no package fails instead of passing green without running anything
+# (_doc-lib/pnpm.md#filtering).
+failIfNoMatch: true
+
+# `allowBuilds` belongs to the project (one comment with the reason per entry, `tooling.md` §1):
+# the sync compares this file without that block and keeps it when rewriting.
 
 # Dependency build scripts run only when listed here: pnpm does not run any by default and
 # interrupts the install until the decision is made explicitly.
@@ -12,7 +22,3 @@ allowBuilds:
   # Resolver of eslint-plugin-import-x. The postinstall only checks the platform's
   # precompiled binary and downloads the fallback when it is missing.
   unrs-resolver: true
-
-minimumReleaseAgeExclude:
-  - '@inlang/cli@3.4.5'
-  - '@inlang/sdk@4.1.0'

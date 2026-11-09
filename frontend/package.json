@@ -1,8 +1,7 @@
 {
-  "name": "frontend",
+  "name": "@maiyu/frontend",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.21.0",
   "imports": {
     "#/*": "./src/*"
   },

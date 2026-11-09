@@ -71,7 +71,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | A fazer | `sync --check` |
-| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | A fazer | destrava o `code-diverge`; `tooling.md` §1 |
+| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Em revisão | branch `feat/backend-inicial`; pnpm 12; três testes do kit do `shared/` reprovam por lacuna do modelo, levada à regente |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | A fazer | `tooling.md` §6 |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
