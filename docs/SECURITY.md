@@ -79,7 +79,7 @@ trocado. Médio: indisponibilidade prolongada. Baixo: enumeração de conteúdo 
 ### 2.8 Para revisão manual
 
 - Qualquer endpoint novo, incluindo o futuro envio dos formulários (`DECISIONS.md` #7), reabre este modelo.
-- Cabeçalhos de segurança e CSP: não coberto por teste; conferir no proxy do Coolify.
+- Cabeçalhos de segurança: a montagem da CSP tem teste (`frontend/src/lib/security-headers.test.ts`), a aplicação no `server.ts` não; conferir com `curl -sI` depois do deploy (§5).
 
 ## 3. Autenticação e sessão
 
@@ -94,6 +94,28 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 - Os formulários validam no cliente com VineJS (`frontend/src/lib/validator.ts`), com teto de tamanho por campo.
 - Não há upload.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada.
+
+### 5.1 Cabeçalhos de segurança
+
+O `frontend/src/server.ts` aplica em toda resposta que passa pelo SSR os cabeçalhos de
+`frontend/src/lib/security-headers.ts`, arquivo do kit (`_standards/frontend.md` §3.3):
+
+| Cabeçalho | Valor | Por quê |
+|---|---|---|
+| `Content-Security-Policy` | `default-src 'self'`; `script-src` e `style-src` com `'self' 'unsafe-inline'`; `img-src 'self' data: blob:`; `font-src 'self' data:`; `connect-src 'self'`; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` | o site não tem API nem bucket, então nada além da própria origem; `frame-ancestors` impede clickjacking; `unsafe-inline` porque o Start escreve os scripts de hidratação inline |
+| `X-Content-Type-Options` | `nosniff` | o navegador não adivinha tipo de arquivo |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | link de saída leva só a origem |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | sem `preload`, que não se desfaz |
+| `X-Robots-Tag` | `noindex, nofollow` | só quando `SITE_ENV` não é `production`, lida por requisição (`ENV.md`) |
+
+Pendências conhecidas:
+
+- **Depende do R1.4.** O VineJS compila o validator no navegador com o construtor de `AsyncFunction`, e a
+  CSP sem `'unsafe-eval'` recusa: em `/contact` e `/career` o JavaScript quebra e a hidratação falha
+  (`_doc-lib/vinejs.md`). A CSP do kit não muda; o R1.4 troca o VineJS do frontend pelo Zod, e este
+  item só vai ao ar na mesma PR.
+- O que o Nitro serve direto de `public/` e de `/assets/` não passa pelo `server.ts` e sai sem esses
+  cabeçalhos, e o `public/robots.txt` estático diz `Allow: /` em qualquer ambiente. Ficam para outro item.
 
 ## 6. Segredos
 
