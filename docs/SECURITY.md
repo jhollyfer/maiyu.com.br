@@ -67,7 +67,7 @@ flowchart LR
 | Id | Abuso | Probabilidade | Impacto | Prioridade | Mitigação | Evidência |
 |---|---|---|---|---|---|---|
 | TM-001 | valor arbitrário em `?category=` | alta | baixo | baixa | valor fora da lista cai para "tudo" | `frontend/src/lib/blog-search.test.ts` |
-| TM-002 | injeção por texto de registro no JSON-LD | baixa | médio | média | JSON-LD montado por objeto e serializado em um ponto | `frontend/src/lib/structured-data.test.ts` |
+| TM-002 | injeção por texto de registro no JSON-LD | baixa | médio | média | JSON-LD montado por objeto e serializado em um ponto, com `<` escapado como `\u003c` | `frontend/src/lib/structured-data.test.ts` |
 | TM-003 | vazamento do `COOLIFY_TOKEN` por log de CI | baixa | alto | média | token só em `env` do passo, não impresso | `.github/workflows/main-deploy-coolify.yml` |
 | TM-004 | dependência com CVE | média | médio | média | versões recentes; lockfile; `pnpm install --frozen-lockfile` no CI | `.github/workflows/ci.yml` |
 
@@ -93,7 +93,7 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 
 - Os formulários validam no cliente com VineJS (`frontend/src/lib/validator.ts`), com teto de tamanho por campo.
 - Não há upload.
-- Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada.
+- Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLdScript` escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
 
 ## 6. Segredos
 
@@ -117,5 +117,5 @@ O contato por e-mail e WhatsApp acontece fora do site, nos serviços do próprio
 
 - [ ] Rota nova tem auth e policy quando houver login; rota pública nova, integração, upload ou papel atualizou o §2.
 - [ ] Nenhum segredo no diff.
-- [ ] Entrada validada; JSON-LD por objeto.
+- [ ] Entrada validada; JSON-LD por objeto e serializado pelo `jsonLdScript`, que escapa `<`.
 - [ ] Log sem dado pessoal.
