@@ -33,9 +33,9 @@ A branch `feat/frontend-kit-backend` trouxe as peças do kit que esperavam o bac
 Tuyau, env, start, page-head, sitemap, `robots.txt`, route-error, hooks, rich-text, `areas.ts`), o
 `ThemeProvider`, o `ThemeToggle` e o `LocaleSwitcher` do kit no lugar dos locais, e o merge do R0.1.
 Fora, por lacuna do kit: `table/` e `list-shell/` (o kit não os torna opcionais e o `typecheck` exige
-uma rota com `ListSearch`), o domínio da API em `.env.production` (decisão do dono), o diário em Tiptap
-(R1.6) e o Dockerfile e workflows (PR própria). Os `<a>` externos dentro de `PillButton render` não
-têm par no `ui/`.
+uma rota com `ListSearch`), o domínio da API em `.env.production` (decisão do dono) e o Dockerfile e workflows
+(PR própria). Os `<a>` externos dentro de `PillButton render` não
+têm par no `ui/`. O diário saiu do `react-markdown`: o corpo dos artigos é documento Tiptap em JSON, um por língua, lido pelo `RichText` do kit no SSR (R1.5 e R1.6 fechadas, `motion` fora).
 
 A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
 upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o
