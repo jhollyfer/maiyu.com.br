@@ -23,6 +23,9 @@ RUN npm install -g pnpm
 # `--frozen-lockfile` checks all of them. The bracket makes it a wildcard, which BuildKit
 # lets match nothing: the frontend-only profile has no `backend/` and the copy skips it.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# The root `prepare` (`node .husky/install.mjs`) runs on the filtered install; without the
+# script the install dies on MODULE_NOT_FOUND before it reads `HUSKY=0` (relato do maiyu.com.br).
+COPY .husky/install.mjs .husky/
 COPY backend/package.jso[n] backend/
 COPY frontend/package.json frontend/
 COPY shared/package.json shared/
