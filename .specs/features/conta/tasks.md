@@ -86,8 +86,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] unitário cobre e-mail novo, e-mail igual e senha nova
-- [ ] Gate check passes: `cd backend && node ace test unit`
+- [x] unitário cobre e-mail novo, e-mail igual e senha nova
+- [x] Gate check passes: `cd backend && node ace test unit`
 
 **Tests**: unit
 **Gate**: quick
