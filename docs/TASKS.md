@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (16 feitos, 2 em andamento, 6 bloqueados, 23 a fazer); atualizado 2026-11-11
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 48 itens de migração para a régua (26 feitos, 0 em andamento, 3 bloqueados, 19 a fazer); atualizado 2026-11-11
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -79,7 +79,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | Feita | `tooling.md` §0; MIGRATIONS.md; fica fora só o TypeScript 7 (exceção do §0); o `@tiptap/*` do `shared/` é da outra frente |
 | R1.8 | `tsconfig` com as flags do piso | P | Feita | `tooling.md` §3; `verbatimModuleSyntax: false` (#319) |
 | R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | Feita | `tooling.md` §4.1, §4.2; `eslint.config.js` do kit, que ignora `components/ui/` (#391) |
-| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | Parcial | `architecture.md` §4; ENV do modelo; falta a linha `VITE_API_URL` em `.env.production` (domínio da API, decisão do dono) |
+| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | Feita | `architecture.md` §4; ENV do modelo; `VITE_API_URL=https://api.maiyu.com.br` (decisão do dono) |
 | R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | Feita | ARVORE.md |
 
 ### Régua B · Backend inicial (item G, sub-sessão)
@@ -111,10 +111,10 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Em andamento |kit do backend entrou (env, start, server, router, http, page-head, sitemap, route-error, hooks, rich-text); `table/` e `list-shell/` ficam fora até o kit torná-los opcionais |
+| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Feita | kit inteiro no frontend, menos `table/` e `list-shell/` (R3.7) |
 | R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
 | R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Feita | #366; `MaiyuCredit` no rodapé e `Picture` em todo `img`; `Photo` ficou só como legenda com crédito CC sobre o `Picture`; imagens em `src/assets`; `PillButton` segue local (desvio, sem variante no `ui/`) |
-| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
+| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Feita | varredura sem elemento interativo cru fora de `ui/`; `<a>` externo só como `render` do `Button`; `PillButton` local é invólucro do `Button`, desvio relatado à régua |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
 | R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |
