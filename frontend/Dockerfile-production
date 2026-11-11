@@ -32,6 +32,11 @@ ENV HUSKY=0
 RUN pnpm --filter "{./frontend}..." install --frozen-lockfile
 
 COPY shared/ shared/
+# The Tuyau client the frontend imports (`@<project>/backend/registry`) is the generated
+# `backend/.adonisjs/client/`, versioned as the Adonis doc asks (#256); its index imports types
+# only, so the backend code stays out of the image. `[t]` keeps the COPY optional for a project
+# without backend (_doc-lib/tuyau.md#guides/frontend/api-client).
+COPY backend/.adonisjs/clien[t] backend/.adonisjs/client
 COPY frontend/ frontend/
 
 # The `VITE_*` of production come from the versioned `frontend/.env.production`, which Vite
@@ -51,12 +56,13 @@ RUN set -eu; \
 # Paraglide compiles the messages before the build; `src/paraglide/` is not versioned, and the
 # compiler downloads the plugins pinned in `project.inlang/settings.json` from jsDelivr, so the
 # Coolify server must reach `cdn.jsdelivr.net` (`tooling.md` §7, _doc-lib/paraglide.md#/file-formats).
-# The `...` filter builds `shared/` before the app, in topological order
+# The `...` filter builds `shared/` before the app, in topological order; `!./backend` keeps
+# the backend's own build (`node ace build`, whose code is not in the image) out of it
 # (_doc-lib/pnpm.md#filtering, https://pnpm.io/filtering).
 # The Vite build with SSR goes past Node's default heap, as in the academy (#395).
 ENV NODE_OPTIONS=--max-old-space-size=8192
 RUN pnpm --filter ./frontend run i18n:compile && \
-    pnpm --filter "{./frontend}..." run build
+    pnpm --filter "{./frontend}..." --filter "!./backend" run build
 
 
 FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
