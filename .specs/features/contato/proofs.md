@@ -1,8 +1,8 @@
 # contato proofs
 
-**HEAD**: 2af11bb
+**HEAD**: 7588204
 **Tree**: clean
-**Result**: 32 pass, 0 fail; mutations 0 killed, 0 not
+**Result**: 33 pass, 0 fail; mutations 3 killed, 0 not
 
 | Check | Proof | Ran | Passed | Result |
 | --- | --- | --- | --- | --- |
@@ -30,6 +30,7 @@
 | C22 | `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts"` | 1 | - | pass |
 | C23 | `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts"` | 1 | - | pass |
 | C24 | `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts"` | 1 | - | pass |
+| C25 | `cd backend && node ace test functional --files="app/features/administrator/contacts/answer/answer.e2e.spec.ts"` | 1 | - | pass |
 | Build | `pnpm --filter ./shared check` | - | - | pass |
 | Build | `cd backend && pnpm typecheck` | - | - | pass |
 | Build | `cd backend && pnpm lint` | - | - | pass |
@@ -38,3 +39,11 @@
 | Build | `cd backend && ! pnpm -s pattern:check 2>&1 | grep -E '^\s*(backend|shared)/'` | - | - | pass |
 | Build | `cd backend && pnpm authz:check` | - | - | pass |
 | Build | `cd backend && pnpm validators:check` | - | - | pass |
+
+## Mutations
+
+| Mutation | Location | Killed |
+| --- | --- | --- |
+| C17: guarda de 12 meses vira 13 | `backend/app/features/administrator/contacts/prune/prune.use-case.ts:13` | yes |
+| C24: o grupo administrator sem o role() deixa o MEMBER passar | `backend/start/routes.ts:148` | yes |
+| edge case: claimAnswer sem o answered_at IS NULL regrava answered_at | `backend/app/repositories/contact/contact.lucid.repository.ts:84` | yes |
