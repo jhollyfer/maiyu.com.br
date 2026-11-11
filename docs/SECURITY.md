@@ -87,11 +87,15 @@ Não se aplica: o site não tem login nem sessão.
 
 ## 4. Autorização
 
-Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
+O site (frontend) é todo público e de leitura. Na API há duas áreas:
+
+- `/storefront/*`, sem sessão: hoje só `POST /storefront/contacts`, a única escrita anônima, declarada em `backend/app/core/openapi/public-routes.ts`.
+- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, e a `ContactPolicy` é a segunda barreira no registro. Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota).
 
 ## 5. Entrada e saída
 
 - Os formulários validam no cliente com VineJS (`frontend/src/lib/validator.ts`), com teto de tamanho por campo.
+- `POST /storefront/contacts` valida de novo na API (nome 1 a 120, e-mail até 254, mensagem 10 a 5000, idioma `pt-BR`, `en` ou `es`), tem o honeypot `website` (preenchido, responde 201 igual ao sucesso e não grava) e limite de 5 envios por hora por IP (429 no sexto). Escrita de outra origem fora de `CORS_ORIGINS` é 403. O log nunca leva nome, e-mail nem mensagem.
 - Não há upload.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLdScript` escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
 
@@ -109,9 +113,10 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 
 | Dado | Finalidade | Base legal | Retenção | Exclusão |
 |---|---|---|---|---|
-| nome, e-mail e mensagem digitados nos formulários | nenhuma: o site não envia nem guarda | Não se aplica: sem tratamento | não há | não há |
+| nome, e-mail, mensagem e idioma do formulário de contato (`contacts`) | responder a quem escreveu | consentimento do titular, que envia a mensagem pedindo a resposta (LGPD art. 7º, I) | 12 meses a partir de `created_at`, respondido ou não | `DELETE /administrator/contacts/:id` a pedido do titular, e o comando `node ace contacts:prune`, que apaga de vez o que passou de 12 meses |
+| nome, e-mail e mensagem do formulário de candidatura | nenhuma: o site não envia nem guarda | Não se aplica: sem tratamento | não há | não há |
 
-O contato por e-mail e WhatsApp acontece fora do site, nos serviços do próprio visitante.
+O expurgo roda como tarefa agendada do Coolify (`ARCHITECTURE.md` §9.1). Não há lixeira: apagar é de vez. A API não envia e-mail ao dono: ele lê a caixa de entrada no painel e responde do próprio e-mail. O contato por e-mail e WhatsApp também acontece fora do site, nos serviços do próprio visitante.
 
 ## 9. Checklist de revisão
 

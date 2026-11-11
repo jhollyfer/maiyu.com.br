@@ -244,13 +244,14 @@ T9 → T10
 
 **Done when**:
 
-- [ ] `openapi:check`, `authz:check` e o spec de mensagens verdes
-- [ ] SECURITY §8 com finalidade, base legal, guarda de 12 meses e exclusão
-- [ ] ARCHITECTURE §9.1 com a tarefa agendada do Coolify que roda `node ace contacts:prune`
-- [ ] Gate check passes: build
+- [x] `openapi:check`, `authz:check` e o spec de mensagens verdes
+- [x] SECURITY §8 com finalidade, base legal, guarda de 12 meses e exclusão
+- [x] ARCHITECTURE §9.1 com a tarefa agendada do Coolify que roda `node ace contacts:prune`
+- [x] Gate check passes: build
 
 **Tests**: none
 **Gate**: build
+**Status**: Done
 
 **Commit**: `docs(contato): contrato, guarda e finalidade do dado`
 

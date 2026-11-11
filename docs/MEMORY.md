@@ -32,12 +32,19 @@ sync, e a migration de `users` segue a do kit (papéis `ADMINISTRATOR` e `MEMBER
 storage rodou contra o MinIO local, ambiente declarado que não vale como prova de PR até a régua
 escolher o substituto. O RB.3 ficou no que o kit traz; rota de conta é proposta ao dono (R2.10).
 
+Contato do backend (R2.10, spec `.specs/features/contato/`, branch `feat/backend-contato-conta`) feito:
+`POST /storefront/contacts` (público, honeypot, 5 por hora por IP), `GET /administrator/contacts`,
+`GET /administrator/contacts/:id`, `POST /administrator/contacts/:id/answer` (mão única, 409),
+`DELETE /administrator/contacts/:id` e o comando `contacts:prune` (12 meses). Aviso por e-mail ao dono
+ficou fora, por decisão do dono. Verde com `shared/` em 79 testes, backend unitário 265 e funcional 194. O formulário do frontend ainda não envia (R0.3, RB.5 e R3).
+
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
 
 ## Próximos passos
 
 1. Regente verifica a `feat/backend-inicial` e abre a PR do backend inicial.
+1a. Agendar no Coolify a tarefa `node ace contacts:prune` (`ARCHITECTURE.md` §9.1) antes de o formulário ir ao ar, e ligar o formulário à API (frente F).
 2. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
    anunciar envio que não acontece.
 3. Fase 1 da migração (R1.1 em diante, `TASKS.md`); R1.2 e RB.1 a RB.4 esperam a leva do kit.

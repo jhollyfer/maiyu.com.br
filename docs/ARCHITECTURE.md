@@ -60,7 +60,7 @@ Ausentes de propósito: `src/start.ts` (`DECISIONS.md` #4) e `integrations/tanst
 
 ## 4. Módulos (features)
 
-Backend (`backend/app/features/`), todo do kit da régua:
+Backend (`backend/app/features/`): o kit da régua e o contato do site:
 
 | Módulo | Rotas | Quem |
 |---|---|---|
@@ -68,6 +68,8 @@ Backend (`backend/app/features/`), todo do kit da régua:
 | `authentication/sessions` | `POST /authentication/{sign-in,sign-out,refresh}` | o dono |
 | `storages/files` | `/storages` (abrir, partes, confirmar, listar, ver, baixar, apagar) | sessão |
 | `documentation` | `GET /openapi.json`, `GET /documentation` | papel de staff |
+| `storefront/contacts` | `POST /storefront/contacts` | visitante, sem sessão |
+| `administrator/contacts` | `GET /administrator/contacts`, `GET /administrator/contacts/:id`, `POST /administrator/contacts/:id/answer`, `DELETE /administrator/contacts/:id`; mais o comando `contacts:prune` | papel de staff |
 
 Frontend: o site tem um grupo de rotas, `_public`.
 
@@ -82,7 +84,7 @@ Frontend: o site tem um grupo de rotas, `_public`.
 | `/sitemap.xml` | `routes/sitemap[.]xml.ts` | buscadores |
 | qualquer outra | `_public/$.tsx` | 404 |
 
-Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquivo enviado), ambas do kit.
+Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
 
 ### 4.1 Linguagem do domínio
 
@@ -96,7 +98,7 @@ Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquiv
 
 ## 5. Modelo de dados
 
-Banco da API (`backend/database/migrations/`, todas do kit):
+Banco da API (`backend/database/migrations/`, as do kit e a de `contacts`):
 
 | Tabela | O que guarda |
 |---|---|
@@ -105,6 +107,7 @@ Banco da API (`backend/database/migrations/`, todas do kit):
 | `rate_limits` | contadores dos limites nomeados de `start/limiter.ts` |
 | `consumed_refresh_tokens` | refresh já usado, para detectar reuso e revogar a família da sessão |
 | `storages` | metadados do arquivo no bucket: nome, tipo, tamanho, estado do upload multipart |
+| `contacts` | a mensagem do formulário de contato: nome (120), e-mail (254), mensagem, idioma, `answered_at` (nulo é pendente), `created_at`; índices em `created_at` e `answered_at`; sem lixeira |
 
 O conteúdo do site continua em constantes tipadas em `frontend/src/lib/` (`projects`, artigos de
 `articles.ts`, `JOBS`), com o tipo de cada um no próprio arquivo.
@@ -165,6 +168,7 @@ régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECIS
 | `UUID_APP` e `COOLIFY_URL` do deploy | `.github/workflows/main-deploy-coolify.yml` | o uuid é da aplicação e não da instância; uuid de outro team é aceito e não implanta nada |
 | Deploy por `POST` em `/api/v1/deploy` com `curl -fsS` | workflow | a rota responde 405 a `GET` desde o Coolify v4.2 |
 | Smoke test em `https://maiyu.com.br/revision.txt` com o sha do commit | workflow | prova que a imagem nova está de pé |
+| Tarefa agendada da API: `node ace contacts:prune`, todo dia, no container da API | painel do Coolify (*Scheduled Tasks* do recurso da API) | a aplicação não tem agendador interno; sem a tarefa a guarda de 12 meses do contato (`SECURITY.md` §8) não se cumpre. Rodar duas vezes é inofensivo, e `--dry-run` só conta |
 
 ## 10. Escala e limites conhecidos
 
