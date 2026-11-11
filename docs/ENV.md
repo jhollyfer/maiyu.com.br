@@ -34,6 +34,7 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `CORS_ORIGINS` | api | sim fora de dev | não | origens do navegador que podem escrever, separadas por vírgula | `http://localhost:3000` |
 | `DATABASE_URL` | api | sim | **sim** | conexão com o Postgres, só no servidor | `postgres://maiyu:<senha>@localhost:5440/maiyu` |
 | `DATABASE_SSL` | api | não | não | TLS na conexão; ausente é desligado | `false` |
+| `DRIVE_DISK` | api | sim | não | disco dos anexos: `s3` (o bucket abaixo, MinIO em dev e teste) ou `fs` (`tmp/uploads`, sem multipart nem URL assinada, então sem fluxo de upload); sem default | `s3` |
 | `UPLOAD_MAX_SIZE` | api | sim | não | teto por arquivo, em bytes | `1073741824` |
 | `MINIO_ROOT_USER` | compose | só em dev | não | root do MinIO local, usado pelo setup | `minio-root` |
 | `MINIO_ROOT_PASSWORD` | compose | só em dev | **sim** | senha do root do MinIO local | `<segredo>` |
@@ -103,8 +104,11 @@ CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHU
 ## 5. Primeira configuração
 
 - [ ] `pnpm install` na raiz (workspace com `backend`, `frontend` e `shared`)
-- [ ] `pnpm --filter ./shared build`
-- [ ] `cp backend/.env.example backend/.env`, `node ace generate:key` em `backend/` e as senhas locais
+- [ ] `pnpm --filter ./backend build:deps` (compila o `shared/`, que o backend importa de `dist/`; sem
+  ele o `tsc` e as suítes não acham `@maiyu/shared`)
+- [ ] `cp backend/.env.example backend/.env`, `node ace generate:key` em `backend/` e as senhas locais.
+  As suítes também precisam dele: o `.env.test` só sobrepõe banco, bucket, CORS e o seed, e o resto
+  (`APP_KEY`, `PORT`, `HOST`...) vem do `.env`
 - [ ] `docker compose -f backend/docker-compose.yml up -d` e `node ace migration:run` em `backend/`
 - [ ] `cd frontend`
 - [ ] `pnpm exec paraglide-js compile --project ./project.inlang --outdir ./src/paraglide`
