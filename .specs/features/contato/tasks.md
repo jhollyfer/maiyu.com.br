@@ -76,12 +76,13 @@ T9 → T10
 
 **Done when**:
 
-- [ ] `StorefrontContactCreateValidator`, `AdministratorContactPaginateValidator` e `ContactShowResponse` exportados pelo `index.ts`
-- [ ] limites do spec (nome 1 a 120, e-mail 254, mensagem 10 a 5000, idioma) recusados e aceitos em teste
-- [ ] Gate check passes: `pnpm --filter ./shared test:unit`
+- [x] `StorefrontContactCreateValidator`, `AdministratorContactPaginateValidator` e `ContactShowResponse` exportados pelo `index.ts`
+- [x] limites do spec (nome 1 a 120, e-mail 254, mensagem 10 a 5000, idioma) recusados e aceitos em teste
+- [x] Gate check passes: `pnpm --filter ./shared test:unit`
 
 **Tests**: unit
 **Gate**: quick
+**Status**: Done
 
 ---
 
