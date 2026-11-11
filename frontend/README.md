@@ -20,13 +20,13 @@ Reinicie o `pnpm dev` depois de mudar `messages/`.
 
 ## Scripts
 
-| Script | O que faz |
-|---|---|
-| `pnpm build` | gera o bundle e o `.output/` do Nitro, e regenera `src/routeTree.gen.ts` |
-| `pnpm check` | compila as mensagens, confere o i18n, roda lint, typecheck e `format:check` |
-| `pnpm test:unit` | compila as mensagens e roda o Vitest |
-| `pnpm check-cycles` | procura ciclo de chunk em `.output/`; roda depois do build |
-| `pnpm format` | Prettier e `eslint --fix` |
+| Script              | O que faz                                                                   |
+| ------------------- | --------------------------------------------------------------------------- |
+| `pnpm build`        | gera o bundle e o `.output/` do Nitro, e regenera `src/routeTree.gen.ts`    |
+| `pnpm check`        | compila as mensagens, confere o i18n, roda lint, typecheck e `format:check` |
+| `pnpm test:unit`    | compila as mensagens e roda o Vitest                                        |
+| `pnpm check-cycles` | procura ciclo de chunk em `.output/`; roda depois do build                  |
+| `pnpm format`       | Prettier e `eslint --fix`                                                   |
 
 O Playwright mora em `e2e/` e roda na sessão, antes do PR (`docs/TEST-PLAN.md`).
 
