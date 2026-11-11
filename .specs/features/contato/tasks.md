@@ -226,11 +226,12 @@ T9 → T10
 
 **Done when**:
 
-- [ ] e2e: apaga o de 13 meses, mantém o de 11; `--dry-run` não apaga; duas execuções deixam o mesmo estado
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: apaga o de 13 meses, mantém o de 11; `--dry-run` não apaga; duas execuções deixam o mesmo estado
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 

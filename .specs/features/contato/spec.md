@@ -146,7 +146,7 @@ dono quiser o aviso.
 | CONTACT-02 | P1: Dono lista e marca como respondida | Design | Done |
 | CONTACT-03 | P2: Aviso ao dono por e-mail | - | Out of scope (dono) |
 | CONTACT-05 | P1: Dono apaga o contato | Design | Done |
-| CONTACT-04 | P1: Guarda de 12 meses | Design | Pending |
+| CONTACT-04 | P1: Guarda de 12 meses | Design | Done |
 
 **Coverage:** 5 total, 4 mapped to tasks, 1 fora por decisão do dono
 
