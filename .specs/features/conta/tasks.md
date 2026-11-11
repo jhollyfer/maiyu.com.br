@@ -180,6 +180,9 @@ Proof: `cd backend && node ace test functional --files="app/features/account/pro
 **C10** - E-mail igual ao atual não derruba as sessões (ACCOUNT-02, AC 4)
 Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="the same email keeps the session"`
 
+**C13** - O save do use case roda dentro da unidade de trabalho, uma vez (ACCOUNT-01, AC 2)
+Proof: `cd backend && node ace test unit --files="app/features/account/profile/update/update.unit.spec.ts" --tests="the save runs inside the unit of work, and only once"`
+
 **C11** - Perfil responde 200 sem senha nem hash (ACCOUNT-03, AC 1)
 Proof: `cd backend && node ace test functional --files="app/features/account/profile/show/show.e2e.spec.ts" --tests="shows the profile without the password"`
 

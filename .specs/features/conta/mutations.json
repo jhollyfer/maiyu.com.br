@@ -3,7 +3,7 @@
     "file": "backend/app/features/account/profile/update/update.use-case.ts",
     "old": "await this.unitOfWork.run(() => this.users.save(user))",
     "new": "await this.users.save(user)",
-    "proof": "cd backend && node ace test unit --files=app/features/account/profile/update/update.unit.spec.ts && node ace test functional --files=app/features/account/profile/update/update.e2e.spec.ts",
+    "proof": "cd backend && node ace test unit --files=\"app/features/account/profile/update/update.unit.spec.ts\" --tests=\"the save runs inside the unit of work, and only once\"",
     "label": "save + revokeAll fora da unidade de trabalho no use case"
   },
   {

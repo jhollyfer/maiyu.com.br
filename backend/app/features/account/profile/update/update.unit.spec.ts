@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
-import { left, USER_ROLE, type Actor } from '@maiyu/shared'
+import { left, USER_ROLE, type Actor, type Either } from '@maiyu/shared'
 
 import AccountProfileUpdateUseCase from './update.use-case.ts'
 
@@ -30,6 +30,26 @@ const ACTOR: Actor = {
   email: 'ana@mail.com',
   role: USER_ROLE.ADMINISTRATOR,
   avatarId: null,
+}
+
+/**
+ * A unit of work that only tells whether its callback is running, so a test can ask a double
+ * "were you called inside the unit?" without a database. The memory unit of work cannot: it
+ * just calls the callback.
+ */
+class WatchedUnitOfWork extends UnitOfWork {
+  open = false
+  runs = 0
+
+  async run<L, R>(work: () => Promise<Either<L, R>>): Promise<Either<L, R>> {
+    this.runs += 1
+    this.open = true
+    try {
+      return await work()
+    } finally {
+      this.open = false
+    }
+  }
 }
 
 async function setup() {
@@ -227,5 +247,36 @@ test.group('account/profile > update (unit)', (group) => {
       status: 401,
       code: 'AUTHENTICATION_REQUIRED',
     })
+  })
+
+  test('the save runs inside the unit of work, and only once', async ({
+    assert,
+  }) => {
+    const doubles = identityDoubles()
+    const unitOfWork = new WatchedUnitOfWork()
+    const useCase = await makeWithMemory(AccountProfileUpdateUseCase, [
+      [UserRepository, doubles.users],
+      [UnitOfWork, unitOfWork],
+      [ClockContract, new ClockFake(NOW)],
+    ])
+    await seedUser(doubles.users)
+    const insideWhenSaved: boolean[] = []
+    const save = doubles.users.save.bind(doubles.users)
+    doubles.users.save = async (user) => {
+      insideWhenSaved.push(unitOfWork.open)
+
+      return save(user)
+    }
+
+    rightOf(
+      await useCase.execute({
+        actor: ACTOR,
+        password: NEW_PASSWORD,
+        currentPassword: PASSWORD,
+      }),
+    )
+
+    assert.equal(unitOfWork.runs, 1)
+    assert.deepEqual(insideWhenSaved, [true])
   })
 })
