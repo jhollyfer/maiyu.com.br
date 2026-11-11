@@ -342,7 +342,7 @@ toda execução e guarda a que falhou; `on-first-retry` só grava em retry.
 `colorScheme`, `page.emulateMedia`, user agent, offline, JavaScript desligado.
 **Para que serve:** testar o fluxo em celular, tema escuro, outro fuso.
 **Quando usar:** caso de 320 px e tema escuro do fluxo crítico; `locale: 'pt-BR'` e
-`timezoneId: 'America/Manaus'` no projeto quando a tela formata data ou número.
+`timezoneId: 'America/Eirunepe'` no projeto quando a tela formata data ou número.
 
 #### docs/test-fixtures
 [doc](https://playwright.dev/docs/test-fixtures)

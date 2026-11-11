@@ -16,7 +16,17 @@ const dbConfig = defineConfig({
     pg: {
       client: 'pg',
       connection: {
-        connectionString: env.get('DATABASE_URL'),
+        // The database session runs in the systems' zone (`TZ`, #393), so `now()::date`,
+        // a scheduled time and a daily report agree with the process. It goes as the `options`
+        // query parameter that node-postgres reads from the connection string: Lucid types
+        // `connection.options` as the mssql object, so the field itself does not compile.
+        connectionString: (function () {
+          const url = new URL(env.get('DATABASE_URL'))
+          const zone = env.get('TZ')
+          if (zone) url.searchParams.set('options', `-c TimeZone=${zone}`)
+
+          return url.toString()
+        })(),
 
         /**
          * Turned on by `DATABASE_SSL`, not by `NODE_ENV`: what decides is where the
