@@ -1,8 +1,8 @@
 import { readFile } from 'node:fs/promises'
 
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
+import { test } from '@japa/runner'
 
 import openapi from '#config/openapi'
 
@@ -23,7 +23,14 @@ import openapi from '#config/openapi'
 type Documento = {
   paths: Record<
     string,
-    Record<string, { operationId: string; responses: Record<string, unknown> }>
+    Record<
+      string,
+      {
+        operationId: string
+        parameters?: unknown[]
+        responses: Record<string, unknown>
+      }
+    >
   >
 }
 
@@ -32,11 +39,21 @@ let document: Documento | undefined
 async function readDocument(): Promise<Documento> {
   if (document) return document
 
-  const read: Documento = JSON.parse(
+  const read: unknown = JSON.parse(
     await readFile(app.makePath('openapi.json'), 'utf-8'),
   )
+  if (!isDocument(read)) throw new Error('openapi.json has no `paths` object')
+
   document = read
   return read
+}
+
+/** The committed file is outside input: `paths` is checked before the tests read it. */
+function isDocument(value: unknown): value is Documento {
+  if (typeof value !== 'object' || value === null) return false
+  if (!('paths' in value)) return false
+
+  return typeof value.paths === 'object' && value.paths !== null
 }
 
 /**
@@ -107,7 +124,7 @@ test.group('documentation > the document describes the router', () => {
     assert.deepEqual(
       extra,
       [],
-      `the document promises what the router does not serve: ${extra}`,
+      `the document promises what the router does not serve: ${extra.join(', ')}`,
     )
   })
 
@@ -133,7 +150,7 @@ test.group('documentation > the document describes the router', () => {
     assert.deepEqual(
       silent,
       [],
-      `operations with no success response described: ${silent}`,
+      `operations with no success response described: ${silent.join(', ')}`,
     )
   })
 
@@ -158,6 +175,40 @@ test.group('documentation > the document describes the router', () => {
       }
     }
 
-    assert.deepEqual(repeated, [], `operationId repetido: ${repeated}`)
+    assert.deepEqual(
+      repeated,
+      [],
+      `operationId repetido: ${repeated.join(', ')}`,
+    )
+  })
+
+  test('each operation points to the Accept-Language parameter', async ({
+    assert,
+  }) => {
+    const { paths } = await readDocument()
+    const reference = '#/components/parameters/AcceptLanguage'
+    const without: string[] = []
+
+    // The message language is a contract of every route (`_standards/i18n.md`): an
+    // operation without the header in the document hides it from whoever reads the reference.
+    for (const [path, operations] of Object.entries(paths)) {
+      for (const [method, operation] of Object.entries(operations)) {
+        const points = (operation.parameters ?? []).some(
+          (parameter) =>
+            typeof parameter === 'object' &&
+            parameter !== null &&
+            '$ref' in parameter &&
+            parameter.$ref === reference,
+        )
+
+        if (!points) without.push(`${method.toUpperCase()} ${path}`)
+      }
+    }
+
+    assert.deepEqual(
+      without,
+      [],
+      `operations without Accept-Language: ${without.join(', ')}`,
+    )
   })
 })

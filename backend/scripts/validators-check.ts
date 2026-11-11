@@ -76,7 +76,7 @@ const EXCEPTIONS: ReadonlyArray<Exception> = [
 ]
 
 /**
- * The password confirmation: in the backend, `password()` uses `confirmed()`, which reads
+ * The password confirmation: in the backend, `Rule.password()` uses `confirmed()`, which reads
  * `passwordConfirmation` from the raw input without declaring it (so it never reaches
  * `merge()`); in `shared/` the field is declared (`frontend.md` §4). The pair holds
  * when the backend has `password` and `shared/` has both.
@@ -163,12 +163,32 @@ export class ValidatorsCheck {
         ),
       ]
 
-    const vine = this.#shape(this.#jsonSchemaOfVine(pair.vine))
+    const vine = this.#withoutParams(
+      this.#shape(this.#jsonSchemaOfVine(pair.vine)),
+    )
     const zod = this.#shape(this.#jsonSchemaOfZod(pair.zod))
 
     return this.#diff(pair.name, '', vine, zod).map((message) =>
       this.#finding(pair.file, 'validator-diverge', message),
     )
+  }
+
+  /**
+   * The route parameter goes in the `params` block of the VineJS schema (`_standards/backend.md`
+   * §4.1, DECISIONS.md #375); the Zod of `shared/` validates the form, which has no route, so it
+   * never has the block. Only the top level is the request: a field named `params` deeper down is
+   * data and is compared.
+   */
+  #withoutParams(shape: Shape): Shape {
+    return {
+      ...shape,
+      properties: Object.fromEntries(
+        Object.entries(shape.properties).filter(
+          ([field]) => field !== 'params',
+        ),
+      ),
+      required: shape.required.filter((field) => field !== 'params'),
+    }
   }
 
   #diff(name: string, path: string, vine: Shape, zod: Shape): Array<string> {
@@ -396,6 +416,7 @@ export class ValidatorsCheck {
   #isGlobal(name: string): boolean {
     return [
       'IdentifierValidator',
+      'PageValidator',
       'PaginationValidator',
       'TrashablePaginationValidator',
     ].includes(name)

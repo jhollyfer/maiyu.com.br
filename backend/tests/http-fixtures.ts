@@ -1,8 +1,8 @@
-import type { ApiClient, ApiResponse } from '@japa/api-client'
 import testUtils from '@adonisjs/core/services/test_utils'
+import type { ApiClient, ApiResponse } from '@japa/api-client'
 
+import { SESSION_TOKEN } from '#config/session-token'
 import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
-import { COOKIE_TOKEN } from '#config/session-token'
 import type User from '#models/user'
 
 /**
@@ -17,21 +17,31 @@ import type User from '#models/user'
 export type ResponseBody = Record<string, any>
 
 export function body(response: ApiResponse): ResponseBody {
-  return response.body()
+  // `body()` is typed `any`: it lands in `unknown` and leaves through the guard, so the lint
+  // (`no-unsafe-return`) sees a narrowed value and not an `any` passed along.
+  const value: unknown = response.body()
+  if (!isResponseBody(value))
+    throw new Error(`response body is not an object: ${String(value)}`)
+
+  return value
 }
 
-/**
- * The seeder's administrator. It is the only account no endpoint creates without a
- * session, so every test that needs a session starts from it.
- */
-export const ADMINISTRATOR = {
-  email: 'administrator@mail.com',
-  password: 'Administrator1!',
+function isResponseBody(value: unknown): value is ResponseBody {
+  return typeof value === 'object' && value !== null
+}
+
+/** The cookie value as a string: `@japa/api-client` types it `any`. */
+function cookieValue(response: ApiResponse, name: string): string {
+  const value: unknown = response.cookie(name)?.value
+  if (typeof value !== 'string')
+    throw new Error(`session cookie ${name} missing from the sign-in response`)
+
+  return value
 }
 
 export type Session = {
-  [COOKIE_TOKEN.ACCESS]: string
-  [COOKIE_TOKEN.REFRESH]: string
+  [SESSION_TOKEN.ACCESS]: string
+  [SESSION_TOKEN.REFRESH]: string
 }
 
 /**
@@ -54,22 +64,24 @@ export async function authenticate(
 
   response.assertStatus(204)
 
-  const access = response.cookie(COOKIE_TOKEN.ACCESS)
-  const refresh = response.cookie(COOKIE_TOKEN.REFRESH)
-  if (!access || !refresh)
-    throw new Error('session cookie missing from the sign-in response')
-
   return {
-    [COOKIE_TOKEN.ACCESS]: access.value,
-    [COOKIE_TOKEN.REFRESH]: refresh.value,
+    [SESSION_TOKEN.ACCESS]: cookieValue(response, SESSION_TOKEN.ACCESS),
+    [SESSION_TOKEN.REFRESH]: cookieValue(response, SESSION_TOKEN.REFRESH),
   }
 }
 
-/** Shortcut to the seeder administrator's session, which is the most used. */
-export function authenticateAsAdministrator(
+/**
+ * An administrator's session, the most used. The account comes from the factory in the test
+ * itself and not from the seeder: the seeder's owner depends on `SEED_OWNER_EMAIL` and
+ * `SEED_OWNER_PASSWORD`, which the test environment does not have to define, and a fixed
+ * e-mail here would match no account the project's seeder creates.
+ */
+export async function authenticateAsAdministrator(
   client: ApiClient,
 ): Promise<Session> {
-  return authenticate(client, ADMINISTRATOR.email, ADMINISTRATOR.password)
+  const { session } = await signInWithFactory(client, 'administrator')
+
+  return session
 }
 
 /**
@@ -104,11 +116,9 @@ export async function signInWithFactory(
 }
 
 /**
- * Empties the database and recreates the administrator.
- *
- * `truncate` also erases the administrator, and it is the only user no endpoint
- * creates without a session - without seeding again, no panel test would have
- * anywhere to start.
+ * Empties the database and runs the seeders again, so the data the project seeds (catalogs,
+ * the owner when its keys are set) is back for the next test. Sessions do not depend on it:
+ * they come from the factory (`signInWithFactory`).
  */
 export async function resetDatabase() {
   // `truncate()` does NOT truncate: it runs the migrations and **returns** the function

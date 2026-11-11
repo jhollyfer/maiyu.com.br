@@ -1,6 +1,7 @@
-import { test } from '@japa/runner'
 import drive from '@adonisjs/drive/services/main'
 import type { ApiClient } from '@japa/api-client'
+import { test } from '@japa/runner'
+
 import type { StorageMimetype } from '@maiyu/shared'
 
 import { PART_SIZE } from '#services/multipart/multipart.contract'
@@ -10,9 +11,9 @@ import {
   resetDatabase,
   type ResponseBody,
 } from '#tests/http-fixtures'
-import { Stored } from '#tests/stored-fixtures'
 import type { Session } from '#tests/http-fixtures'
 import { pngBytes } from '#tests/storages-fixtures'
+import { Stored } from '#tests/stored-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the
@@ -215,6 +216,6 @@ test.group('storages > complete > acesso e identificador', (group) => {
       .json({})
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'id')
+    assert.property(body(response).errors, 'params.id')
   })
 })

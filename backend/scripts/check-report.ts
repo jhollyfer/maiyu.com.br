@@ -22,7 +22,11 @@ export class CheckReport {
    * the runner. The order is the section's: whoever fixes reads first which decision was broken,
    * and only then where.
    */
-  static print(name: string, findings: ReadonlyArray<Finding>, write: (line: string) => void = console.log): number {
+  static print(
+    name: string,
+    findings: ReadonlyArray<Finding>,
+    write: (line: string) => void = console.log,
+  ): number {
     if (findings.length === 0) {
       write(`${name}: no findings.`)
       return 0
@@ -30,7 +34,9 @@ export class CheckReport {
 
     write(`${name}: ${findings.length} findings\n`)
     const bySection = Map.groupBy(findings, (finding) => finding.section)
-    const sections = [...bySection].toSorted((a, b) => a[0].localeCompare(b[0], 'en', { numeric: true }))
+    const sections = [...bySection].toSorted((a, b) =>
+      a[0].localeCompare(b[0], 'en', { numeric: true }),
+    )
     for (const [section, list] of sections) {
       write(`  ${section}`)
       for (const finding of list) {

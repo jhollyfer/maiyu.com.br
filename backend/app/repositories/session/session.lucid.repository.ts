@@ -1,30 +1,37 @@
+import { createHash } from 'node:crypto'
+
 import { inject } from '@adonisjs/core'
 import { Secret } from '@adonisjs/core/helpers'
-import logger from '@adonisjs/core/services/logger'
 
-import User from '#models/user'
-import { COOKIE_TOKEN } from '#config/session-token'
+import { TransactionalAccessTokensProvider } from './transactional-access-tokens.provider.ts'
+
+import { SESSION_TOKEN } from '#config/session-token'
+import { TransactionContext } from '#core/transaction-context'
+import User, { ACCESS_TOKEN_TABLE } from '#models/user'
 import {
   SessionRepository,
   type RefreshGrant,
   type SessionTokens,
 } from '#repositories/session/session.repository'
-import { TransactionContext } from '#core/transaction-context'
 
-/** The `DbAccessTokensProvider` table, created by the `auth_access_tokens` migration. */
-const SESSION_TABLE = 'auth_access_tokens'
+/** The reuse marks, created by the `consumed_refresh_tokens` migration. */
+const CONSUMED_TABLE = 'consumed_refresh_tokens'
 
 /**
- * The session tokens in the database: issue, read the refresh one and revoke. Batch
- * revocation goes through the transaction in progress, which is why it lives in a
- * repository and not in an external I/O service.
+ * The session tokens in the database: issue, read the refresh one, consume it and revoke.
+ * Every query goes through the client of the transaction in progress, the provider's
+ * included (`TransactionalAccessTokensProvider`): a second connection inside a unit of work
+ * is what starves the pool under a burst of refreshes.
  *
- * Separate from the controller, which writes the HTTP response: issuing a token touches the
- * database, writing a cookie touches the transport, and those are two reasons to change.
+ * Separate from the cookie writer, which writes the HTTP response: issuing a token touches
+ * the database, writing a cookie touches the transport, and those are two reasons to change.
  */
 @inject()
 export class SessionLucidRepository extends SessionRepository {
-  constructor(private readonly transaction: TransactionContext) {
+  constructor(
+    private readonly transaction: TransactionContext,
+    private readonly tokens: TransactionalAccessTokensProvider,
+  ) {
     super()
   }
 
@@ -37,14 +44,14 @@ export class SessionLucidRepository extends SessionRepository {
    */
   async issue(userId: string): Promise<SessionTokens | null> {
     const tokenable = this.tokenable(userId)
-    const accessToken = await User.accessTokens.create(tokenable, [], {
-      name: COOKIE_TOKEN.ACCESS,
-      expiresIn: COOKIE_TOKEN.ACCESS_EXPIRY,
+    const accessToken = await this.tokens.create(tokenable, [], {
+      name: SESSION_TOKEN.ACCESS,
+      expiresIn: SESSION_TOKEN.ACCESS_EXPIRY,
     })
 
-    const refreshToken = await User.accessTokens.create(tokenable, [], {
-      name: COOKIE_TOKEN.REFRESH,
-      expiresIn: COOKIE_TOKEN.REFRESH_EXPIRY,
+    const refreshToken = await this.tokens.create(tokenable, [], {
+      name: SESSION_TOKEN.REFRESH,
+      expiresIn: SESSION_TOKEN.REFRESH_EXPIRY,
     })
 
     // `value` is only optional in the type because the same `AccessToken` represents the
@@ -60,24 +67,21 @@ export class SessionLucidRepository extends SessionRepository {
   /**
    * Drops all the account's sessions.
    *
-   * By table, and not by `User.accessTokens.deleteAll`: the `@adonisjs/auth` provider
-   * uses the model's connection and does not accept a transaction, and the
-   * revocation must land together with the write that motivated it (password change,
-   * role change, archiving) - two writes, one transaction (_standards/backend.md §4.2).
+   * By table, and not by `deleteAll` of the stock provider, which uses the model's
+   * connection: the revocation must land together with the write that motivated it
+   * (password change, role change, archiving, refresh reuse) - one transaction
+   * (_standards/backend.md §4.2).
    */
   async revokeAll(userId: string): Promise<void> {
     await this.transaction
       .client()
-      .from(SESSION_TABLE)
+      .from(ACCESS_TOKEN_TABLE)
       .where('tokenable_id', userId)
       .delete()
   }
 
   async revoke(userId: string, identifier: string): Promise<boolean> {
-    const deleted = await User.accessTokens.delete(
-      this.tokenable(userId),
-      identifier,
-    )
+    const deleted = await this.tokens.delete(this.tokenable(userId), identifier)
 
     return deleted !== 0
   }
@@ -85,19 +89,67 @@ export class SessionLucidRepository extends SessionRepository {
   async readRefresh(value: string): Promise<RefreshGrant | null> {
     // An unreadable token makes `verify` THROW instead of returning null.
     try {
-      const token = await User.accessTokens.verify(new Secret(value))
+      const token = await this.tokens.verify(new Secret(value))
 
-      if (!token || token.name !== COOKIE_TOKEN.REFRESH) return null
+      if (!token || token.name !== SESSION_TOKEN.REFRESH) return null
 
       return {
         userId: String(token.tokenableId),
         identifier: String(token.identifier),
+        fingerprint: this.fingerprintOf(value),
+        expiresAt: token.expiresAt,
       }
-    } catch (error) {
-      logger.debug({ err: error }, '[session > readRefresh] unreadable token')
-
+    } catch {
+      // An unreadable token is an expected answer, not a failure, so nothing is logged:
+      // the repository has no logger of its own, and reading the request one from the
+      // async local storage would break outside a request (DECISIONS.md #314).
       return null
     }
+  }
+
+  /**
+   * The `DELETE` with the counted rows is the critical section (`_standards/backend.md`
+   * §4.10; _doc-lib/lucid.md#update-and-delete-queries,
+   * https://lucid.adonisjs.com/docs/update-and-delete-queries, "The query returns the number
+   * of affected rows"). The mark goes on the same client, so it lands with the deletion or
+   * not at all.
+   */
+  async consume(grant: RefreshGrant): Promise<boolean> {
+    const client = this.transaction.client()
+    const deleted: unknown = await client
+      .from(ACCESS_TOKEN_TABLE)
+      .where('id', grant.identifier)
+      .where('tokenable_id', grant.userId)
+      .where('name', SESSION_TOKEN.REFRESH)
+      .delete()
+
+    if (Number(deleted) === 0) return false
+
+    await client.insertQuery().table(CONSUMED_TABLE).insert({
+      tokenable_id: grant.userId,
+      hash: grant.fingerprint,
+      expires_at: grant.expiresAt,
+      created_at: new Date(),
+    })
+
+    return true
+  }
+
+  async findReused(value: string): Promise<string | null> {
+    const mark: unknown = await this.transaction
+      .client()
+      .from(CONSUMED_TABLE)
+      .select('tokenable_id')
+      .where('hash', this.fingerprintOf(value))
+      .where((query) =>
+        query.whereNull('expires_at').orWhere('expires_at', '>', new Date()),
+      )
+      .first()
+
+    if (typeof mark !== 'object' || mark === null || !('tokenable_id' in mark))
+      return null
+
+    return String(mark.tokenable_id)
   }
 
   /**
@@ -109,5 +161,10 @@ export class SessionLucidRepository extends SessionRepository {
     tokenable.id = userId
 
     return tokenable
+  }
+
+  /** The sha256 in hex of the plain token: what the reuse mark keeps, never the token. */
+  private fingerprintOf(value: string): string {
+    return createHash('sha256').update(value).digest('hex')
   }
 }

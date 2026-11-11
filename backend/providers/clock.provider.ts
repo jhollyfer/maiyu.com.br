@@ -16,6 +16,8 @@ export default class ClockProvider {
   constructor(protected app: ApplicationService) {}
 
   register() {
-    this.app.container.bind(ClockContract, () => this.app.container.make(SystemClockService))
+    this.app.container.bind(ClockContract, () =>
+      this.app.container.make(SystemClockService),
+    )
   }
 }

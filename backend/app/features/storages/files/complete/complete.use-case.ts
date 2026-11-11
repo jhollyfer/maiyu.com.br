@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import {
   left,
   right,
@@ -11,15 +12,18 @@ import {
 
 import { FileRefusal } from '../_shared.file-refusal.ts'
 
+import type { IdentifierPayload } from '#core/validator'
 import type { Storage } from '#domain/storage/storage.entity'
 import HTTPException from '#exceptions/http.exception'
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import { MultipartContract } from '#services/multipart/multipart.contract'
-import type { IdentifierPayload } from '#core/validator'
+import { StorageContract } from '#services/storage/storage.contract'
 import type { StoragesFileCompletePayload } from '#validators/storages/files.validator'
 
-type Payload = Merge<IdentifierPayload, StoragesFileCompletePayload>
+type Payload = Merge<
+  IdentifierPayload,
+  Omit<StoragesFileCompletePayload, 'params'>
+>
 type Response = Either<HTTPException, StoragesFileShowResponse>
 
 /**
@@ -38,7 +42,9 @@ type Response = Either<HTTPException, StoragesFileShowResponse>
  *
  * Calling twice is safe. A client that lost the response to a network
  * drop resends the confirmation, and the second returns the same record instead of
- * an "upload already closed" error that would help nobody.
+ * an "upload already closed" error that would help nobody. Two calls in flight
+ * both check, and only one marks: the row turns `UPLOADED` through
+ * `StorageRepository.claimCompletion` (`_standards/backend.md` §5.4).
  */
 @inject()
 export default class StoragesFileCompleteUseCase {
@@ -74,7 +80,9 @@ export default class StoragesFileCompleteUseCase {
           return left(FileRefusal.http(completed.value, this.i18n))
         }
 
-        await this.storages.save(storage)
+        // Of two concurrent calls only one marks the row; the one that loses
+        // (`null`) falls through to the reread below and answers with the winner.
+        await this.storages.claimCompletion(storage)
       }
 
       const detail = await this.storages.detail(storage.id)
@@ -83,7 +91,10 @@ export default class StoragesFileCompleteUseCase {
 
       return right(await this.bucket.withUrl(detail))
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > complete][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > complete][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(
@@ -106,7 +117,7 @@ export default class StoragesFileCompleteUseCase {
       await this.bucket.discard(storage.snapshot().path)
       await this.storages.delete(storage)
     } catch (error) {
-      logger.error(
+      HttpContext.getOrFail().logger.error(
         { err: error },
         '[storages/files > complete][discard][error]',
       )

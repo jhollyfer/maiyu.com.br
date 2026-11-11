@@ -5,9 +5,10 @@ import StoragesFileDownloadUseCase from './download.use-case.ts'
 import { StorageRepository } from '#repositories/storage/storage.repository'
 import { StorageContract } from '#services/storage/storage.contract'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import {
   FILE_ID,
-  rightOf,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
@@ -22,7 +23,9 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-test.group('storages/files > download (unit)', () => {
+test.group('storages/files > download (unit)', (group) => {
+  insideHttpContext(group)
+
   test('returns the signed URL with the original name', async ({ assert }) => {
     const { storages, useCase } = await setup()
     await storages.save(uploadedFile())

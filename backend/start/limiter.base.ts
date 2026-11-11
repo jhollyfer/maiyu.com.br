@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto'
 
 import limiter from '@adonisjs/limiter/services/main'
 
-import { COOKIE_TOKEN } from '#config/session-token'
+import { SESSION_TOKEN } from '#config/session-token'
 
 /**
  * The house rate limits (DECISIONS.md #130, backend.md §4.10), the same in every project.
@@ -106,7 +106,7 @@ export const signUpThrottle = limiter.define('signUp', function () {
  * falls back to the IP: there is no session to renew and the answer is 401 anyway.
  */
 export const refreshThrottle = limiter.define('refresh', function (context) {
-  const key = LimiterKey.refresh(context.request.cookie(COOKIE_TOKEN.REFRESH))
+  const key = LimiterKey.refresh(context.request.cookie(SESSION_TOKEN.REFRESH))
 
   if (!key) return limiter.allowRequests(30).every('1 minute')
 

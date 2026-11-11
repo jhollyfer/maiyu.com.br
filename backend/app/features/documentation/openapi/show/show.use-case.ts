@@ -1,9 +1,10 @@
 import { readFile } from 'node:fs/promises'
 
 import { inject } from '@adonisjs/core'
-import { I18n } from '@adonisjs/i18n'
+import { HttpContext } from '@adonisjs/core/http'
 import app from '@adonisjs/core/services/app'
-import logger from '@adonisjs/core/services/logger'
+import { I18n } from '@adonisjs/i18n'
+
 import { left, right, type Either } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
@@ -34,7 +35,10 @@ export default class DocumentationOpenapiShowUseCase {
 
       return right(DocumentationOpenapiShowUseCase.specification)
     } catch (error) {
-      logger.error({ err: error }, '[documentation/openapi > show][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[documentation/openapi > show][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(

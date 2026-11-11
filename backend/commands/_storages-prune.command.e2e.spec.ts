@@ -1,14 +1,16 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import drive from '@adonisjs/drive/services/main'
 import type { ApiClient } from '@japa/api-client'
+import { test } from '@japa/runner'
+
 import type { StorageMimetype } from '@maiyu/shared'
 
+import StoragesPrune from '#commands/storages-prune.command'
+import { UserFactory } from '#database/factories/user.factory'
 import {
   MultipartContract,
   PART_SIZE,
 } from '#services/multipart/multipart.contract'
-import StoragesPrune from '#commands/storages-prune.command'
 import {
   authenticateAsAdministrator,
   body,
@@ -17,6 +19,7 @@ import {
 } from '#tests/http-fixtures'
 import type { Session } from '#tests/http-fixtures'
 import { ageStorage, pngBytes, storageExists } from '#tests/storages-fixtures'
+import { Stored } from '#tests/stored-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the form that sent it,
@@ -81,10 +84,15 @@ async function upload(
   return body(completed)
 }
 
-/** A `storages` row with no binary at all: only the metadata matters here. */
+/** Points a user's avatar at the file: the reference the sweep must respect. */
+async function attachAsAvatar(storageId: string): Promise<void> {
+  const user = await UserFactory.create()
+
+  await Stored.attachAvatar(user.id, storageId)
+}
 
 /**
- * The sweep of abandoned `PENDING` (`node ace storages:prune`).
+ * The sweep of abandoned `PENDING` and orphan `UPLOADED` (`node ace storages:prune`).
  *
  * `PENDING` is the only state one never leaves on one's own: whoever closes the tab
  * mid-upload never calls `complete` or `DELETE`, and the row stays up with the
@@ -152,13 +160,31 @@ test.group('storages > prune', (group) => {
     assert.isTrue(await storageExists(opened.storage.id))
   })
 
-  test('does not touch UPLOADED, however old it is', async ({
+  test('deletes the old orphan UPLOADED, binary and row', async ({
     client,
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
     const storage = await upload(client, session)
 
+    await age(storage.id, 48)
+
+    const command = await prune()
+
+    command.assertSucceeded()
+
+    assert.isFalse(await storageExists(storage.id))
+    assert.isFalse(await drive.use().exists(storage.path))
+  })
+
+  test('does not touch an UPLOADED in use, however old it is', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+    const storage = await upload(client, session)
+
+    await attachAsAvatar(storage.id)
     await age(storage.id, 24 * 365)
 
     const command = await prune()
@@ -167,6 +193,20 @@ test.group('storages > prune', (group) => {
 
     assert.isTrue(await storageExists(storage.id))
     assert.isTrue(await drive.use().exists(storage.path))
+  })
+
+  test('does not touch a recent orphan UPLOADED', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+    const storage = await upload(client, session)
+
+    const command = await prune()
+
+    command.assertSucceeded()
+
+    assert.isTrue(await storageExists(storage.id))
   })
 
   test('--hours adjusts the cutoff', async ({ client, assert }) => {

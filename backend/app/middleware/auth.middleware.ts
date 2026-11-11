@@ -1,6 +1,7 @@
+import type { Authenticators } from '@adonisjs/auth/types'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
-import type { Authenticators } from '@adonisjs/auth/types'
+
 import { ActorSchema } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
@@ -22,6 +23,7 @@ export default class AuthMiddleware {
     const user = await ctx.auth.authenticateUsing(options.guards)
     const actor = ActorSchema.safeParse({
       id: user.id,
+      email: user.email,
       role: user.role,
       avatarId: user.avatarId,
     })
@@ -32,6 +34,6 @@ export default class AuthMiddleware {
 
     ctx.actor = actor.data
 
-    return next()
+    await next()
   }
 }

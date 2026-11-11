@@ -1,13 +1,15 @@
 import { readdir } from 'node:fs/promises'
 
-import { LOCALE, LOCALES } from '@maiyu/shared'
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
+
+import { FIELD_LABELS, LOCALE, LOCALES } from '@maiyu/shared'
 
 import {
   icuVariables,
   langFiles,
   readLang,
+  readValidatorLang,
   sharedMessage,
 } from '#tests/lang-fixtures'
 
@@ -119,7 +121,7 @@ test.group('lang > validator.json matches shared', () => {
     assert,
   }) => {
     for (const locale of LOCALES) {
-      const entries = await readLang(locale, 'validator')
+      const entries = await readValidatorLang(locale)
       const diverging = [...entries]
         .filter(([key, message]) => {
           const shared = sharedMessage(locale, key)
@@ -129,6 +131,22 @@ test.group('lang > validator.json matches shared', () => {
         .map(([key]) => key)
 
       assert.deepEqual(diverging, [], locale)
+    }
+  })
+
+  test('when shared has a field label, the backend has the same key', async ({
+    assert,
+  }) => {
+    // The test above only sees keys the backend has: a label added to
+    // `PROJECT_FIELD_LABELS` and forgotten in `validator/shared/fields.json` would pass,
+    // and the 422 would show the raw field name.
+    for (const locale of LOCALES) {
+      const entries = await readValidatorLang(locale)
+      const missing = Object.keys(FIELD_LABELS[locale]).filter(
+        (field) => !entries.has(`shared.fields.${field}`),
+      )
+
+      assert.deepEqual(missing, [], locale)
     }
   })
 })

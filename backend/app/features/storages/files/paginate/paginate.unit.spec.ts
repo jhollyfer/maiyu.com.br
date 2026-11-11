@@ -4,9 +4,10 @@ import StoragesFilePaginateUseCase from './paginate.use-case.ts'
 
 import { StorageRepository } from '#repositories/storage/storage.repository'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import {
   pendingFile,
-  rightOf,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
@@ -20,7 +21,9 @@ async function setup() {
   return { storages, useCase }
 }
 
-test.group('storages/files > paginate (unit)', () => {
+test.group('storages/files > paginate (unit)', (group) => {
+  insideHttpContext(group)
+
   test('lists the first page, twenty at a time', async ({ assert }) => {
     const { storages, useCase } = await setup()
     await storages.save(uploadedFile('1d2c3b4a-5f6e-4d8c-9b0a-1f2e3d4c5b61'))

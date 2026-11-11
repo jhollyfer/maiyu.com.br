@@ -1,29 +1,29 @@
-import type { HttpContext } from '@adonisjs/core/http'
 import { inject } from '@adonisjs/core'
+import type { HttpContext } from '@adonisjs/core/http'
 
 import AuthenticationSessionSignOutUseCase from './sign-out.use-case.ts'
 
-import { defineDocs } from '#core/openapi/types'
-import { COOKIE_TOKEN, cookieOptions } from '#config/session-token'
+import { OpenApiDocs } from '#core/openapi/types'
+import { SessionCookie } from '#features/authentication/_shared.session-cookie'
 
 @inject()
 export default class AuthenticationSessionSignOutController {
-  static docs = defineDocs({
-    summary: 'End session',
+  static docs = OpenApiDocs.defineDocs({
+    summary: 'Sair',
     description:
-      'Ends the session **on the server**, not just on screen: deletes the current access token and the refresh token, ' +
-      'then clears both cookies. Responds `204` without a body.\n\n' +
-      'An unreadable refresh token does not prevent sign-out - the cookies are cleared anyway, ' +
-      'because the result the person asked for is to be without a session.\n\n' +
-      'It deletes only the tokens of this session. Dropping **all** of them is a consequence of changing email or ' +
-      'password in `PUT /account`, not of this route.',
+      'Encerra a sessão **no servidor**, não só na tela: apaga o token de acesso atual e o de refresh, ' +
+      'depois limpa os dois cookies. Responde `204` sem corpo.\n\n' +
+      'Refresh ilegível não impede a saída: os cookies são limpos mesmo assim, ' +
+      'porque o resultado que a pessoa pediu é ficar sem sessão.\n\n' +
+      'Apaga só os tokens desta sessão. Derrubar **todos** é consequência de trocar e-mail ou ' +
+      'senha em `PUT /account`, não desta rota.',
   })
 
   constructor(private readonly useCase: AuthenticationSessionSignOutUseCase) {}
 
   async handle(context: HttpContext) {
     const { actor } = context
-    const refreshToken = context.request.cookie(COOKIE_TOKEN.REFRESH)
+    const refreshToken = SessionCookie.readRefresh(context.request)
 
     const result = await this.useCase.execute({
       actor,
@@ -34,11 +34,7 @@ export default class AuthenticationSessionSignOutController {
 
     if (result.isLeft()) throw result.value
 
-    // The SAME attributes as the issuing, not a bare `clearCookie`: without them the
-    // browser creates a second empty host-only cookie and the domain one survives.
-    context.response
-      .clearCookie(COOKIE_TOKEN.ACCESS, cookieOptions.clear)
-      .clearCookie(COOKIE_TOKEN.REFRESH, cookieOptions.clear)
+    SessionCookie.clear(context.response)
 
     return context.response.noContent()
   }

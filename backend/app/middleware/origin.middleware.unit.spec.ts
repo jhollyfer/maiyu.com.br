@@ -1,17 +1,18 @@
 import { IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
 
-import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
-import i18nManager from '@adonisjs/i18n/services/main'
 import {
   HttpContextFactory,
   RequestFactory,
 } from '@adonisjs/core/factories/http'
+import app from '@adonisjs/core/services/app'
+import i18nManager from '@adonisjs/i18n/services/main'
+import { test } from '@japa/runner'
+
 import { BASE_LOCALE } from '@maiyu/shared'
 
-import OriginMiddleware from '#middleware/origin.middleware'
 import HTTPException from '#exceptions/http.exception'
+import OriginMiddleware from '#middleware/origin.middleware'
 
 /** The `.env.test` allowlist. */
 const ALLOWED = 'http://localhost:5173'

@@ -15,7 +15,7 @@ export default class IdGeneratorProvider {
 
   register() {
     this.app.container.bind(IdGeneratorContract, () =>
-      this.app.container.make(CryptoIdGeneratorService)
+      this.app.container.make(CryptoIdGeneratorService),
     )
   }
 }

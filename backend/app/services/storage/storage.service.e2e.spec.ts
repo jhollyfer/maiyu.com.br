@@ -1,6 +1,6 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import drive from '@adonisjs/drive/services/main'
+import { test } from '@japa/runner'
 
 import { StorageContract } from '#services/storage/storage.contract'
 import { pngBytes } from '#tests/storages-fixtures'

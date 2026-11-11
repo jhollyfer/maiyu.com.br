@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import {
   left,
   right,
@@ -8,10 +9,10 @@ import {
   type StoragesFileShowResponse,
 } from '@maiyu/shared'
 
-import HTTPException from '#exceptions/http.exception'
-import { StorageContract } from '#services/storage/storage.contract'
-import { StorageRepository } from '#repositories/storage/storage.repository'
 import type { IdentifierPayload } from '#core/validator'
+import HTTPException from '#exceptions/http.exception'
+import { StorageRepository } from '#repositories/storage/storage.repository'
+import { StorageContract } from '#services/storage/storage.contract'
 
 type Payload = IdentifierPayload
 type Response = Either<HTTPException, StoragesFileShowResponse>
@@ -40,7 +41,10 @@ export default class StoragesFileShowUseCase {
 
       return right(await this.bucket.withUrl(storage))
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > show][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > show][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(

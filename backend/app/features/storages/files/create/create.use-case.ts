@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto'
 
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import {
   left,
   right,
@@ -10,23 +11,20 @@ import {
   type StoragesFileUploadResponse,
 } from '@maiyu/shared'
 
+import { FileRefusal } from '../_shared.file-refusal.ts'
 import { FilePresenter } from '../files.presenter.ts'
 
 import { Storage } from '#domain/storage/storage.entity'
 import HTTPException from '#exceptions/http.exception'
+import { UploadParts } from '#features/storages/_shared.parts'
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import {
   MultipartContract,
   PART_SIZE,
   PRESIGNED_BATCH,
   type PresignedPart,
 } from '#services/multipart/multipart.contract'
-import {
-  countParts,
-  pendingParts,
-  sizedParts,
-} from '#features/storages/_shared.parts'
+import { StorageContract } from '#services/storage/storage.contract'
 import type { StoragesFileCreatePayload } from '#validators/storages/files.validator'
 
 type Payload = StoragesFileCreatePayload
@@ -63,7 +61,7 @@ export default class StoragesFileCreateUseCase {
 
   async execute(payload: Payload): Promise<Response> {
     const key = this.bucket.key(payload.mimetype)
-    const totalParts = countParts(payload.size, PART_SIZE)
+    const totalParts = UploadParts.count(payload.size, PART_SIZE)
 
     let uploadId: string | null = null
     let parts: Array<PresignedPart> = []
@@ -87,15 +85,19 @@ export default class StoragesFileCreateUseCase {
         parts = await this.multipart.signParts(
           key,
           uploadId,
-          sizedParts(
-            pendingParts({ totalParts, uploaded: [], batch: PRESIGNED_BATCH }),
+          UploadParts.sized(
+            UploadParts.pending({
+              totalParts,
+              uploaded: [],
+              batch: PRESIGNED_BATCH,
+            }),
             payload.size,
             PART_SIZE,
           ),
         )
       }
 
-      const storage = Storage.open({
+      const opened = Storage.open({
         id: randomUUID(),
         key,
         originalName: payload.fileName,
@@ -105,6 +107,16 @@ export default class StoragesFileCreateUseCase {
         partSize: PART_SIZE,
         now: new Date(),
       })
+
+      // No row is born, so the URLs already signed point to a key nothing will
+      // ever confirm; only the open multipart would keep billing, and it goes.
+      if (opened.isLeft()) {
+        if (uploadId) await this.abortQuietly(key, uploadId)
+
+        return left(FileRefusal.http(opened.value, this.i18n))
+      }
+
+      const storage = opened.value
 
       await this.storages.save(storage)
 
@@ -119,7 +131,10 @@ export default class StoragesFileCreateUseCase {
         }),
       )
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > create][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > create][error]',
+      )
 
       // The multipart may have been opened before the row failed. Without this
       // abort it hangs in the bucket forever: orphan parts do not
@@ -143,7 +158,10 @@ export default class StoragesFileCreateUseCase {
     try {
       await this.multipart.abort(key, uploadId)
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > create][abort][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > create][abort][error]',
+      )
     }
   }
 }

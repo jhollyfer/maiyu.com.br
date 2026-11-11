@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
+import { test } from '@japa/runner'
 
 import { SessionLucidRepository } from './session.lucid.repository.ts'
 import { SessionMemoryRepository } from './session.memory.repository.ts'
@@ -65,6 +65,22 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       assert.isTrue(await sessions.revoke(userId, grant?.identifier ?? ''))
       assert.isFalse(await sessions.revoke(userId, grant?.identifier ?? ''))
       assert.isNull(await sessions.readRefresh(refreshToken))
+    })
+
+    test('consume deletes the refresh once and leaves the reuse mark', async ({
+      assert,
+    }) => {
+      const { sessions, userId } = await make()
+      const issued = await sessions.issue(userId)
+      const refreshToken = issued?.refreshToken ?? ''
+      const grant = await sessions.readRefresh(refreshToken)
+      if (!grant) throw new Error('issued refresh token not read back')
+
+      assert.isNull(await sessions.findReused(refreshToken))
+      assert.isTrue(await sessions.consume(grant))
+      assert.isFalse(await sessions.consume(grant))
+      assert.isNull(await sessions.readRefresh(refreshToken))
+      assert.equal(await sessions.findReused(refreshToken), userId)
     })
 
     test("revokeAll drops all the account's sessions and only its own", async ({

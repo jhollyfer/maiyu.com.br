@@ -1,6 +1,7 @@
-import { ACTIVE_STATUS, USER_ROLE } from '@maiyu/shared'
 import logger from '@adonisjs/core/services/logger'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
+
+import { ACTIVE_STATUS, USER_ROLE } from '@maiyu/shared'
 
 import User from '#models/user'
 import env from '#start/env'

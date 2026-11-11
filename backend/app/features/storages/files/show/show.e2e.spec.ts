@@ -1,12 +1,13 @@
 import { test } from '@japa/runner'
+
 import { UPLOAD_STATUS } from '@maiyu/shared'
 
-import { storageRow } from '#tests/storages-fixtures'
 import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { storageRow } from '#tests/storages-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the
@@ -74,7 +75,7 @@ test.group('storages > detalhe', (group) => {
     const response = await client.get('/storages/nao-e-uuid').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'id')
+    assert.property(body(response).errors, 'params.id')
   })
 })
 

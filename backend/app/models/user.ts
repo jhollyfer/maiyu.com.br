@@ -1,18 +1,19 @@
 import {
-  TRASHED_MODE,
-  type ActiveStatus,
-  type TrashedMode,
-  type UserRole,
-} from '@maiyu/shared'
-import {
   type AccessToken,
   DbAccessTokensProvider,
 } from '@adonisjs/auth/access_tokens'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { compose } from '@adonisjs/core/helpers'
-import hash from '@adonisjs/core/services/hash'
 import { column, scope } from '@adonisjs/lucid/orm'
 
+import {
+  TRASHED_MODE,
+  type ActiveStatus,
+  type TrashedMode,
+  type UserRole,
+} from '@maiyu/shared'
+
+import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import { UserSchema } from '#database/schema'
 
 /**
@@ -25,9 +26,10 @@ export const ACCESS_TOKEN_TABLE = 'auth_access_tokens'
 /**
  * Hashing before save and `verifyCredentials` (lookup by uid, hash checked in constant
  * time) come together from the mixin: split, they leave a creation path that saves the
- * plain-text password.
+ * plain-text password. The mixin takes one hasher, so it gets the one that still reads the
+ * legacy scrypt hashes (DECISIONS.md #370).
  */
-const AuthFinder = withAuthFinder(() => hash.use('argon'), {
+const AuthFinder = withAuthFinder(() => LegacyAwareHashDriver.hasher(), {
   uids: ['email'],
   passwordColumnName: 'password',
 })

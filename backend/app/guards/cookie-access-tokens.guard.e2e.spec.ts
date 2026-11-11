@@ -1,12 +1,11 @@
 import { test } from '@japa/runner'
 
-import { COOKIE_TOKEN } from '#config/session-token'
+import { SESSION_TOKEN } from '#config/session-token'
 import {
-  ADMINISTRATOR,
   authenticateAsAdministrator,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
-import { findUserByEmail } from '#tests/users-fixtures'
 
 /**
  * The guard checks the token `name`, not just the signature.
@@ -38,7 +37,7 @@ test.group('guards > cookie-access-tokens', (group) => {
     const session = await authenticateAsAdministrator(client)
 
     const response = await client.get('/account').cookies({
-      [COOKIE_TOKEN.ACCESS]: session[COOKIE_TOKEN.REFRESH],
+      [SESSION_TOKEN.ACCESS]: session[SESSION_TOKEN.REFRESH],
     })
 
     response.assertStatus(401)
@@ -46,7 +45,7 @@ test.group('guards > cookie-access-tokens', (group) => {
 
   test('a token that does not exist answers 401', async ({ client }) => {
     const response = await client.get('/account').cookies({
-      [COOKIE_TOKEN.ACCESS]: 'oat_abc.def',
+      [SESSION_TOKEN.ACCESS]: 'oat_abc.def',
     })
 
     response.assertStatus(401)
@@ -55,8 +54,7 @@ test.group('guards > cookie-access-tokens', (group) => {
   test('a deactivated account loses access on the next request', async ({
     client,
   }) => {
-    const session = await authenticateAsAdministrator(client)
-    const user = await findUserByEmail(ADMINISTRATOR.email)
+    const { user, session } = await signInWithFactory(client, 'administrator')
     user.status = 'INACTIVE'
     await user.save()
 

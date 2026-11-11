@@ -348,6 +348,30 @@ export class VineSchema {
     return parameters
   }
 
+  /**
+   * Splits the `params` block out of the schema of an action.
+   *
+   * The route parameter lives in the `params` key of the same validator that reads the
+   * body (`DECISIONS.md` #375), and `validateUsing` fills it from the route. Published
+   * as it is, `params` would become a body field nobody sends: here it leaves the
+   * schema and becomes the path parameters. `rest` is the schema without it, and comes
+   * out `undefined` when nothing is left.
+   */
+  static splitParams(schema: SchemaObject): {
+    params?: SchemaObject
+    rest?: SchemaObject
+  } {
+    const { params, ...properties } = schema.properties ?? {}
+
+    if (!VineSchema.isSchemaObject(params)) return { rest: schema }
+
+    if (Object.keys(properties).length === 0) return { params }
+
+    const required = (schema.required ?? []).filter((name) => name !== 'params')
+
+    return { params, rest: { ...schema, properties, required } }
+  }
+
   // ---------------------------------------------------------------------------
   // Pagination
   // ---------------------------------------------------------------------------

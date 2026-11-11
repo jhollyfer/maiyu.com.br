@@ -1,13 +1,13 @@
-import type { z } from '@maiyu/shared'
 import type { JSONSchema7 } from 'json-schema'
+
+import type { z } from '@maiyu/shared'
 
 /**
  * Vocabulary of the documentation generator.
  *
- * It was born before the generator because `defineDocs` is consumed
- * by every controller and by `#core/response` since the first feature -
- * declaring the contract only when the generator existed would force going back to every
- * controller to add it.
+ * It was born before the generator because every controller calls
+ * `OpenApiDocs.defineDocs` since the first feature: declaring the contract only
+ * when the generator existed would force going back to every controller to add it.
  *
  * The central type is `OperationDocs`: what each controller declares about its
  * own operation. Only what the code does not tell by itself goes in here - route,
@@ -104,11 +104,18 @@ export type OperationDocs = {
 }
 
 /**
- * Typed identity. It exists to give inference and autocomplete in the declaration
- * inside the controller, at no runtime cost.
+ * Home of the documentation helper (_standards/typescript.md §6: no loose
+ * function). A class and not a static on `OperationDocs`, because that name is
+ * already the type.
  */
-export function defineDocs(docs: OperationDocs): OperationDocs {
-  return docs
+export class OpenApiDocs {
+  /**
+   * Typed identity. It exists to give inference and autocomplete in the declaration
+   * inside the controller, at no runtime cost.
+   */
+  static defineDocs(docs: OperationDocs): OperationDocs {
+    return docs
+  }
 }
 
 /** A controller as the generator sees it: it may or may not have declared its documentation. */
@@ -129,7 +136,7 @@ export type OpenAPIOperation = {
   security?: Array<Record<string, string[]>>
   /** The roles the middleware chain requires. Read by `authz:check`. */
   'x-roles'?: string[]
-  parameters?: OpenAPIParameter[]
+  parameters?: Array<OpenAPIParameter | OpenAPIParameterRef>
   requestBody?: {
     required: boolean
     content: Record<string, { schema: SchemaObject }>
@@ -139,10 +146,15 @@ export type OpenAPIOperation = {
 
 export type OpenAPIParameter = {
   name: string
-  in: 'path' | 'query'
+  in: 'path' | 'query' | 'header'
   required: boolean
   description?: string
   schema: SchemaObject
+}
+
+/** A parameter declared once in `components.parameters` and pointed to by each operation. */
+export type OpenAPIParameterRef = {
+  $ref: string
 }
 
 export type OpenAPIResponse = {
@@ -158,6 +170,7 @@ export type OpenAPIDocument = {
   paths: Record<string, Record<string, OpenAPIOperation>>
   components: {
     securitySchemes: Record<string, Record<string, string>>
+    parameters: Record<string, OpenAPIParameter>
     schemas: Record<string, SchemaObject>
   }
 }

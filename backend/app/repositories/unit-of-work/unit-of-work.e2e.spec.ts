@@ -1,9 +1,10 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
+import { test } from '@japa/runner'
+
 import { left, right } from '@maiyu/shared'
 
-import { UnitOfWorkLucid } from './unit-of-work.lucid.ts'
+import { LucidUnitOfWork } from './unit-of-work.lucid.ts'
 
 import { TransactionContext } from '#core/transaction-context'
 import { resetDatabase } from '#tests/http-fixtures'
@@ -22,11 +23,11 @@ async function insertSport(
   })
 }
 
-test.group('UnitOfWorkLucid', (group) => {
+test.group('LucidUnitOfWork', (group) => {
   group.each.setup(() => resetDatabase())
 
   test('right commits the write', async ({ assert }) => {
-    const unit = await app.container.make(UnitOfWorkLucid)
+    const unit = await app.container.make(LucidUnitOfWork)
     const context = await app.container.make(TransactionContext)
 
     const result = await unit.run(async () => {
@@ -39,7 +40,7 @@ test.group('UnitOfWorkLucid', (group) => {
   })
 
   test('left undoes the write without throw', async ({ assert }) => {
-    const unit = await app.container.make(UnitOfWorkLucid)
+    const unit = await app.container.make(LucidUnitOfWork)
     const context = await app.container.make(TransactionContext)
 
     const result = await unit.run(async () => {
@@ -52,7 +53,7 @@ test.group('UnitOfWorkLucid', (group) => {
   })
 
   test('an exception undoes the write and rises', async ({ assert }) => {
-    const unit = await app.container.make(UnitOfWorkLucid)
+    const unit = await app.container.make(LucidUnitOfWork)
     const context = await app.container.make(TransactionContext)
 
     await assert.rejects(() =>

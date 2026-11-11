@@ -1,18 +1,21 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
+import type { Logger } from '@adonisjs/core/logger'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
-import { left, right, type Either } from '@maiyu/shared'
+
+import { left, right, type Either, type Merge } from '@maiyu/shared'
 
 import { FileRefusal } from '../_shared.file-refusal.ts'
 
+import type { IdentifierPayload } from '#core/validator'
 import type { Storage } from '#domain/storage/storage.entity'
 import HTTPException from '#exceptions/http.exception'
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import { MultipartContract } from '#services/multipart/multipart.contract'
-import type { IdentifierPayload } from '#core/validator'
+import { StorageContract } from '#services/storage/storage.contract'
 
-type Payload = IdentifierPayload
+// A command has no HttpContext, so it hands in its child logger (DECISIONS.md #314).
+type Payload = Merge<IdentifierPayload, { logger?: Logger }>
 type Response = Either<HTTPException, null>
 
 /**
@@ -60,13 +63,15 @@ export default class StoragesFileDeleteUseCase {
       if (removable.isLeft())
         return left(FileRefusal.http(removable.value, this.i18n))
 
-      if (storage.isPending()) await this.cancel(storage)
-      else await this.bucket.discard(storage.snapshot().path)
+      if (storage.isPending()) return await this.cancel(storage)
 
+      await this.bucket.discard(storage.snapshot().path)
       await this.storages.delete(storage)
 
       return right(null)
     } catch (error) {
+      const logger = payload.logger ?? HttpContext.getOrFail().logger
+
       logger.error({ err: error }, '[storages/files > delete][error]')
 
       return left(
@@ -86,19 +91,46 @@ export default class StoragesFileDeleteUseCase {
    * may exist is the whole object, when the `PUT` managed to complete before the
    * cancellation; deleting it may find nothing, and finding nothing is the
    * common one.
+   *
+   * The row goes through `deletePending`, never by id alone: a `complete` that
+   * claimed it in the meantime keeps it. When the row did not go, or the bucket
+   * refused the abort because that `complete` already closed the `uploadId`, the
+   * row is reread: gone means another cancel got there first, and cancelling a
+   * cancelled upload does not fail; still there means a `complete` won.
    */
-  private async cancel(storage: Storage): Promise<void> {
+  private async cancel(storage: Storage): Promise<Response> {
     const { path, uploadId } = storage.snapshot()
 
-    if (uploadId) {
-      await this.multipart.abort(path, uploadId)
-      return
+    try {
+      if (uploadId) await this.multipart.abort(path, uploadId)
+    } catch (error) {
+      if ((await this.storages.findById(storage.id))?.isPending()) throw error
+
+      return this.settled(storage.id)
     }
 
-    try {
-      await this.bucket.discard(path)
-    } catch {
-      // Not finding the object is the common case, and it is the result that was wanted.
+    if (!uploadId) {
+      try {
+        await this.bucket.discard(path)
+      } catch {
+        // Not finding the object is the common case, and it is the result that was wanted.
+      }
     }
+
+    if (await this.storages.deletePending(storage.id)) return right(null)
+
+    return this.settled(storage.id)
+  }
+
+  /** The answer once a concurrent call decided the row: gone is done, confirmed is `409`. */
+  private async settled(id: string): Promise<Response> {
+    if (!(await this.storages.findById(id))) return right(null)
+
+    return left(
+      HTTPException.Conflict(
+        this.i18n.t('files.already_uploaded'),
+        'STORAGE_ALREADY_UPLOADED',
+      ),
+    )
   }
 }

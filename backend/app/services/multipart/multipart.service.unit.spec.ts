@@ -1,5 +1,5 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
+import { test } from '@japa/runner'
 
 import { MultipartContract } from '#services/multipart/multipart.contract'
 

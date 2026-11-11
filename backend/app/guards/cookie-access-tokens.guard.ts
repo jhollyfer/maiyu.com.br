@@ -1,13 +1,14 @@
-import app from '@adonisjs/core/services/app'
-import { Secret } from '@adonisjs/core/helpers'
 import { errors, symbols } from '@adonisjs/auth'
-import type { HttpContext } from '@adonisjs/core/http'
 import type { AccessToken } from '@adonisjs/auth/access_tokens'
 import type { AuthClientResponse, GuardContract } from '@adonisjs/auth/types'
+import { Secret } from '@adonisjs/core/helpers'
+import type { HttpContext } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+
 import { ACTIVE_STATUS } from '@maiyu/shared'
 
+import { SESSION_TOKEN } from '#config/session-token'
 import User from '#models/user'
-import { COOKIE_TOKEN } from '#config/session-token'
 import { SessionRepository } from '#repositories/session/session.repository'
 
 /**
@@ -28,7 +29,7 @@ type GuardUser = User & { currentAccessToken: AccessToken }
  * the same token by header would reopen the path `httpOnly` closes.
  */
 export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
-  readonly driverName = COOKIE_TOKEN.DRIVER_NAME
+  readonly driverName = SESSION_TOKEN.DRIVER_NAME
   authenticationAttempted = false
   isAuthenticated = false
   user?: GuardUser;
@@ -44,7 +45,7 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
   }
 
   #getCookieToken(): string {
-    const token = this.context.request.cookie(COOKIE_TOKEN.ACCESS)
+    const token = this.context.request.cookie(SESSION_TOKEN.ACCESS)
 
     if (!token) throw this.#authenticationFailed()
 
@@ -69,7 +70,7 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
     // The refresh token comes out of the same provider and is valid by the same
     // verification: without checking the `name`, presenting it as an access token
     // would give a session with the refresh's lifetime.
-    if (!accessToken || accessToken.name !== COOKIE_TOKEN.ACCESS)
+    if (!accessToken || accessToken.name !== SESSION_TOKEN.ACCESS)
       throw this.#authenticationFailed()
 
     // The filter was only on sign-in, and the token lives a day: archiving or
@@ -117,8 +118,8 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
 
     return {
       cookies: {
-        [COOKIE_TOKEN.ACCESS]: tokens.accessToken,
-        [COOKIE_TOKEN.REFRESH]: tokens.refreshToken,
+        [SESSION_TOKEN.ACCESS]: tokens.accessToken,
+        [SESSION_TOKEN.REFRESH]: tokens.refreshToken,
       },
     }
   }

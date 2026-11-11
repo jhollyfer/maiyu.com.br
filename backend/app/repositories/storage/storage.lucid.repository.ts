@@ -1,36 +1,20 @@
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
+
 import { UPLOAD_STATUS } from '@maiyu/shared'
 import type { Paginated } from '@maiyu/shared'
 
+import { STORAGE_REFERENCES } from './storage.references.ts'
 import {
   StorageRepository,
   type StorageFileRead,
   type StorageListCriteria,
 } from './storage.repository.ts'
 
-import StorageModel from '#models/storage'
-import { Storage } from '#domain/storage/storage.entity'
 import { TransactionContext } from '#core/transaction-context'
-
-/**
- * Every column that points to `storages`, with the label the error message
- * shows when the file is in use.
- *
- * A single list of objects, not lists matched by index: with two, an
- * insertion in the middle of one of them shifts the label of all the following ones. Every
- * reference to `storages` is `SET NULL` or `CASCADE`, so the database would prevent
- * nothing: a column missing here is a file in use that vanishes without warning.
- */
-const REFERENCES = [
-  { table: 'users', column: 'avatar_id', label: 'avatar de usuário' },
-  { table: 'photos', column: 'storage_id', label: 'foto da galeria' },
-  {
-    table: 'site_settings',
-    column: 'regulation_id',
-    label: 'regulamento do site',
-  },
-] as const
+import { Storage } from '#domain/storage/storage.entity'
+import StorageModel from '#models/storage'
+import LucidMapping from '#repositories/shared/lucid-mapping'
 
 @inject()
 export class StorageLucidRepository extends StorageRepository {
@@ -83,7 +67,7 @@ export class StorageLucidRepository extends StorageRepository {
   async usedBy(id: string): Promise<string[]> {
     const client = this.transaction.client()
     const counts = await Promise.all(
-      REFERENCES.map(async (reference) => {
+      STORAGE_REFERENCES.map(async (reference) => {
         const rows = await client
           .from(reference.table)
           .where(reference.column, id)
@@ -97,26 +81,118 @@ export class StorageLucidRepository extends StorageRepository {
     return counts.filter((count) => count.total > 0).map((count) => count.label)
   }
 
+  /**
+   * Find, then insert or update: never `updateOrCreate` (`_standards/domain.md`
+   * §5.2, `DECISIONS.md` #332). The existing row is written by the query builder
+   * and not by `merge().save()`: both of those run the auto-timestamp, and
+   * `autoUpdate` on `updatedAt` would overwrite the instant the entity stamped,
+   * which is the age `findOrphans` reads. The query builder `update` skips hooks
+   * and auto-timestamps (_doc-lib/lucid.md#crud-operations,
+   * https://lucid.adonisjs.com/docs/crud-operations, "Updating in bulk with the
+   * query builder"); `create` keeps a value already set.
+   */
   async save(storage: Storage): Promise<void> {
+    const client = this.transaction.client()
     const { id, createdAt, updatedAt, deletedAt, ...columns } =
       storage.snapshot()
+    const existing = await StorageModel.find(id, { client })
 
-    await StorageModel.updateOrCreate(
-      { id },
-      {
-        ...columns,
-        createdAt: this.dateOrNull(createdAt),
-        updatedAt: this.dateOrNull(updatedAt),
-        deletedAt: this.dateOrNull(deletedAt),
-      },
-      { client: this.transaction.client() },
-    )
+    if (!existing) {
+      await StorageModel.create(
+        {
+          id,
+          ...columns,
+          // `open` always stamps the birth; `undefined` lets the column default it.
+          createdAt: this.dateOrNull(createdAt) ?? undefined,
+          updatedAt: this.dateOrNull(updatedAt),
+          deletedAt: this.dateOrNull(deletedAt),
+        },
+        { client },
+      )
+      return
+    }
+
+    await StorageModel.query({ client })
+      .where('id', id)
+      .update({ ...columns, updatedAt, deletedAt })
   }
 
   async delete(storage: Storage): Promise<void> {
     await StorageModel.query({ client: this.transaction.client() })
       .where('id', storage.id)
       .delete()
+  }
+
+  /**
+   * The status filter in the same `UPDATE` is the claim: Postgres takes the row
+   * lock to write it, so the second writer re-evaluates the `WHERE` after the
+   * first commits and matches nothing. `returning('id')` makes the result the
+   * claimed rows instead of a driver-specific count
+   * (_doc-lib/lucid.md#update-and-delete-queries,
+   * https://lucid.adonisjs.com/docs/update-and-delete-queries).
+   */
+  async claimCompletion(storage: Storage): Promise<Storage | null> {
+    const { id, status, uploadId, updatedAt } = storage.snapshot()
+    const claimed: ReadonlyArray<unknown> = await StorageModel.query({
+      client: this.transaction.client(),
+    })
+      .where('id', id)
+      .where('status', UPLOAD_STATUS.PENDING)
+      .update({ status, uploadId, updatedAt })
+      .returning('id')
+
+    if (claimed.length === 0) return null
+
+    return storage
+  }
+
+  /** The same row lock as `claimCompletion`: whichever writes first wins, and the other matches nothing. */
+  async deletePending(id: string): Promise<boolean> {
+    const deleted: ReadonlyArray<unknown> = await StorageModel.query({
+      client: this.transaction.client(),
+    })
+      .where('id', id)
+      .where('status', UPLOAD_STATUS.PENDING)
+      .delete()
+      .returning('id')
+
+    return deleted.length > 0
+  }
+
+  async findAbandoned(before: Date): Promise<Storage[]> {
+    const rows = await StorageModel.query({ client: this.transaction.client() })
+      .where('status', UPLOAD_STATUS.PENDING)
+      .where('createdAt', '<', before)
+      .withScopes((scopes) => scopes.notDeleted())
+      .orderBy('createdAt', 'asc')
+
+    return rows.map((row) => this.toEntity(row))
+  }
+
+  /**
+   * One `NOT IN` per entry of `STORAGE_REFERENCES`: a column added there is
+   * covered here too, by the same list that guards the deletion.
+   */
+  async findOrphans(before: Date): Promise<Storage[]> {
+    const client = this.transaction.client()
+    const query = StorageModel.query({ client })
+      .where('status', UPLOAD_STATUS.UPLOADED)
+      .where('updatedAt', '<', before)
+      .withScopes((scopes) => scopes.notDeleted())
+
+    for (const reference of STORAGE_REFERENCES) {
+      query.whereNotIn(
+        'id',
+        client
+          .from(reference.table)
+          .select(reference.column)
+          .whereNotNull(reference.column),
+      )
+    }
+
+    const rows = await query.orderBy('updatedAt', 'asc')
+
+    return rows.map((row) => this.toEntity(row))
   }
 
   async paginate(
@@ -132,7 +208,7 @@ export class StorageLucidRepository extends StorageRepository {
     // The `OR` goes inside a subquery: chained directly it would escape the
     // previous `AND`, and the search would cancel the status filter.
     if (criteria.search) {
-      const search = `%${criteria.search}%`
+      const search = LucidMapping.contains(criteria.search)
 
       query.where((builder) => {
         builder
@@ -142,14 +218,7 @@ export class StorageLucidRepository extends StorageRepository {
       })
     }
 
-    const page = await query
-      .orderBy(criteria.sort, criteria.direction)
-      .paginate(criteria.page, criteria.perPage)
-
-    return {
-      meta: page.getMeta(),
-      data: page.all().map((row) => this.toResponse(row)),
-    }
+    return LucidMapping.page(query, criteria, (row) => this.toResponse(row))
   }
 
   private toEntity(row: StorageModel): Storage {

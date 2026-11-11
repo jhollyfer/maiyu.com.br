@@ -7,14 +7,21 @@ const shieldConfig = defineConfig({
    */
   csp: {
     /**
-     * Enable the Content-Security-Policy header.
+     * The API only answers JSON: nothing loads and nothing frames it. The closed
+     * policy is the net for the day a response is read as HTML (`DECISIONS.md`
+     * #353). The documentation page, the only one that builds HTML, carries its
+     * own policy (`DOCUMENTATION_CSP` in `app/core/openapi/scalar.ts`)
+     * (_doc-lib/adonisjs.md#guides/security/securing-ssr-applications,
+     * https://docs.adonisjs.com/guides/security/securing-ssr-applications).
      */
-    enabled: false,
+    enabled: true,
 
-    /**
-     * Per-resource CSP directives.
-     */
-    directives: {},
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+      formAction: ["'none'"],
+    },
 
     /**
      * Report violations without blocking resources.

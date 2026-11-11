@@ -3,22 +3,48 @@ import { join } from 'node:path'
 
 import { test } from '@japa/runner'
 
-/**
- * The "read-only storefront" net (_standards/backend.md §7): an anonymous route that is not
- * `GET` only exists if it is in the list declared below, and nothing under `/storefront`
- * writes. It reads the authorization baseline, which is what `authz:check` already enforces
- * against `openapi.json`.
- */
-const BASELINE: Record<string, string> = JSON.parse(
-  readFileSync(join(import.meta.dirname, 'authz-baseline.json'), 'utf-8'),
-)
-const ANONYMOUS = 'anonymous'
+import {
+  PROJECT_ANONYMOUS_WRITES,
+  READ_ONLY_PUBLIC_PREFIXES,
+} from '#core/openapi/public-routes'
+import { AuthzCheck } from '#scripts/authz-check'
 
-/** The anonymous writes that exist by design: signing in and renewing the session through the refresh cookie. */
-const DECLARED_ANONYMOUS_WRITES = [
+/**
+ * The public surface net (_standards/backend.md §4.10): an anonymous route that is not `GET`
+ * only exists if it is declared, and nothing under a read-only public prefix writes. It reads
+ * the authorization baseline, which is what `authz:check` already enforces against
+ * `openapi.json`, with the same protection label it writes.
+ */
+const BASELINE = readBaseline()
+
+/** The kit's anonymous writes: signing in and renewing the session through the refresh cookie. */
+const KIT_ANONYMOUS_WRITES = [
   'POST /authentication/refresh',
   'POST /authentication/sign-in',
 ] as const
+
+const DECLARED_ANONYMOUS_WRITES = [
+  ...KIT_ANONYMOUS_WRITES,
+  ...PROJECT_ANONYMOUS_WRITES,
+].sort()
+
+/** `route -> protection`, as `authz:check` writes it; anything else fails here, not in a test. */
+function readBaseline(): Record<string, string> {
+  const read: unknown = JSON.parse(
+    readFileSync(join(import.meta.dirname, 'authz-baseline.json'), 'utf-8'),
+  )
+  if (typeof read !== 'object' || read === null)
+    throw new Error('authz-baseline.json is not an object')
+
+  const baseline: Record<string, string> = {}
+  for (const [route, protection] of Object.entries(read)) {
+    if (typeof protection !== 'string')
+      throw new Error(`authz-baseline.json: ${route} has no protection`)
+    baseline[route] = protection
+  }
+
+  return baseline
+}
 
 function routesWhere(
   predicate: (route: string, protection: string) => boolean,
@@ -35,26 +61,30 @@ test.group('public routes (unit)', () => {
   }) => {
     const writes = routesWhere(
       (route, protection) =>
-        protection === ANONYMOUS && !route.startsWith('GET '),
+        protection === AuthzCheck.ANONYMOUS && !route.startsWith('GET '),
     )
 
-    assert.deepEqual(writes, [...DECLARED_ANONYMOUS_WRITES])
+    assert.deepEqual(writes, DECLARED_ANONYMOUS_WRITES)
   })
 
-  test('nothing under /storefront writes', ({ assert }) => {
-    const writes = routesWhere(
-      (route) => route.includes(' /storefront') && !route.startsWith('GET '),
-    )
+  for (const prefix of READ_ONLY_PUBLIC_PREFIXES) {
+    test(`nothing under ${prefix} writes`, ({ assert }) => {
+      const writes = routesWhere(
+        (route) => route.includes(` ${prefix}`) && !route.startsWith('GET '),
+      )
 
-    assert.deepEqual(writes, [])
-  })
+      assert.deepEqual(writes, [])
+    })
 
-  test('the scan sees the storefront: without a target, the guard would not guard', ({
-    assert,
-  }) => {
-    const storefront = routesWhere((route) => route.includes(' /storefront'))
+    test(`the scan sees ${prefix}: without a target, the guard would not guard`, ({
+      assert,
+    }) => {
+      const routes = routesWhere((route) => route.includes(` ${prefix}`))
 
-    assert.isAbove(storefront.length, 0)
-    assert.isTrue(storefront.every((route) => BASELINE[route] === ANONYMOUS))
-  })
+      assert.isAbove(routes.length, 0)
+      assert.isTrue(
+        routes.every((route) => BASELINE[route] === AuthzCheck.ANONYMOUS),
+      )
+    })
+  }
 })

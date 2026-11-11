@@ -24,18 +24,14 @@ R0.2 (JSON-LD com `<` escapado) e o R0.4 (`.gitignore` da raiz pela régua, `.gi
 modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) está pronto na branch
 `fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
 
-Frente do backend (R1.2 e RB.1 a RB.4), na branch `feat/backend-inicial`. O R1.2 está montado: o
-workspace lista `backend`, `frontend` e `shared` pelo modelo (`failIfNoMatch`, `allowBuilds` mantido),
-o `shared/` nasceu como `@maiyu/shared` com o kit de `_templates/code/shared`, Zod e Tiptap, o
-frontend virou `@maiyu/frontend` e o pnpm subiu para a 12. O sync gravou o kit do backend em
-`backend/` (`@maiyu/backend`), com `.env.test`, `.prettierignore`, `docker-compose.yml` nas portas
-5440, 9016 e 9017 e o `.env.example` com os valores do projeto. Os dois pacotes esperam a próxima
-leva do kit: o `check` do `shared/` reprova em três testes do próprio kit, e o backend não compila
-porque o kit importa peças que não traz (lacunas 1 a 16, com a regente geral). Por ordem da regente,
-nenhuma lacuna se escreve no projeto. O `argon2` entrou pelo kit (lacuna 17 resolvida no upstream) e
-está liberado no `allowBuilds`. O RB.3 fica no que o kit traz (seeder do dono e as três rotas de
-sessão); rota de conta é domínio e vai para a R2.10. O MinIO local da sessão é ambiente declarado: e2e
-de storage rodada contra ele não conta como prova de PR até a régua escolher o substituto.
+Frente do backend (R1.2 e RB.1 a RB.4), na branch `feat/backend-inicial`, com a leva 6 do kit
+(`maiyu-pattern` em ae62029) e a `main` mergeada. O `shared/` está verde (lint, typecheck, build e 55
+testes) e o R1.2 está em revisão. O backend recebeu a leva 6, com os pontos de extensão alinhados ao
+esqueleto novo, mas ainda não compila: faltam no kit `database/factories/user.factory.ts`,
+`scripts/pattern-check.config.ts` e a migration de `storages`, e o Ace não sobe sem o
+`database/schema.ts`, que só a migration gera. Levado à regente; nenhuma lacuna se escreve no projeto.
+O RB.3 fica no que o kit traz (seeder do dono e as três rotas de sessão). O MinIO local é ambiente
+declarado: e2e de storage contra ele não conta como prova de PR.
 
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).

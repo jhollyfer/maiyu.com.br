@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import { left, right, type Actor, type Either } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
@@ -41,7 +42,7 @@ export default class AuthenticationSessionSignOutUseCase {
 
       return right(null)
     } catch (error) {
-      logger.error(
+      HttpContext.getOrFail().logger.error(
         { err: error },
         '[authentication/sessions > sign-out][error]',
       )

@@ -4,7 +4,6 @@ import type {
   InferAuthEvents,
   Authenticators,
 } from '@adonisjs/auth/types'
-import type { Actor } from '@maiyu/shared'
 
 import { cookieAccessTokensGuard } from '#guards/cookie-access-tokens.guard'
 
@@ -37,16 +36,4 @@ declare module '@adonisjs/auth/types' {
 }
 declare module '@adonisjs/core/types' {
   interface EventsList extends InferAuthEvents<Authenticators> {}
-}
-
-/**
- * Who acts in the request, set by `auth.middleware.ts` after validating the
- * account against the `ActorSchema` (_standards/backend.md §4.3). Declared here, in a
- * type-and-config-only file, for the same reason as `ctx.i18n`
- * (`config/i18n.ts`).
- */
-declare module '@adonisjs/core/http' {
-  export interface HttpContext {
-    actor: Actor
-  }
 }

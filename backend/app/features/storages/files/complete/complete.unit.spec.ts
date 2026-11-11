@@ -3,13 +3,14 @@ import { test } from '@japa/runner'
 import StoragesFileCompleteUseCase from './complete.use-case.ts'
 
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import { MultipartContract } from '#services/multipart/multipart.contract'
+import { StorageContract } from '#services/storage/storage.contract'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import {
   FILE_ID,
   pendingFile,
-  rightOf,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
@@ -25,7 +26,9 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-test.group('storages/files > complete (unit)', () => {
+test.group('storages/files > complete (unit)', (group) => {
+  insideHttpContext(group)
+
   test('checks the size in the bucket and becomes UPLOADED', async ({
     assert,
   }) => {
@@ -36,6 +39,27 @@ test.group('storages/files > complete (unit)', () => {
     const result = await useCase.execute({ id: FILE_ID })
 
     assert.deepInclude(rightOf(result), { status: 'UPLOADED', uploadId: null })
+  })
+
+  test('a concurrent complete that marked first is the answer: no second write', async ({
+    assert,
+  }) => {
+    const { storages, bucket, useCase } = await setup()
+    await storages.save(pendingFile())
+    bucket.put('capa.png', { contentLength: 1024 })
+    let saved = 0
+    storages.claimCompletion = async () => {
+      // The other call won between the read and the claim.
+      await storages.save(uploadedFile())
+      saved += 1
+
+      return null
+    }
+
+    const result = await useCase.execute({ id: FILE_ID })
+
+    assert.deepInclude(rightOf(result), { status: 'UPLOADED', id: FILE_ID })
+    assert.equal(saved, 1)
   })
 
   test('multipart asks the bucket to reassemble the parts', async ({

@@ -1,5 +1,6 @@
-import { test } from '@japa/runner'
 import type { ApiClient } from '@japa/api-client'
+import { test } from '@japa/runner'
+
 import type { StorageMimetype } from '@maiyu/shared'
 
 import { PART_SIZE } from '#services/multipart/multipart.contract'
@@ -192,6 +193,6 @@ test.group('storages > parts > acesso e identificador', (group) => {
     const response = await client.get('/storages/x/parts').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'id')
+    assert.property(body(response).errors, 'params.id')
   })
 })

@@ -1,12 +1,13 @@
 import { readdir } from 'node:fs/promises'
 
-import { LOCALE, LOCALES } from '@maiyu/shared'
-import type { Locale } from '@maiyu/shared'
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
+import { KIT_FIELD_LABELS, LOCALE, LOCALES } from '@maiyu/shared'
+import type { Locale } from '@maiyu/shared'
+
 import * as core from '#core/validator'
-import { readLang } from '#tests/lang-fixtures'
+import { readValidatorLang } from '#tests/lang-fixtures'
 
 /**
  * The static audits of the validators, all through `toJSONSchema()`.
@@ -121,7 +122,7 @@ function strings(schema: unknown, prefix = ''): Array<[string, unknown]> {
  */
 test.group('validator > text ceilings', () => {
   test('when a validator has a text field, has a size limit', ({ assert }) => {
-    // `format` and `pattern` cover whoever already limits by another path - `email()`,
+    // `format` and `pattern` cover whoever already limits by another path - `Rule.email()`,
     // `uuid()` -, and `enum` is not free text.
     const unbounded = validators
       .flatMap((each) => strings(each.toJSONSchema()))
@@ -163,24 +164,15 @@ function walk(schema: unknown, prefix = ''): Array<string> {
 const fields = new Set(validators.flatMap((each) => walk(each.toJSONSchema())))
 
 /**
- * Legitimate label that will never appear in `toJSONSchema()`.
- *
- * `passwordConfirmation` is not a declared field: it is born from
- * `.confirmed({ as: 'passwordConfirmation' })` in `password()`, which is a
- * rule. The error is reported under that name, so the label must exist - but the
- * schema does not know the key, and without this list the orphan test would flag it.
- */
-const MISSING_FROM_SCHEMA = ['passwordConfirmation']
-
-/**
- * The entries of `resources/lang/<locale>/validator.json` under a prefix, without
- * it: `shared.fields.name` becomes `name`.
+ * The entries of `resources/lang/<locale>/validator.json` and of the project's
+ * `validator/shared/fields.json` under a prefix, without it: `shared.fields.name`
+ * becomes `name`.
  */
 async function entriesOf(
   locale: Locale,
   prefix: 'shared.fields.' | 'shared.messages.',
 ): Promise<Map<string, string>> {
-  const entries = await readLang(locale, 'validator')
+  const entries = await readValidatorLang(locale)
 
   return new Map(
     [...entries]
@@ -219,7 +211,9 @@ test.group('validator > labels', () => {
     assert,
   }) => {
     // The opposite of the test above: a label for a field that already left the validator does not
-    // warn that it is dead, and keeps being copied to the next resource.
+    // warn that it is dead, and keeps being copied to the next resource. The kit's labels
+    // are left out: they come from the sync, the project cannot delete them, and a
+    // project that has not built the user screens yet would be red for nothing.
     const leaves = new Set(
       [...fields].map((path) => path.slice(path.lastIndexOf('.') + 1)),
     )
@@ -227,7 +221,9 @@ test.group('validator > labels', () => {
     for (const locale of LOCALES) {
       const labels = await entriesOf(locale, 'shared.fields.')
       const orphans = [...labels.keys()].filter((key) => {
-        if (MISSING_FROM_SCHEMA.includes(key)) return false
+        // Also covers `passwordConfirmation`, which `toJSONSchema()` never shows: it is
+        // born from `.confirmed({ as: 'passwordConfirmation' })` in `Rule.password()`.
+        if (key in KIT_FIELD_LABELS[locale]) return false
 
         return !fields.has(key) && !leaves.has(key)
       })
@@ -255,7 +251,7 @@ test.group('messages > validation provider', () => {
     // `app/core/validator.ts` enters this list in the same commit.
     //
     // `regex` and `confirmed` are left out on purpose: their only uses
-    // are in `password()`, and both already have a `field.rule` key. Enforcing
+    // are in `Rule.password()`, and both already have a `field.rule` key. Enforcing
     // the generic one would be enforcing dead code.
     const required = [
       'required',
@@ -304,5 +300,61 @@ test.group('messages > validation provider', () => {
     )
 
     assert.deepEqual(suspects, [])
+  })
+})
+
+/**
+ * The update and listing blocks of `Rule` (`backend.md` §4.4). VineJS's `.optional()` takes
+ * `null` as missing, and the bodyparser turns `''` into `null` before it: without
+ * `Rule.notNull()` an update with `{ name: null }` passes and erases a required column.
+ */
+test.group('validator > Rule', () => {
+  const fields = () => ({
+    name: core.vine.string().trim().maxLength(160),
+    avatarId: core.vine.string().uuid().nullable(),
+  })
+  const UpdateValidator = core.vine.create(core.Rule.partial(fields()))
+
+  test('when the update leaves a field out, it is valid', async ({
+    assert,
+  }) => {
+    assert.deepEqual(await UpdateValidator.validate({}), {})
+  })
+
+  test('when the update sends null to a required field, it is `required`', async ({
+    assert,
+  }) => {
+    const error = await UpdateValidator.validate({ name: null }).catch(
+      (caught: unknown) => caught,
+    )
+
+    assert.instanceOf(error, core.errors.E_VALIDATION_ERROR)
+    if (!(error instanceof core.errors.E_VALIDATION_ERROR)) return
+    // `messages` is `any` in the error's type: read as `unknown`, compared by shape.
+    const messages: unknown = error.messages
+    assert.containSubset(messages, [{ field: 'name', rule: 'required' }])
+    assert.isTrue(Array.isArray(messages) && messages.length === 1)
+  })
+
+  test('when the field was declared `.nullable()`, null still erases it', async ({
+    assert,
+  }) => {
+    assert.deepEqual(await UpdateValidator.validate({ avatarId: null }), {
+      avatarId: null,
+    })
+  })
+
+  test('when a listing has no search, it does not accept `search`', ({
+    assert,
+  }) => {
+    assert.deepEqual(Object.keys(core.Rule.pageFields()).sort(), [
+      'page',
+      'perPage',
+    ])
+    assert.deepEqual(Object.keys(core.Rule.paginationFields()).sort(), [
+      'page',
+      'perPage',
+      'search',
+    ])
   })
 })

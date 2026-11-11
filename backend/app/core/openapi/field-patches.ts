@@ -4,11 +4,11 @@ import type { SchemaObject } from '#core/openapi/types'
  * Documentation fixes for the shared rules of `#core/validator`.
  *
  * They live in one place, and not inside each controller, because the divergence belongs to the
- * helper: whoever changes `password()` sees the fix next to the others, instead of
+ * helper: whoever changes `Rule.password()` sees the fix next to the others, instead of
  * finding out through a wrong document months later.
  *
  * The generator applies these fixes by **field name**, in any payload
- * where the field appears. Three validators use `password()`; declaring the repair
+ * where the field appears. Three validators use `Rule.password()`; declaring the repair
  * in three controllers would guarantee the fourth was born wrong.
  */
 
@@ -27,7 +27,7 @@ export type FieldPatch = {
 }
 
 /**
- * What `password()` validates and JSON Schema does not tell.
+ * What `Rule.password()` validates and JSON Schema does not tell.
  *
  * Two losses, both measured on the VineJS 4.4.0 output:
  *

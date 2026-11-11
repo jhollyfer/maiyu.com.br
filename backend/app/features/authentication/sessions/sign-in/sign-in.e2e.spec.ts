@@ -1,7 +1,8 @@
 import { test } from '@japa/runner'
 
-import { COOKIE_TOKEN } from '#config/session-token'
-import { ADMINISTRATOR, body, resetDatabase } from '#tests/http-fixtures'
+import { SESSION_TOKEN } from '#config/session-token'
+import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
+import { body, resetDatabase } from '#tests/http-fixtures'
 
 /**
  * The whole session through the real path: sign-in is the only way to get a
@@ -12,23 +13,30 @@ import { ADMINISTRATOR, body, resetDatabase } from '#tests/http-fixtures'
  * exists - otherwise the login form becomes a registration checker.
  */
 test.group('authentication > sign-in', (group) => {
-  group.each.setup(() => resetDatabase())
+  // The account comes from the factory, not from the seeder: the seeder's owner depends on
+  // env keys the test environment does not have to define (K37).
+  let account = { email: '', password: FACTORY_PASSWORD }
+  group.each.setup(async () => {
+    const teardown = await resetDatabase()
+    const user = await UserFactory.query().apply('administrator').create()
+    account = { email: user.email, password: FACTORY_PASSWORD }
+
+    return teardown
+  })
 
   test('correct credential responds 204 with both cookies', async ({
     client,
     assert,
   }) => {
-    const response = await client
-      .post('/authentication/sign-in')
-      .json(ADMINISTRATOR)
+    const response = await client.post('/authentication/sign-in').json(account)
 
     response.assertStatus(204)
 
     // No body: the token pair travels only in `Set-Cookie`, and the page's JavaScript
     // never reaches it.
     assert.isEmpty(response.text())
-    assert.isDefined(response.cookie(COOKIE_TOKEN.ACCESS)?.value)
-    assert.isDefined(response.cookie(COOKIE_TOKEN.REFRESH)?.value)
+    assert.isDefined(response.cookie(SESSION_TOKEN.ACCESS)?.value)
+    assert.isDefined(response.cookie(SESSION_TOKEN.REFRESH)?.value)
   })
 
   test('wrong credential responds 401 without revealing whether the email exists', async ({
@@ -37,7 +45,7 @@ test.group('authentication > sign-in', (group) => {
   }) => {
     const existing = await client
       .post('/authentication/sign-in')
-      .json({ email: ADMINISTRATOR.email, password: 'Errada1234!' })
+      .json({ email: account.email, password: 'Errada1234!' })
 
     const nonexistent = await client
       .post('/authentication/sign-in')
@@ -52,14 +60,14 @@ test.group('authentication > sign-in', (group) => {
     assert.equal(body(existing).code, 'INVALID_CREDENTIALS')
 
     // And no cookie is written on refusal.
-    assert.isUndefined(existing.cookie(COOKIE_TOKEN.ACCESS))
+    assert.isUndefined(existing.cookie(SESSION_TOKEN.ACCESS))
   })
 
   test('429 on the sixth attempt from the same IP in a minute, even with the right password', async ({
     client,
     assert,
   }) => {
-    const wrong = { email: ADMINISTRATOR.email, password: 'Errada123!' }
+    const wrong = { email: account.email, password: 'Errada123!' }
 
     for (let attempt = 1; attempt <= 5; attempt++) {
       const refused = await client.post('/authentication/sign-in').json(wrong)
@@ -69,10 +77,10 @@ test.group('authentication > sign-in', (group) => {
 
     const blocked = await client
       .post('/authentication/sign-in')
-      .json({ email: ADMINISTRATOR.email, password: ADMINISTRATOR.password })
+      .json({ email: account.email, password: account.password })
 
     blocked.assertStatus(429)
     assert.equal(body(blocked).code, 'TOO_MANY_REQUESTS')
-    assert.isUndefined(blocked.cookie(COOKIE_TOKEN.ACCESS))
+    assert.isUndefined(blocked.cookie(SESSION_TOKEN.ACCESS))
   })
 })

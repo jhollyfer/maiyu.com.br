@@ -121,6 +121,9 @@ export default defineConfig([
             { pattern: '#**', group: 'internal' },
             { pattern: '@maiyu/**', group: 'internal' },
           ],
+          // The default excludes `external` from pathGroups, so `@maiyu/shared`, classified as
+          // external, would never reach the `internal` group above.
+          pathGroupsExcludedImportTypes: ['builtin'],
           'newlines-between': 'always',
           alphabetize: { order: 'asc' },
         },
@@ -174,8 +177,14 @@ export default defineConfig([
   },
   {
     // the unit test builds the use-case with the in-memory implementation (`_standards/DECISIONS.md` #116).
-    files: ['**/*.unit.spec.ts'],
+    // Its fixture (`tests/<theme>-unit-fixtures.ts`) builds the same doubles for the spec.
+    files: ['**/*.unit.spec.ts', 'tests/*-unit-fixtures.ts'],
     rules: { 'no-restricted-syntax': 'off' },
+  },
+  {
+    // The in-memory double and the spec stub answer an async contract with no I/O to await.
+    files: ['**/*.memory.repository.ts', '**/*.unit.spec.ts'],
+    rules: { '@typescript-eslint/require-await': 'off' },
   },
   {
     // Generated files are not linted: the fix disappears on the next generation.

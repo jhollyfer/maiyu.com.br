@@ -150,6 +150,32 @@ test.group('core > memory rows > page', () => {
     assert.isNull(page.meta.previousPageUrl)
   })
 
+  test('breaks ties by id in the requested direction', ({ assert }) => {
+    const tied = [
+      { id: 'c', at: NOW },
+      { id: 'a', at: NOW },
+      { id: 'b', at: NOW },
+    ]
+    const read = {
+      sortValue: (row: (typeof tied)[number]) => row.at,
+      toItem: (row: (typeof tied)[number]) => row.id,
+    }
+
+    const asc = MemoryRows.page(
+      tied,
+      { page: 1, perPage: 10, sort: 'at', direction: SORT_DIRECTION.ASC },
+      read,
+    )
+    const desc = MemoryRows.page(
+      tied,
+      { page: 1, perPage: 10, sort: 'at', direction: SORT_DIRECTION.DESC },
+      read,
+    )
+
+    assert.deepEqual(asc.data, ['a', 'b', 'c'])
+    assert.deepEqual(desc.data, ['c', 'b', 'a'])
+  })
+
   test('slice gives the same meta as Lucid on the last page', ({ assert }) => {
     const page = MemoryRows.slice(['a', 'b', 'c'], 2, 2)
 

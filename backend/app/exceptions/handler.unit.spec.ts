@@ -1,11 +1,15 @@
-import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
 import { errors as authErrors } from '@adonisjs/auth'
-import { errors as limiterErrors } from '@adonisjs/limiter'
-import { LimiterResponse } from '@adonisjs/limiter'
+import {
+  AuthorizationResponse,
+  errors as bouncerErrors,
+} from '@adonisjs/bouncer'
 import { Exception } from '@adonisjs/core/exceptions'
-import { errors as httpErrors } from '@adonisjs/core/http'
 import { HttpContextFactory } from '@adonisjs/core/factories/http'
+import { errors as httpErrors } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+import { LimiterResponse } from '@adonisjs/limiter'
+import { errors as limiterErrors } from '@adonisjs/limiter'
+import { test } from '@japa/runner'
 
 import HttpExceptionHandler from '#exceptions/handler'
 import HTTPException from '#exceptions/http.exception'
@@ -22,11 +26,10 @@ async function run(error: unknown) {
   const context = new HttpContextFactory().create()
 
   await handler.handle(error, context)
+  // `getBody()` is typed `any`; `unknown` makes each test narrow before reading it.
+  const body: unknown = context.response.getBody()
 
-  return {
-    status: context.response.getStatus(),
-    body: context.response.getBody(),
-  }
+  return { status: context.response.getStatus(), body }
 }
 
 test.group('exceptions > handler (unit)', () => {
@@ -41,6 +44,22 @@ test.group('exceptions > handler (unit)', () => {
     assert.deepInclude(result.body, {
       status: 401,
       code: 'AUTHENTICATION_REQUIRED',
+    })
+  })
+
+  test('a policy denial answers with its code and the translated key', async ({
+    assert,
+  }) => {
+    const denial = AuthorizationResponse.deny('STORAGE_NOT_FOUND', 404).t(
+      'files.not_found',
+    )
+    const result = await run(new bouncerErrors.E_AUTHORIZATION_FAILURE(denial))
+
+    assert.equal(result.status, 404)
+    assert.deepInclude(result.body, {
+      status: 404,
+      code: 'STORAGE_NOT_FOUND',
+      message: 'Arquivo não encontrado',
     })
   })
 

@@ -1,21 +1,27 @@
-import type { z } from '@maiyu/shared'
+import { middlewareInfo } from '@adonisjs/core/http/helpers'
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
-import { middlewareInfo } from '@adonisjs/core/http/helpers'
 
+import { BASE_LOCALE, LOCALES, type z } from '@maiyu/shared'
+
+import openapi, { ACTION_OVERRIDES, type TagRule } from '#config/openapi'
+import { SESSION_TOKEN } from '#config/session-token'
 import { FIELD_PATCHES } from '#core/openapi/field-patches'
-import openapi, {
-  ACTION_OVERRIDES,
-  SECURITY_COOKIE,
-  SECURITY_SCHEME,
-  type TagRule,
-} from '#config/openapi'
-import {
-  controllerPath,
-  introspect,
-  loadResponseSchema,
-  type Introspection,
-} from '#scripts/openapi/introspect'
+import type {
+  DocumentedController,
+  DocumentedValidator,
+  OpenAPIDocument,
+  OpenAPIOperation,
+  OpenAPIParameter,
+  OpenAPIParameterRef,
+  OpenAPIResponse,
+  OperationDocs,
+  PaginatedResponse,
+  ResponseBody,
+  SchemaObject,
+} from '#core/openapi/types'
+import { VineSchema } from '#core/openapi/vine-schema'
+import { ZodSchema } from '#core/openapi/zod-schema'
 import {
   AUTOMATIC_CODES,
   errorComponentName,
@@ -23,20 +29,13 @@ import {
   errorSchema,
   forbiddenDescription,
 } from '#scripts/openapi/errors'
-import { VineSchema } from '#core/openapi/vine-schema'
-import { ZodSchema } from '#core/openapi/zod-schema'
-import type {
-  DocumentedController,
-  DocumentedValidator,
-  OpenAPIDocument,
-  OpenAPIOperation,
-  OpenAPIParameter,
-  OpenAPIResponse,
-  OperationDocs,
-  PaginatedResponse,
-  ResponseBody,
-  SchemaObject,
-} from '#core/openapi/types'
+import {
+  controllerPath,
+  documentMessage,
+  introspect,
+  loadResponseSchema,
+  type Introspection,
+} from '#scripts/openapi/introspect'
 
 /**
  * Builds the OpenAPI document from the real router.
@@ -52,6 +51,32 @@ import type {
  * use case, the presenter and the frontend, and the generator never reads the model.
  */
 
+/**
+ * Name of the security scheme every authenticated operation references.
+ *
+ * It is `apiKey` in a cookie, not `bearer`: the guard reads the token from the
+ * cookie and has no fallback to the `Authorization` header. Documenting bearer
+ * here would make the reference "Test Request" always fail.
+ */
+const SECURITY_SCHEME = 'cookieAuth'
+
+/**
+ * The cookie that carries the access token, read from the service that issues
+ * it: a name written twice would leave the document pointing at a cookie the
+ * guard no longer reads.
+ */
+const SECURITY_COOKIE = SESSION_TOKEN.ACCESS
+
+/**
+ * The server is relative, and not from `config/openapi.ts` nor the ENV: the OpenAPI spec lets
+ * the URL be relative "to the location where the OpenAPI document is being served" (3.1.0,
+ * Server Object, https://spec.openapis.org/oas/v3.1.0#server-object), and the API serves its
+ * own `/openapi.json`. An absolute URL read at generation time would bake the `.env` of whoever
+ * generated into the committed file: wrong in every other environment, and a `--check`
+ * divergence on every machine (`_standards/openapi.md`, "fluxo-de-trabalho").
+ */
+const SERVERS = [{ url: '/' }]
+
 /** Token types that `router.parsePattern` returns for a segment. */
 const TOKEN = {
   STATIC: 0,
@@ -62,16 +87,40 @@ const TOKEN = {
 
 const METHOD_ORDER: string[] = ['get', 'post', 'put', 'patch', 'delete']
 
+/**
+ * The document speaks one language, pt-BR, the language of the use-case messages it collects
+ * (`_standards/openapi.md`, "erros-do-use-case"; `_standards/i18n.md` §1): every text the
+ * generator writes itself is in pt-BR too, so a summary or a description never mixes two.
+ */
 const SUCCESS_DESCRIPTIONS: Record<number, string> = {
-  200: 'Success',
-  201: 'Resource created',
-  204: 'Success, no body',
+  200: 'Sucesso',
+  201: 'Recurso criado',
+  204: 'Sucesso, sem corpo',
 }
 
 /** The status an operation not yet documented probably returns. */
 const IMPLIED_SUCCESS: Record<string, number> = {
   post: 201,
   delete: 204,
+}
+
+/**
+ * The header that picks the language of the messages (`detect-user-locale.middleware.ts`,
+ * `_standards/i18n.md`). It holds for every operation, so it is declared once in
+ * `components.parameters` and each operation points to it.
+ */
+const ACCEPT_LANGUAGE = 'AcceptLanguage'
+
+const ACCEPT_LANGUAGE_PARAMETER: OpenAPIParameter = {
+  name: 'Accept-Language',
+  in: 'header',
+  required: false,
+  description: `Idioma das mensagens. Fora da lista, ou ausente, vale ${BASE_LOCALE}.`,
+  schema: { type: 'string', enum: [...LOCALES], default: BASE_LOCALE },
+}
+
+const ACCEPT_LANGUAGE_REF: OpenAPIParameterRef = {
+  $ref: `#/components/parameters/${ACCEPT_LANGUAGE}`,
 }
 
 type BuildResult = {
@@ -126,7 +175,7 @@ async function resolveDocs(
 
   if (!Array.isArray(reference)) return undefined
 
-  const [target] = reference
+  const target: unknown = reference[0]
 
   if (isController(target)) return target.docs
 
@@ -235,7 +284,7 @@ function resolveTagRule(path: string): TagRule | undefined {
 /**
  * The summary of each operation, built from the controller file name plus the
  * group noun: `create.controller.ts` under a group whose `singular` is
- * "company" becomes "Create company".
+ * "empresa" becomes "Criar empresa".
  *
  * The noun pairs in `config/openapi.ts` cover the resource operations. The
  * alternative was a hand-written summary per operation, which is where the
@@ -252,13 +301,13 @@ function resolveTagRule(path: string): TagRule | undefined {
  * another project.
  */
 const ACTION_SUMMARY: Record<string, (rule: TagRule) => string> = {
-  create: (rule) => `Create ${rule.singular}`,
-  paginate: (rule) => `List ${rule.plural}`,
-  show: (rule) => `Show ${rule.singular}`,
-  update: (rule) => `Update ${rule.singular}`,
-  archive: (rule) => `Archive ${rule.singular}`,
-  unarchive: (rule) => `Restore ${rule.singular}`,
-  delete: (rule) => `Remove ${rule.singular}`,
+  create: (rule) => `Criar ${rule.singular}`,
+  paginate: (rule) => `Listar ${rule.plural}`,
+  show: (rule) => `Detalhar ${rule.singular}`,
+  update: (rule) => `Atualizar ${rule.singular}`,
+  archive: (rule) => `Arquivar ${rule.singular}`,
+  unarchive: (rule) => `Restaurar ${rule.singular}`,
+  delete: (rule) => `Remover ${rule.singular}`,
 }
 
 /**
@@ -266,12 +315,12 @@ const ACTION_SUMMARY: Record<string, (rule: TagRule) => string> = {
  * answer even where `singular` was not declared.
  */
 const FIXED_SUMMARY: Record<string, string> = {
-  'sign-in': 'Sign in',
-  'sign-out': 'Sign out',
-  refresh: 'Renew the session',
-  complete: 'Confirm the upload',
-  parts: 'Resume the upload',
-  download: 'Download the file',
+  'sign-in': 'Entrar',
+  'sign-out': 'Sair',
+  refresh: 'Renovar a sessão',
+  complete: 'Confirmar o upload',
+  parts: 'Retomar o upload',
+  download: 'Baixar o arquivo',
 }
 
 function deriveSummary(
@@ -372,7 +421,7 @@ async function readProtection(
  * declaration were the base, a route without a declaration would be empty - which was
  * exactly the problem of the first version, with 5 of 46 operations complete.
  */
-type Contract = {
+export type Contract = {
   summary: string
   description?: string
   tag?: string
@@ -391,12 +440,12 @@ function impliedSuccess(method: string): number {
   return IMPLIED_SUCCESS[method] ?? 200
 }
 
-async function buildContract(
+function buildContract(
   docs: OperationDocs | undefined,
   intro: Introspection | undefined,
   method: string,
   rule: TagRule | undefined,
-): Promise<Contract> {
+): Contract {
   const errors = new Map<number, Map<string, string>>()
 
   for (const error of intro?.errors ?? []) {
@@ -509,7 +558,7 @@ function buildSuccessResponses(
 
   for (const [rawStatus, body] of Object.entries(contract.responses)) {
     const status = Number(rawStatus)
-    const description = SUCCESS_DESCRIPTIONS[status] ?? 'Success'
+    const description = SUCCESS_DESCRIPTIONS[status] ?? 'Sucesso'
 
     if (body === 'no-content') {
       responses[rawStatus] = { description }
@@ -572,16 +621,25 @@ function buildErrorResponses(
     codes.set(status, current)
   }
 
+  // The same keys the handler and `role.middleware.ts` translate, read in pt-BR.
   if (protection.authenticated)
-    add(401, AUTOMATIC_CODES.unauthenticated, 'Unauthorized')
+    add(
+      401,
+      AUTOMATIC_CODES.unauthenticated,
+      documentMessage('errors.unauthorized'),
+    )
   if (protection.roles.length > 0)
-    add(403, AUTOMATIC_CODES.forbidden, 'Acesso negado')
+    add(403, AUTOMATIC_CODES.forbidden, documentMessage('errors.access_denied'))
   if (contract.body || contract.query || contract.params) {
-    add(422, AUTOMATIC_CODES.validation, 'Invalid data')
+    add(422, AUTOMATIC_CODES.validation, documentMessage('errors.validation'))
   }
 
   if (protection.throttled)
-    add(429, AUTOMATIC_CODES.rateLimited, 'Too many requests')
+    add(
+      429,
+      AUTOMATIC_CODES.rateLimited,
+      documentMessage('errors.too_many_requests'),
+    )
 
   add(500)
 
@@ -607,7 +665,8 @@ function buildErrorResponses(
 
     // The messages came literally from the use case's `left(...)`, so they serve
     // as description without anyone writing anything.
-    const messages = [...found.values()].filter(Boolean)
+    // A `Set`: two codes with the same message would print it twice.
+    const messages = [...new Set(found.values())].filter(Boolean)
     if (!description && messages.length > 0) description = messages.join(' · ')
 
     responses[String(status)] = errorResponse(
@@ -624,54 +683,84 @@ function buildErrorResponses(
 // Operation
 // ---------------------------------------------------------------------------
 
-function buildParameters(
-  contract: Contract,
-  pathParams: string[],
-  operationId: string,
+/**
+ * A validator schema with the `params` block out of it (`VineSchema.splitParams`,
+ * `DECISIONS.md` #375), whatever slot the controller read it from. `IdentifierValidator`
+ * read from the body, the query string or `context.params` is the same route parameter: the
+ * `params` key is never a body field nor a query parameter.
+ */
+function splitSlot(
+  validator: DocumentedValidator | undefined,
+  context: string,
   warnings: string[],
-): OpenAPIParameter[] {
-  const parameters: OpenAPIParameter[] = []
+): { params?: SchemaObject; rest?: SchemaObject } {
+  if (!validator) return {}
+
+  return VineSchema.splitParams(
+    VineSchema.toSchema(validator, context, warnings),
+  )
+}
+
+/**
+ * Path and query parameters and the request body of an operation, from the validators
+ * the controller reads.
+ *
+ * Exported for `emit.unit.spec.ts`: an action whose only input is the `:id`
+ * (`IdentifierValidator`, the archive and delete ones) must come out with the path
+ * parameter and nothing else, no required query parameter and no body.
+ */
+export function requestShape(
+  contract: Pick<Contract, 'body' | 'query' | 'params'>,
+  input: { method: string; operationId: string; pathParams: string[] },
+  warnings: string[],
+): { parameters: OpenAPIParameter[]; body?: SchemaObject } {
+  const { method, operationId, pathParams } = input
+
+  const body = splitSlot(contract.body, `${operationId} (payload)`, warnings)
+  const query = splitSlot(contract.query, `${operationId} (query)`, warnings)
+  const params = splitSlot(
+    contract.params,
+    `${operationId} (parameters)`,
+    warnings,
+  )
 
   const declared = new Map<string, OpenAPIParameter>()
 
-  if (contract.params) {
-    const schema = VineSchema.toSchema(
-      contract.params,
-      `${operationId} (parameters)`,
-      warnings,
-    )
+  // `context.params` validated without the `params` key is the route itself.
+  for (const schema of [
+    body.params,
+    query.params,
+    params.params ?? params.rest,
+  ]) {
+    if (!schema) continue
 
-    for (const parameter of VineSchema.toParameters(schema, 'path')) {
+    for (const parameter of VineSchema.toParameters(schema, 'path'))
       declared.set(parameter.name, parameter)
-    }
   }
 
-  for (const name of pathParams) {
-    const known = declared.get(name)
-
-    if (known) {
-      parameters.push(known)
-      continue
-    }
-
-    parameters.push({
-      name,
-      in: 'path',
-      required: true,
-      schema: { type: 'string' },
-    })
-  }
-
-  if (contract.query) {
-    const schema = VineSchema.toSchema(
-      contract.query,
-      `${operationId} (query)`,
-      warnings,
+  const parameters: OpenAPIParameter[] = pathParams.map(function (name) {
+    return (
+      declared.get(name) ?? {
+        name,
+        in: 'path',
+        required: true,
+        schema: { type: 'string' },
+      }
     )
-    parameters.push(...VineSchema.toParameters(schema, 'query'))
+  })
+
+  if (query.rest)
+    parameters.push(...VineSchema.toParameters(query.rest, 'query'))
+
+  // A `GET` has no body: what its `validateUsing` reads besides `params` is the query string.
+  if (method === 'get') {
+    if (body.rest)
+      parameters.push(...VineSchema.toParameters(body.rest, 'query'))
+
+    return { parameters }
   }
 
-  return parameters
+  return { parameters, body: body.rest }
 }
 
 function buildOperation(
@@ -691,14 +780,14 @@ function buildOperation(
   if (!contract.tag) {
     warnings.push(
       `${method.toUpperCase()} ${path}: no prefix of \`config/openapi.ts\` matches this ` +
-        'path. The operation falls in "No group" in the sidebar.',
+        'path. The operation falls in "Sem grupo" in the sidebar.',
     )
   }
 
   const operation: OpenAPIOperation = {
     operationId,
     summary: contract.summary,
-    tags: [contract.tag ?? 'No group'],
+    tags: [contract.tag ?? 'Sem grupo'],
     responses: {},
   }
 
@@ -711,23 +800,17 @@ function buildOperation(
   // line less here, and without the field that line hides in a description.
   if (protection.roles.length > 0) operation['x-roles'] = protection.roles
 
-  const parameters = buildParameters(
+  const { parameters, body } = requestShape(
     contract,
-    pathParams,
-    operationId,
+    { method, operationId, pathParams },
     warnings,
   )
 
-  if (parameters.length > 0) operation.parameters = parameters
+  operation.parameters = [ACCEPT_LANGUAGE_REF, ...parameters]
 
-  if (contract.body) {
+  if (body) {
     const name = `${pascalize(operationId)}Body`
-    const derived = VineSchema.toSchema(
-      contract.body,
-      `${operationId} (payload)`,
-      warnings,
-    )
-    const patched = VineSchema.applyFieldPatches(derived, FIELD_PATCHES)
+    const patched = VineSchema.applyFieldPatches(body, FIELD_PATCHES)
     const schema = VineSchema.mergeSchema(patched, contract.overrides?.body)
     components[name] = schema
     operation.requestBody = {
@@ -751,12 +834,12 @@ function buildOperation(
     const status = impliedSuccess(method)
     operation.responses[String(status)] = {
       description:
-        'Success. The body of this response is not described: the feature is not ' +
-        'registered in `app/core/response.ts`.',
+        'Sucesso. O corpo desta resposta não está descrito: a feature não está ' +
+        'registrada em `app/core/openapi/response.ts`.',
     }
     warnings.push(
       `${method.toUpperCase()} ${path}: no response body. Register the feature in ` +
-        '`app/core/response.ts`, pointing to the `…Response` schema of `shared/`.',
+        '`app/core/openapi/response.ts`, pointing to the `…Response` schema of `shared/`.',
     )
   }
 
@@ -825,7 +908,7 @@ export async function buildDocument(): Promise<BuildResult> {
       total += 1
 
       const verb = method.toLowerCase()
-      const contract = await buildContract(docs, intro, verb, rule)
+      const contract = buildContract(docs, intro, verb, rule)
 
       if (Object.keys(contract.responses).length > 0) documented += 1
 
@@ -850,7 +933,7 @@ export async function buildDocument(): Promise<BuildResult> {
     document: {
       openapi: '3.1.0',
       info: openapi.info,
-      servers: openapi.servers,
+      servers: SERVERS,
       tags: openapi.tags
         .filter(function (tag) {
           return usedTags.has(tag.name)
@@ -867,6 +950,7 @@ export async function buildDocument(): Promise<BuildResult> {
             name: SECURITY_COOKIE,
           },
         },
+        parameters: { [ACCEPT_LANGUAGE]: ACCEPT_LANGUAGE_PARAMETER },
         schemas: sortKeys(components),
       },
     },

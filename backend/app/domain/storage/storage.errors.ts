@@ -3,6 +3,8 @@
  * HTTP status or screen text. The use case translates each one.
  */
 export type StorageError =
+  | { readonly code: 'STORAGE_SIZE_INVALID'; readonly size: number }
+  | { readonly code: 'STORAGE_TYPE_UNSUPPORTED'; readonly mimetype: string }
   | {
       readonly code: 'STORAGE_SIZE_MISMATCH'
       readonly declared: number

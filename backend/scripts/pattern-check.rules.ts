@@ -54,16 +54,29 @@ export class PatternRules {
    */
   static rawInteractive(text: string): ReadonlyArray<number> {
     const blank = (comment: string) => comment.replace(/[^\n]/g, ' ')
-    const code = text.replace(/\/\*[\s\S]*?\*\//g, blank).replace(/\/\/[^\n]*/g, blank)
+    const code = text
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/\/\/[^\n]*/g, blank)
     const lines = text.split('\n')
     const out: number[] = []
     // shortcut: `<input` looks ahead to the next `/>` for `type="file"`; an input whose attributes
     // hold JSX escapes, upgrade to the TSX AST when one does.
-    for (const match of code.matchAll(/<(button|select|textarea|label|table|dialog|form|progress|hr|input)(?=[\s/>])/g)) {
+    for (const match of code.matchAll(
+      /<(button|select|textarea|label|table|dialog|form|progress|hr|input)(?=[\s/>])/g,
+    )) {
       const index = match.index
-      if (match[1] === 'input' && code.slice(index, code.indexOf('/>', index) + 1).includes('type="file"')) continue
+      if (
+        match[1] === 'input' &&
+        code.slice(index, code.indexOf('/>', index) + 1).includes('type="file"')
+      )
+        continue
       const line = code.slice(0, index).split('\n').length
-      if (/eslint-disable-next-line no-restricted-syntax/.test(lines[line - 2] ?? '')) continue
+      if (
+        /eslint-disable-next-line no-restricted-syntax/.test(
+          lines[line - 2] ?? '',
+        )
+      )
+        continue
       out.push(line)
     }
     return out
@@ -73,60 +86,82 @@ export class PatternRules {
     {
       id: 'index-barrel',
       section: 'architecture.md §3 (DECISIONS.md #319)',
-      message: 'no `index.ts`: import the exact file; a barrel defeats tree shaking and hides cycles',
+      message:
+        'no `index.ts`: import the exact file; a barrel defeats tree shaking and hides cycles',
       scope: /^(backend\/app|frontend\/src)\/(.+\/)?index\.tsx?$/,
       lines: () => [1],
     },
     {
       id: 'shared-no-vine',
       section: 'architecture.md §9',
-      message: '`shared/` never imports `@vinejs/vine`: its schemas are Zod, read by both sides',
+      message:
+        '`shared/` never imports `@vinejs/vine`: its schemas are Zod, read by both sides',
       scope: /^shared\/src\/.+\.ts$/,
       lines: (file) => PatternRules.matching(file.text, /from '@vinejs\/vine/),
     },
     {
       id: 'env-outside-config',
       section: 'domain.md §11.1 (DECISIONS.md #314)',
-      message: 'ENV is read only in `config/`: export the value from `config/<name>.ts` and import it',
+      message:
+        'ENV is read only in `config/`: export the value from `config/<name>.ts` and import it',
       scope: /^backend\/(app|providers|start|commands)\/.+\.ts$/,
       exclude: /^backend\/start\/env\.ts$|\.spec\.ts$/,
-      lines: (file) => PatternRules.matching(file.text, /from '#start\/env'|\bprocess\.env\b/),
+      lines: (file) =>
+        PatternRules.matching(file.text, /from '#start\/env'|\bprocess\.env\b/),
     },
     {
       id: 'request-logger',
       section: 'backend.md §4 (DECISIONS.md #314)',
-      message: 'a feature logs through `HttpContext.getOrFail().logger`, which carries the request id',
-      scope: /^backend\/app\/features\/.+\.ts$/,
+      message:
+        'a feature logs through `HttpContext.getOrFail().logger`, which carries the request id; a repository does not log',
+      scope: /^backend\/app\/(features|repositories)\/.+\.ts$/,
       exclude: SPEC,
-      lines: (file) => PatternRules.matching(file.text, /from '@adonisjs\/core\/services\/logger'/),
+      lines: (file) =>
+        PatternRules.matching(
+          file.text,
+          /from '@adonisjs\/core\/services\/logger'/,
+        ),
     },
     {
       id: 'refusal-name',
       section: 'architecture.md §3',
-      message: 'a refusal translator is `_shared.<resource>-refusal.ts` (singular), over `_shared.refusal.base.ts`',
+      message:
+        'a refusal translator is `_shared.<resource>-refusal.ts` (singular), over `_shared.refusal.base.ts`',
       scope: /^backend\/app\/features\/.*refusal[^/]*\.ts$/,
       exclude: SPEC,
       lines: (file) =>
-        PatternRules.whole(!/^_shared\.([a-z0-9-]+-)?refusal(\.base)?\.ts$/.test(PatternRules.basename(file.path))),
+        PatternRules.whole(
+          !/^_shared\.([a-z0-9-]+-)?refusal(\.base)?\.ts$/.test(
+            PatternRules.basename(file.path),
+          ),
+        ),
     },
     {
       id: 'spec-name',
       section: 'architecture.md §8',
-      message: 'a spec is `<name>.unit.spec.ts` or `<name>.e2e.spec.ts`, named after the file it covers without the role suffix',
+      message:
+        'a spec is `<name>.unit.spec.ts` or `<name>.e2e.spec.ts`, named after the file it covers without the role suffix',
       scope: /^backend\/.+\.spec\.ts$/,
       lines: (file) =>
-        PatternRules.whole(!/\.(unit|e2e)\.spec\.ts$/.test(file.path) || /\.(entity|service)\.(unit|e2e)\.spec\.ts$/.test(file.path)),
+        PatternRules.whole(
+          !/\.(unit|e2e)\.spec\.ts$/.test(file.path) ||
+            /\.(entity|service)\.(unit|e2e)\.spec\.ts$/.test(file.path),
+        ),
     },
     {
       id: 'route-name',
       section: 'openapi.md §1',
-      message: 'a route name is `<module>.<resource>.<action>`, the same path as the feature folder',
+      message:
+        'a route name is `<module>.<resource>.<action>`, the same path as the feature folder',
       scope: /^backend\/start\/routes\.ts$/,
       lines: (file) => {
         const out: number[] = []
         file.text.split('\n').forEach((line, index) => {
           for (const match of line.matchAll(/\.as\('([^']+)'\)/g)) {
-            if (!/^[a-z][a-z-]*\.[a-z][a-z-]*\.[a-z][a-z-]*$/.test(match[1] ?? '')) out.push(index + 1)
+            if (
+              !/^[a-z][a-z-]*\.[a-z][a-z-]*\.[a-z][a-z-]*$/.test(match[1] ?? '')
+            )
+              out.push(index + 1)
           }
         })
         return out
@@ -135,62 +170,92 @@ export class PatternRules {
     {
       id: 'rollbacks-in-production',
       section: 'backend.md §3',
-      message: '`config/database.ts` sets `migrations.disableRollbacksInProduction: true`',
+      message:
+        '`config/database.ts` sets `migrations.disableRollbacksInProduction: true`',
       scope: /^backend\/config\/database\.ts$/,
-      lines: (file) => PatternRules.whole(!/disableRollbacksInProduction:\s*true/.test(file.text)),
+      lines: (file) =>
+        PatternRules.whole(
+          !/disableRollbacksInProduction:\s*true/.test(file.text),
+        ),
     },
     {
       id: 'or-fail',
       section: 'backend.md §4',
-      message: '`*OrFail()` is a throw: the repository returns `null` and the use-case decides',
+      message:
+        '`*OrFail()` is a throw: the repository returns `null` and the use-case decides',
       scope: /^backend\/app\/.+\.ts$/,
       exclude: SPEC,
-      lines: (file) => PatternRules.matching(file.text, /\w+OrFail\(/),
+      // `HttpContext.getOrFail()` is the request logger's way in (`request-logger`, backend.md §4.2,
+      // _doc-lib/adonisjs.md#guides/basics/http-context), not an ORM lookup that throws 404 as 500.
+      lines: (file) =>
+        PatternRules.matching(file.text, /(?<!HttpContext\.)\b\w+OrFail\(/),
     },
     {
       id: 'shared-impure',
       section: 'architecture.md §3 (backend.md §4.9)',
-      message: '`_shared.<theme>.ts` is a pure function: no model, `db` or `drive` as a value',
+      message:
+        '`_shared.<theme>.ts` is a pure function: no model, `db` or `drive` as a value',
       scope: /^backend\/app\/features\/(.+\/)?_shared\.[a-z0-9-]+\.ts$/,
       exclude: /\.base\.ts$|-?refusal\.ts$/,
       lines: (file) =>
-        PatternRules.matching(file.text, /^import (?!type )[^\n]*from '(#models\/|@adonisjs\/lucid\/services\/db|@adonisjs\/drive)/),
+        PatternRules.matching(
+          file.text,
+          /^import (?!type )[^\n]*from '(#models\/|@adonisjs\/lucid\/services\/db|@adonisjs\/drive)/,
+        ),
     },
     {
       id: 'common-prefix',
       section: 'i18n.md §4 (DECISIONS.md #359)',
-      message: '`common_*` messages belong to `components/common/`; a screen uses its own prefix',
+      message:
+        '`common_*` messages belong to `components/common/`; a screen uses its own prefix',
       scope: /^frontend\/src\/.+\.tsx?$/,
-      exclude: /^frontend\/src\/components\/common\/|^frontend\/src\/paraglide\//,
+      exclude:
+        /^frontend\/src\/components\/common\/|^frontend\/src\/paraglide\//,
       lines: (file) => PatternRules.matching(file.text, /\bm\.common_/),
     },
     {
       id: 'kit-import',
       section: 'frontend.md (KIT.md §1 item 7)',
-      message: 'a kit piece takes I/O by prop: no `mutations/`, `queries/` or `#/lib/labels`',
+      message:
+        'a kit piece takes I/O by prop: no `mutations/`, `queries/` or `#/lib/labels`',
       scope: /^frontend\/src\/components\/common\/.+\.tsx?$/,
-      lines: (file) => PatternRules.matching(file.text, /from '#\/(mutations|queries)\/|from '#\/lib\/labels'/),
+      lines: (file) =>
+        PatternRules.matching(
+          file.text,
+          /from '#\/(mutations|queries)\/|from '#\/lib\/labels'/,
+        ),
     },
     {
       id: 'query-exact-version',
       section: 'tooling.md §0 (DECISIONS.md #319)',
-      message: '`@tanstack/*query*` at an exact version: the packages move together',
+      message:
+        '`@tanstack/*query*` at an exact version: the packages move together',
       scope: /^frontend\/package\.json$/,
-      lines: (file) => PatternRules.matching(file.text, /"@tanstack\/[a-z-]*query[a-z-]*":\s*"[\^~]/),
+      lines: (file) =>
+        PatternRules.matching(
+          file.text,
+          /"@tanstack\/[a-z-]*query[a-z-]*":\s*"[\^~]/,
+        ),
     },
     {
       id: 'boolean-layout-prop',
       section: 'frontend.md (KIT.md §1 item 6)',
-      message: 'a kit feature turns on by the part present or by a data/variant prop, never by `showX`, `hideX` or `borderX`',
+      message:
+        'a kit feature turns on by the part present or by a data/variant prop, never by `showX`, `hideX` or `borderX`',
       scope: /^frontend\/src\/components\/common\/.+\.tsx$/,
       // shortcut: regex over the prop type, not AST; a prop declared across lines escapes, upgrade
       // to the TypeScript AST when one does.
-      lines: (file) => PatternRules.matching(file.text, /\b(show|hide|border)[A-Z]\w*\??\s*:\s*boolean/),
+      lines: (file) =>
+        PatternRules.matching(
+          file.text,
+          /\b(show|hide|border)[A-Z]\w*\??\s*:\s*boolean/,
+        ),
     },
     {
       id: 'raw-interactive-element',
       section: 'frontend.md §6 (DECISIONS.md #366)',
-      message: 'a native interactive element outside `components/ui/`: use the shadcn component or the kit piece',
+      message:
+        'a native interactive element outside `components/ui/`: use the shadcn component or the kit piece',
       scope: /^frontend\/src\/(routes|components\/common)\/.+\.tsx$/,
       exclude: SPEC,
       lines: (file) => PatternRules.rawInteractive(file.text),

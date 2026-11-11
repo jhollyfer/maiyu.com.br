@@ -38,6 +38,15 @@ const dbConfig = defineConfig({
          */
         naturalSort: true,
         paths: ['database/migrations'],
+
+        /**
+         * In production a migration only moves forward (`DECISIONS.md` #291):
+         * `rollback`, `reset` and `refresh` refuse to run with
+         * `NODE_ENV=production`, even with `--force`. Undoing an applied migration is
+         * a new migration that reverts it (_standards/backend.md §4.13;
+         * _doc-lib/lucid.md#migrations, https://lucid.adonisjs.com/docs/migrations).
+         */
+        disableRollbacksInProduction: true,
       },
 
       schemaGeneration: {
@@ -49,7 +58,9 @@ const dbConfig = defineConfig({
         rulesPaths: ['./database/schema_rules.js'],
       },
 
-      debug: app.inDev,
+      // `db:query` only fires with `debug`; the query-count fixture of the tests listens to it
+      // (_doc-lib/lucid.md#debugging, https://lucid.adonisjs.com/docs/debugging).
+      debug: app.inDev || app.inTest,
     },
   },
 })

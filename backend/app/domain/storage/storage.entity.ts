@@ -83,6 +83,11 @@ export class Storage {
   /**
    * Birth: the record of an upload that is about to start. The id and the clock
    * come from outside; so does the object key, because the bucket is what draws it.
+   *
+   * A refusal is a fact, not a throw (`_standards/domain.md` §1): the validator
+   * already filters size and type, and this is the invariant that holds whoever
+   * calls. A type without a signature here could never be confirmed, so it is
+   * refused before a URL is signed for it.
    */
   static open(input: {
     readonly id: string
@@ -93,21 +98,32 @@ export class Storage {
     readonly uploadId: string | null
     readonly partSize: number
     readonly now: Date
-  }): Storage {
-    return new Storage({
-      id: input.id,
-      filename: input.key,
-      originalName: input.originalName,
-      mimetype: input.mimetype,
-      size: input.size,
-      path: input.key,
-      status: UPLOAD_STATUS.PENDING,
-      uploadId: input.uploadId,
-      partSize: input.partSize,
-      createdAt: input.now,
-      updatedAt: input.now,
-      deletedAt: null,
-    })
+  }): Either<StorageError, Storage> {
+    if (!Number.isSafeInteger(input.size) || input.size < 1)
+      return left({ code: 'STORAGE_SIZE_INVALID', size: input.size })
+
+    if (!(input.mimetype in SIGNATURES))
+      return left({
+        code: 'STORAGE_TYPE_UNSUPPORTED',
+        mimetype: input.mimetype,
+      })
+
+    return right(
+      new Storage({
+        id: input.id,
+        filename: input.key,
+        originalName: input.originalName,
+        mimetype: input.mimetype,
+        size: input.size,
+        path: input.key,
+        status: UPLOAD_STATUS.PENDING,
+        uploadId: input.uploadId,
+        partSize: input.partSize,
+        createdAt: input.now,
+        updatedAt: input.now,
+        deletedAt: null,
+      }),
+    )
   }
 
   /** Rehydration by the repository: the data passed through the rules when it was saved. */

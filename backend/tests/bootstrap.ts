@@ -1,24 +1,25 @@
-import { assert } from '@japa/assert'
-import { ApiClient, apiClient } from '@japa/api-client'
+import { authApiClient } from '@adonisjs/auth/plugins/api_client'
 import app from '@adonisjs/core/services/app'
-import type { Config } from '@japa/runner/types'
+import testUtils from '@adonisjs/core/services/test_utils'
+import { dbAssertions } from '@adonisjs/lucid/plugins/db'
+import { ApiClient, apiClient } from '@japa/api-client'
+import { assert } from '@japa/assert'
+import { pluginAdonisJS } from '@japa/plugin-adonisjs'
 import { disallowPinnedTests } from '@japa/runner/plugins'
 import { spec } from '@japa/runner/reporters'
-import { pluginAdonisJS } from '@japa/plugin-adonisjs'
-import { dbAssertions } from '@adonisjs/lucid/plugins/db'
-import testUtils from '@adonisjs/core/services/test_utils'
-import { authApiClient } from '@adonisjs/auth/plugins/api_client'
+import type { Config } from '@japa/runner/types'
 
 import type { Registry } from '../.adonisjs/client/registry/schema.d.ts'
 
-import env from '#start/env'
 import { corsOrigins } from '#config/cors'
+import env from '#start/env'
 import { DatabaseGuard } from '#tests/database-guard'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
  */
 declare module '@japa/api-client/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires an `interface`, and the merge is the whole body
   interface RoutesRegistry extends Registry {}
 }
 
@@ -29,12 +30,16 @@ declare module '@japa/api-client/types' {
 /**
  * The test client is not a browser and does not send `Origin`; the origin barrier
  * (`origin.middleware.ts`) would refuse every write. Every request goes out as if it
- * came from the first origin of `CORS_ORIGINS` in `.env.test`; the test that measures the
- * refusal sets its own `Origin`.
+ * came from the first origin of `CORS_ORIGINS` in `.env.test`, unless the test already
+ * declared a browser signal: its own `Origin`, or a `Sec-Fetch-Site`, which the barrier
+ * only reads when `Origin` is absent. The test that measures a request without either
+ * removes the filled header in its own setup hook, which runs after this one:
+ * `.setup((request) => { request.request.unset('origin') })`.
  */
 ApiClient.setup((request) => {
   // The hook runs at send time, after the test's `.header()`: it only fills in when missing.
   if (request.request.get('origin')) return
+  if (request.request.get('sec-fetch-site')) return
 
   // The first allowlisted origin of `.env.test`, so a project whose frontend is not on
   // 5173 does not refuse every e2e write.
@@ -74,8 +79,12 @@ const REPORTERS = {
         name: 'tap',
         handler: (_runner, emitter) => {
           let count = 0
+          // The report is the process output itself, read by the audit engine.
+          const line = (text: string): void => {
+            process.stdout.write(`${text}\n`)
+          }
 
-          emitter.on('runner:start', () => console.log('TAP version 13'))
+          emitter.on('runner:start', () => line('TAP version 13'))
 
           emitter.on('test:end', (test) => {
             count += 1
@@ -84,31 +93,31 @@ const REPORTERS = {
             // Skipped is not proof: it comes out as `ok ... # SKIP`, which the engine
             // recognizes and refuses as evidence.
             if (test.isTodo) {
-              console.log(`ok ${count} - ${title} # TODO`)
+              line(`ok ${count} - ${title} # TODO`)
               return
             }
 
             if (test.isSkipped) {
-              console.log(
+              line(
                 `ok ${count} - ${title} # SKIP ${test.skipReason ?? ''}`.trimEnd(),
               )
               return
             }
 
             if (test.hasError) {
-              console.log(`not ok ${count} - ${title}`)
+              line(`not ok ${count} - ${title}`)
 
               for (const { error } of test.errors) {
-                console.log(`  # ${error.message.split('\n').join('\n  # ')}`)
+                line(`  # ${error.message.split('\n').join('\n  # ')}`)
               }
 
               return
             }
 
-            console.log(`ok ${count} - ${title}`)
+            line(`ok ${count} - ${title}`)
           })
 
-          emitter.on('runner:end', () => console.log(`1..${count}`))
+          emitter.on('runner:end', () => line(`1..${count}`))
         },
       },
     ],

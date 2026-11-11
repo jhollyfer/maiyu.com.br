@@ -11,7 +11,7 @@
 # The base is pinned by digest and Dependabot updates it: a moving tag changes what
 # was audited without a single commit.
 
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS builder
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS builder
 
 WORKDIR /app
 
@@ -26,8 +26,12 @@ RUN npx --yes get-pnpm
 # Manifests before the code, so the install stays cached while only the
 # code changes. `pnpm-workspace.yaml` carries `allowBuilds`: without it the install
 # decides on its own what to compile, or stops and asks (_doc-lib/pnpm.md#docker).
+# The frontend manifest comes in because the single lockfile describes every package and
+# `--frozen-lockfile` checks all of them; the bracket makes it a wildcard, which BuildKit
+# lets match nothing when the project has no `frontend/`.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY backend/package.json backend/
+COPY frontend/package.jso[n] frontend/
 COPY shared/package.json shared/
 # The commit hook has no use inside the image, and `prepare` must not install it
 # (_doc-lib/husky.md#how-to.html, https://typicode.github.io/husky/how-to.html).
@@ -59,6 +63,7 @@ RUN NODE_ENV=development \
     TRUSTED_PROXIES=loopback \
     CORS_ORIGINS=http://localhost:3000 \
     DATABASE_URL=postgres://build:build@localhost:5432/build \
+    DRIVE_DISK=s3 \
     UPLOAD_MAX_SIZE=1073741824 \
     STORAGE_KEY=build \
     STORAGE_SECRET=build \
@@ -67,18 +72,21 @@ RUN NODE_ENV=development \
     pnpm --filter "{./backend}..." run build
 
 # Only the production dependencies, with whatever comes from the workspace inside, in an
-# isolated folder (_doc-lib/pnpm.md#cli/deploy, https://pnpm.io/cli/deploy).
+# isolated folder (_doc-lib/pnpm.md#cli/deploy, https://pnpm.io/cli/deploy). Only its
+# `node_modules` is used: the files the deploy copies follow `files`, `.npmignore` and
+# `.gitignore`, and `build/` is gitignored, so the compiled app comes straight from the
+# `backend/build/` of this stage and never depends on what the deploy copied.
 RUN pnpm --filter ./backend --prod deploy /out
 
 
-FROM node:24-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
 
 WORKDIR /app
 
 # `build/` brings `bin/`, `config/`, `database/` and the `openapi.json` declared in
 # `metaFiles` - the `GET /openapi.json` route reads that file from disk. The
 # `node_modules` comes from the deploy: production only, no assembler, eslint or typescript.
-COPY --from=builder --chown=node:node /out/build ./
+COPY --from=builder --chown=node:node /app/backend/build ./
 COPY --from=builder --chown=node:node /out/node_modules ./node_modules
 
 # The `node` image already ships the `node` user (uid 1000). There is no upload

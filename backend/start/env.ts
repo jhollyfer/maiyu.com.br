@@ -101,8 +101,9 @@ export default await Env.create(new URL('../', import.meta.url), {
   | Storage
   |----------------------------------------------------------------------------
   |
-  | An S3-compatible bucket, the same in every environment: the upload is presigned
-  | multipart, and multipart is an S3 API that a local disk does not have. The prefix is
+  | An S3-compatible bucket: the upload is presigned multipart, and multipart is an
+  | S3 API that a local disk does not have. `DRIVE_DISK` picks the disk (`s3` or `fs`),
+  | required and without a default, like every choice of the operator. The prefix is
   | `STORAGE_`, and not a vendor name: what the code depends on is the
   | protocol, and vendors swap places by changing the endpoint.
   |
@@ -112,6 +113,7 @@ export default await Env.create(new URL('../', import.meta.url), {
   | the operator's decision, and a default in the code would be a ceiling nobody
   | chose.
   */
+  DRIVE_DISK: Env.schema.enum(['s3', 'fs'] as const),
   UPLOAD_MAX_SIZE: Env.schema.number(),
   STORAGE_KEY: Env.schema.string(),
   STORAGE_SECRET: Env.schema.string(),

@@ -1,6 +1,7 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import type { ApiClient } from '@japa/api-client'
+import { test } from '@japa/runner'
+
 import type { StorageMimetype } from '@maiyu/shared'
 
 import { StorageContract } from '#services/storage/storage.contract'
@@ -199,6 +200,6 @@ test.group('storages > download > identificador', (group) => {
     const response = await client.get('/storages/x/download').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'id')
+    assert.property(body(response).errors, 'params.id')
   })
 })

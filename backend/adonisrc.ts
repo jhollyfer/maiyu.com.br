@@ -1,7 +1,7 @@
+import { indexPolicies } from '@adonisjs/bouncer'
 import { indexEntities } from '@adonisjs/core'
 import { defineConfig } from '@adonisjs/core/app'
 import { generateRegistry } from '@tuyau/core/hooks'
-import { indexPolicies } from '@adonisjs/bouncer'
 
 export default defineConfig({
   /*
@@ -71,8 +71,10 @@ export default defineConfig({
   | List of modules to import before starting the application.
   |
   */
+  // `#start/limiter` is not a preload: Adonis imports this list in parallel, the limiter has a
+  // top-level await (`limiter/services/main`), and `start/routes.ts` already imports it statically;
+  // the duplicate import could make `routes` read a throttle before it existed (ReferenceError at boot).
   preloads: [
-    () => import('#start/limiter'),
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
@@ -106,7 +108,14 @@ export default defineConfig({
         timeout: 5000,
       },
       {
-        files: ['app/**/*.e2e.spec.{ts,js}', 'commands/**/*.e2e.spec.{ts,js}'],
+        files: [
+          'app/**/*.e2e.spec.{ts,js}',
+          'commands/**/*.e2e.spec.{ts,js}',
+          'scripts/**/*.e2e.spec.{ts,js}',
+          // The seeder spec lives in tests/seeders/, never in database/seeders/: Lucid loads every
+          // script file there as a seeder (DECISIONS.md #380).
+          'tests/**/*.e2e.spec.{ts,js}',
+        ],
         name: 'functional',
         timeout: 30000,
       },
@@ -128,8 +137,8 @@ export default defineConfig({
     // `/openapi.json`. Without this entry the production build does not copy it, and the route
     // answers 500 on the built server - but works in development.
     { pattern: 'openapi.json', reloadServer: false },
-    // The demonstration photos (`database/seeders/dev/demo.ts`): the seed reads them
-    // from disk, and the demonstration also runs on the built server.
+    // The translations (`@adonisjs/i18n` reads them from disk at boot): without this entry the
+    // built server answers every message with its key.
     {
       pattern: 'resources/lang/**/*.{json,yaml,yml}',
       reloadServer: false,

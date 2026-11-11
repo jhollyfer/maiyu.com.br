@@ -1,11 +1,12 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
-import { USER_ROLE } from '@maiyu/shared'
+
+import { STAFF_USER_ROLES } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
 
-/** Who operates the panel. */
-const STAFF: ReadonlyArray<string> = [USER_ROLE.ADMINISTRATOR]
+/** Who operates the panel: the project's staff roles (`enums/user-role.ts`). */
+const STAFF: ReadonlyArray<string> = STAFF_USER_ROLES
 
 /**
  * The API reference only exists for whoever operates the installation.
@@ -28,7 +29,7 @@ export default class DocumentationMiddleware {
 
     if (!STAFF.includes(user.role)) throw this.notFound(context)
 
-    return next()
+    await next()
   }
 
   private notFound(context: HttpContext) {

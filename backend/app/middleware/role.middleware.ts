@@ -1,5 +1,6 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+
 import { type UserRole } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
@@ -37,6 +38,6 @@ export default class RoleMiddleware {
       )
     }
 
-    return next()
+    await next()
   }
 }

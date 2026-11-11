@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 
 import { DateTime } from 'luxon'
+
 import { UPLOAD_STATUS } from '@maiyu/shared'
 
 import Storage from '#models/storage'
@@ -45,9 +46,14 @@ export async function storageExists(id: string): Promise<boolean> {
   return (await Storage.find(id)) !== null
 }
 
-/** Ages the row in the database: it is the age the cleanup command uses to decide. */
+/**
+ * Ages the row in the database: it is the age the cleanup command uses to decide,
+ * from the opening for a `PENDING` and from the confirmation for an `UPLOADED`.
+ */
 export async function ageStorage(id: string, hours: number): Promise<void> {
+  const past = DateTime.now().minus({ hours }).toSQL()
+
   await Storage.query()
     .where('id', id)
-    .update({ created_at: DateTime.now().minus({ hours }).toSQL() })
+    .update({ created_at: past, updated_at: past })
 }
