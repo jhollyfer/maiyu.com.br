@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/conta/design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 **Mutations**: 3
 **Build note**: o `pattern:check` lê o repositório inteiro e acusa 6 achados de `frontend/`, de outra frente (R1.7 e R2/R3); o Build reprova só achado em `backend/` ou `shared/`.
@@ -196,7 +196,7 @@ Proof: `cd backend && node ace test functional --files="app/features/account/pro
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** batch worker 2 (T1-T5) at HEAD 902a353, returned at 1245da1; Verifier at HEAD after proofs (20/20)
+**Dispatched:** batch worker 2 (T1-T5) at HEAD 902a353, returned at 1245da1; Verifier at HEAD ca96937, returned FAIL at 4531f38; fix pass returned at 95ae926; round 2 at the final HEAD
 **Walked:** none
 
 ---
