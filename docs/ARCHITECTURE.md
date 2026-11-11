@@ -143,7 +143,7 @@ conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Pap�
 |---|---|---|---|---|
 | Desenvolvimento | site http://localhost:3000, API http://localhost:3333 | máquina local (`pnpm dev`) | Postgres do `backend/docker-compose.yml` na porta 5440 | não se aplica |
 | Preview / Homologação | Não se aplica | | | |
-| Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | push na `main` dispara o workflow |
+| Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | *Auto Deploy* do recurso no Coolify, construindo do Git, sem workflow (`_standards/tooling.md` §8.3) |
 | Produção (API) | `https://api.maiyu.com.br` (decisão do dono, 2026-11-11); recurso no Coolify a criar, com `CORS_ORIGINS=https://maiyu.com.br` | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
 
 Health check: `GET /health-check` (resposta `{ "status": "ok" }`, `no-store`), o nome exato que a
@@ -161,10 +161,7 @@ régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECIS
 | CORS do bucket de produção aberto ao site, com `PUT` e `ETag` exposto | painel do provedor S3 ou R2 | sem o `ETag` exposto nenhum upload multipart se completa |
 | Healthcheck do painel em `/health-check` | painel do Coolify | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira |
 | Aplicação na imagem Nitro, porta 3000 | painel do Coolify | o site anterior era nginx estático na porta 80 |
-| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`, `VITE_SITE_URL` | secrets do repositório no GitHub | os workflows do perfil sem backend publicam a imagem `maiyu-app` e chamam o deploy (`DECISIONS.md` #14) |
-| `UUID_APP` e `COOLIFY_URL` do deploy | `.github/workflows/main-deploy-coolify.yml` | o uuid é da aplicação e não da instância; uuid de outro team é aceito e não implanta nada |
-| Deploy por `POST` em `/api/v1/deploy` com `curl -fsS` | workflow | a rota responde 405 a `GET` desde o Coolify v4.2 |
-| Smoke test em `https://maiyu.com.br/revision.txt` com o sha do commit | workflow | prova que a imagem nova está de pé |
+| Recurso do site: *Base Directory* `/`, *Dockerfile Location* `/frontend/Dockerfile-production`, *Auto Deploy* ligado | painel do Coolify | a imagem constrói da raiz para ver o `shared/` e o lockfile único; não há mais workflow, Docker Hub nem `COOLIFY_*` no GitHub (`ENV.md` §3) |
 
 ## 10. Escala e limites conhecidos
 

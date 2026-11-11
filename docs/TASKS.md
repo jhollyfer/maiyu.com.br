@@ -123,9 +123,9 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R4.1 | Sem `.github/workflows/`, com o Dockerfile multi-stage na mesma PR | M | A fazer | #298, #368, #369; o dono troca o Coolify antes do merge |
+| R4.1 | Sem `.github/workflows/`, com o Dockerfile multi-stage na mesma PR | M | Feita | #298, #368, #369; sete workflows removidos; o dono liga o *Auto Deploy* no Coolify antes do merge e apaga os secrets (`ENV.md` §3) |
 | R4.2 | `Dockerfile-production` multi-stage pelo modelo do academy; `.dockerignore` na raiz | M | Feita | `tooling.md` §8.2; os dois Dockerfiles iguais ao kit e o `.dockerignore` já igual. Lacunas do kit na validação: ver `MEMORY.md` |
-| R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | A fazer | `tooling.md` §9 |
+| R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | Feita | já iguais ao kit; `sync --check` sem linha de dependabot ou editorconfig; `tooling.md` §9 |
 | R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | A fazer | `tooling.md` §10.6 |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | A fazer | |

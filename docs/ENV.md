@@ -90,9 +90,17 @@ antes do PR (`_standards/tooling.md` §7). Do backend se versionam só o `.env.e
 `.env.test`; as variáveis de runtime da API de produção se cadastram no recurso do Coolify
 (`_standards/tooling.md` §8.3). O `backend/.adonisjs/server/routes.json` também fica fora: é o arquivo
 de passagem que o Adonis grava a cada boot fora de produção para o dev server ler e apagar; o resto
-de `backend/.adonisjs/` é versionado. Os segredos do
-CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL` (`DECISIONS.md` #14). `VITE_SITE_URL` em `https://`, sem barra no fim; vazios, o build de publicação reprova
-(`ARCHITECTURE.md` §9.1).
+de `backend/.adonisjs/` é versionado. O repositório não tem mais `.github/workflows/`
+(`_standards/tooling.md` §8.3, `maiyu-pattern` #298, #368, #369): o Coolify constrói do Git pelo
+`Dockerfile-production`, e o `VITE_SITE_URL` e o `VITE_API_URL` de produção vêm do `frontend/.env.production`
+versionado (só valor público), de modo que nenhum segredo de CI/CD é mais lido.
+
+**Passo do dono, fora do repositório:** apagar os secrets do Actions (Settings, Secrets and variables,
+Actions) que os workflows removidos usavam: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`,
+`COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL`. Antes de apagar, no painel do Coolify, ligar o
+*Auto Deploy* do recurso do site, com *Base Directory* `/` e *Dockerfile Location*
+`/frontend/Dockerfile-production`, e conferir o healthcheck em `/health-check`; só então apagar os secrets e o
+token do Docker Hub (revogar o token no Docker Hub também).
 
 ## 4. Por ambiente
 
