@@ -42,7 +42,7 @@ function Visit({ project }: ProjectProps): React.JSX.Element {
       className="rounded-xl"
       render={
         <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.home_workVisit()}
+          {m.home_work_visit()}
           <ArrowUpRightIcon />
         </a>
       }
@@ -97,7 +97,7 @@ export function Work(): React.JSX.Element {
     <section data-slot="home-work" className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <h2 className={cn(REVEAL, 'max-w-3xl text-display')}>
-          {m.home_workTitle()}
+          {m.home_work_title()}
         </h2>
 
         <article

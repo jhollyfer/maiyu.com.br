@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_public/contact')({
   head: () =>
     pageHead({
       pathname: '/contact',
-      title: m.contactPage_metaTitle(),
-      description: m.contactPage_metaDescription(),
+      title: m.contact_page_meta_title(),
+      description: m.contact_page_meta_description(),
     }),
 })

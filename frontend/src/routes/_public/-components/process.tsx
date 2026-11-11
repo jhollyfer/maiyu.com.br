@@ -13,20 +13,20 @@ type Step = {
 /** Os quatro passos, do diagnóstico à evolução. */
 const STEPS: ReadonlyArray<Step> = [
   {
-    title: () => m.home_step1Title(),
-    description: () => m.home_step1Desc(),
+    title: () => m.home_step1_title(),
+    description: () => m.home_step1_desc(),
   },
   {
-    title: () => m.home_step2Title(),
-    description: () => m.home_step2Desc(),
+    title: () => m.home_step2_title(),
+    description: () => m.home_step2_desc(),
   },
   {
-    title: () => m.home_step3Title(),
-    description: () => m.home_step3Desc(),
+    title: () => m.home_step3_title(),
+    description: () => m.home_step3_desc(),
   },
   {
-    title: () => m.home_step4Title(),
-    description: () => m.home_step4Desc(),
+    title: () => m.home_step4_title(),
+    description: () => m.home_step4_desc(),
   },
 ]
 
@@ -44,10 +44,10 @@ export function Process(): React.JSX.Element {
       <div className="mx-auto grid max-w-7xl gap-12 px-4 md:grid-cols-12 md:px-8">
         <div className={cn(REVEAL, 'md:col-span-5')}>
           <h2 className="text-display tracking-[-0.015em]">
-            {m.home_processTitle()}
+            {m.home_process_title()}
           </h2>
           <p className="mt-6 max-w-[40ch] font-serif text-lead text-foreground/75">
-            {m.home_processDesc()}
+            {m.home_process_desc()}
           </p>
         </div>
 

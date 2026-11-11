@@ -25,16 +25,16 @@ export const TALENT_AREAS: ReadonlyArray<TalentArea> = [
   {
     id: 'development',
     title: JOB_POSITION_LABELS.development,
-    description: () => m.career_area_developmentDesc(),
+    description: () => m.career_area_development_desc(),
   },
   {
     id: 'design',
     title: JOB_POSITION_LABELS.design,
-    description: () => m.career_area_designDesc(),
+    description: () => m.career_area_design_desc(),
   },
   {
     id: 'data',
     title: JOB_POSITION_LABELS.data,
-    description: () => m.career_area_dataDesc(),
+    description: () => m.career_area_data_desc(),
   },
 ]

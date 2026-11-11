@@ -7,7 +7,7 @@ export const Route = createFileRoute('/_public/career')({
   head: () =>
     pageHead({
       pathname: '/career',
-      title: m.career_metaTitle(),
-      description: m.career_metaDescription(),
+      title: m.career_meta_title(),
+      description: m.career_meta_description(),
     }),
 })

@@ -51,12 +51,12 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
 function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
   return (
     <dl className="grid grid-cols-[5.5rem_1fr] gap-x-6 gap-y-4 border-t border-border pt-6 text-small">
-      <dt className="text-muted-foreground">{m.portfolio_yearLabel()}</dt>
+      <dt className="text-muted-foreground">{m.portfolio_year_label()}</dt>
       <dd className="flex items-center gap-2">
         <span aria-hidden="true" className="size-2 rotate-45 bg-urucum" />
         {project.year}
       </dd>
-      <dt className="text-muted-foreground">{m.portfolio_stackLabel()}</dt>
+      <dt className="text-muted-foreground">{m.portfolio_stack_label()}</dt>
       <dd>
         <ul className="flex flex-wrap gap-1.5">
           {project.tech.map((tech) => (
@@ -82,7 +82,7 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
       className="self-start"
       render={
         <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.portfolio_visitSite()}
+          {m.portfolio_visit_site()}
           <ArrowUpRightIcon />
           <span className="sr-only">{project.title}</span>
         </a>
@@ -102,8 +102,8 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero
-        title={`${m.portfolio_heroTitle1()} ${m.portfolio_heroTitle2()} ${m.portfolio_heroTitle3()}`}
-        lead={m.portfolio_heroDescription()}
+        title={`${m.portfolio_hero_title1()} ${m.portfolio_hero_title2()} ${m.portfolio_hero_title3()}`}
+        lead={m.portfolio_hero_description()}
       />
 
       <section data-slot="portfolio-featured" className="py-16 md:py-24">
@@ -157,7 +157,7 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="portfolio-list" className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="max-w-2xl border-t border-border pt-12 text-h1">
-            {m.home_selectedWorkDesc()}
+            {m.home_selected_work_desc()}
           </h2>
 
           <ul className="mt-6 divide-y divide-border">

@@ -108,7 +108,7 @@ function RouteComponent(): React.JSX.Element {
                 params={{ slug: featuredArticle.slug }}
                 className="group inline-flex min-h-11 items-center gap-2 self-start text-body font-medium text-urucum"
               >
-                {m.blog_readArticle()}
+                {m.blog_read_article()}
                 <ArrowRightIcon
                   size={18}
                   aria-hidden="true"
@@ -123,9 +123,9 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="blog-list" className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex flex-col gap-6 border-t border-border pt-12 md:flex-row md:items-end md:justify-between">
-            <h2 className="text-h1">{m.blog_recentArticles()}</h2>
+            <h2 className="text-h1">{m.blog_recent_articles()}</h2>
             <nav
-              aria-label={m.blog_recentArticles()}
+              aria-label={m.blog_recent_articles()}
               className="flex flex-wrap gap-2"
             >
               {FILTERS.map((filter) => {

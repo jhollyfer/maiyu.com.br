@@ -33,14 +33,14 @@ type Channel = {
 const CHANNELS: ReadonlyArray<Channel> = [
   {
     icon: WhatsappLogoIcon,
-    title: () => m.contactPage_whatsappTitle(),
-    subtitle: () => m.contactPage_whatsappSubtitle(),
+    title: () => m.contact_page_whatsapp_title(),
+    subtitle: () => m.contact_page_whatsapp_subtitle(),
     lines: [{ text: CONTACT.phone, href: CALL_URL }],
   },
   {
     icon: EnvelopeSimpleIcon,
-    title: () => m.contactPage_emailTitle(),
-    subtitle: () => m.contactPage_emailSubtitle(),
+    title: () => m.contact_page_email_title(),
+    subtitle: () => m.contact_page_email_subtitle(),
     lines: [
       { text: CONTACT.email, href: 'mailto:'.concat(CONTACT.email) },
       {
@@ -51,8 +51,8 @@ const CHANNELS: ReadonlyArray<Channel> = [
   },
   {
     icon: PhoneIcon,
-    title: () => m.contactPage_phoneTitle(),
-    subtitle: () => m.contactPage_phoneSubtitle(),
+    title: () => m.contact_page_phone_title(),
+    subtitle: () => m.contact_page_phone_subtitle(),
     lines: [
       { text: CONTACT.phone, href: CONTACT.phoneHref },
       { text: CONTACT.secondPhone, href: CONTACT.secondPhoneHref },
@@ -60,8 +60,8 @@ const CHANNELS: ReadonlyArray<Channel> = [
   },
   {
     icon: MapPinIcon,
-    title: () => m.contactPage_locationTitle(),
-    subtitle: () => m.contactPage_locationSubtitle(),
+    title: () => m.contact_page_location_title(),
+    subtitle: () => m.contact_page_location_subtitle(),
     lines: [{ text: CONTACT.street }, { text: CONTACT.district }],
   },
 ]
@@ -78,19 +78,21 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero
-        title={m.contactPage_title()}
-        lead={m.contactPage_description()}
+        title={m.contact_page_title()}
+        lead={m.contact_page_description()}
       >
         <ul className="flex flex-col gap-3 text-body-lg">
-          {[m.contactPage_languages(), m.contactPage_audience()].map((text) => (
-            <li key={text} className={cn(REVEAL, 'flex items-start gap-4')}>
-              <span
-                aria-hidden="true"
-                className="mt-3 size-2 shrink-0 rotate-45 bg-urucum"
-              />
-              {text}
-            </li>
-          ))}
+          {[m.contact_page_languages(), m.contact_page_audience()].map(
+            (text) => (
+              <li key={text} className={cn(REVEAL, 'flex items-start gap-4')}>
+                <span
+                  aria-hidden="true"
+                  className="mt-3 size-2 shrink-0 rotate-45 bg-urucum"
+                />
+                {text}
+              </li>
+            ),
+          )}
         </ul>
       </PageHero>
 
