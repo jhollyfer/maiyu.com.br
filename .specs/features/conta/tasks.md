@@ -9,8 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/conta/design.md`
-**Status**: Draft
-**Approved**: pending
+**Status**: Approved
+**Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 **Mutations**: 3
 **Build**: `pnpm --filter ./shared check; cd backend && pnpm typecheck; cd backend && pnpm lint; cd backend && pnpm format:check; cd backend && pnpm openapi:check; cd backend && pnpm pattern:check; cd backend && pnpm authz:check; cd backend && pnpm validators:check`
 

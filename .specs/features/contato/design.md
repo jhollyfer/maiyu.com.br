@@ -1,7 +1,7 @@
 # Contato Design
 
 **Spec**: `.specs/features/contato/spec.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 
@@ -72,7 +72,7 @@ graph TD
 ### Use-cases e controllers
 
 - `storefront/contacts/create`: honeypot -> `right(null)` sem gravar; senão cria.
-- `administrator/contacts/paginate`, `show`, `answer`, `delete` (depende da resposta do dono, item 3).
+- `administrator/contacts/paginate`, `show`, `answer`, `delete`.
 - `commands/contacts-prune.command.ts` chama `AdministratorContactPruneUseCase` (`features/administrator/contacts/prune/prune.use-case.ts`, sem controller), como o `storages:prune` chama o use-case de delete.
 
 ## Data Models
@@ -108,6 +108,6 @@ Sem `deleted_at`: o contato não vai para lixeira; o apagar é de vez (pedido LG
 
 | Risk | Mitigation |
 | ---- | ---------- |
-| Aviso por e-mail exige Redis e SMTP no Coolify | **depende da resposta do dono (item 7)**: a recomendação é deixar fora desta entrega |
-| Apagar à mão | **depende da resposta do dono (item 3)**: tarefa T8 só entra com o sim |
+| Aviso por e-mail exigiria Redis e SMTP no Coolify | fora desta entrega, decisão do dono |
+| Apagar à mão é irreversível | só o staff, por `DELETE`, 404 igual para inexistente |
 | Spam acima do limite por IP | honeypot + limiter; captcha fica fora |

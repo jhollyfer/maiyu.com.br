@@ -1,7 +1,7 @@
 # Conta do dono Design
 
 **Spec**: `.specs/features/conta/spec.md`
-**Status**: Draft
+**Status**: Approved
 
 ---
 

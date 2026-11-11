@@ -9,8 +9,8 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/contato/design.md`
-**Status**: Draft
-**Approved**: pending
+**Status**: Approved
+**Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 **Mutations**: 3
 **Build**: `pnpm --filter ./shared check; cd backend && pnpm typecheck; cd backend && pnpm lint; cd backend && pnpm format:check; cd backend && pnpm openapi:check; cd backend && pnpm pattern:check; cd backend && pnpm authz:check; cd backend && pnpm validators:check`
 
@@ -191,11 +191,12 @@ T9 → T10
 
 ---
 
-### T8: DELETE /administrator/contacts/:id (depende da resposta do dono, item 3)
+### T8: DELETE /administrator/contacts/:id
 
 **What**: apagar de vez um contato, para pedido de exclusão da LGPD.
 **Where**: `backend/app/features/administrator/contacts/delete/delete.use-case.ts`
 **Depends on**: T7
+**Requirement**: CONTACT-05
 **Reuses**: forma do delete de storages
 
 **Done when**:
@@ -236,6 +237,7 @@ T9 → T10
 
 - [ ] `openapi:check`, `authz:check` e o spec de mensagens verdes
 - [ ] SECURITY §8 com finalidade, base legal, guarda de 12 meses e exclusão
+- [ ] ARCHITECTURE §9.1 com a tarefa agendada do Coolify que roda `node ace contacts:prune`
 - [ ] Gate check passes: build
 
 **Tests**: none
@@ -307,6 +309,18 @@ Proof: `cd backend && node ace test functional --files="commands/_contacts-prune
 **C20** - Duas execuções deixam o mesmo estado (CONTACT-04, AC 4)
 Proof: `cd backend && node ace test functional --files="commands/_contacts-prune.command.e2e.spec.ts" --tests="running twice leaves the same state"`
 
+**C21** - Apagar responde 204 e a linha some (CONTACT-05, AC 1)
+Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts" --tests="deleting removes the contact for good"`
+
+**C22** - Apagar id inexistente responde 404 (CONTACT-05, AC 2)
+Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts" --tests="deleting an unknown id answers 404"`
+
+**C23** - Apagar sem sessão responde 401 (CONTACT-05, AC 3)
+Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts" --tests="deleting without a session answers 401"`
+
+**C24** - Apagar com papel fora do staff responde 403 e não apaga (CONTACT-05, AC 4)
+Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts" --tests="a member cannot delete"`
+
 ---
 
 ## Handoff
@@ -327,4 +341,4 @@ T4 → T5 (fim da fase 1 para o início da fase 2)
 T8 → T9 (fim da fase 2 para o início da fase 3)
 ```
 
-Pendente da resposta do dono: T8 (apagar à mão, item 3) e o aviso por e-mail (CONTACT-03, item 7), que fica sem tarefa enquanto a recomendação for deixá-lo fora.
+CONTACT-03 (aviso por e-mail) fica fora, decisão do dono.

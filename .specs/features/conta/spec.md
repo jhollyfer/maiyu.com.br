@@ -1,6 +1,6 @@
 # Conta do dono Specification
 
-**Approved**: pending
+**Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 
 ## Problem Statement
 
@@ -27,14 +27,14 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | -------------- | --------- | ---------- |
-| Rotas | `GET /account/profile` e `PUT /account/profile` | rota em inglês (#383), módulo `account`, recurso `profile` como no adacaibs | n |
-| Prova de identidade | toda troca de senha ou e-mail exige `currentPassword` | a sessão prova o cookie, não a pessoa | n |
-| Política da senha nova | a regra de senha do `Rule` do shared (a mesma do kit) | uma regra só nos dois lados | n |
-| Sessão depois da troca | todas as sessões da conta caem, inclusive a da requisição; a resposta 200 limpa os cookies e o dono entra de novo | o roteiro exige 200 seguido de 401 | n |
-| E-mail em uso | 409 `EMAIL_IN_USE` | o dono já está autenticado: não há enumeração de conta | n |
-| Limite | limiter por usuário na troca de conta (`backend.md` §4.10), 5 por 15 minutos | rota sensível | n |
+| Rotas | `GET /account/profile` e `PUT /account/profile` | rota em inglês (#383), módulo `account`, recurso `profile` como no adacaibs | y |
+| Prova de identidade | toda troca de senha ou e-mail exige `currentPassword` | a sessão prova o cookie, não a pessoa | y |
+| Política da senha nova | a regra de senha do `Rule` do shared (a mesma do kit) | uma regra só nos dois lados | y |
+| Sessão depois da troca | todas as sessões da conta caem, inclusive a da requisição; a resposta 200 limpa os cookies e o dono entra de novo | o roteiro exige 200 seguido de 401 | y |
+| E-mail em uso | 409 `EMAIL_IN_USE` | o dono já está autenticado: não há enumeração de conta | y |
+| Limite | limiter por usuário na troca de conta (`backend.md` §4.10), 5 por 15 minutos | rota sensível | y |
 
-**Open questions:** (1) exigir a senha atual também para trocar só o e-mail? (2) depois da troca, derrubar inclusive a sessão atual (o dono entra de novo) em vez de emitir sessão nova?
+**Open questions:** none - resolved by the owner on 2026-11-11 (respostas 5 e 6: senha atual exigida também para o e-mail; a sessão atual cai).
 
 ---
 
@@ -105,7 +105,7 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 | ACCOUNT-02 | P1: Trocar o e-mail | Design | Pending |
 | ACCOUNT-03 | P2: Ver o perfil | Design | Pending |
 
-**Coverage:** 3 total, 0 mapped to tasks, 3 unmapped
+**Coverage:** 3 total, 3 mapped to tasks
 
 ---
 
