@@ -332,6 +332,9 @@ Proof: `cd backend && node ace test functional --files="app/features/administrat
 **C24** - Apagar com papel fora do staff responde 403 e não apaga (CONTACT-05, AC 4)
 Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/delete/delete.e2e.spec.ts" --tests="a member cannot delete"`
 
+**C25** - Dois answer simultâneos dão um 200 e um 409 (CONTACT-02, edge case)
+Proof: `cd backend && node ace test functional --files="app/features/administrator/contacts/answer/answer.e2e.spec.ts" --tests="two answers at once give one 200 and one 409"`
+
 ---
 
 ## Handoff
