@@ -100,7 +100,7 @@ Banco da API (`backend/database/migrations/`, todas do kit):
 
 | Tabela | O que guarda |
 |---|---|
-| `users` | a conta do dono: nome, e-mail único, hash Argon2 da senha, papel `ADMINISTRATOR`, status, foto (`avatar_id` em `storages`) e arquivamento |
+| `users` | a conta do dono: nome, e-mail único, hash Argon2 da senha, papel (`ADMINISTRATOR` ou `MEMBER`), status, foto (`avatar_id` em `storages`) e arquivamento |
 | `auth_access_tokens` | o par de tokens da sessão (acesso e refresh rotativo), apagado em logout e em mudança de senha, e-mail, papel ou status |
 | `rate_limits` | contadores dos limites nomeados de `start/limiter.ts` |
 | `consumed_refresh_tokens` | refresh já usado, para detectar reuso e revogar a família da sessão |
@@ -134,8 +134,8 @@ O site é público. A API tem uma conta só, a do dono, criada pelo seeder a par
 e `SEED_OWNER_PASSWORD` (`firstOrCreate`: o deploy roda o seed toda vez e nunca reescreve a senha
 trocada). Sessão por par de tokens opacos em cookie `httpOnly` (guard `cookie-access-tokens` do kit),
 com refresh rotativo e checagem de origem em toda escrita. Mudar senha, e-mail, papel ou status da
-conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Papel único `ADMINISTRATOR`,
-que também é a lista de staff (`shared/src/enums/user-role.ts`).
+conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Papéis do esqueleto do kit em `shared/src/enums/user-role.ts`:
+`ADMINISTRATOR`, que é a lista de staff, e `MEMBER`, o papel menos privilegiado, que nenhuma rota cria hoje.
 
 ## 9. Ambientes
 

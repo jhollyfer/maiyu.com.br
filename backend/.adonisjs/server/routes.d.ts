@@ -4,47 +4,47 @@ type ParamValue = string | number | bigint | boolean
 
 export type ScannedRoutes = {
   ALL: {
-    'health-check': { paramsTuple?: []; params?: {} }
-    'documentation.openapi': { paramsTuple?: []; params?: {} }
-    'documentation.reference': { paramsTuple?: []; params?: {} }
-    'authentication.sign_in': { paramsTuple?: []; params?: {} }
-    'authentication.sign_out': { paramsTuple?: []; params?: {} }
-    'authentication.refresh': { paramsTuple?: []; params?: {} }
-    'storages.paginate': { paramsTuple?: []; params?: {} }
-    'storages.create': { paramsTuple?: []; params?: {} }
-    'storages.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'health_check': { paramsTuple?: []; params?: {} }
+    'documentation.openapi.show': { paramsTuple?: []; params?: {} }
+    'documentation.reference.show': { paramsTuple?: []; params?: {} }
+    'authentication.sessions.sign-in': { paramsTuple?: []; params?: {} }
+    'authentication.sessions.sign-out': { paramsTuple?: []; params?: {} }
+    'authentication.sessions.refresh': { paramsTuple?: []; params?: {} }
+    'storages.files.paginate': { paramsTuple?: []; params?: {} }
+    'storages.files.create': { paramsTuple?: []; params?: {} }
+    'storages.files.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
-    'health-check': { paramsTuple?: []; params?: {} }
-    'documentation.openapi': { paramsTuple?: []; params?: {} }
-    'documentation.reference': { paramsTuple?: []; params?: {} }
-    'storages.paginate': { paramsTuple?: []; params?: {} }
-    'storages.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'health_check': { paramsTuple?: []; params?: {} }
+    'documentation.openapi.show': { paramsTuple?: []; params?: {} }
+    'documentation.reference.show': { paramsTuple?: []; params?: {} }
+    'storages.files.paginate': { paramsTuple?: []; params?: {} }
+    'storages.files.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   HEAD: {
-    'health-check': { paramsTuple?: []; params?: {} }
-    'documentation.openapi': { paramsTuple?: []; params?: {} }
-    'documentation.reference': { paramsTuple?: []; params?: {} }
-    'storages.paginate': { paramsTuple?: []; params?: {} }
-    'storages.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
-    'storages.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'health_check': { paramsTuple?: []; params?: {} }
+    'documentation.openapi.show': { paramsTuple?: []; params?: {} }
+    'documentation.reference.show': { paramsTuple?: []; params?: {} }
+    'storages.files.paginate': { paramsTuple?: []; params?: {} }
+    'storages.files.parts': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   POST: {
-    'authentication.sign_in': { paramsTuple?: []; params?: {} }
-    'authentication.sign_out': { paramsTuple?: []; params?: {} }
-    'authentication.refresh': { paramsTuple?: []; params?: {} }
-    'storages.create': { paramsTuple?: []; params?: {} }
-    'storages.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'authentication.sessions.sign-in': { paramsTuple?: []; params?: {} }
+    'authentication.sessions.sign-out': { paramsTuple?: []; params?: {} }
+    'authentication.sessions.refresh': { paramsTuple?: []; params?: {} }
+    'storages.files.create': { paramsTuple?: []; params?: {} }
+    'storages.files.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
-    'storages.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

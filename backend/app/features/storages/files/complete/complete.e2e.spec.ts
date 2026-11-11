@@ -170,6 +170,10 @@ test.group('storages > complete > acesso e identificador', (group) => {
       .json({})
 
     response.assertStatus(422)
-    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
+    // The key is the dotted path itself, and `property` would read it as a nested path.
+    assert.include(
+      Object.keys(body(response, ErrorEnvelope).errors ?? {}),
+      'params.id',
+    )
   })
 })

@@ -190,8 +190,13 @@ export class PatternRules {
       exclude: SPEC,
       // `HttpContext.getOrFail()` is the request logger's way in (`request-logger`, backend.md §4.2,
       // _doc-lib/adonisjs.md#guides/basics/http-context), not an ORM lookup that throws 404 as 500.
+      // `getUserOrFail()` is the auth API: the doc reads the user through it and a guard implements
+      // it as part of `GuardContract` (_doc-lib/adonisjs.md#guides/auth/custom-auth-guard).
       lines: (file) =>
-        PatternRules.matching(file.text, /(?<!HttpContext\.)\b\w+OrFail\(/),
+        PatternRules.matching(
+          file.text,
+          /(?<!HttpContext\.)\b(?!getUserOrFail\()\w+OrFail\(/,
+        ),
     },
     {
       id: 'shared-impure',

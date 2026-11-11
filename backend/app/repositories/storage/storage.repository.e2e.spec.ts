@@ -292,7 +292,11 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
         abandoned.map((storage) => storage.id),
         [older.id, old.id],
       )
-      assert.deepEqual(await repository.findAbandoned(NOW), [])
+      // The cutoff is strict: the oldest one, opened exactly at it, is not abandoned yet.
+      assert.deepEqual(
+        await repository.findAbandoned(new Date(NOW.getTime() - 60_000)),
+        [],
+      )
     })
 
     test('findOrphans brings the UPLOADED confirmed before the cutoff', async ({

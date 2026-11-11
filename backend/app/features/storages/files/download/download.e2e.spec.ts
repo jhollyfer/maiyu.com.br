@@ -77,17 +77,17 @@ test.group('storages > download', (group) => {
     assert.include(disposition, "filename*=UTF-8''capa.png")
   })
 
-  test('the advisor cannot download a file that is not theirs: only the administrator operates the collection', async ({
+  test('whoever is not staff cannot download a file that is not theirs: only the staff operates the collection', async ({
     client,
   }) => {
     const admin = await authenticateAsAdministrator(client)
     const storage = await uploadFile(client, admin)
 
-    const advisor = await authenticateAsNonStaff(client)
+    const stranger = await authenticateAsNonStaff(client)
 
     const response = await client
       .get(`/storages/${storage.id}/download`)
-      .cookies(advisor)
+      .cookies(stranger)
       .redirects(0)
 
     response.assertStatus(404)
@@ -146,6 +146,10 @@ test.group('storages > download > identificador', (group) => {
     const response = await client.get('/storages/x/download').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
+    // The key is the dotted path itself, and `property` would read it as a nested path.
+    assert.include(
+      Object.keys(body(response, ErrorEnvelope).errors ?? {}),
+      'params.id',
+    )
   })
 })

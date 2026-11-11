@@ -2,23 +2,31 @@
 import type { routes } from './index.ts'
 
 export interface ApiDefinition {
-  healthCheck: typeof routes['health-check']
+  healthCheck: typeof routes['health_check']
   documentation: {
-    openapi: typeof routes['documentation.openapi']
-    reference: typeof routes['documentation.reference']
+    openapi: {
+      show: typeof routes['documentation.openapi.show']
+    }
+    reference: {
+      show: typeof routes['documentation.reference.show']
+    }
   }
   authentication: {
-    signIn: typeof routes['authentication.sign_in']
-    signOut: typeof routes['authentication.sign_out']
-    refresh: typeof routes['authentication.refresh']
+    sessions: {
+      signIn: typeof routes['authentication.sessions.sign-in']
+      signOut: typeof routes['authentication.sessions.sign-out']
+      refresh: typeof routes['authentication.sessions.refresh']
+    }
   }
   storages: {
-    paginate: typeof routes['storages.paginate']
-    create: typeof routes['storages.create']
-    complete: typeof routes['storages.complete']
-    parts: typeof routes['storages.parts']
-    show: typeof routes['storages.show']
-    delete: typeof routes['storages.delete']
-    download: typeof routes['storages.download']
+    files: {
+      paginate: typeof routes['storages.files.paginate']
+      create: typeof routes['storages.files.create']
+      complete: typeof routes['storages.files.complete']
+      parts: typeof routes['storages.files.parts']
+      show: typeof routes['storages.files.show']
+      delete: typeof routes['storages.files.delete']
+      download: typeof routes['storages.files.download']
+    }
   }
 }

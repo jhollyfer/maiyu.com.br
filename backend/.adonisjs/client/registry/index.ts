@@ -8,83 +8,83 @@ export type { Route, Path } from './schema.d.ts'
 const placeholder: any = {}
 
 const routes = {
-  'health-check': {
+  'health_check': {
     methods: ["GET","HEAD"],
     pattern: '/health-check',
     tokens: [[0,"health-check"]],
-    types: placeholder as Registry['health-check']['types'],
+    types: placeholder as Registry['health_check']['types'],
   },
-  'documentation.openapi': {
+  'documentation.openapi.show': {
     methods: ["GET","HEAD"],
     pattern: '/openapi.json',
     tokens: [[0,"openapi.json"]],
-    types: placeholder as Registry['documentation.openapi']['types'],
+    types: placeholder as Registry['documentation.openapi.show']['types'],
   },
-  'documentation.reference': {
+  'documentation.reference.show': {
     methods: ["GET","HEAD"],
     pattern: '/documentation',
     tokens: [[0,"documentation"]],
-    types: placeholder as Registry['documentation.reference']['types'],
+    types: placeholder as Registry['documentation.reference.show']['types'],
   },
-  'authentication.sign_in': {
+  'authentication.sessions.sign-in': {
     methods: ["POST"],
     pattern: '/authentication/sign-in',
     tokens: [[0,"authentication"],[0,"sign-in"]],
-    types: placeholder as Registry['authentication.sign_in']['types'],
+    types: placeholder as Registry['authentication.sessions.sign-in']['types'],
   },
-  'authentication.sign_out': {
+  'authentication.sessions.sign-out': {
     methods: ["POST"],
     pattern: '/authentication/sign-out',
     tokens: [[0,"authentication"],[0,"sign-out"]],
-    types: placeholder as Registry['authentication.sign_out']['types'],
+    types: placeholder as Registry['authentication.sessions.sign-out']['types'],
   },
-  'authentication.refresh': {
+  'authentication.sessions.refresh': {
     methods: ["POST"],
     pattern: '/authentication/refresh',
     tokens: [[0,"authentication"],[0,"refresh"]],
-    types: placeholder as Registry['authentication.refresh']['types'],
+    types: placeholder as Registry['authentication.sessions.refresh']['types'],
   },
-  'storages.paginate': {
+  'storages.files.paginate': {
     methods: ["GET","HEAD"],
     pattern: '/storages',
     tokens: [[0,"storages"]],
-    types: placeholder as Registry['storages.paginate']['types'],
+    types: placeholder as Registry['storages.files.paginate']['types'],
   },
-  'storages.create': {
+  'storages.files.create': {
     methods: ["POST"],
     pattern: '/storages',
     tokens: [[0,"storages"]],
-    types: placeholder as Registry['storages.create']['types'],
+    types: placeholder as Registry['storages.files.create']['types'],
   },
-  'storages.complete': {
+  'storages.files.complete': {
     methods: ["POST"],
     pattern: '/storages/:id/complete',
     tokens: [[0,"storages"],[1,"id"],[0,"complete"]],
-    types: placeholder as Registry['storages.complete']['types'],
+    types: placeholder as Registry['storages.files.complete']['types'],
   },
-  'storages.parts': {
+  'storages.files.parts': {
     methods: ["GET","HEAD"],
     pattern: '/storages/:id/parts',
     tokens: [[0,"storages"],[1,"id"],[0,"parts"]],
-    types: placeholder as Registry['storages.parts']['types'],
+    types: placeholder as Registry['storages.files.parts']['types'],
   },
-  'storages.show': {
+  'storages.files.show': {
     methods: ["GET","HEAD"],
     pattern: '/storages/:id',
     tokens: [[0,"storages"],[1,"id"]],
-    types: placeholder as Registry['storages.show']['types'],
+    types: placeholder as Registry['storages.files.show']['types'],
   },
-  'storages.delete': {
+  'storages.files.delete': {
     methods: ["DELETE"],
     pattern: '/storages/:id',
     tokens: [[0,"storages"],[1,"id"]],
-    types: placeholder as Registry['storages.delete']['types'],
+    types: placeholder as Registry['storages.files.delete']['types'],
   },
-  'storages.download': {
+  'storages.files.download': {
     methods: ["GET","HEAD"],
     pattern: '/storages/:id/download',
     tokens: [[0,"storages"],[1,"id"],[0,"download"]],
-    types: placeholder as Registry['storages.download']['types'],
+    types: placeholder as Registry['storages.files.download']['types'],
   },
 } as const satisfies Record<string, AdonisEndpoint>
 

@@ -16,7 +16,7 @@ export default class extends BaseSchema {
       // Literal values (DECISIONS.md #354): a migration is history, and an imported enum
       // would rewrite it when the enum changes. They match `USER_ROLE` in the shared.
       // No `defaultTo`: a forgotten creation path would silently save a role nobody chose.
-      table.enum('role', ['ADMINISTRATOR']).notNullable()
+      table.enum('role', ['ADMINISTRATOR', 'MEMBER']).notNullable()
       table
         .enum('status', ['ACTIVE', 'INACTIVE'])
         .notNullable()

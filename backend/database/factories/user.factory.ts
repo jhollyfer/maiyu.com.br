@@ -15,9 +15,8 @@ import User from '#models/user'
 export const FACTORY_PASSWORD = 'Demo1234!'
 
 /**
- * An account (_doc-lib/lucid.md#model-factories). The kit has a single role, so the default
- * and the `administrator` state agree; the project that adds a less privileged role makes it
- * the default here, and a spec that needs an administrator asks for the state, so nobody
+ * An account (_doc-lib/lucid.md#model-factories). The default is the least privileged role,
+ * outside the staff, and a spec that needs an administrator asks for the state, so nobody
  * gains privilege by omission.
  *
  * Extension point (KIT.md §3.4): the project fills the columns and states it added to the model.
@@ -27,7 +26,7 @@ export const UserFactory = factory
     name: faker.person.fullName(),
     email: faker.internet.email().toLowerCase(),
     password: FACTORY_PASSWORD,
-    role: USER_ROLE.ADMINISTRATOR,
+    role: USER_ROLE.MEMBER,
     status: ACTIVE_STATUS.ACTIVE,
   }))
   .state('administrator', (user) => {

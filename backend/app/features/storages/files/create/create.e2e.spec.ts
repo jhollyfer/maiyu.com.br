@@ -3,6 +3,7 @@ import { test } from '@japa/runner'
 import { ErrorEnvelope } from '@maiyu/shared'
 
 import { UPLOAD_MAX_SIZE } from '#config/drive'
+import { StorageFactory } from '#database/factories/storage.factory'
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
@@ -114,27 +115,20 @@ test.group('storages > create', (group) => {
   })
 
   /**
-   * `size` is `bigint` in the database. With `integer`, this `POST` would pass
-   * validation - the environment cap allows it - and blow up on the `INSERT`, because
-   * `int4` stops at 2.1 GB. The test declares 4 GiB and transfers nothing: only the
-   * metadata travels, and the row is born `PENDING`.
+   * `size` is `bigint` in the database. With `integer`, a `POST` under a ceiling above 2.1 GB
+   * would pass validation and blow up on the `INSERT`, because `int4` stops there. The row goes
+   * in through the factory and not the route: the route caps at `UPLOAD_MAX_SIZE`, which the
+   * project may set below 2^31, and what this measures is the column and the model.
    *
-   * The assertion on the envelope is the wire: the driver returns `int8` as a string, and
-   * without the model `consume` the `size` would come out in quotes.
+   * The read is the wire: the driver returns `int8` as a string, and without the model
+   * `consume` the `size` would come back in quotes.
    */
-  test('accepts a size above the int4 cap', async ({ client, assert }) => {
-    const session = await authenticateAsAdministrator(client)
+  test('stores a size above the int4 cap', async ({ assert }) => {
     const size = 4 * 1024 ** 3
 
-    const opened = await openUpload(client, session, {
-      fileName: 'acervo.pdf',
-      mimetype: 'application/pdf',
-      size,
-    })
+    const created = await StorageFactory.merge({ size }).create()
 
-    assert.strictEqual(opened.storage.size, size)
-
-    const stored = await Stored.storageOrFail(opened.storage.id)
+    const stored = await Stored.storageOrFail(created.id)
     assert.strictEqual(stored.size, size)
   })
 

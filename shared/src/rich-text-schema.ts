@@ -110,14 +110,20 @@ export class RichText {
     return true
   }
 
+  /**
+   * A link the reader may draw: the write path refuses the rest, and the reader asks again
+   * for Markdown that came from outside without passing through the validator.
+   */
+  static isSafeHref(href: unknown): href is string {
+    return typeof href === 'string' && SAFE_HREF.test(href)
+  }
+
   static #linksAreSafe(nodes: ReadonlyArray<RichTextNode>): boolean {
     return nodes.every((node) => {
       const marksAreSafe = (node.marks ?? []).every((mark) => {
         if (mark.type !== 'link') return true
 
-        const href = mark.attrs?.href
-
-        return typeof href === 'string' && SAFE_HREF.test(href)
+        return RichText.isSafeHref(mark.attrs?.href)
       })
 
       return marksAreSafe && RichText.#linksAreSafe(node.content ?? [])

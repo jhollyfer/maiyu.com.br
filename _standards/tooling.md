@@ -536,8 +536,11 @@ vai para `shared/`, que é código puro e não exporta ferramenta (`architecture
 - Playwright e `@vitest/eslint-plugin`: teste focado, pulado sem motivo e espera fixa reprovam no
   lint, não na revisão (_doc-lib/eslint.md#mskelton/eslint-plugin-playwright). O Japa não tem plugin
   de lint: o `.pin()` esquecido se cobra pelo `disallowPinnedTests` (§10.1).
-- `components/ui/` (shadcn) segue as mesmas regras; a variante marcada `// casa:` (`frontend.md` §6)
-  não é motivo de relaxar lint.
+- `components/ui/` e os arquivos que o registry do shadcn escreve (`hooks/use-mobile.ts`,
+  `hooks/use-highlighted-code.ts`, `lib/highlighter.tsx`) ficam fora do estilo da casa no ESLint do kit
+  (ordem de import, `no-ternary`, `as`, regras de a11y e `any`): são saída do registry, comparada pelo
+  `shadcn --diff`, e editada só pelo patch `// casa:` (`frontend.md` §6, `DECISIONS.md` #391). O resto
+  das regras e o typecheck valem.
 
 ---
 

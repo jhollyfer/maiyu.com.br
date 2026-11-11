@@ -1,4 +1,3 @@
-import app from '@adonisjs/core/services/app'
 import { defineConfig, services } from '@adonisjs/drive'
 import type { InferDriveDisks } from '@adonisjs/drive/types'
 import type { S3ClientConfig } from '@aws-sdk/client-s3'
@@ -106,9 +105,11 @@ const driveConfig = defineConfig({
     }),
 
     // Under `tmp/`, which the project never commits. No `serveFiles`: the files
-    // are private, and the `fs` driver has no signed URL to read them by.
+    // are private, and the `fs` driver has no signed URL to read them by. A URL from this file
+    // and not `app.tmpPath()`: `validators:check` imports the config outside the boot, where
+    // `app` does not exist yet (_doc-lib/flydrive.md#services/fs, https://flydrive.dev/docs/services/fs).
     fs: services.fs({
-      location: app.tmpPath('uploads'),
+      location: new URL('../tmp/uploads', import.meta.url),
       visibility: 'private',
       serveFiles: false,
     }),

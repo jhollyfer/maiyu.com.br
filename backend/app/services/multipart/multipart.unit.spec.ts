@@ -10,7 +10,7 @@ async function service(): Promise<MultipartContract> {
 /**
  * The signature is computed locally (SigV4), without network: what is checked here is
  * what the URL pins, not the bucket (`_standards/backend.md` §5.4). The protocol
- * against the real bucket lives in `multipart.service.e2e.spec.ts`.
+ * against the real bucket lives in `multipart.e2e.spec.ts`.
  */
 test.group('services > multipart (unit)', () => {
   test('each part gets its own URL, with type and size pinned in the signature', async ({

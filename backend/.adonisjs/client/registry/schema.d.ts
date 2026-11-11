@@ -8,7 +8,7 @@ import type { routes } from './index.ts'
 export type ParamValue = string | number | bigint | boolean
 
 export interface Registry {
-  'health-check': {
+  'health_check': {
     methods: ["GET","HEAD"]
     pattern: '/health-check'
     types: {
@@ -21,7 +21,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/health-check.controller').default['handle']>>>
     }
   }
-  'documentation.openapi': {
+  'documentation.openapi.show': {
     methods: ["GET","HEAD"]
     pattern: '/openapi.json'
     types: {
@@ -34,7 +34,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/documentation/openapi/show/show.controller').default['handle']>>>
     }
   }
-  'documentation.reference': {
+  'documentation.reference.show': {
     methods: ["GET","HEAD"]
     pattern: '/documentation'
     types: {
@@ -47,7 +47,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/documentation/reference/show/show.controller').default['handle']>>>
     }
   }
-  'authentication.sign_in': {
+  'authentication.sessions.sign-in': {
     methods: ["POST"]
     pattern: '/authentication/sign-in'
     types: {
@@ -60,7 +60,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/sessions/sign-in/sign-in.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'authentication.sign_out': {
+  'authentication.sessions.sign-out': {
     methods: ["POST"]
     pattern: '/authentication/sign-out'
     types: {
@@ -73,7 +73,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/sessions/sign-out/sign-out.controller').default['handle']>>>
     }
   }
-  'authentication.refresh': {
+  'authentication.sessions.refresh': {
     methods: ["POST"]
     pattern: '/authentication/refresh'
     types: {
@@ -86,7 +86,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/sessions/refresh/refresh.controller').default['handle']>>>
     }
   }
-  'storages.paginate': {
+  'storages.files.paginate': {
     methods: ["GET","HEAD"]
     pattern: '/storages'
     types: {
@@ -99,7 +99,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/paginate/paginate.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.create': {
+  'storages.files.create': {
     methods: ["POST"]
     pattern: '/storages'
     types: {
@@ -112,7 +112,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.complete': {
+  'storages.files.complete': {
     methods: ["POST"]
     pattern: '/storages/:id/complete'
     types: {
@@ -125,7 +125,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/complete/complete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.parts': {
+  'storages.files.parts': {
     methods: ["GET","HEAD"]
     pattern: '/storages/:id/parts'
     types: {
@@ -138,7 +138,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/parts/parts.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.show': {
+  'storages.files.show': {
     methods: ["GET","HEAD"]
     pattern: '/storages/:id'
     types: {
@@ -151,7 +151,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/show/show.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.delete': {
+  'storages.files.delete': {
     methods: ["DELETE"]
     pattern: '/storages/:id'
     types: {
@@ -164,7 +164,7 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
-  'storages.download': {
+  'storages.files.download': {
     methods: ["GET","HEAD"]
     pattern: '/storages/:id/download'
     types: {

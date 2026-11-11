@@ -1,8 +1,4 @@
-import {
-  ACTIVE_STATUS,
-  type ActiveStatus,
-  type UserRole,
-} from '@maiyu/shared'
+import { ACTIVE_STATUS, type ActiveStatus, type UserRole } from '@maiyu/shared'
 
 export type UserProps = {
   readonly id: string

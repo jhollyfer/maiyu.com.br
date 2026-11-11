@@ -149,6 +149,16 @@ test.group('pattern:check > catalog', () => {
       ]),
       ['or-fail'],
     )
+    // The auth API the doc asks for, in a guard and in a use-case, is not an ORM throw.
+    assert.deepEqual(
+      rules([
+        {
+          path: 'backend/app/guards/cookie-access-tokens.guard.ts',
+          text: 'getUserOrFail(): GuardUser {\n  return this.getUserOrFail()\n',
+        },
+      ]),
+      [],
+    )
     // The request logger the standard asks for (backend.md §4.2) is not an ORM throw.
     assert.deepEqual(
       rules([

@@ -8,6 +8,7 @@ import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
 import {
   openUpload,
@@ -88,14 +89,13 @@ test.group('storages > delete', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const { user, session } = await signInWithFactory(client, 'administrator')
     const storage = await uploadFile(client, session)
 
-    const linked = await client
-      .put('/account')
-      .cookies(session)
-      .json({ avatarId: storage.id })
-    linked.assertStatus(200)
+    // The avatar is the reference the kit itself has (`STORAGE_REFERENCES`); the screen that
+    // sets it is the project's, so the row is linked directly.
+    user.avatarId = storage.id
+    await user.save()
 
     const response = await client
       .delete(`/storages/${storage.id}`)
@@ -113,11 +113,13 @@ test.group('storages > delete', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const { user, session } = await signInWithFactory(client, 'administrator')
     const storage = await uploadFile(client, session)
 
-    await client.put('/account').cookies(session).json({ avatarId: storage.id })
-    await client.put('/account').cookies(session).json({ avatarId: null })
+    user.avatarId = storage.id
+    await user.save()
+    user.avatarId = null
+    await user.save()
 
     const response = await client
       .delete(`/storages/${storage.id}`)
@@ -159,6 +161,10 @@ test.group('storages > delete > identificador', (group) => {
     const response = await client.delete('/storages/x').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
+    // The key is the dotted path itself, and `property` would read it as a nested path.
+    assert.include(
+      Object.keys(body(response, ErrorEnvelope).errors ?? {}),
+      'params.id',
+    )
   })
 })

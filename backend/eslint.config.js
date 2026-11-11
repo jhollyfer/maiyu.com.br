@@ -99,6 +99,8 @@ export default defineConfig([
               name: [
                 'ModelQueryBuilderContract',
                 'DatabaseQueryBuilderContract',
+                'RelationQueryBuilderContract',
+                'RelationSubQueryBuilderContract',
               ],
               package: '@adonisjs/lucid',
             },

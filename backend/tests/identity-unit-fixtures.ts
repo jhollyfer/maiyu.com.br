@@ -1,8 +1,4 @@
-import {
-  ACTIVE_STATUS,
-  USER_ROLE,
-  type ActiveStatus,
-} from '@maiyu/shared'
+import { ACTIVE_STATUS, USER_ROLE, type ActiveStatus } from '@maiyu/shared'
 
 import { User } from '#domain/user/user.entity'
 import { SessionMemoryRepository } from '#repositories/session/session.memory.repository'
