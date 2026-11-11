@@ -3,6 +3,7 @@ import type * as React from 'react'
 import { Picture } from '#/components/common/picture/picture'
 import type { PicturePlacement } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
+import { Button } from '#/components/ui/button'
 import { localized } from '#/lib/i18n'
 import { PHOTOS } from '#/lib/photos'
 import type { PhotoKey } from '#/lib/photos'
@@ -65,14 +66,25 @@ export function Photo({
       </AspectRatio>
       <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small text-muted-foreground">
         <span>{localized(photo.caption)}</span>
-        <a
-          href={photo.sourceUrl}
-          target="_blank"
-          rel="noopener noreferrer license"
-          className="underline-offset-4 hover:text-foreground hover:underline"
-        >
-          {m.photo_credit({ author: photo.author, license: photo.license })}
-        </a>
+        {/*
+         * Button do ui/ e não `<a>` cru (#366). `min-h-11` porque o crédito
+         * também é alvo de toque no celular (44px, WCAG 2.5.5); o tamanho do
+         * texto segue o da legenda, não o do botão.
+         */}
+        <Button
+          variant="link"
+          nativeButton={false}
+          className="h-auto min-h-11 px-0 text-small font-normal text-muted-foreground hover:text-foreground"
+          render={
+            <a
+              href={photo.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer license"
+            >
+              {m.photo_credit({ author: photo.author, license: photo.license })}
+            </a>
+          }
+        />
       </figcaption>
     </figure>
   )

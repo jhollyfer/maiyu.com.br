@@ -96,7 +96,7 @@ function RouteComponent(): React.JSX.Element {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   render={<Link to="/" />}
-                  className="inline-flex min-h-11 items-center"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center"
                 >
                   {m.nav_home()}
                 </BreadcrumbLink>
@@ -105,7 +105,7 @@ function RouteComponent(): React.JSX.Element {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   render={<Link to="/blog" />}
-                  className="inline-flex min-h-11 items-center"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center"
                 >
                   {m.nav_blog()}
                 </BreadcrumbLink>

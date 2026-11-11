@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 48 itens de migração para a régua (26 feitos, 0 em andamento, 3 bloqueados, 19 a fazer); atualizado 2026-11-11
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 48 itens de migração para a régua (26 feitos, 1 em andamento, 3 bloqueados, 18 a fazer); atualizado 2026-11-11
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -126,7 +126,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R4.1 | Sem `.github/workflows/`, com o Dockerfile multi-stage na mesma PR | M | A fazer | #298, #368, #369; o dono troca o Coolify antes do merge |
 | R4.2 | `Dockerfile-production` multi-stage pelo modelo do academy; `.dockerignore` na raiz | M | A fazer | `tooling.md` §8.2 |
 | R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | A fazer | `tooling.md` §9 |
-| R4.4 | E2E Playwright dos fluxos públicos | G | A fazer | `tooling.md` §7 |
+| R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | A fazer | `tooling.md` §10.6 |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | A fazer | |
 

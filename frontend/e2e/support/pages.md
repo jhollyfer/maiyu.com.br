@@ -6,4 +6,14 @@ mede os alvos de toque de cada uma no celular. Uma rota por item, sem o prefixo 
 
 ## 200
 
+- /
+- /portfolio
+- /blog
+- /blog/software-que-funciona-com-internet-lenta
+- /career
+- /contact
+
 ## 404
+
+- /nao-existe
+- /blog/nao-existe

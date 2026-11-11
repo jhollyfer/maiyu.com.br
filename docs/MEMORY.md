@@ -18,6 +18,9 @@
 
 ## Parou em
 
+O E2E do kit cobre as páginas públicas (`e2e/support/pages.md`): 90 de 90, depois de levar a 44px os
+alvos de toque do crédito das fotos, do rodapé e do breadcrumb do artigo.
+
 Frente do frontend (item G, sub-sessão), na branch `feat/frontend-regua`, nascida de
 `feat/backend-inicial`. O lote 1 juntou, por merge e sem force, as branches prontas da fase 1:
 espelhos (R1.1), husky e commitlint (R1.3), Luxon (R1.6, parte), versões (R1.7), piso do
