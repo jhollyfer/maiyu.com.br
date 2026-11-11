@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-import { ErrorEnvelope } from '@maiyu/shared'
+import { ErrorEnvelope, StorefrontContactCreateResponse } from '@maiyu/shared'
 
 import { body, resetDatabase } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
@@ -24,9 +24,11 @@ test.group('storefront/contacts > create', (group) => {
     const response = await client.post('/storefront/contacts').json(VALID)
 
     response.assertStatus(201)
+    const receipt = body(response, StorefrontContactCreateResponse)
 
     const [saved, ...others] = await Stored.contacts()
     assert.lengthOf(others, 0)
+    assert.equal(saved?.id, receipt.id)
     assert.deepInclude(saved?.serialize(), {
       name: 'Ana Souza',
       email: 'ana@exemplo.com',
@@ -74,6 +76,11 @@ test.group('storefront/contacts > create', (group) => {
       .json({ ...VALID, website: 'http://spam.example' })
 
     response.assertStatus(201)
+    // The same receipt shape as a person gets, so the robot learns nothing.
+    assert.sameMembers(
+      Object.keys(body(response, StorefrontContactCreateResponse)),
+      ['id', 'createdAt'],
+    )
     assert.lengthOf(await Stored.contacts(), 0)
   })
 

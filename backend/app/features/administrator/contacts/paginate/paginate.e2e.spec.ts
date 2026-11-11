@@ -1,7 +1,11 @@
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
-import { ContactShowResponse, ErrorEnvelope, ResponseRule } from '@maiyu/shared'
+import {
+  AdministratorContactShowResponse,
+  ErrorEnvelope,
+  ResponseRule,
+} from '@maiyu/shared'
 
 import { ContactFactory } from '#database/factories/contact.factory'
 import {
@@ -11,7 +15,7 @@ import {
   resetDatabase,
 } from '#tests/http-fixtures'
 
-const ContactsPage = ResponseRule.paginated(ContactShowResponse)
+const ContactsPage = ResponseRule.paginated(AdministratorContactShowResponse)
 
 const BASE = DateTime.fromISO('2026-11-01T00:00:00Z')
 

@@ -1,7 +1,7 @@
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
-import { ContactShowResponse, ErrorEnvelope } from '@maiyu/shared'
+import { AdministratorContactShowResponse, ErrorEnvelope } from '@maiyu/shared'
 
 import { ContactFactory } from '#database/factories/contact.factory'
 import {
@@ -33,7 +33,7 @@ test.group('administrator/contacts > show', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.deepInclude(body(response, ContactShowResponse), {
+    assert.deepInclude(body(response, AdministratorContactShowResponse), {
       id: contact.id,
       name: 'Ana Souza',
       email: 'ana@exemplo.com',

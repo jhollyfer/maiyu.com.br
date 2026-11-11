@@ -2,7 +2,7 @@ import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
-import { ContactShowResponse, ErrorEnvelope } from '@maiyu/shared'
+import { AdministratorContactShowResponse, ErrorEnvelope } from '@maiyu/shared'
 
 import { ContactFactory } from '#database/factories/contact.factory'
 import { ClockContract } from '#services/clock/clock.contract'
@@ -43,7 +43,7 @@ test.group('administrator/contacts > answer', (group) => {
 
     response.assertStatus(200)
     assert.equal(
-      body(response, ContactShowResponse).answeredAt,
+      body(response, AdministratorContactShowResponse).answeredAt,
       '2026-11-05T15:00:00.000Z',
     )
     const stored = await Stored.contact(contact.id)

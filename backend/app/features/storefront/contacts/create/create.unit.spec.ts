@@ -58,7 +58,10 @@ test.group('storefront/contacts > create (unit)', (group) => {
 
     const result = await useCase.execute(PAYLOAD)
 
-    assert.isTrue(result.isRight())
+    assert.deepEqual(result.value, {
+      id: '00000000-0000-4000-8000-000000000001',
+      createdAt: clock.now().toJSDate().toISOString(),
+    })
     const [saved] = await stored(contacts)
     assert.deepInclude(saved?.snapshot(), {
       id: '00000000-0000-4000-8000-000000000001',
@@ -68,7 +71,7 @@ test.group('storefront/contacts > create (unit)', (group) => {
     })
   })
 
-  test('a filled honeypot answers like a success and saves nothing', async ({
+  test('a filled honeypot answers with a receipt like a success and saves nothing', async ({
     assert,
   }) => {
     const contacts = new ContactMemoryRepository()
@@ -79,7 +82,7 @@ test.group('storefront/contacts > create (unit)', (group) => {
       website: 'http://spam.example',
     })
 
-    assert.isTrue(result.isRight())
+    assert.sameMembers(Object.keys(result.value), ['id', 'createdAt'])
     assert.lengthOf(await stored(contacts), 0)
   })
 

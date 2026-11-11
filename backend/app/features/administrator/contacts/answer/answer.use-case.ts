@@ -5,7 +5,7 @@ import { I18n } from '@adonisjs/i18n'
 import {
   left,
   right,
-  type ContactShowResponse,
+  type AdministratorContactShowResponse,
   type Either,
 } from '@maiyu/shared'
 
@@ -18,7 +18,7 @@ import { ContactRepository } from '#repositories/contact/contact.repository'
 import { ClockContract } from '#services/clock/clock.contract'
 
 type Payload = IdentifierPayload
-type Response = Either<HTTPException, ContactShowResponse>
+type Response = Either<HTTPException, AdministratorContactShowResponse>
 
 /**
  * Marks a message as answered, one way: the instant is the clock's, and answering again is

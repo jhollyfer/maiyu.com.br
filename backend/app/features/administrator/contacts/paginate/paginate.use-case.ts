@@ -7,9 +7,8 @@ import {
   SORT_DIRECTION,
   left,
   right,
-  type ContactShowResponse,
+  type AdministratorContactPaginateResponse,
   type Either,
-  type Paginated,
 } from '@maiyu/shared'
 
 import { ContactPresenter } from '../contacts.presenter.ts'
@@ -19,7 +18,7 @@ import { ContactRepository } from '#repositories/contact/contact.repository'
 import type { AdministratorContactPaginatePayload } from '#validators/administrator/contacts.validator'
 
 type Payload = AdministratorContactPaginatePayload
-type Response = Either<HTTPException, Paginated<ContactShowResponse>>
+type Response = Either<HTTPException, AdministratorContactPaginateResponse>
 
 /**
  * The panel inbox: newest message first, because what matters in an inbox is what just

@@ -5,7 +5,7 @@ import { I18n } from '@adonisjs/i18n'
 import {
   left,
   right,
-  type ContactShowResponse,
+  type AdministratorContactShowResponse,
   type Either,
 } from '@maiyu/shared'
 
@@ -16,7 +16,7 @@ import HTTPException from '#exceptions/http.exception'
 import { ContactRepository } from '#repositories/contact/contact.repository'
 
 type Payload = IdentifierPayload
-type Response = Either<HTTPException, ContactShowResponse>
+type Response = Either<HTTPException, AdministratorContactShowResponse>
 
 @inject()
 export default class AdministratorContactShowUseCase {
