@@ -21,6 +21,17 @@ test.group('validators:check > pair comparison', () => {
     assert.deepEqual(findings, [])
   })
 
+  test('vine.boolean() and z.boolean() are the same rule', ({ assert }) => {
+    const findings = check.compare({
+      file,
+      name: 'StoragesFileCreateValidator',
+      vine: vine.create({ pinned: vine.boolean() }),
+      zod: z.object({ pinned: z.boolean() }),
+    })
+
+    assert.deepEqual(findings, [])
+  })
+
   test('when a ceiling differs, is an architecture.md §10 finding, in the backend file', ({
     assert,
   }) => {
