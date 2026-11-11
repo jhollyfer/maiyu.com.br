@@ -86,6 +86,8 @@ const openapi = {
  * table, keyed by the controller file name without the suffix. It wins over the
  * mechanism table and the group noun.
  */
-export const ACTION_OVERRIDES: Record<string, string> = {}
+export const ACTION_OVERRIDES: Record<string, string> = {
+  answer: 'Marcar contato como respondido',
+}
 
 export default openapi

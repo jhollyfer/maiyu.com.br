@@ -20,6 +20,7 @@ export type ScannedRoutes = {
     'storefront.contacts.create': { paramsTuple?: []; params?: {} }
     'administrator.contacts.paginate': { paramsTuple?: []; params?: {} }
     'administrator.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'administrator.contacts.answer': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
     'health_check': { paramsTuple?: []; params?: {} }
@@ -50,6 +51,7 @@ export type ScannedRoutes = {
     'storages.files.create': { paramsTuple?: []; params?: {} }
     'storages.files.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'storefront.contacts.create': { paramsTuple?: []; params?: {} }
+    'administrator.contacts.answer': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   DELETE: {
     'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

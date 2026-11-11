@@ -189,11 +189,12 @@ T9 → T10
 
 **Done when**:
 
-- [ ] e2e: 200 com `answeredAt`; 409 na segunda e `answered_at` igual; dois em paralelo dão um 200 e um 409
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: 200 com `answeredAt`; 409 na segunda e `answered_at` igual; dois em paralelo dão um 200 e um 409
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 

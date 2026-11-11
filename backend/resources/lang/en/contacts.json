@@ -1,4 +1,5 @@
 {
   "not_found": "Contact not found",
-  "forbidden": "You cannot access the contacts"
+  "forbidden": "You cannot access the contacts",
+  "already_answered": "This contact was already marked as answered"
 }

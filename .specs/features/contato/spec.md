@@ -143,7 +143,7 @@ dono quiser o aviso.
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | CONTACT-01 | P1: Visitante envia mensagem | Design | Done |
-| CONTACT-02 | P1: Dono lista e marca como respondida | Design | Pending |
+| CONTACT-02 | P1: Dono lista e marca como respondida | Design | Done |
 | CONTACT-03 | P2: Aviso ao dono por e-mail | - | Out of scope (dono) |
 | CONTACT-05 | P1: Dono apaga o contato | Design | Pending |
 | CONTACT-04 | P1: Guarda de 12 meses | Design | Pending |

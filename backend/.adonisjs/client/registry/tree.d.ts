@@ -38,6 +38,7 @@ export interface ApiDefinition {
     contacts: {
       paginate: typeof routes['administrator.contacts.paginate']
       show: typeof routes['administrator.contacts.show']
+      answer: typeof routes['administrator.contacts.answer']
     }
   }
 }

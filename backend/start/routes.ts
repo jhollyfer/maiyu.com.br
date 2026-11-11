@@ -133,6 +133,11 @@ router
         router
           .get(':id', [controllers.administrator.contacts.show.Show])
           .as('administrator.contacts.show')
+        router
+          .post(':id/answer', [
+            controllers.administrator.contacts.answer.Answer,
+          ])
+          .as('administrator.contacts.answer')
       })
       .prefix('contacts')
   })

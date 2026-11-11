@@ -6,6 +6,9 @@
 export const controllers = {
   administrator: {
     contacts: {
+      answer: {
+        Answer: () => import('#features/administrator/contacts/answer/answer.controller'),
+      },
       paginate: {
         Paginate: () => import('#features/administrator/contacts/paginate/paginate.controller'),
       },
