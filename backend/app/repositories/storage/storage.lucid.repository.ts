@@ -1,7 +1,7 @@
 import { inject } from '@adonisjs/core'
 import { DateTime } from 'luxon'
 
-import { UPLOAD_STATUS } from '@maiyu/shared'
+import { UPLOAD_STATUS, z } from '@maiyu/shared'
 import type { Paginated } from '@maiyu/shared'
 
 import { STORAGE_REFERENCES } from './storage.references.ts'
@@ -15,6 +15,12 @@ import { TransactionContext } from '#core/transaction-context'
 import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
 import LucidMapping from '#repositories/shared/lucid-mapping'
+
+/**
+ * The rows of a `count('* as total')`, typed `any` by the query builder. Postgres `count` is
+ * `bigint` and the driver delivers it as a string, hence the coercion.
+ */
+const CountRows = z.array(z.object({ total: z.coerce.number() }))
 
 @inject()
 export class StorageLucidRepository extends StorageRepository {
@@ -68,13 +74,13 @@ export class StorageLucidRepository extends StorageRepository {
     const client = this.transaction.client()
     const counts = await Promise.all(
       STORAGE_REFERENCES.map(async (reference) => {
-        const rows = await client
+        const rows: unknown = await client
           .from(reference.table)
           .where(reference.column, id)
           .count('* as total')
 
-        // Postgres `count` is `bigint`, and the driver delivers it as a string.
-        return { label: reference.label, total: Number(rows[0]?.total ?? 0) }
+        const [row] = CountRows.parse(rows)
+        return { label: reference.label, total: row?.total ?? 0 }
       }),
     )
 

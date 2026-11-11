@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 
+import { ErrorEnvelope } from '@maiyu/shared'
+
 import { SESSION_TOKEN } from '#config/session-token'
 import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
 import { body, resetDatabase } from '#tests/http-fixtures'
@@ -56,8 +58,11 @@ test.group('authentication > sign-in', (group) => {
 
     // Same response in both cases: any difference - code, message or
     // pointed field - would turn the login into a registration checker.
-    assert.deepEqual(body(existing), body(nonexistent))
-    assert.equal(body(existing).code, 'INVALID_CREDENTIALS')
+    assert.deepEqual(
+      body(existing, ErrorEnvelope),
+      body(nonexistent, ErrorEnvelope),
+    )
+    assert.equal(body(existing, ErrorEnvelope).code, 'INVALID_CREDENTIALS')
 
     // And no cookie is written on refusal.
     assert.isUndefined(existing.cookie(SESSION_TOKEN.ACCESS))
@@ -80,7 +85,7 @@ test.group('authentication > sign-in', (group) => {
       .json({ email: account.email, password: account.password })
 
     blocked.assertStatus(429)
-    assert.equal(body(blocked).code, 'TOO_MANY_REQUESTS')
+    assert.equal(body(blocked, ErrorEnvelope).code, 'TOO_MANY_REQUESTS')
     assert.isUndefined(blocked.cookie(SESSION_TOKEN.ACCESS))
   })
 })

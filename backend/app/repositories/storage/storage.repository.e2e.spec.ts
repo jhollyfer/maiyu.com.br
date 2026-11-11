@@ -18,7 +18,7 @@ import { PNG_HEAD } from '#tests/storages-unit-fixtures'
  */
 const IMPLEMENTATIONS = {
   lucid: () => app.container.make(StorageLucidRepository),
-  memory: async () => new StorageMemoryRepository(),
+  memory: () => app.container.make(StorageMemoryRepository),
 } satisfies Record<string, () => Promise<StorageRepository>>
 
 const NOW = new Date('2026-10-29T12:00:00.000Z')

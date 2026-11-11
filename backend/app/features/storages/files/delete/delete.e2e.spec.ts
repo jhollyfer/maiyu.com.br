@@ -1,18 +1,21 @@
 import drive from '@adonisjs/drive/services/main'
-import type { ApiClient } from '@japa/api-client'
 import { test } from '@japa/runner'
 
-import type { StorageMimetype } from '@maiyu/shared'
+import { ErrorEnvelope } from '@maiyu/shared'
 
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
-import { pngBytes } from '#tests/storages-fixtures'
+import {
+  openUpload,
+  partUrl,
+  putPart,
+  uploadFile,
+  pngBytes,
+} from '#tests/storages-fixtures'
 import { Stored } from '#tests/stored-fixtures'
 
 /**
@@ -27,57 +30,6 @@ import { Stored } from '#tests/stored-fixtures'
  */
 const FULL_PART = pngBytes(PART_SIZE, 65)
 
-const SMALL = pngBytes(1024)
-
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
-
-  response.assertStatus(201)
-
-  return body(response)
-}
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-async function put(url: string, content: Uint8Array): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: content,
-    headers: { 'Content-Type': 'image/png' },
-  })
-
-  if (!response.ok) throw new Error(`PUT respondeu ${response.status}`)
-
-  return response.headers.get('etag') ?? ''
-}
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
-async function upload(
-  client: ApiClient,
-  session: Session,
-): Promise<ResponseBody> {
-  const opened = await open(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: SMALL.byteLength,
-  })
-
-  await put(opened.parts[0].url, SMALL)
-
-  const completed = await client
-    .post(`/storages/${opened.storage.id}/complete`)
-    .cookies(session)
-    .json({})
-
-  completed.assertStatus(200)
-
-  return body(completed)
-}
-
 /** A `storages` row with no binary at all: only the metadata matters here. */
 
 test.group('storages > delete', (group) => {
@@ -88,7 +40,7 @@ test.group('storages > delete', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     // The binary exists beforehand: without this assertion, a `delete` that deleted
     // nothing would pass the one below vacuously.
@@ -110,13 +62,13 @@ test.group('storages > delete', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'galeria.png',
       mimetype: 'image/png',
       size: PART_SIZE * 2,
     })
 
-    await put(opened.parts[0].url, FULL_PART)
+    await putPart(partUrl(opened), FULL_PART)
 
     const response = await client
       .delete(`/storages/${opened.storage.id}`)
@@ -137,7 +89,7 @@ test.group('storages > delete', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     const linked = await client
       .put('/account')
@@ -150,7 +102,7 @@ test.group('storages > delete', (group) => {
       .cookies(session)
 
     response.assertStatus(409)
-    assert.equal(body(response).code, 'STORAGE_IN_USE')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_IN_USE')
 
     // The 409 cannot be a "deleted and complained": record and binary are still there.
     assert.isNotNull(await Stored.storage(storage.id))
@@ -162,7 +114,7 @@ test.group('storages > delete', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     await client.put('/account').cookies(session).json({ avatarId: storage.id })
     await client.put('/account').cookies(session).json({ avatarId: null })
@@ -183,7 +135,7 @@ test.group('storages > delete', (group) => {
       .cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'STORAGE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
   })
 
   test('requires a session', async ({ client }) => {
@@ -207,6 +159,6 @@ test.group('storages > delete > identificador', (group) => {
     const response = await client.delete('/storages/x').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'params.id')
+    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
   })
 })

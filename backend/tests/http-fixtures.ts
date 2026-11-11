@@ -1,40 +1,34 @@
 import testUtils from '@adonisjs/core/services/test_utils'
 import type { ApiClient, ApiResponse } from '@japa/api-client'
 
+import type { z } from '@maiyu/shared'
+
 import { SESSION_TOKEN } from '#config/session-token'
 import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
 import type User from '#models/user'
 
 /**
- * The body as the specs read it: an object of free fields.
+ * The body read through the schema of the response, from `@maiyu/shared`: the same contract
+ * the frontend validates (`frontend.md` §3.3), and a spec that reads a field the response does not
+ * have fails here, with the path, instead of comparing against `undefined`.
  *
- * The `any` is forced by `@japa/api-client` with the `@tuyau/core` registry: the
- * route matches by path and not by method, so `response.body()` is the union of all
- * responses of that path - the error ones included. It is the only `any` in the
- * suite, and every spec inherits the type from here (`ResponseBody`).
+ * `response.body()` is typed `any` by `@japa/api-client`; it lands in `unknown` and leaves only
+ * through the schema, so no spec reads a field of an `any`.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- @tuyau/core registry unites the responses of the path
-export type ResponseBody = Record<string, any>
-
-export function body(response: ApiResponse): ResponseBody {
-  // `body()` is typed `any`: it lands in `unknown` and leaves through the guard, so the lint
-  // (`no-unsafe-return`) sees a narrowed value and not an `any` passed along.
+export function body<TSchema extends z.ZodType>(
+  response: ApiResponse,
+  schema: TSchema,
+): z.output<TSchema> {
   const value: unknown = response.body()
-  if (!isResponseBody(value))
-    throw new Error(`response body is not an object: ${String(value)}`)
 
-  return value
-}
-
-function isResponseBody(value: unknown): value is ResponseBody {
-  return typeof value === 'object' && value !== null
+  return schema.parse(value)
 }
 
 /** The cookie value as a string: `@japa/api-client` types it `any`. */
-function cookieValue(response: ApiResponse, name: string): string {
+export function cookieValue(response: ApiResponse, name: string): string {
   const value: unknown = response.cookie(name)?.value
   if (typeof value !== 'string')
-    throw new Error(`session cookie ${name} missing from the sign-in response`)
+    throw new Error(`session cookie ${name} missing from the response`)
 
   return value
 }

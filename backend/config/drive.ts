@@ -118,5 +118,6 @@ const driveConfig = defineConfig({
 export default driveConfig
 
 declare module '@adonisjs/drive/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires `interface`, which adds no members here
   export interface DriveDisks extends InferDriveDisks<typeof driveConfig> {}
 }

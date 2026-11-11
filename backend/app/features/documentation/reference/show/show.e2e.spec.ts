@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 
+import { ErrorEnvelope } from '@maiyu/shared'
+
 import { DOCUMENTATION_CSP } from '#core/openapi/scalar'
 import {
   authenticateAsAdministrator,
@@ -67,6 +69,6 @@ test.group('reference > show', (group) => {
     const response = await client.get('/documentation').cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'RESOURCE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'RESOURCE_NOT_FOUND')
   })
 })

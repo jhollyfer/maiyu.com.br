@@ -1,6 +1,10 @@
 import { test } from '@japa/runner'
 
-import { UPLOAD_STATUS } from '@maiyu/shared'
+import {
+  ErrorEnvelope,
+  StoragesFileShowResponse,
+  UPLOAD_STATUS,
+} from '@maiyu/shared'
 
 import {
   authenticateAsAdministrator,
@@ -35,10 +39,13 @@ test.group('storages > detalhe', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.equal(body(response).id, storage.id)
-    assert.equal(body(response).originalName, 'capa.png')
+    assert.equal(body(response, StoragesFileShowResponse).id, storage.id)
+    assert.equal(
+      body(response, StoragesFileShowResponse).originalName,
+      'capa.png',
+    )
     // Not a column: the model hook resolves it on read from `path`.
-    assert.include(body(response).url, storage.path)
+    assert.include(body(response, StoragesFileShowResponse).url, storage.path)
   })
 
   test('reaches the still PENDING upload', async ({ client, assert }) => {
@@ -52,7 +59,7 @@ test.group('storages > detalhe', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.equal(body(response).status, 'PENDING')
+    assert.equal(body(response, StoragesFileShowResponse).status, 'PENDING')
   })
 
   test('nonexistent id responds 404', async ({ client, assert }) => {
@@ -63,7 +70,7 @@ test.group('storages > detalhe', (group) => {
       .cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'STORAGE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
   })
 
   test('malformed id responds 422 instead of a Postgres 500', async ({
@@ -75,7 +82,7 @@ test.group('storages > detalhe', (group) => {
     const response = await client.get('/storages/nao-e-uuid').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'params.id')
+    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
   })
 })
 

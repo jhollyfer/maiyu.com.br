@@ -1,17 +1,20 @@
-import type { ApiClient } from '@japa/api-client'
 import { test } from '@japa/runner'
 
-import type { StorageMimetype } from '@maiyu/shared'
+import { ErrorEnvelope, StoragesFileUploadResponse } from '@maiyu/shared'
 
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
-import { pngBytes } from '#tests/storages-fixtures'
+import {
+  openUpload,
+  partUrl,
+  putPart,
+  uploadFile,
+  pngBytes,
+} from '#tests/storages-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the
@@ -27,55 +30,6 @@ const FULL_PART = pngBytes(PART_SIZE, 65)
 
 const SMALL = pngBytes(1024)
 
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
-
-  response.assertStatus(201)
-
-  return body(response)
-}
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-async function put(url: string, content: Uint8Array): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: content,
-    headers: { 'Content-Type': 'image/png' },
-  })
-
-  if (!response.ok) throw new Error(`PUT respondeu ${response.status}`)
-
-  return response.headers.get('etag') ?? ''
-}
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
-async function upload(
-  client: ApiClient,
-  session: Session,
-): Promise<ResponseBody> {
-  const opened = await open(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: SMALL.byteLength,
-  })
-
-  await put(opened.parts[0].url, SMALL)
-
-  const completed = await client
-    .post(`/storages/${opened.storage.id}/complete`)
-    .cookies(session)
-    .json({})
-
-  completed.assertStatus(200)
-
-  return body(completed)
-}
-
 /** A `storages` row with no binary at all: only the metadata matters here. */
 
 test.group('storages > parts', (group) => {
@@ -87,7 +41,7 @@ test.group('storages > parts', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'galeria.png',
       mimetype: 'image/png',
       size: PART_SIZE * 2 + SMALL.byteLength,
@@ -96,8 +50,8 @@ test.group('storages > parts', (group) => {
     assert.equal(opened.totalParts, 3)
 
     // Uploads the first two and "drops" before the third.
-    await put(opened.parts[0].url, FULL_PART)
-    await put(opened.parts[1].url, FULL_PART)
+    await putPart(partUrl(opened), FULL_PART)
+    await putPart(partUrl(opened, 1), FULL_PART)
 
     const response = await client
       .get(`/storages/${opened.storage.id}/parts`)
@@ -105,7 +59,7 @@ test.group('storages > parts', (group) => {
 
     response.assertStatus(200)
 
-    const resumed = body(response)
+    const resumed = body(response, StoragesFileUploadResponse)
 
     assert.deepEqual(
       resumed.uploaded.map((part: { partNumber: number }) => part.partNumber),
@@ -125,7 +79,7 @@ test.group('storages > parts', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'galeria.png',
       mimetype: 'image/png',
       size: PART_SIZE + SMALL.byteLength,
@@ -135,13 +89,16 @@ test.group('storages > parts', (group) => {
       .get(`/storages/${opened.storage.id}/parts`)
       .cookies(session)
 
-    await put(body(response).parts[0].url, FULL_PART)
+    await putPart(
+      partUrl(body(response, StoragesFileUploadResponse)),
+      FULL_PART,
+    )
 
     const after = await client
       .get(`/storages/${opened.storage.id}/parts`)
       .cookies(session)
 
-    assert.lengthOf(body(after).uploaded, 1)
+    assert.lengthOf(body(after, StoragesFileUploadResponse).uploaded, 1)
   })
 
   test('an already confirmed file responds with empty lists', async ({
@@ -149,16 +106,19 @@ test.group('storages > parts', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     const response = await client
       .get(`/storages/${storage.id}/parts`)
       .cookies(session)
 
     response.assertStatus(200)
-    assert.isEmpty(body(response).parts)
-    assert.isEmpty(body(response).uploaded)
-    assert.equal(body(response).storage.status, 'UPLOADED')
+    assert.isEmpty(body(response, StoragesFileUploadResponse).parts)
+    assert.isEmpty(body(response, StoragesFileUploadResponse).uploaded)
+    assert.equal(
+      body(response, StoragesFileUploadResponse).storage.status,
+      'UPLOADED',
+    )
   })
 })
 
@@ -181,7 +141,7 @@ test.group('storages > parts > acesso e identificador', (group) => {
       .cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'STORAGE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
   })
 
   test('malformed id responds 422 instead of a Postgres 500', async ({
@@ -193,6 +153,6 @@ test.group('storages > parts > acesso e identificador', (group) => {
     const response = await client.get('/storages/x/parts').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'params.id')
+    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
   })
 })

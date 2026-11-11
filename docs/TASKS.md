@@ -71,7 +71,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | A fazer | `sync --check` |
-| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Em revisão | `feat/backend-inicial`; `shared/` verde com o kit da leva 6.1; `shared/src/index.ts` e `enums/user-role.ts` são provisórios do projeto até a leva 8 do kit |
+| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Em revisão | `feat/backend-inicial`; `shared/` verde com o kit da leva 7 (format, lint, tsc, 62 testes); `enums/user-role.ts` é o esqueleto do kit; `index.ts` provisório do projeto até a leva 8 |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | A fazer | `tooling.md` §6 |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
@@ -86,7 +86,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Bloqueada | leva 6.1 aplicada: tsc 0, migrations e schema ok; lint, format, `pattern:check`, `validators:check` e specs do kit reprovam em arquivos do kit, levados ao upstream |
+| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Bloqueada | leva 7 aplicada: tsc e lint verdes; format reprova em dois pontos de extensão iguais ao esqueleto do kit; `pattern:check`, `validators:check` e specs do kit esperam a leva 8 |
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | Em andamento | `openapi.json` e `authz-baseline.json` gerados; health-check e i18n de três idiomas vêm do kit; specs do kit pendentes da correção upstream |
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Bloqueada | escopo do kit: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; a revogação em update de conta espera rota de conta, proposta ao dono na R2.10 |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Em andamento | `.env.example` do modelo novo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017; `Dockerfile-production` do kit; e2e de storage contra o MinIO local não vale como prova de PR |

@@ -65,6 +65,9 @@ export class PatternRules {
       /<(button|select|textarea|label|table|dialog|form|progress|hr|input)(?=[\s/>])/g,
     )) {
       const index = match.index
+      // The element given to a Base UI `render` prop is the tag the `ui/` component renders
+      // (`nativeButton`), not a raw one: the same exception as the frontend ESLint selector.
+      if (/render=\{\s*$/.test(code.slice(0, index))) continue
       if (
         match[1] === 'input' &&
         code.slice(index, code.indexOf('/>', index) + 1).includes('type="file"')

@@ -25,7 +25,9 @@ export class CheckReport {
   static print(
     name: string,
     findings: ReadonlyArray<Finding>,
-    write: (line: string) => void = console.log,
+    write: (line: string) => void = (line) => {
+      process.stdout.write(`${line}\n`)
+    },
   ): number {
     if (findings.length === 0) {
       write(`${name}: no findings.`)

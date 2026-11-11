@@ -27,7 +27,7 @@ const IMPLEMENTATIONS = {
     }
   },
   memory: async (): Promise<Pair> => ({
-    sessions: new SessionMemoryRepository(),
+    sessions: await app.container.make(SessionMemoryRepository),
     userId: randomUUID(),
   }),
 } satisfies Record<string, () => Promise<Pair>>

@@ -57,13 +57,17 @@ export default class StorageService extends StorageContract {
    */
   async head(path: string): Promise<Uint8Array> {
     const stream = await drive.use().getStream(path)
-    const chunks: Buffer[] = []
+    const chunks: Uint8Array[] = []
     let read = 0
 
     try {
       for await (const chunk of stream) {
-        chunks.push(Buffer.from(chunk))
-        read += chunk.length
+        // The stream yields `any`; with no encoding set, Node hands over `Buffer`, a `Uint8Array`.
+        const piece: unknown = chunk
+        if (!(piece instanceof Uint8Array))
+          throw new TypeError(`object ${path} streamed a non-binary chunk`)
+        chunks.push(piece)
+        read += piece.byteLength
 
         if (read >= STORAGE_SIGNATURE_BYTES) break
       }

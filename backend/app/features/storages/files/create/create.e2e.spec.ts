@@ -1,7 +1,6 @@
-import type { ApiClient } from '@japa/api-client'
 import { test } from '@japa/runner'
 
-import type { StorageMimetype } from '@maiyu/shared'
+import { ErrorEnvelope } from '@maiyu/shared'
 
 import { UPLOAD_MAX_SIZE } from '#config/drive'
 import { PART_SIZE } from '#services/multipart/multipart.contract'
@@ -9,9 +8,8 @@ import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
+import { openUpload } from '#tests/storages-fixtures'
 import { Stored } from '#tests/stored-fixtures'
 import { StoragesFileCreateValidator } from '#validators/storages/files.validator'
 
@@ -20,23 +18,6 @@ import { StoragesFileCreateValidator } from '#validators/storages/files.validato
  * form that submitted it, and ownership authorizes nothing. What rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
-
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
-
-  response.assertStatus(201)
-
-  return body(response)
-}
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
 
 /** A `storages` row with no binary at all: only the metadata matters here. */
 
@@ -93,7 +74,7 @@ test.group('storages > create', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'capa.png',
       mimetype: 'image/png',
       size: 2 * 1024 * 1024,
@@ -117,7 +98,7 @@ test.group('storages > create', (group) => {
     const session = await authenticateAsAdministrator(client)
 
     // Two full parts and a remainder: `ceil` must count the remainder.
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'edital.pdf',
       mimetype: 'application/pdf',
       size: PART_SIZE * 2 + 1,
@@ -145,7 +126,7 @@ test.group('storages > create', (group) => {
     const session = await authenticateAsAdministrator(client)
     const size = 4 * 1024 ** 3
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'acervo.pdf',
       mimetype: 'application/pdf',
       size,
@@ -181,7 +162,7 @@ test.group('storages > create > 422', (group) => {
       .json({ fileName: 'script.sh', mimetype: 'application/x-sh', size: 128 })
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'mimetype')
+    assert.property(body(response, ErrorEnvelope).errors, 'mimetype')
     assert.lengthOf(await Stored.storages(), 0)
   })
 })

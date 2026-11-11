@@ -260,6 +260,13 @@ test.group('pattern:check > catalog', () => {
     assert.deepEqual(
       lines(
         screen,
+        '<Switch nativeButton render={<button type="button" />} />\n',
+      ),
+      [],
+    )
+    assert.deepEqual(
+      lines(
+        screen,
         '<input\n  id="a"\n  type="file"\n/>\n<input name="b" />\n',
       ),
       [5],

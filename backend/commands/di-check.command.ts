@@ -58,8 +58,14 @@ export default class DiCheck extends BaseCommand {
       const specifier = `#${target.directory}/${target.file.replace(/\.ts$/, '')}`
 
       try {
-        const imported = await import(specifier)
-        if (typeof imported.default !== 'function') continue
+        const imported: unknown = await import(specifier)
+        if (
+          typeof imported !== 'object' ||
+          imported === null ||
+          !('default' in imported) ||
+          typeof imported.default !== 'function'
+        )
+          continue
 
         await this.app.container.make(imported.default)
       } catch (error) {

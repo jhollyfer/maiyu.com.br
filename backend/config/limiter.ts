@@ -30,5 +30,6 @@ const limiterConfig = defineConfig({
 export default limiterConfig
 
 declare module '@adonisjs/limiter/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires `interface`, which adds no members here
   export interface LimitersList extends InferLimiters<typeof limiterConfig> {}
 }

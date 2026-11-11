@@ -1,8 +1,7 @@
 import app from '@adonisjs/core/services/app'
-import type { ApiClient } from '@japa/api-client'
 import { test } from '@japa/runner'
 
-import type { StorageMimetype } from '@maiyu/shared'
+import { ErrorEnvelope } from '@maiyu/shared'
 
 import { StorageContract } from '#services/storage/storage.contract'
 import {
@@ -10,67 +9,14 @@ import {
   authenticateAsNonStaff,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
-import { pngBytes } from '#tests/storages-fixtures'
+import { uploadFile } from '#tests/storages-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the
  * form that submitted it, and ownership authorizes nothing. What rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
-
-const SMALL = pngBytes(1024)
-
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
-
-  response.assertStatus(201)
-
-  return body(response)
-}
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-async function put(url: string, content: Uint8Array): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: content,
-    headers: { 'Content-Type': 'image/png' },
-  })
-
-  if (!response.ok) throw new Error(`PUT respondeu ${response.status}`)
-
-  return response.headers.get('etag') ?? ''
-}
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
-async function upload(
-  client: ApiClient,
-  session: Session,
-): Promise<ResponseBody> {
-  const opened = await open(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: SMALL.byteLength,
-  })
-
-  await put(opened.parts[0].url, SMALL)
-
-  const completed = await client
-    .post(`/storages/${opened.storage.id}/complete`)
-    .cookies(session)
-    .json({})
-
-  completed.assertStatus(200)
-
-  return body(completed)
-}
 
 /** A `storages` row with no binary at all: only the metadata matters here. */
 
@@ -79,7 +25,7 @@ test.group('storages > download', (group) => {
 
   test('refuses whoever has no session', async ({ client }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     // With the bucket private, this route is the only path to the binary. Open,
     // it issued a signed URL for any uuid without a session - the back
@@ -93,7 +39,7 @@ test.group('storages > download', (group) => {
 
   test('redirects to a temporary bucket URL', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     // Without following the redirect, to see what the **application** responds.
     const response = await client
@@ -115,7 +61,7 @@ test.group('storages > download', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     const response = await client
       .get(`/storages/${storage.id}/download`)
@@ -135,7 +81,7 @@ test.group('storages > download', (group) => {
     client,
   }) => {
     const admin = await authenticateAsAdministrator(client)
-    const storage = await upload(client, admin)
+    const storage = await uploadFile(client, admin)
 
     const advisor = await authenticateAsNonStaff(client)
 
@@ -154,7 +100,7 @@ test.group('storages > download', (group) => {
       .cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'STORAGE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
   })
 })
 
@@ -200,6 +146,6 @@ test.group('storages > download > identificador', (group) => {
     const response = await client.get('/storages/x/download').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'params.id')
+    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
   })
 })

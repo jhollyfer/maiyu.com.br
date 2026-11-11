@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { test } from '@japa/runner'
@@ -30,9 +30,14 @@ const DECLARED_ANONYMOUS_WRITES = [
 
 /** `route -> protection`, as `authz:check` writes it; anything else fails here, not in a test. */
 function readBaseline(): Record<string, string> {
-  const read: unknown = JSON.parse(
-    readFileSync(join(import.meta.dirname, 'authz-baseline.json'), 'utf-8'),
-  )
+  const file = join(import.meta.dirname, 'authz-baseline.json')
+  // A new project has no baseline yet: say how to make it instead of a bare ENOENT.
+  if (!existsSync(file))
+    throw new Error(
+      'authz-baseline.json missing: run `pnpm authz:check -- --write` once and commit it',
+    )
+
+  const read: unknown = JSON.parse(readFileSync(file, 'utf-8'))
   if (typeof read !== 'object' || read === null)
     throw new Error('authz-baseline.json is not an object')
 

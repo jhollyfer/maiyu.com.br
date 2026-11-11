@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 
+import { ErrorEnvelope } from '@maiyu/shared'
+
 import { corsOrigins } from '#config/cors'
 import { body } from '#tests/http-fixtures'
 
@@ -22,7 +24,7 @@ test.group('middleware > origin (e2e)', () => {
 
     const response = await client.post(ROUTE).header('origin', origin ?? '')
 
-    assert.notEqual(body(response).code, REFUSED)
+    assert.notEqual(body(response, ErrorEnvelope).code, REFUSED)
   })
 
   test('an Origin outside the allowlist is refused with 403', async ({
@@ -34,7 +36,7 @@ test.group('middleware > origin (e2e)', () => {
       .header('origin', 'http://intruder.example')
 
     response.assertStatus(403)
-    assert.equal(body(response).code, REFUSED)
+    assert.equal(body(response, ErrorEnvelope).code, REFUSED)
   })
 
   test('without Origin, a cross-site Sec-Fetch-Site is refused', async ({
@@ -46,7 +48,7 @@ test.group('middleware > origin (e2e)', () => {
       .header('sec-fetch-site', 'cross-site')
 
     response.assertStatus(403)
-    assert.equal(body(response).code, REFUSED)
+    assert.equal(body(response, ErrorEnvelope).code, REFUSED)
   })
 
   test('without Origin, a same-origin Sec-Fetch-Site passes', async ({
@@ -57,7 +59,7 @@ test.group('middleware > origin (e2e)', () => {
       .post(ROUTE)
       .header('sec-fetch-site', 'same-origin')
 
-    assert.notEqual(body(response).code, REFUSED)
+    assert.notEqual(body(response, ErrorEnvelope).code, REFUSED)
   })
 
   test('without Origin and Sec-Fetch-Site the write is refused', async ({
@@ -70,6 +72,6 @@ test.group('middleware > origin (e2e)', () => {
     })
 
     response.assertStatus(403)
-    assert.equal(body(response).code, REFUSED)
+    assert.equal(body(response, ErrorEnvelope).code, REFUSED)
   })
 })

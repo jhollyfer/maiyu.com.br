@@ -1,11 +1,19 @@
 import { test } from '@japa/runner'
 
+import { ErrorEnvelope, z } from '@maiyu/shared'
+
 import {
   authenticateAsAdministrator,
   authenticateAsNonStaff,
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+
+/** Only what the specs read of the document; `app/core/openapi/openapi.e2e.spec.ts` checks the rest. */
+const OpenApiDocument = z.object({
+  openapi: z.string(),
+  paths: z.record(z.string(), z.unknown()),
+})
 
 /**
  * `GET /openapi.json`. Requires the session of whoever operates the installation, but must not
@@ -24,7 +32,7 @@ test.group('openapi > show', (group) => {
 
     response.assertStatus(200)
     assert.include(response.header('content-type') ?? '', 'application/json')
-    assert.equal(body(response).openapi, '3.1.0')
+    assert.equal(body(response, OpenApiDocument).openapi, '3.1.0')
   })
 
   test('no service route appears in the document', async ({
@@ -38,7 +46,7 @@ test.group('openapi > show', (group) => {
 
     for (const path of ['/health-check', '/openapi.json', '/documentation']) {
       assert.notProperty(
-        body(response).paths,
+        body(response, OpenApiDocument).paths,
         path,
         `${path} is documented, and it is not an API operation`,
       )
@@ -61,6 +69,6 @@ test.group('openapi > show', (group) => {
     const response = await client.get('/openapi.json').cookies(session)
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'RESOURCE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'RESOURCE_NOT_FOUND')
   })
 })

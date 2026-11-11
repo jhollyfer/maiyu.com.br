@@ -57,19 +57,4 @@ export class FileRefusal extends RefusalBase {
   static http(error: StorageError, i18n: I18n): HTTPException {
     return FileRefusal.translate(FileRefusal.TABLE, error.code, error, i18n)
   }
-
-  /**
-   * Attaching a file that does not exist, was removed or is still `PENDING` is
-   * `422` pointing at the field, never `404` nor `500`, because whoever sent the wrong
-   * id was the payload. It holds for every resource that attaches a file.
-   */
-  static attachmentNotFound(field: string, i18n: I18n): HTTPException {
-    return HTTPException.UnprocessableEntity(
-      i18n.t('files.not_found'),
-      'STORAGE_NOT_FOUND',
-      {
-        [field]: i18n.t('files.not_found'),
-      },
-    )
-  }
 }

@@ -1,12 +1,15 @@
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
+import { ErrorEnvelope } from '@maiyu/shared'
+
 import { SESSION_TOKEN } from '#config/session-token'
 import { UserFactory } from '#database/factories/user.factory'
 import { SessionRepository } from '#repositories/session/session.repository'
 import {
   authenticateAsAdministrator,
   body,
+  cookieValue,
   resetDatabase,
 } from '#tests/http-fixtures'
 
@@ -60,11 +63,10 @@ test.group('authentication > refresh', (group) => {
     const replay = await client.post('/authentication/refresh').cookies(session)
 
     replay.assertStatus(401)
-    assert.equal(body(replay).code, 'AUTHENTICATION_REQUIRED')
+    assert.equal(body(replay, ErrorEnvelope).code, 'AUTHENTICATION_REQUIRED')
     // The pair issued from the replayed token died with the family.
     const after = await client.post('/authentication/refresh').cookies({
-      [SESSION_TOKEN.REFRESH]:
-        rotated.cookie(SESSION_TOKEN.REFRESH)?.value ?? '',
+      [SESSION_TOKEN.REFRESH]: cookieValue(rotated, SESSION_TOKEN.REFRESH),
     })
     after.assertStatus(401)
   })

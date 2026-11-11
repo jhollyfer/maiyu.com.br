@@ -34,20 +34,26 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
   isAuthenticated = false
   user?: GuardUser;
 
-  declare [symbols.GUARD_KNOWN_EVENTS]: {}
+  // The guard emits no event: an empty map, not `{}` (any non-nullish value).
+  declare [symbols.GUARD_KNOWN_EVENTS]: Record<never, never>
 
   constructor(private context: HttpContext) {}
 
-  #authenticationFailed() {
+  /**
+   * Typed `Error`: the package declares the exception as an anonymous constructor, and the
+   * lint only accepts a `throw` it can tell is an error (`only-throw-error`).
+   */
+  #authenticationFailed(): Error {
     return new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
       guardDriverName: this.driverName,
     })
   }
 
   #getCookieToken(): string {
-    const token = this.context.request.cookie(SESSION_TOKEN.ACCESS)
+    // `request.cookie()` is typed `any`: a value other than a non-empty string is no token.
+    const token: unknown = this.context.request.cookie(SESSION_TOKEN.ACCESS)
 
-    if (!token) throw this.#authenticationFailed()
+    if (typeof token !== 'string' || !token) throw this.#authenticationFailed()
 
     return token
   }

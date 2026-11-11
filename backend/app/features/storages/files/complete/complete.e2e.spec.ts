@@ -1,18 +1,21 @@
 import drive from '@adonisjs/drive/services/main'
-import type { ApiClient } from '@japa/api-client'
 import { test } from '@japa/runner'
 
-import type { StorageMimetype } from '@maiyu/shared'
+import { ErrorEnvelope, StoragesFileShowResponse } from '@maiyu/shared'
 
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
-import { pngBytes } from '#tests/storages-fixtures'
+import {
+  openUpload,
+  partUrl,
+  putPart,
+  uploadFile,
+  pngBytes,
+} from '#tests/storages-fixtures'
 import { Stored } from '#tests/stored-fixtures'
 
 /**
@@ -29,55 +32,6 @@ const FULL_PART = pngBytes(PART_SIZE, 65)
 
 const SMALL = pngBytes(1024)
 
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
-
-  response.assertStatus(201)
-
-  return body(response)
-}
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-async function put(url: string, content: Uint8Array): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: content,
-    headers: { 'Content-Type': 'image/png' },
-  })
-
-  if (!response.ok) throw new Error(`PUT respondeu ${response.status}`)
-
-  return response.headers.get('etag') ?? ''
-}
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
-async function upload(
-  client: ApiClient,
-  session: Session,
-): Promise<ResponseBody> {
-  const opened = await open(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: SMALL.byteLength,
-  })
-
-  await put(opened.parts[0].url, SMALL)
-
-  const completed = await client
-    .post(`/storages/${opened.storage.id}/complete`)
-    .cookies(session)
-    .json({})
-
-  completed.assertStatus(200)
-
-  return body(completed)
-}
-
 /** A `storages` row with no binary at all: only the metadata matters here. */
 
 test.group('storages > complete', (group) => {
@@ -88,7 +42,7 @@ test.group('storages > complete', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     assert.equal(storage.status, 'UPLOADED')
     assert.isTrue(await drive.use().exists(storage.path))
@@ -98,15 +52,15 @@ test.group('storages > complete', (group) => {
     const session = await authenticateAsAdministrator(client)
     const size = PART_SIZE + SMALL.byteLength
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'galeria.png',
       mimetype: 'image/png',
       size,
     })
 
     const parts = [
-      { partNumber: 1, etag: await put(opened.parts[0].url, FULL_PART) },
-      { partNumber: 2, etag: await put(opened.parts[1].url, SMALL) },
+      { partNumber: 1, etag: await putPart(partUrl(opened), FULL_PART) },
+      { partNumber: 2, etag: await putPart(partUrl(opened, 1), SMALL) },
     ]
 
     const response = await client
@@ -121,7 +75,7 @@ test.group('storages > complete', (group) => {
     assert.equal(metadata.contentLength, size)
     // The `uploadId` is zeroed: the conversation with the bucket is over, and keeping its
     // pointer would only keep alive an address that leads nowhere.
-    assert.isNull(body(response).uploadId)
+    assert.isNull(body(response, StoragesFileShowResponse).uploadId)
   })
 
   test('refuses with 422 when what was uploaded does not have the declared size', async ({
@@ -132,13 +86,13 @@ test.group('storages > complete', (group) => {
 
     // Declares a thousand bytes and tries to upload ten. The first barrier is the bucket's:
     // the URL pins `content-length`, and a PUT with another size gets 403.
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'capa.png',
       mimetype: 'image/png',
       size: 1000,
     })
 
-    const refused = await fetch(opened.parts[0].url, {
+    const refused = await fetch(partUrl(opened), {
       method: 'PUT',
       body: new Uint8Array(10),
       headers: { 'Content-Type': 'image/png' },
@@ -155,7 +109,7 @@ test.group('storages > complete', (group) => {
       .json({})
 
     response.assertStatus(422)
-    assert.equal(body(response).code, 'STORAGE_SIZE_MISMATCH')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_SIZE_MISMATCH')
 
     // Refused is refused: neither the row nor the binary survive, and the record
     // never reaches `UPLOADED`.
@@ -168,7 +122,7 @@ test.group('storages > complete', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
     const again = await client
       .post(`/storages/${storage.id}/complete`)
@@ -176,8 +130,8 @@ test.group('storages > complete', (group) => {
       .json({})
 
     again.assertStatus(200)
-    assert.equal(body(again).id, storage.id)
-    assert.equal(body(again).status, 'UPLOADED')
+    assert.equal(body(again, StoragesFileShowResponse).id, storage.id)
+    assert.equal(body(again, StoragesFileShowResponse).status, 'UPLOADED')
   })
 })
 
@@ -201,7 +155,7 @@ test.group('storages > complete > acesso e identificador', (group) => {
       .json({})
 
     response.assertStatus(404)
-    assert.equal(body(response).code, 'STORAGE_NOT_FOUND')
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
   })
 
   test('malformed id responds 422 instead of a Postgres 500', async ({
@@ -216,6 +170,6 @@ test.group('storages > complete > acesso e identificador', (group) => {
       .json({})
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'params.id')
+    assert.property(body(response, ErrorEnvelope).errors, 'params.id')
   })
 })
