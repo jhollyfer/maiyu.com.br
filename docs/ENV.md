@@ -96,6 +96,13 @@ deploy: sem GitHub Actions de entrega, o Coolify constrói do Git e os valores m
 (`_standards/tooling.md` §8.3, `_standards/DECISIONS.md` #368). `VITE_SITE_URL` e `VITE_API_URL` são
 públicos e vêm de `frontend/.env.production`, em `https://` e sem barra no fim (`ARCHITECTURE.md` §9.1).
 
+**Passo do dono, fora do repositório:** apagar os secrets do Actions (Settings, Secrets and variables,
+Actions) que os workflows removidos usavam: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`,
+`COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL`. Antes de apagar, no painel do Coolify, ligar o
+*Auto Deploy* do recurso do site com *Dockerfile Location* `/frontend/Dockerfile-production` e o
+*Health Check* do painel vazio (`ARCHITECTURE.md` §9.1); só então apagar os secrets e revogar o token no
+Docker Hub.
+
 ## 4. Por ambiente
 
 | Ambiente | De onde vêm os valores | Observação |
