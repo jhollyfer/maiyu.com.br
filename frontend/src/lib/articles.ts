@@ -33,7 +33,12 @@ export type Article = {
   featured?: boolean
 }
 
-export const articles: ReadonlyArray<Article> = [
+/**
+ * Tupla não vazia, e não `ReadonlyArray`: com `noUncheckedIndexedAccess`, `articles[0]` tiparia
+ * `Article | undefined` e o destaque do diário herdaria o `undefined`. O compilador recusa o
+ * registro vazio.
+ */
+export const articles: readonly [Article, ...Article[]] = [
   {
     slug: 'software-que-funciona-com-internet-lenta',
     category: 'tech',

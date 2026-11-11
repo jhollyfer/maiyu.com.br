@@ -23,7 +23,12 @@ export type Project = {
   featured?: boolean
 }
 
-export const projects: ReadonlyArray<Project> = [
+/**
+ * Tupla não vazia, e não `ReadonlyArray`: com `noUncheckedIndexedAccess`, `projects[0]` e o
+ * `[lead, ...rest]` da home tipariam `Project | undefined`. O tipo guarda o que a tela supõe (há
+ * pelo menos um projeto), e o compilador recusa o registro vazio.
+ */
+export const projects: readonly [Project, ...Project[]] = [
   {
     slug: 'adacaibs',
     title: 'ADACAIBS',
