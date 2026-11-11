@@ -36,5 +36,21 @@ export function validateRedirectSearch(
   // to `//`, and that gets past a check made only on the slash.
   if (value.startsWith('/\\')) return REFUSED
 
+  // A control character (tab, line break, DEL) anywhere: the browser strips it while parsing
+  // the URL, so `/\t/evil.test` becomes `//evil.test` after the checks above (relato do aporta).
+  if (/[\u0000-\u001f\u007f]/.test(value)) return REFUSED
+
   return { redirect: value }
+}
+
+/**
+ * Where to go after signing in: the validated `redirect`, or the area home the project gives
+ * (`homeOf`). One function for the form, the `beforeLoad` guard and the layout guard, which
+ * must agree (from the aporta).
+ */
+export function redirectDestination(
+  search: RedirectSearch,
+  home: string,
+): string {
+  return search.redirect ?? home
 }
