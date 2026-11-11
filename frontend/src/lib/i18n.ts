@@ -34,7 +34,8 @@ export function dayPickerLocale(): DayPickerLocale {
  * browser's time zone or UTC: the page renders on SSR, and the same time in
  * two zones diverges at hydration - besides showing 1pm for a 9am match.
  */
-export const TIME_ZONE = 'America/Manaus'
+// Western Amazonas (Benjamin Constant, Atalaia do Norte, Tabatinga) is UTC-5 (DECISIONS.md #390).
+export const TIME_ZONE = 'America/Eirunepe'
 
 /** The product's currency: the `formatCurrency` of a Brazilian product. */
 const CURRENCY = 'BRL'

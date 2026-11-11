@@ -1,14 +1,14 @@
 import { baseLocale } from '#/paraglide/runtime'
 
+import { localizedUrl } from './page-head'
 import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
-import { localizedUrl } from './site-i18n'
 
 /**
  * O JSON-LD que o site publica, montado num lugar só.
  *
  * O mesmo desenho do academy: uma função por tipo, testada, e a rota só decide
- * quando injetar. Nenhuma função devolve string; quem serializa é
- * `jsonLdScript`, porque um objeto é o que dá para inspecionar num teste sem
+ * quando injetar. Nenhuma função devolve string; quem serializa é o
+ * `jsonLd` do kit (`lib/page-head.ts`, que escapa o `<`), porque um objeto é o que dá para inspecionar num teste sem
  * reparsear.
  */
 
@@ -71,44 +71,6 @@ export function organizationJsonLd(description: string): JsonLd {
     ],
     sameAs: SOCIALS.map((social) => social.href),
   }
-}
-
-/** Um degrau da trilha: o nome que se lê e o caminho absoluto para onde leva. */
-export type Crumb = {
-  name: string
-  url: string
-}
-
-/**
- * A trilha de navegação de uma rota de detalhe, com a home sempre no primeiro
- * degrau.
- *
- * Recebe URL já absoluta, e não caminho como no academy: aqui o endereço
- * depende do idioma (`/en/blog/...`), e quem sabe o idioma é a rota.
- *
- * Trilha vazia devolve lista vazia: um `BreadcrumbList` de um degrau só não
- * informa hierarquia nenhuma.
- */
-export function breadcrumbListJsonLd(
-  home: Crumb,
-  trail: ReadonlyArray<Crumb>,
-): Array<JsonLd> {
-  if (trail.length === 0) return []
-
-  const crumbs = [home, ...trail]
-
-  return [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: crumbs.map((crumb, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: crumb.name,
-        item: crumb.url,
-      })),
-    },
-  ]
 }
 
 /** Os campos de um artigo do diário que o `BlogPosting` publica. */
@@ -189,25 +151,5 @@ export function projectListJsonLd(
         },
       },
     })),
-  }
-}
-
-/**
- * Um objeto de JSON-LD na forma que o `scripts` do `head` recebe.
- *
- * Existe para que nenhuma rota escreva o `type` à mão: um `application/json`
- * digitado por engano é ignorado pelo buscador sem erro nenhum.
- */
-export function jsonLdScript(data: JsonLd): {
-  type: string
-  children: string
-} {
-  return {
-    type: 'application/ld+json',
-    // JSON.stringify does not escape `<`, so a record field holding
-    // `</script>` would close the tag early and let the rest run as HTML.
-    // `\u003c` is the same character to a JSON parser and inert to the HTML one
-    // (_standards/frontend.md §9.7).
-    children: JSON.stringify(data).replaceAll('<', '\\u003c'),
   }
 }

@@ -54,14 +54,15 @@ ou fora da máquina.
 
 ### 1.2 Frontend
 
-Mesma ordem de blocos do `frontend/.env.example`.
+Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versionado) leva `VITE_API_URL` e `VITE_SITE_URL` fixos para o Vitest.
 
 | Variável | App | Obrigatória | Segredo | O que é | Exemplo |
 |---|---|---|---|---|---|
-| `VITE_API_URL` | web | não | não | endereço da API; o frontend ainda não fala com o backend (RB.5 de `TASKS.md`) | `http://localhost:3333` |
+| `VITE_API_URL` | web | sim, no build | não | raiz da API que o `request()` do kit chama; o `build-env.ts` do kit recusa o build sem ela. Em produção está **pendente da decisão do dono** (domínio público da API), e a linha de `frontend/.env.production` fica comentada até lá; o site ainda não chama a API | `http://localhost:3333` |
 | `SERVER_API_URL` | web | não | não | endereço da API visto pelo SSR; sem uso aqui | `http://api:3333` |
-| `VITE_SITE_URL` | web | não | não | origem pública do site; hoje `SITE_URL` é constante em `lib/site.ts` | `http://localhost:3000` |
-| `SITE_ENV` | web | não | não | `production` ou outro valor; hoje sem leitor no código | `development` |
+| `VITE_SITE_URL` | web | sim, no build | não | origem pública do site, sem barra no fim: canônico, hreflang, sitemap, `robots.txt` e JSON-LD; `SITE_URL` de `lib/site.ts` lê dela. Produção em `frontend/.env.production` (`https://maiyu.com.br`) | `http://localhost:3000` |
+| `SITE_ENV` | web | não | não | lida a cada requisição pelo `server.ts`: só `production` é indexável, o resto responde `noindex` e `Disallow: /` | `development` |
+| `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
 | `E2E_*` | web | não | `E2E_*_PASSWORD` sim | só para Playwright; o site não tem E2E | ver `.env.example` |

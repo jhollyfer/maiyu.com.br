@@ -29,14 +29,18 @@ canonical e JSON-LD prefixados. O lote 2 trouxe o kit livre do backend (levas 7 
 kit (que ignora `components/ui/`, #391) e o merge da `feat/backend-inicial` (PR B, #23). O VineJS saiu
 do frontend; contato e carreiras não têm formulário, só o aviso honesto e os canais reais
 (`DECISIONS.md` #17, decisão do dono); o contato volta numa PR que consome o recurso do backend.
-Seguem o R0.1 e as peças do kit que esperavam o backend (router, http, env, page-head, sitemap,
-route-error, Tuyau, start.ts, `areas.ts`).
+A branch `feat/frontend-kit-backend` trouxe as peças do kit que esperavam o backend (router, http com
+Tuyau, env, start, page-head, sitemap, `robots.txt`, route-error, hooks, rich-text, `areas.ts`), o
+`ThemeProvider`, o `ThemeToggle` e o `LocaleSwitcher` do kit no lugar dos locais, e o merge do R0.1.
+Fora, por lacuna do kit: `table/` e `list-shell/` (o kit não os torna opcionais e o `typecheck` exige
+uma rota com `ListSearch`), o domínio da API em `.env.production` (decisão do dono), o diário em Tiptap
+(R1.6) e o Dockerfile e workflows (PR própria). Os `<a>` externos dentro de `PillButton render` não
+têm par no `ui/`.
 
 A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
 upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o
 R0.2 (JSON-LD com `<` escapado) e o R0.4 (`.gitignore` da raiz pela régua, `.gitleaks.toml` do
-modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) está pronto na branch
-`fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
+modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) entrou por merge da branch `fix/seguranca-cabecalhos`.
 
 Frente do backend (R1.2 e RB.1 a RB.4) feita na branch `feat/backend-inicial`, com a leva 8 do kit
 (`maiyu-pattern` em 1a9a636): `shared/` e `backend/` verdes em format, lint, tsc, `pattern:check`,

@@ -3,8 +3,8 @@ import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { Button } from '#/components/ui/button'
+import { currentLocalYear } from '#/lib/i18n'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
-import { currentYear } from '#/lib/site-i18n'
 import { m } from '#/paraglide/messages'
 
 import { FOOTER_NAVIGATION } from './menu'
@@ -19,7 +19,7 @@ import { navLinkVariants } from './nav-link'
  * de 0.9, engolia o clique.
  */
 export function Footer(): React.JSX.Element {
-  const year = currentYear()
+  const year = currentLocalYear()
 
   return (
     <footer

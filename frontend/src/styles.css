@@ -21,8 +21,8 @@
 @plugin '@tailwindcss/typography';
 
 /*
- * O tema escuro é uma classe no `<html>`, escrita pelo `next-themes` do
- * `__root.tsx` antes da hidratação. Sem esta linha a classe cairia no vazio.
+ * O tema escuro é uma classe no `<html>`, escrita pelo `ThemeProvider` do kit, a partir do cookie, no
+ * `__root.tsx` (`lib/theme.ts`). Sem esta linha a classe cairia no vazio.
  */
 @custom-variant dark (&:is(.dark *));
 

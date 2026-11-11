@@ -17,7 +17,11 @@ import { fileURLToPath } from 'node:url'
 
 import sharp from 'sharp'
 
-const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
+const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
+const PUBLIC = join(ROOT, 'public')
+// O `og:image` do kit (`lib/page-head.ts`) importa `assets/brand/logo-512.png`, e o bundler dá
+// a ele o endereço com hash; é o mesmo desenho do ícone de 512 do manifesto.
+const BRAND = join(ROOT, 'src', 'assets', 'brand')
 const SOURCE = join(PUBLIC, 'favicon.svg')
 
 /**
@@ -67,13 +71,14 @@ const targets = [
   // Os dois tamanhos que o manifesto declara.
   { name: 'icon-192.png', size: 192 },
   { name: 'icon-512.png', size: 512 },
+  { name: 'logo-512.png', size: 512, dir: BRAND },
 ]
 
-for (const { name, size, wrap } of targets) {
+for (const { name, size, wrap, dir = PUBLIC } of targets) {
   const png = await render(size).toBuffer()
   const output = wrap?.(png, size) ?? png
 
-  await writeFile(join(PUBLIC, name), output)
+  await writeFile(join(dir, name), output)
   process.stdout.write(`${name} (${size}x${size}, ${output.length} bytes)\n`)
 }
 
