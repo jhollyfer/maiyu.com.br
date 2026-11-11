@@ -6,9 +6,9 @@ import { AccountProfileUpdateValidator } from './profile.validator.js'
 const NEW_PASSWORD = 'Nova@1234'
 
 describe('AccountProfileUpdateValidator', () => {
-  it('when the body has a new email and the current password, it accepts it', () => {
+  it('when the body has a new name and the current password, it accepts it', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      email: 'dono@exemplo.com',
+      name: 'Dono Novo',
       currentPassword: 'Senha@123',
     })
 
@@ -25,10 +25,10 @@ describe('AccountProfileUpdateValidator', () => {
     expect(result.success).toBe(true)
   })
 
-  it('when the body has neither email nor password, it refuses both fields', () => {
+  it('when the body has neither name nor password, it refuses both fields', () => {
     const result = AccountProfileUpdateValidator.safeParse({})
 
-    expect(ValidationFixture.fields(result)).toEqual(['email', 'password'])
+    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
   })
 
   it('when the body only carries the current password, it refuses the body', () => {
@@ -36,12 +36,12 @@ describe('AccountProfileUpdateValidator', () => {
       currentPassword: 'Senha@123',
     })
 
-    expect(ValidationFixture.fields(result)).toEqual(['email', 'password'])
+    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
   })
 
-  it('when the email changes without the current password, it refuses the current password', () => {
+  it('when the name changes without the current password, it refuses the current password', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      email: 'dono@exemplo.com',
+      name: 'Dono Novo',
     })
 
     expect(ValidationFixture.messages(result)).toEqual([
@@ -80,23 +80,35 @@ describe('AccountProfileUpdateValidator', () => {
     ])
   })
 
-  it('when the email is malformed, it refuses the email', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      email: 'dono',
+  it('when the name has 120 characters it accepts, and at 121 it refuses the name', () => {
+    const accepted = AccountProfileUpdateValidator.safeParse({
+      name: 'a'.repeat(120),
+      currentPassword: 'Senha@123',
+    })
+    const refused = AccountProfileUpdateValidator.safeParse({
+      name: 'a'.repeat(121),
       currentPassword: 'Senha@123',
     })
 
-    expect(ValidationFixture.fields(result)).toEqual(['email'])
+    expect(accepted.success).toBe(true)
+    expect(ValidationFixture.fields(refused)).toEqual(['name'])
   })
 
-  it('when the email is blank, it reads it as missing and refuses it as required', () => {
+  it('when the name is only spaces, it refuses the name', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      email: '',
+      name: '   ',
       currentPassword: 'Senha@123',
     })
 
-    expect(ValidationFixture.messages(result)).toEqual([
-      { field: 'email', message: 'Informe o e-mail' },
-    ])
+    expect(ValidationFixture.fields(result)).toEqual(['name'])
+  })
+
+  it('when the body carries an email, it ignores the key', () => {
+    const result = AccountProfileUpdateValidator.safeParse({
+      email: 'dono@exemplo.com',
+      currentPassword: 'Senha@123',
+    })
+
+    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
   })
 })

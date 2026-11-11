@@ -61,15 +61,15 @@ T4 → T5
 
 ### T1: Validator e resposta do perfil no shared
 
-**What**: `AccountProfileUpdateValidator` (Rule.partial, `currentPassword` obrigatório) e `AccountProfileShowResponse`.
+**What**: `AccountProfileUpdateValidator` (Rule.partial com `name` e `password`, `currentPassword` obrigatório) e `AccountProfileShowResponse`.
 **Where**: `shared/src/validators/account/profile.validator.ts`
 **Depends on**: None
 **Reuses**: `Rule.email()`, `Rule.password()`, `Rule.partial`
-**Requirement**: ACCOUNT-01, ACCOUNT-02, ACCOUNT-03
+**Requirement**: ACCOUNT-01, ACCOUNT-04, ACCOUNT-03
 
 **Done when**:
 
-- [x] corpo sem `email` nem `password` recusado; senha fora da regra recusada
+- [x] corpo sem `name` nem `password` recusado; senha fora da regra recusada
 - [x] Gate check passes: `pnpm --filter ./shared test:unit`
 
 **Tests**: unit
@@ -79,14 +79,14 @@ T4 → T5
 
 ### T2: User.update e credentials
 
-**What**: a entidade marca revogação quando muda e-mail ou senha e não marca quando o e-mail é o mesmo.
+**What**: a entidade marca revogação quando muda a senha e não marca quando muda só o nome.
 **Where**: `backend/app/domain/user/user.entity.ts`
 **Depends on**: T1
 **Reuses**: forma do `User` do adacaibs
 
 **Done when**:
 
-- [x] unitário cobre e-mail novo, e-mail igual e senha nova
+- [x] unitário cobre nome novo, nome igual e senha nova
 - [x] Gate check passes: `cd backend && node ace test unit`
 
 **Tests**: unit
@@ -130,14 +130,14 @@ T4 → T5
 
 ### T5: PUT /account/profile
 
-**What**: validator VineJS par do Zod, use-case com prova da senha atual, controller que limpa os cookies, `accountThrottle`, mensagens nos três idiomas, `openapi.json` e baseline.
+**What**: validator VineJS par do Zod, use-case com prova da senha atual, controller que limpa os cookies só quando a senha troca, `accountThrottle`, mensagens nos três idiomas, `openapi.json` e baseline.
 **Where**: `backend/app/features/account/profile/update/update.use-case.ts`
 **Depends on**: T4
 **Reuses**: `SessionCookie`, `UnitOfWork`, `hash`
 
 **Done when**:
 
-- [x] e2e: troca de senha 200 e cookie antigo 401; troca de e-mail 200 e cookie antigo 401; 409; 422 da senha atual; 422 da senha nova; 429; e-mail igual não derruba
+- [x] e2e: troca de senha 200 e cookie antigo 401; troca de nome 200 sem derrubar a sessão nem limpar cookie; 422 da senha atual (senha e nome); 422 da senha nova e da senha igual à atual; 429
 - [x] `openapi:check`, `authz:check`, `validators:check` verdes
 - [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
@@ -168,17 +168,14 @@ Proof: `cd backend && node ace test functional --files="app/features/account/pro
 **C6** - Save que falha mantém senha e sessões (ACCOUNT-01, AC 6)
 Proof: `cd backend && node ace test functional --files="app/repositories/user/user.repository.e2e.spec.ts" --tests="a failed save keeps the password and the sessions"`
 
-**C7** - Troca de e-mail responde 200 com o perfil (ACCOUNT-02, AC 1)
-Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="changing the email answers 200 and the new email signs in"`
+**C7** - Troca de nome responde 200 com o perfil e grava o nome (ACCOUNT-04, AC 1)
+Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="changing the name answers 200 with the new name"`
 
-**C8** - Cookie de antes da troca de e-mail responde 401 (ACCOUNT-02, AC 2)
-Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="after an email change the old cookie answers 401"`
+**C8** - Troca só do nome mantém a sessão e não limpa os cookies (ACCOUNT-04, AC 2)
+Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="a name change keeps the session and does not clear the cookies"`
 
-**C9** - E-mail de outra conta responde 409 EMAIL_IN_USE (ACCOUNT-02, AC 3)
-Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="an email in use answers 409"`
-
-**C10** - E-mail igual ao atual não derruba as sessões (ACCOUNT-02, AC 4)
-Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="the same email keeps the session"`
+**C9** - Troca de nome com senha atual errada responde 422 em currentPassword e não muda nada (ACCOUNT-04, AC 3)
+Proof: `cd backend && node ace test functional --files="app/features/account/profile/update/update.e2e.spec.ts" --tests="a name change with a wrong current password answers 422 and changes nothing"`
 
 **C13** - O save do use case roda dentro da unidade de trabalho, uma vez (ACCOUNT-01, AC 2)
 Proof: `cd backend && node ace test unit --files="app/features/account/profile/update/update.unit.spec.ts" --tests="the save runs inside the unit of work, and only once"`

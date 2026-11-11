@@ -33,15 +33,15 @@ type Result = {
 type Response = Either<HTTPException, Result>
 
 /**
- * Changes the owner's e-mail or password. The current password comes first: the cookie
+ * Changes the owner's name or password. The current password comes first: the cookie
  * proves the session, not the person, and a stolen cookie must not be able to lock the owner
- * out. Changing either one ends every session of the account, the one that made this request
+ * out. Changing the password ends every session of the account, the one that made this request
  * included: the entity asks for it, and the repository writes the row and the revocation on
- * the same unit of work, so a failed save keeps the old credential and its sessions.
+ * the same unit of work, so a failed save keeps the old password and its sessions.
  *
  * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`.
  *
- * An e-mail equal to the current one is not a change: `200` and the sessions stay.
+ * A name alone is not a credential: `200` and the sessions stay. The e-mail does not change here.
  */
 @inject()
 export default class AccountProfileUpdateUseCase {
@@ -90,9 +90,14 @@ export default class AccountProfileUpdateUseCase {
       const saved = await this.unitOfWork.run(() => this.users.save(user))
 
       if (saved.isLeft()) {
-        // `UNIQUE_CONFLICT` is the e-mail `UNIQUE` index; the other left is the database.
+        // The e-mail does not change here, so the `UNIQUE` index has nothing to refuse: a
+        // conflict would be a defect, and the other left is the database.
         if (saved.value.code === 'UNIQUE_CONFLICT')
-          return left(ProfileRefusal.http({ code: 'EMAIL_IN_USE' }, this.i18n))
+          return left(
+            this.failure(
+              new Error('unexpected unique conflict on the profile'),
+            ),
+          )
 
         return left(this.failure(saved.value.cause))
       }

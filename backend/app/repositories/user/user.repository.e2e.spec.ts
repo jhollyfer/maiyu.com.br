@@ -114,34 +114,21 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       assert.isFalse(await passwordHolds(users, user.id, FACTORY_PASSWORD))
     })
 
-    test('save with a new email revokes the sessions and writes the email', async ({
+    test('save with a new name only keeps the sessions and writes the name', async ({
       assert,
     }) => {
       const { users, sessions, unitOfWork, seed } = await make()
       const user = await seed()
       const issued = await sessions.issue(user.id)
-      user.update({ email: 'novo@exemplo.com' }, NOW)
-
-      await unitOfWork.run(() => users.save(user))
-
-      assert.isNull(await sessions.readRefresh(issued?.refreshToken ?? ''))
-      assert.equal(
-        (await users.findById(user.id))?.snapshot().email,
-        'novo@exemplo.com',
-      )
-    })
-
-    test('save without a credential change keeps the sessions', async ({
-      assert,
-    }) => {
-      const { users, sessions, unitOfWork, seed } = await make()
-      const user = await seed()
-      const issued = await sessions.issue(user.id)
-      user.update({ email: user.snapshot().email }, NOW)
+      user.update({ name: 'Nome Novo' }, NOW)
 
       await unitOfWork.run(() => users.save(user))
 
       assert.isNotNull(await sessions.readRefresh(issued?.refreshToken ?? ''))
+      assert.equal(
+        (await users.findById(user.id))?.snapshot().name,
+        'Nome Novo',
+      )
       assert.isTrue(await passwordHolds(users, user.id, FACTORY_PASSWORD))
     })
 
@@ -152,9 +139,15 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       const user = await seed()
       const other = await seed()
       const issued = await sessions.issue(user.id)
-      user.update({ email: other.snapshot().email, password: 'Nova@1234' }, NOW)
+      // The e-mail no longer changes through `update`, so the taken one is rehydrated in: the
+      // contract under test is that a refused save writes and revokes nothing.
+      const taken = User.restore({
+        ...user.snapshot(),
+        email: other.snapshot().email,
+      })
+      taken.update({ password: 'Nova@1234' }, NOW)
 
-      const saved = await unitOfWork.run(() => users.save(user))
+      const saved = await unitOfWork.run(() => users.save(taken))
 
       assert.deepEqual(saved.value, UNIQUE_CONFLICT)
       assert.isNotNull(await sessions.readRefresh(issued?.refreshToken ?? ''))

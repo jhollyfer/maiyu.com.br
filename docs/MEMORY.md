@@ -39,14 +39,14 @@ Contato do backend (R2.10, spec `.specs/features/contato/`, branch `feat/backend
 ficou fora, por decisão do dono. Verde com `shared/` em 79 testes, backend unitário 265 e funcional 194. O formulário do frontend ainda não envia (R0.3, RB.5 e R3).
 
 Conta do dono no backend (R2.10, spec `.specs/features/conta/`, mesma branch) feita: `GET /account/profile`
-e `PUT /account/profile` (sessão, sem `role`), com troca de senha ou de e-mail exigindo `currentPassword`,
-senha nova pela regra do `Rule`, 409 `EMAIL_IN_USE`, e-mail igual sem derrubar sessão, revogação de
-todas as sessões na mesma `UnitOfWork` do save (a da chamada inclusive, com cookies limpos na 200) e
-limite de 5 por 15 minutos por usuário. A funcional prova 200 seguido de 401 para senha e para e-mail.
-Verde com `shared/` em 91 testes, backend unitário 284 e funcional 221. Falta a verificação da
-feature; a tela da conta no frontend é a frente F. O corpo não aceita `name` (a spec manda 422 sem
-`email` nem `password`), e o limite de 5 é só desta rota: o `accountThrottle` do kit, de 10, ficou sem
-uso (lacuna do kit, relatada ao regente).
+e `PUT /account/profile` (sessão, sem `role`), com troca de nome e de senha exigindo `currentPassword`,
+senha nova pela regra do `Rule` (422 `PASSWORD_SAME_AS_CURRENT` se igual à atual), revogação de todas as
+sessões na mesma `UnitOfWork` do save quando a senha troca (a da chamada inclusive, com cookies limpos na
+200) e limite do kit, 10 por 15 minutos por usuário (`accountThrottle`). Trocar só o nome responde 200 e
+mantém a sessão. A troca de e-mail ficou fora por decisão do dono (sem o link de confirmação da
+`backend.md` §7 item 7): bloqueada até existir o bloco de e-mail. O `Rule.email()` do kit passou a baixar a
+caixa (upstream a8462c8, pelo sync). A funcional prova 200 seguido de 401 para a senha. Falta a
+verificação final da feature; a tela da conta no frontend é a frente F.
 
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).

@@ -15,9 +15,12 @@ export type UserProps = {
   updatedAt: Date | null
 }
 
-/** What the owner may change in the account: the credentials, and nothing else. */
+/**
+ * What the owner may change in the account: the name and the password. The e-mail is not here:
+ * a new address needs a confirmation link, which this delivery does not have.
+ */
 export type UserPatch = {
-  readonly email?: string
+  readonly name?: string
   /** Plain text, hashed by the repository on `save` like the one `create` receives. */
   readonly password?: string
 }
@@ -25,7 +28,7 @@ export type UserPatch = {
 /** What the repository must do besides writing the row. */
 export type UserCredentials = {
   /**
-   * A new e-mail or password ends every session of the account, written together with the
+   * A new password ends every session of the account, written together with the
    * row (`_standards/backend.md` §4.10): a session opened with the old credential must not
    * outlive it.
    */
@@ -69,15 +72,15 @@ export class User {
   }
 
   /**
-   * Changes the credentials. An e-mail equal to the current one changes nothing and keeps
-   * the sessions: asking for what already holds is not a change of credential. A password
-   * always counts, because the entity only holds its hash and cannot tell it is the same.
+   * Changes the name and the password. A name equal to the current one changes nothing, and a
+   * name alone never asks to revoke the sessions: it is not a credential. A password always
+   * counts, because the entity only holds its hash and cannot tell it is the same (the use
+   * case refuses the same password before it gets here).
    */
   update(patch: UserPatch, now: Date): User {
-    if (patch.email !== undefined && patch.email !== this.props.email) {
-      this.props.email = patch.email
+    if (patch.name !== undefined && patch.name !== this.props.name) {
+      this.props.name = patch.name
       this.props.updatedAt = now
-      this.revokeSessions = true
     }
 
     if (patch.password !== undefined) {

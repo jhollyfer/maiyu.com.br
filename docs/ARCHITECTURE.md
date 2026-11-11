@@ -85,7 +85,7 @@ Frontend: o site tem um grupo de rotas, `_public`.
 | `/sitemap.xml` | `routes/sitemap[.]xml.ts` | buscadores |
 | qualquer outra | `_public/$.tsx` | 404 |
 
-Entidades de domínio do backend: `user` (a conta do dono, que troca e-mail e senha por `update` e marca a revogação das sessões em `credentials()`) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
+Entidades de domínio do backend: `user` (a conta do dono, que troca nome e senha por `update` e marca a revogação das sessões em `credentials()`) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
 
 ### 4.1 Linguagem do domínio
 
@@ -141,20 +141,21 @@ com refresh rotativo e checagem de origem em toda escrita. Mudar senha, e-mail, 
 conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Papéis do esqueleto do kit em `shared/src/enums/user-role.ts`:
 `ADMINISTRATOR`, que é a lista de staff, e `MEMBER`, o papel menos privilegiado, que nenhuma rota cria hoje.
 
-Troca de senha e de e-mail (`PUT /account/profile`, `.specs/features/conta/`): o dono ou qualquer conta
-com sessão troca a própria credencial, sem `role`, e a rota não recebe id: o escopo é o `actor` do
-cookie. O corpo precisa de `email` ou `password`, e trocar qualquer um exige `currentPassword`
-(422 no campo `currentPassword` se errada, antes de qualquer outra regra); a senha nova segue o
-`Rule.password()` do `shared/`, com confirmação. E-mail de outra conta é 409 `EMAIL_IN_USE`, vindo do
-índice `UNIQUE` (`UNIQUE_CONFLICT` do repository, traduzido em `_shared.profile-refusal.ts`); e-mail
-igual ao atual é 200 e não derruba nada. Quando muda o e-mail ou a senha, a entidade `User` marca a
+Troca de nome e de senha (`PUT /account/profile`, `.specs/features/conta/`): o dono ou qualquer conta
+com sessão troca o próprio nome e a própria senha, sem `role`, e a rota não recebe id: o escopo é o
+`actor` do cookie. O corpo precisa de `name` (1 a 120) ou `password`, e trocar qualquer um exige
+`currentPassword` (422 no campo `currentPassword` se errada, antes de qualquer outra regra); a senha
+nova segue o `Rule.password()` do `shared/`, com confirmação, e igual à atual é 422
+`PASSWORD_SAME_AS_CURRENT` no campo `password`. A troca de e-mail não está nesta entrega: a `backend.md`
+§7 item 7 manda confirmar o endereço novo por link, com aviso ao antigo, e o bloco de e-mail ainda não
+existe (decisão do dono; o corpo não aceita `email`). Quando muda a senha, a entidade `User` marca a
 revogação, e o `UserRepository.save` grava a linha e chama `SessionRepository.revokeAll` na mesma
-`UnitOfWork`: ou ficam a credencial antiga e as sessões, ou nenhuma das duas. A revogação inclui a
-sessão que fez a chamada, então a resposta 200 limpa os cookies (`SessionCookie.clear`) e o dono entra
-de novo com a credencial nova; o cookie de antes responde 401. O limite é de 10 trocas por 15 minutos
-por usuário (`accountThrottle` do kit, em `start/limiter.base.ts`, com bloqueio de 15 minutos), porque a
-rota compara a senha atual e seria um oráculo de senha para quem roubasse o cookie. Aviso por e-mail
-ao endereço antigo ficou fora, por decisão do dono: o e-mail novo vale na hora.
+`UnitOfWork`: ou ficam a senha antiga e as sessões, ou nenhuma das duas. A revogação inclui a sessão
+que fez a chamada, então a resposta 200 limpa os cookies (`SessionCookie.clear`) e o dono entra de novo
+com a senha nova; o cookie de antes responde 401. Trocar só o nome não é troca de credencial: 200, sem
+revogar e sem limpar cookie. O limite é de 10 trocas por 15 minutos por usuário (`accountThrottle` do
+kit, em `start/limiter.base.ts`, com bloqueio de 15 minutos), porque a rota compara a senha atual e
+seria um oráculo de senha para quem roubasse o cookie.
 
 ## 9. Ambientes
 

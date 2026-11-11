@@ -4,19 +4,20 @@
 
 ## Problem Statement
 
-O dono entra com a senha do seeder e não tem como trocá-la nem trocar o e-mail sem mexer no banco. A
-régua manda que trocar senha, e-mail, papel ou status derrube as sessões da conta na mesma unidade de
-trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido de 401.
+O dono entra com a senha do seeder e não tem como trocá-la nem mudar o próprio nome sem mexer no
+banco. A régua manda que trocar senha, e-mail, papel ou status derrube as sessões da conta na mesma
+unidade de trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido de 401.
 
 ## Goals
 
-- [ ] O dono troca a própria senha e o próprio e-mail pela API.
-- [ ] Depois da troca, nenhuma sessão antiga da conta vale.
+- [ ] O dono troca a própria senha e o próprio nome pela API.
+- [ ] Depois da troca de senha, nenhuma sessão antiga da conta vale.
 
 ## Out of Scope
 
 | Feature | Reason |
 | ------- | ------ |
+| Troca de e-mail da conta | Bloqueada: e-mail fora desta entrega (decisão do dono); volta com o bloco de e-mail e o link de confirmação (`backend.md` §7 item 7) |
 | Recuperação de senha por e-mail | não pedida; o kit ainda não traz `passwords/` |
 | Gestão de outras contas | o site tem uma conta só |
 | Tela da conta no frontend | frente F |
@@ -28,13 +29,14 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 | Assumption / decision | Chosen default | Rationale | Confirmed? |
 | --------------------- | -------------- | --------- | ---------- |
 | Rotas | `GET /account/profile` e `PUT /account/profile` | rota em inglês (#383), módulo `account`, recurso `profile` como no adacaibs | y |
-| Prova de identidade | toda troca de senha ou e-mail exige `currentPassword` | a sessão prova o cookie, não a pessoa | y |
+| Prova de identidade | toda troca de senha ou de nome exige `currentPassword` | a sessão prova o cookie, não a pessoa | y |
 | Política da senha nova | a regra de senha do `Rule` do shared (a mesma do kit) | uma regra só nos dois lados | y |
-| Sessão depois da troca | todas as sessões da conta caem, inclusive a da requisição; a resposta 200 limpa os cookies e o dono entra de novo | o roteiro exige 200 seguido de 401 | y |
-| E-mail em uso | 409 `EMAIL_IN_USE` | o dono já está autenticado: não há enumeração de conta | y |
+| Sessão depois da troca | a troca de senha derruba todas as sessões da conta, inclusive a da requisição; a resposta 200 limpa os cookies e o dono entra de novo. A troca só do nome não derruba sessão nem limpa cookie | o roteiro exige 200 seguido de 401 para a senha; o nome não é credencial | y |
+| Corpo do PUT | `name` (1 a 120) e `password`, pelo menos um; o corpo não traz `email` | alinhamento ao irmão adacaibs (regente, 2026-11-11); sem e-mail nesta entrega não há o link de confirmação da `backend.md` §7 item 7 | y |
+| Senha igual à atual | 422 `PASSWORD_SAME_AS_CURRENT` no campo `password` | alinhamento ao irmão adacaibs: igual não muda nada e derrubaria as sessões à toa | y |
 | Limite | `accountThrottle` do kit (`start/limiter.base.ts`): 10 por 15 minutos por usuário, com bloqueio de 15 minutos (`backend.md` §4.10) | rota sensível; decisão da regente em 2026-11-11: vale o do kit, sem política própria | y |
 
-**Open questions:** none - resolved by the owner on 2026-11-11 (respostas 5 e 6: senha atual exigida também para o e-mail; a sessão atual cai).
+**Open questions:** none - resolved by the owner on 2026-11-11 (resposta 5: senha atual exigida; resposta 6: a sessão atual cai na troca de senha; troca de e-mail fora desta entrega por decisão do dono).
 
 ---
 
@@ -60,20 +62,28 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 
 ---
 
-### P1: Trocar o e-mail ⭐ MVP
+### P1: Trocar o nome ⭐ MVP
 
-**User Story**: As a dono, I want trocar o e-mail da conta so that o acesso siga o endereço que eu uso.
+**User Story**: As a dono, I want trocar o nome da conta so that a tela da conta e o painel mostrem como me chamo.
 
-**Why P1**: o e-mail do seeder pode não ser o definitivo.
+**Why P1**: o nome do seeder é provisório, e o irmão adacaibs edita o nome pela mesma rota.
 
 **Acceptance Criteria**:
 
-1. WHEN o dono envia `PUT /account/profile` com `currentPassword` certa e `email` novo THEN the system SHALL gravar o e-mail e responder 200 com o perfil  <!-- event-driven -->
-2. WHEN a troca de e-mail responde 200 THEN the system SHALL apagar todos os tokens de sessão da conta na mesma transação  <!-- event-driven -->
-3. IF o e-mail já é de outra conta THEN the system SHALL responder 409 `EMAIL_IN_USE` e não mudar nada  <!-- unwanted -->
-4. WHEN o `email` enviado é igual ao atual THEN the system SHALL responder 200 sem derrubar as sessões  <!-- event-driven -->
+1. WHEN o dono envia `PUT /account/profile` com `currentPassword` certa e `name` novo THEN the system SHALL gravar o nome e responder 200 com o perfil  <!-- event-driven -->
+2. WHEN a troca só do nome responde 200 THEN the system SHALL manter as sessões da conta e não limpar os cookies  <!-- event-driven -->
+3. IF `currentPassword` está errada na troca de nome THEN the system SHALL responder 422 no campo `currentPassword` e não mudar nada  <!-- unwanted -->
 
-**Independent Test**: trocar o e-mail (200), cookie antigo em `GET` (401), entrar com o e-mail novo (204).
+**Independent Test**: trocar o nome (200, sem `Set-Cookie` de sessão), repetir o `GET` com o cookie antigo (200 com o nome novo).
+
+---
+
+### Bloqueada: Trocar o e-mail (ACCOUNT-02)
+
+Bloqueada: e-mail fora desta entrega (decisão do dono); volta com o bloco de e-mail e o link de
+confirmação. A `backend.md` §7 item 7 manda que o e-mail novo só valha depois de confirmado por
+link, com aviso ao endereço antigo, e a entrega não tem o bloco de e-mail. Sem critério nem check
+até lá; o `PUT /account/profile` não aceita `email`.
 
 ---
 
@@ -92,7 +102,7 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 
 ## Edge Cases
 
-- IF o corpo não traz `email` nem `password` THEN the system SHALL responder 422
+- IF o corpo não traz `name` nem `password` THEN the system SHALL responder 422
 - IF a mesma conta troca a senha duas vezes em paralelo THEN the system SHALL aplicar as duas em sequência e deixar zero sessões antigas válidas
 - IF passa de 10 trocas em 15 minutos THEN the system SHALL responder 429
 
@@ -103,10 +113,11 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
 | ACCOUNT-01 | P1: Trocar a senha | Design | Pending |
-| ACCOUNT-02 | P1: Trocar o e-mail | Design | Pending |
+| ACCOUNT-02 | Bloqueada: Trocar o e-mail | - | Bloqueada: e-mail fora desta entrega (decisão do dono) |
+| ACCOUNT-04 | P1: Trocar o nome | Design | Pending |
 | ACCOUNT-03 | P2: Ver o perfil | Design | Pending |
 
-**Coverage:** 3 total, 3 mapped to tasks
+**Coverage:** 3 total, 3 mapped to tasks (ACCOUNT-02 bloqueada, fora da entrega)
 
 ---
 
@@ -114,10 +125,11 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 
 - Mensagem da regente de 2026-11-11 (R2.10 aprovado pelo dono) - escopo da conta
 - `_standards/backend.md` §4.10 - sessão morre no servidor em troca de senha, e-mail ou papel
+- Mensagem da regente de 2026-11-11 - e-mail fora do `PUT`, `name` dentro, alinhamento ao adacaibs
 - `CANONICAS.md` §C - troca de senha com revogação, referência adacaibs
 
 ---
 
 ## Success Criteria
 
-- [ ] Funcional prova 200 seguido de 401 para senha e para e-mail
+- [ ] Funcional prova 200 seguido de 401 para a senha, e 200 sem derrubar sessão para o nome

@@ -86,7 +86,7 @@
       },
       "put": {
         "operationId": "accountProfileUpdate",
-        "summary": "Trocar e-mail ou senha",
+        "summary": "Trocar nome ou senha",
         "tags": [
           "Conta"
         ],
@@ -107,16 +107,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Este e-mail já pertence a outra conta",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error409EmailInUse"
                 }
               }
             }
@@ -152,7 +142,7 @@
             }
           }
         },
-        "description": "Troca o e-mail, a senha ou os dois. O corpo precisa de `email` ou `password`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`; e-mail de outra conta responde `409` `EMAIL_IN_USE`.\n\nTrocar e-mail ou senha **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a credencial nova. Enviar o e-mail que a conta já tem responde `200` e mantém as sessões.\n\nLimite de 10 trocas por 15 minutos por usuário. O papel e o nome não mudam por aqui.",
+        "description": "Troca o nome, a senha ou os dois. O corpo precisa de `name` ou `password`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`.\n\nTrocar a senha **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a senha nova. Trocar só o nome responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O e-mail e o papel não mudam por aqui.",
         "security": [
           {
             "cookieAuth": []
@@ -267,8 +257,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
-              "minimum": 1
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
             }
           },
           {
@@ -276,7 +267,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100
             }
@@ -831,8 +822,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
-              "minimum": 1
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
             }
           },
           {
@@ -840,7 +832,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100
             }
@@ -1566,10 +1558,10 @@
       "AccountProfileUpdateBody": {
         "type": "object",
         "properties": {
-          "email": {
+          "name": {
             "type": "string",
-            "format": "email",
-            "maxLength": 254
+            "minLength": 1,
+            "maxLength": 120
           },
           "password": {
             "type": "string",
@@ -2141,40 +2133,6 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "CONTACT_ALREADY_ANSWERED"
-            ]
-          },
-          "errors": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
-          }
-        },
-        "required": [
-          "message",
-          "status",
-          "code"
-        ]
-      },
-      "Error409EmailInUse": {
-        "type": "object",
-        "properties": {
-          "message": {
-            "type": "string",
-            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
-          },
-          "status": {
-            "type": "integer",
-            "enum": [
-              409
-            ]
-          },
-          "code": {
-            "type": "string",
-            "description": "Identificador de máquina da falha.",
-            "enum": [
-              "EMAIL_IN_USE"
             ]
           },
           "errors": {

@@ -21,31 +21,28 @@ function owner(): User {
 }
 
 test.group('User > update', () => {
-  test('a new e-mail is written, stamps the instant and asks to revoke the sessions', ({
+  test('a new name is written and stamps the instant, without asking to revoke the sessions', ({
     assert,
   }) => {
     const user = owner()
 
-    user.update({ email: 'nova@mail.com' }, CHANGED)
+    user.update({ name: 'Ana Souza' }, CHANGED)
 
     assert.deepInclude(user.snapshot(), {
-      email: 'nova@mail.com',
+      name: 'Ana Souza',
       updatedAt: CHANGED,
     })
-    assert.isTrue(user.credentials().revokeSessions)
+    assert.isFalse(user.credentials().revokeSessions)
   })
 
-  test('the same e-mail changes nothing and does not ask to revoke the sessions', ({
+  test('the same name changes nothing and does not ask to revoke the sessions', ({
     assert,
   }) => {
     const user = owner()
 
-    user.update({ email: 'ana@mail.com' }, CHANGED)
+    user.update({ name: user.snapshot().name }, CHANGED)
 
-    assert.deepInclude(user.snapshot(), {
-      email: 'ana@mail.com',
-      updatedAt: null,
-    })
+    assert.deepInclude(user.snapshot(), { updatedAt: null })
     assert.isFalse(user.credentials().revokeSessions)
   })
 

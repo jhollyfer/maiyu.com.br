@@ -17,7 +17,7 @@ import {
 import { findUserByEmail } from '#tests/users-fixtures'
 
 const NEW_PASSWORD = 'Nova@1234'
-const NEW_EMAIL = 'dono-novo@exemplo.com'
+const NEW_NAME = 'Dono Novo'
 
 /** The new password, with the confirmation the policy asks for. */
 const PASSWORD_CHANGE = {
@@ -27,9 +27,9 @@ const PASSWORD_CHANGE = {
 }
 
 /**
- * The owner changes a credential: `PUT /account/profile`. Changing the password or the
- * e-mail ends every session of the account, the one that asked included, so the proof is a
- * `200` followed by a `401` with the very cookie that made the call.
+ * The owner changes the name or the password: `PUT /account/profile`. Changing the password
+ * ends every session of the account, the one that asked included, so the proof is a `200`
+ * followed by a `401` with the very cookie that made the call; the name alone ends nothing.
  */
 test.group('account/profile > update', (group) => {
   group.each.setup(() => resetDatabase())
@@ -158,7 +158,7 @@ test.group('account/profile > update', (group) => {
     assert.property(body(response, ErrorEnvelope).errors ?? {}, 'password')
   })
 
-  test('changing the email answers 200 and the new email signs in', async ({
+  test('changing the name answers 200 with the new name', async ({
     client,
     assert,
   }) => {
@@ -167,63 +167,60 @@ test.group('account/profile > update', (group) => {
     const response = await client
       .put('/account/profile')
       .cookies(session)
-      .json({ email: NEW_EMAIL, currentPassword: FACTORY_PASSWORD })
+      .json({ name: NEW_NAME, currentPassword: FACTORY_PASSWORD })
 
     response.assertStatus(200)
-    assert.equal(body(response, AccountProfileShowResponse).email, NEW_EMAIL)
-    assert.equal((await findUserByEmail(NEW_EMAIL)).id, user.id)
-    await authenticate(client, NEW_EMAIL, FACTORY_PASSWORD)
+    assert.deepEqual(body(response, AccountProfileShowResponse), {
+      id: user.id,
+      name: NEW_NAME,
+      email: user.email,
+      role: 'ADMINISTRATOR',
+    })
+    assert.equal((await findUserByEmail(user.email)).name, NEW_NAME)
   })
 
-  test('after an email change the old cookie answers 401', async ({
+  test('a name change keeps the session and does not clear the cookies', async ({
     client,
+    assert,
   }) => {
     const { session } = await signInWithFactory(client, 'administrator')
-    const changed = await client
-      .put('/account/profile')
-      .cookies(session)
-      .json({ email: NEW_EMAIL, currentPassword: FACTORY_PASSWORD })
-    changed.assertStatus(200)
-
-    const response = await client.get('/account/profile').cookies(session)
-
-    response.assertStatus(401)
-  })
-
-  test('an email in use answers 409', async ({ client, assert }) => {
-    const { user, session } = await signInWithFactory(client, 'administrator')
-    const other = await UserFactory.create()
 
     const response = await client
       .put('/account/profile')
       .cookies(session)
-      .json({ email: other.email, currentPassword: FACTORY_PASSWORD })
-
-    response.assertStatus(409)
-    const error = body(response, ErrorEnvelope)
-    assert.equal(error.code, 'EMAIL_IN_USE')
-    assert.deepEqual(Object.keys(error.errors ?? {}), ['email'])
-    assert.equal((await findUserByEmail(user.email)).id, user.id)
-    // The refused change revoked nothing.
-    const alive = await client.get('/account/profile').cookies(session)
-    alive.assertStatus(200)
-  })
-
-  test('the same email keeps the session', async ({ client, assert }) => {
-    const { user, session } = await signInWithFactory(client, 'administrator')
-
-    const response = await client
-      .put('/account/profile')
-      .cookies(session)
-      .json({ email: user.email, currentPassword: FACTORY_PASSWORD })
+      .json({ name: NEW_NAME, currentPassword: FACTORY_PASSWORD })
 
     response.assertStatus(200)
-    assert.equal(body(response, AccountProfileShowResponse).email, user.email)
+    // No `Set-Cookie` at all: a cleared cookie would sign the browser out of a live session.
+    for (const name of [SESSION_TOKEN.ACCESS, SESSION_TOKEN.REFRESH])
+      assert.isUndefined(response.cookie(name), name)
+    // The cookie from before the call is still good.
+    const alive = await client.get('/account/profile').cookies(session)
+    alive.assertStatus(200)
+    assert.equal(body(alive, AccountProfileShowResponse).name, NEW_NAME)
+  })
+
+  test('a name change with a wrong current password answers 422 and changes nothing', async ({
+    client,
+    assert,
+  }) => {
+    const { user, session } = await signInWithFactory(client, 'administrator')
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({ name: NEW_NAME, currentPassword: 'Errada@123' })
+
+    response.assertStatus(422)
+    const error: ErrorBody = body(response, ErrorEnvelope)
+    assert.equal(error.code, 'CURRENT_PASSWORD_INVALID')
+    assert.deepEqual(Object.keys(error.errors ?? {}), ['currentPassword'])
+    assert.equal((await findUserByEmail(user.email)).name, user.name)
     const alive = await client.get('/account/profile').cookies(session)
     alive.assertStatus(200)
   })
 
-  test('a body with neither email nor password answers 422', async ({
+  test('a body with neither name nor password answers 422', async ({
     client,
     assert,
   }) => {
@@ -237,7 +234,7 @@ test.group('account/profile > update', (group) => {
     response.assertStatus(422)
     assert.sameMembers(
       Object.keys(body(response, ErrorEnvelope).errors ?? {}),
-      ['email', 'password'],
+      ['name', 'password'],
     )
   })
 
@@ -249,10 +246,10 @@ test.group('account/profile > update', (group) => {
 
     const response = await client
       .put('/account/profile')
-      .json({ email: NEW_EMAIL, currentPassword: FACTORY_PASSWORD })
+      .json({ name: NEW_NAME, currentPassword: FACTORY_PASSWORD })
 
     response.assertStatus(401)
-    assert.equal((await findUserByEmail(account.email)).id, account.id)
+    assert.equal((await findUserByEmail(account.email)).name, account.name)
   })
 
   test('two password changes at once leave no old session valid', async ({
