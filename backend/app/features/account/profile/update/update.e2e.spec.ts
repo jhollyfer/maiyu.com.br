@@ -249,14 +249,14 @@ test.group('account/profile > update', (group) => {
     response.assertStatus(401)
   })
 
-  test('the sixth change in fifteen minutes answers 429', async ({
+  test('the eleventh change in fifteen minutes answers 429', async ({
     client,
     assert,
   }) => {
     const { session } = await signInWithFactory(client, 'administrator')
     const wrong = { ...PASSWORD_CHANGE, currentPassword: 'Errada@123' }
 
-    for (let attempt = 1; attempt <= 5; attempt++) {
+    for (let attempt = 1; attempt <= 10; attempt++) {
       const refused = await client
         .put('/account/profile')
         .cookies(session)

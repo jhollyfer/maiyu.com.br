@@ -14,8 +14,9 @@ import { STAFF_USER_ROLES } from '@maiyu/shared'
 
 import { controllers } from '#generated/controllers'
 import { middleware } from '#start/kernel'
-import { accountUpdateThrottle, contactThrottle } from '#start/limiter'
+import { contactThrottle } from '#start/limiter'
 import {
+  accountThrottle,
   refreshThrottle,
   signInAccountThrottle,
   signInThrottle,
@@ -117,7 +118,7 @@ router
         router
           .put('/', [controllers.account.profile.update.Update])
           .as('account.profile.update')
-          .use(accountUpdateThrottle)
+          .use(accountThrottle)
       })
       .prefix('profile')
   })

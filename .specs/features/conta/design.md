@@ -42,7 +42,7 @@ graph TD
 | System | Integration Method |
 | ------ | ------------------ |
 | `start/routes.ts` | grupo `account` com `auth()` |
-| `start/limiter.ts` | `accountThrottle`: 5 por 15 minutos por usuário |
+| `start/routes.ts` | `accountThrottle` do kit (`limiter.base.ts`), usado na rota sem política própria: 10 por 15 minutos por usuário |
 | `resources/lang/*/account.json` | `account.email_in_use`, `account.current_password_invalid` |
 
 ## Components

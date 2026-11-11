@@ -32,7 +32,7 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 | Política da senha nova | a regra de senha do `Rule` do shared (a mesma do kit) | uma regra só nos dois lados | y |
 | Sessão depois da troca | todas as sessões da conta caem, inclusive a da requisição; a resposta 200 limpa os cookies e o dono entra de novo | o roteiro exige 200 seguido de 401 | y |
 | E-mail em uso | 409 `EMAIL_IN_USE` | o dono já está autenticado: não há enumeração de conta | y |
-| Limite | limiter por usuário na troca de conta (`backend.md` §4.10), 5 por 15 minutos | rota sensível | y |
+| Limite | `accountThrottle` do kit (`start/limiter.base.ts`): 10 por 15 minutos por usuário, com bloqueio de 15 minutos (`backend.md` §4.10) | rota sensível; decisão da regente em 2026-11-11: vale o do kit, sem política própria | y |
 
 **Open questions:** none - resolved by the owner on 2026-11-11 (respostas 5 e 6: senha atual exigida também para o e-mail; a sessão atual cai).
 
@@ -93,7 +93,7 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 
 - IF o corpo não traz `email` nem `password` THEN the system SHALL responder 422
 - IF a mesma conta troca a senha duas vezes em paralelo THEN the system SHALL aplicar as duas em sequência e deixar zero sessões antigas válidas
-- IF passa de 5 trocas em 15 minutos THEN the system SHALL responder 429
+- IF passa de 10 trocas em 15 minutos THEN the system SHALL responder 429
 
 ---
 

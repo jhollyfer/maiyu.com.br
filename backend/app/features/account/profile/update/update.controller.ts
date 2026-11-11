@@ -20,7 +20,7 @@ export default class AccountProfileUpdateController {
       'chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono ' +
       'entra de novo com a credencial nova. Enviar o e-mail que a conta já tem responde `200` e ' +
       'mantém as sessões.\n\n' +
-      'Limite de 5 trocas por 15 minutos por usuário. O papel e o nome não mudam por aqui.',
+      'Limite de 10 trocas por 15 minutos por usuário. O papel e o nome não mudam por aqui.',
   })
 
   constructor(private readonly useCase: AccountProfileUpdateUseCase) {}

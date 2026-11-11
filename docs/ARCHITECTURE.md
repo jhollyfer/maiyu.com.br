@@ -151,8 +151,8 @@ igual ao atual é 200 e não derruba nada. Quando muda o e-mail ou a senha, a en
 revogação, e o `UserRepository.save` grava a linha e chama `SessionRepository.revokeAll` na mesma
 `UnitOfWork`: ou ficam a credencial antiga e as sessões, ou nenhuma das duas. A revogação inclui a
 sessão que fez a chamada, então a resposta 200 limpa os cookies (`SessionCookie.clear`) e o dono entra
-de novo com a credencial nova; o cookie de antes responde 401. O limite é de 5 trocas por 15 minutos
-por usuário (`accountUpdateThrottle` em `start/limiter.ts`, com bloqueio de 15 minutos), porque a
+de novo com a credencial nova; o cookie de antes responde 401. O limite é de 10 trocas por 15 minutos
+por usuário (`accountThrottle` do kit, em `start/limiter.base.ts`, com bloqueio de 15 minutos), porque a
 rota compara a senha atual e seria um oráculo de senha para quem roubasse o cookie. Aviso por e-mail
 ao endereço antigo ficou fora, por decisão do dono: o e-mail novo vale na hora.
 
