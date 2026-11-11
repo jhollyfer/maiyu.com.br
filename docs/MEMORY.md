@@ -18,6 +18,8 @@
 
 ## Parou em
 
+RD.3 feita: `ARCHITECTURE.md` §9.1 descreve os dois recursos do Coolify (site e API) pelo quadro da régua, sem workflows de entrega. RD.2 feita: `docs/` posto em dia (SECURITY, TEST-PLAN, ENV, ARCHITECTURE, RULES, PRD) e as decisões locais substituídas marcadas em `DECISIONS.md`. RD.4 feita: `frontend/README.md` e `frontend/AGENTS.md` pela régua, `frontend/CLAUDE.md` com `@AGENTS.md`, `components/common/CLAUDE.md` removido. Régua D fechada na branch `docs/regua-docs`.
+
 O E2E do kit cobre as páginas públicas (`e2e/support/pages.md`): 90 de 90, depois de levar a 44px os
 alvos de toque do crédito das fotos, do rodapé e do breadcrumb do artigo.
 

@@ -19,9 +19,9 @@
 - Dependência nova, ou troca de versão major.
 - Teste que está falhando: investiga, não apaga nem pula.
 - `docs/PRD.md` (escopo).
-- Secret do repositório, painel do Coolify, `UUID_APP` e configuração de deploy.
+- Painel do Coolify (variáveis, domínios, *Watch Paths*) e qualquer configuração de deploy: quem decide é o dono.
 - `components/ui/`: território do shadcn, nunca editado à mão.
-- `.github/workflows/`: pendente de decisão do dono (`DECISIONS.md` #6).
+- `.github/`: os workflows saem pela régua (`_standards/DECISIONS.md` #298); mexer só na frente de infra (`TASKS.md` R4.1).
 - Copy de posicionamento (quem é a Maiyu, a quem serve): vem do dono do produto (`PRD.md` §1 e §2).
 
 ## 3. Regras deste projeto
