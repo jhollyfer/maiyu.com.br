@@ -42,14 +42,29 @@ test.group('storefront/contacts > create', (group) => {
     client,
     assert,
   }) => {
-    // Five cases, the ceiling of the hourly limit: the sixth request would answer 429 and measure
-    // the limiter instead of the validator. The other bounds are the shared validator's spec.
+    // Five requests, the ceiling of the hourly limit: a sixth would answer 429 and measure the
+    // limiter instead of the validator. So the four per-field refusals of the first cases share
+    // one request, and the freed ones hold the backend's own bounds (`contacts.validator.ts`,
+    // a different schema from the shared Zod one): a loose `minLength`/`maxLength` there would
+    // stay green on every other check.
+    const longEmail = `ana@${'b'.repeat(63)}.${'c'.repeat(63)}.${'d'.repeat(63)}.${'e'.repeat(55)}.com`
+    assert.lengthOf(longEmail, 255)
+
     const invalid = [
       { payload: {}, fields: ['email', 'locale', 'message', 'name'] },
-      { payload: { ...VALID, name: 'a'.repeat(121) }, fields: ['name'] },
-      { payload: { ...VALID, email: 'ana' }, fields: ['email'] },
-      { payload: { ...VALID, message: '         ' }, fields: ['message'] },
-      { payload: { ...VALID, locale: 'fr' }, fields: ['locale'] },
+      {
+        payload: {
+          ...VALID,
+          name: 'a'.repeat(121),
+          email: 'ana',
+          message: '         ',
+          locale: 'fr',
+        },
+        fields: ['email', 'locale', 'message', 'name'],
+      },
+      { payload: { ...VALID, message: 'a'.repeat(9) }, fields: ['message'] },
+      { payload: { ...VALID, message: 'a'.repeat(5001) }, fields: ['message'] },
+      { payload: { ...VALID, email: longEmail }, fields: ['email'] },
     ]
 
     for (const { payload, fields } of invalid) {
