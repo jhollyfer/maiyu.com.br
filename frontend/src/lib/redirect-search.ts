@@ -1,3 +1,30 @@
+/** Percent-encoded control characters (`%00` to `%1F`, `%7F`). */
+const ENCODED_CONTROL = /%(?:[01][0-9a-f]|7f)/i
+
+const BACKSLASH = 92
+const DELETE = 127
+const SPACE = 32
+
+/** Raw control characters and `\`: never part of an honest path here. */
+function hasControlOrBackslash(value: string): boolean {
+  if (ENCODED_CONTROL.test(value)) return true
+
+  // `charCodeAt` and not a regex: ESLint's `no-control-regex` rejects the class.
+  return Array.from(value).some((char) => {
+    const code = char.charCodeAt(0)
+
+    return code < SPACE || code === DELETE || code === BACKSLASH
+  })
+}
+
+const BASE = 'http://x'
+
+function stayedOnSite(path: string): boolean {
+  if (!URL.canParse(path, BASE)) return false
+
+  return new URL(path, BASE).origin === BASE
+}
+
 /** Where to go back to after signing in, when the guard blocked someone midway. */
 export type RedirectSearch = {
   redirect?: string | undefined
@@ -12,7 +39,8 @@ export type RedirectSearch = {
  *
  * A refused value comes back as `{ redirect: undefined }`, never `{}`: the router merges
  * `{ ...parentSearch, ...validated }`, so an absent key lets the raw `?redirect=` of the URL
- * survive the validation (open redirect, relato do manganga, 2026-11-11).
+ * survive the validation (open redirect; relato do manganga). The control and backslash
+ * checks and the URL resolution came from the curupira; the aporta found the tab case.
  *
  * Lives outside `routes/` so it can be tested without the route tree generator
  * treating the test file as a route.
@@ -32,13 +60,12 @@ export function validateRedirectSearch(
   // after typing the password, and the address bar gives nothing away.
   if (!value.startsWith('/') || value.startsWith('//')) return REFUSED
 
-  // `\` in place of `/` is the variation that browsers normalize back
-  // to `//`, and that gets past a check made only on the slash.
-  if (value.startsWith('/\\')) return REFUSED
-
-  // A control character (tab, line break, DEL) anywhere: the browser strips it while parsing
-  // the URL, so `/\t/evil.test` becomes `//evil.test` after the checks above (relato do aporta).
-  if (/[\u0000-\u001f\u007f]/.test(value)) return REFUSED
+  // The browser's own parser is the judge of the rest. It drops tabs and newlines
+  // inside a URL (`/\t/evil.com` becomes `//evil.com`) and turns `\` into `/`, which are
+  // exactly the spellings a string check misses. A path is internal only if resolving it
+  // against a base stays on that base.
+  if (hasControlOrBackslash(value)) return REFUSED
+  if (!stayedOnSite(value)) return REFUSED
 
   return { redirect: value }
 }
