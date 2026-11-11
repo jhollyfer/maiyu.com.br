@@ -13,7 +13,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 **Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 **Mutations**: 3
 **Build note**: o `pattern:check` lê o repositório inteiro e acusa 6 achados de `frontend/`, de outra frente (R1.7 e R2/R3); o Build reprova só achado em `backend/` ou `shared/`.
-**Build**: `pnpm --filter ./shared check; cd backend && pnpm typecheck; cd backend && pnpm lint; cd backend && pnpm format:check; cd backend && pnpm openapi:check; cd backend && ! pnpm -s pattern:check 2>&1 | grep -E '^\s*(backend|shared)/'; cd backend && pnpm authz:check; cd backend && pnpm validators:check`
+**Build**: `pnpm --filter ./shared check; cd backend && pnpm typecheck; cd backend && pnpm lint; cd backend && pnpm format:check; cd backend && pnpm openapi:check; cd backend && pnpm -s pattern:check > /tmp/pattern-check.txt 2>&1; ! grep -e '^ *backend/' -e '^ *shared/' /tmp/pattern-check.txt; cd backend && pnpm authz:check; cd backend && pnpm validators:check`
 
 ---
 
