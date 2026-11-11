@@ -114,11 +114,12 @@ T9 → T10
 
 **Done when**:
 
-- [ ] responder pendente grava o instante; responder respondido devolve o fato sem mudar nada
-- [ ] Gate check passes: `cd backend && node ace test unit`
+- [x] responder pendente grava o instante; responder respondido devolve o fato sem mudar nada
+- [x] Gate check passes: `cd backend && node ace test unit`
 
 **Tests**: unit
 **Gate**: quick
+**Status**: Done
 
 ---
 
