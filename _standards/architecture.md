@@ -97,7 +97,7 @@ backend/
 │   │   │   ├── <entidade>.entity.ts       # classe rica: create/restore, transições, invariantes
 │   │   │   ├── <entidade>.errors.ts       # fatos de domínio (sem status HTTP)
 │   │   │   └── <entidade>.unit.spec.ts
-│   │   └── shared/<nome>.value-object.ts  # value object só do backend (Money, Slug com unicidade…)
+│   │   └── shared/<nome>.value-object.ts  # value object só do backend (Slug com unicidade…); o que roda no front, Money incluído, vai para shared/src/value-objects/ (domain.md §3)
 │   ├── repositories/
 │   │   ├── shared/<nome>.ts               # serve a 2+ repositories e importa model ou faz I/O de persistência (Adonis: lucid-mapping.ts; driver: conexão, coleção com escopo); helper puro vai para core/ (DECISIONS #278)
 │   │   ├── unit-of-work/{unit-of-work.ts, unit-of-work.lucid.ts, unit-of-work.memory.ts}   # domain.md §6
@@ -562,7 +562,7 @@ shared/
     ├── validators/<módulo>/_shared.<tema>.ts   # regra de domínio de 2+ recursos do mesmo módulo; só função pura em classe static (typescript.md §6)
     ├── validators/_shared.<tema>.ts   # a mesma regra entre módulos diferentes: sobe para a raiz de validators/, nunca importa `_shared` de outro módulo
     ├── enums/<nome>.ts              # POST_STATUS / PostStatus / POST_STATUSES
-    ├── value-objects/<nome>.ts      # Cpf, Cnpj, Email, Phone: create() devolve Either; formatação pura
+    ├── value-objects/<nome>.ts      # Cpf, Cnpj, Email, Phone, Money: create() devolve Either; formatação pura
     ├── records/<contexto>.ts        # tipo de registro e constante que os dois lados leem (Table, Row, User); sem schema
     ├── rich-text-schema.ts          # [opc] com @tiptap/core (bloco opcional do sync): lista única de extensões do Tiptap + conversão HTML/Markdown → JSON (editor e migration)
     └── responses/<módulo>/<recurso>.response.ts     # schemas Zod de resposta + tipos (§10)

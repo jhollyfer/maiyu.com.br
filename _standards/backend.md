@@ -696,6 +696,10 @@ Dentro da implementação do repository:
   dev e teste (_doc-lib/lucid.md#debugging); sem nenhuma query registrada ele reprova, em vez de passar com 0.
   Lentidão em produção se separa antes de corrigir: `pg_stat_statements`, contagem da tabela e tempo
   da rota na API contra o do proxy.
+  Coluna `jsonb` localizada (nome e título nos três idiomas) de catálogo pequeno (dezenas a poucos
+  milhares de linhas) não leva índice de expressão nem trigram por idioma: o Seq Scan cabe na página e
+  a medida com volume no PR prova. Com volume que a medida mostre lento, um índice de expressão só do
+  idioma base (`(name->>'pt-BR')`) (relato do academy).
   Armadilhas medidas nos projetos (interclasse, 51 mil linhas):
   - filtro "pertence a" com `OR EXISTS` estoura o custo estimado e liga o JIT (213 ms); escreva
     `whereIn(col, sub).orWhereIn(outra, sub)` com índice (12 ms) (_doc-lib/postgresql.md#jit-decision);
@@ -1478,7 +1482,7 @@ nome e significado vêm daqui.
 | `NODE_ENV` | api | sim | não | `development`, `production` ou `test` |
 | `PORT` | api | sim | não | porta HTTP |
 | `HOST` | api | sim | não | interface de escuta; `0.0.0.0` em container |
-| `TZ` | api | não | não | fuso do processo; `UTC` em todo ambiente |
+| `TZ` | api | não | não | fuso de todo sistema da casa, processo e sessão do banco: `America/Eirunepe` em todo ambiente (`DECISIONS.md` #393) |
 
 **`# App`**
 
