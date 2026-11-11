@@ -60,7 +60,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; R1.4 feita, falta o merge e a prova da CSP no navegador |
+| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Feita | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; merge feito; sem erro de CSP no console em `/pt-br` e num artigo |
 | R0.2 | JSON-LD serializado com `<` escapado | P | Feita | `frontend.md` §9.7; `docs/SECURITY.md` |
 | R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | Feita | `DECISIONS.md` #17: sem formulário, aviso e canais reais; contato volta com o recurso do backend (R2.10) |
 | R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | Feita | `tooling.md` §9 e §7, KIT.md §3.3 |
@@ -74,13 +74,13 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Feita | `feat/backend-inicial`; workspace do modelo e `shared/` (`@maiyu/shared`) com o kit da leva 8: format, lint, tsc e 62 testes |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | Feita | #241; MIGRATIONS.md; `@vinejs/vine` fora do frontend; os schemas dos formulários saíram do `shared/` com a decisão #17 (sem formulário no site) |
-| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
+| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | Em andamento | `tooling.md` §0.1 |
 | R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Em andamento | `tooling.md` §0.1; Luxon feito; Tiptap estático bloqueado por lacuna do RichText do kit |
 | R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | Feita | `tooling.md` §0; MIGRATIONS.md; fica fora só o TypeScript 7 (exceção do §0); o `@tiptap/*` do `shared/` é da outra frente |
 | R1.8 | `tsconfig` com as flags do piso | P | Feita | `tooling.md` §3; `verbatimModuleSyntax: false` (#319) |
 | R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | Feita | `tooling.md` §4.1, §4.2; `eslint.config.js` do kit, que ignora `components/ui/` (#391) |
-| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | A fazer | `architecture.md` §4; ENV do modelo |
-| R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | A fazer | ARVORE.md |
+| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | Parcial | `architecture.md` §4; ENV do modelo; falta a linha `VITE_API_URL` em `.env.production` (domínio da API, decisão do dono) |
+| R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | Feita | ARVORE.md |
 
 ### Régua B · Backend inicial (item G, sub-sessão)
 
@@ -90,7 +90,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | Feita | `/health-check`, OpenAPI (`openapi:check` e `authz:check` verdes), i18n pt-BR, en e es e as specs do kit |
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta espera rota de conta (R2.10) |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
-| RB.5 | Tuyau dentro do `request()` no frontend | M | A fazer | #324; depois de RB.1 |
+| RB.5 | Tuyau dentro do `request()` no frontend | M | Feita | #324; depois de RB.1 |
 
 ### Régua 2 · Árvore e camadas
 
@@ -111,9 +111,9 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Em andamento | kit livre do backend entrou (levas 7 e 8); o resto espera o merge do backend no frontend |
+| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Em andamento |kit do backend entrou (env, start, server, router, http, page-head, sitemap, route-error, hooks, rich-text); `table/` e `list-shell/` ficam fora até o kit torná-los opcionais |
 | R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
-| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Bloqueada | #366 |
+| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Parcial | #366 |
 | R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Bloqueada | `i18n.md` |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |

@@ -79,7 +79,7 @@ trocado. Médio: indisponibilidade prolongada. Baixo: enumeração de conteúdo 
 ### 2.8 Para revisão manual
 
 - Qualquer endpoint novo, incluindo o futuro formulário de contato (`DECISIONS.md` #17), reabre este modelo.
-- Cabeçalhos de segurança e CSP: não coberto por teste; conferir no proxy do Coolify.
+- Cabeçalhos de segurança: a montagem da CSP tem teste (`frontend/src/lib/security-headers.test.ts`), a aplicação no `server.ts` não; conferir com `curl -sI` depois do deploy (§5).
 
 ## 3. Autenticação e sessão
 
@@ -93,7 +93,25 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 
 - O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada à mão em `lib/blog-search.ts`.
 - Não há upload.
-- Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLdScript` escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
+- Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLd` do kit escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
+
+### 5.1 Cabeçalhos de segurança
+
+O `frontend/src/server.ts` aplica em toda resposta que passa pelo SSR os cabeçalhos de
+`frontend/src/lib/security-headers.ts`, arquivo do kit (`_standards/frontend.md` §3.3):
+
+| Cabeçalho | Valor | Por quê |
+|---|---|---|
+| `Content-Security-Policy` | `default-src 'self'`; `script-src` com `'self'` e nonce por resposta; `style-src` com `'unsafe-inline'`; `img-src`, `connect-src` e `font-src` do kit; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` | `frame-ancestors` impede clickjacking; o nonce autoriza os scripts de hidratação do Start sem `unsafe-inline` em script; a origem da API e a do bucket entram por `VITE_API_URL` e `STORAGE_PUBLIC_URL` |
+| `X-Content-Type-Options` | `nosniff` | o navegador não adivinha tipo de arquivo |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | link de saída leva só a origem |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | sem `preload`, que não se desfaz |
+| `X-Robots-Tag` | `noindex, nofollow` | só quando `SITE_ENV` não é `production`, lida por requisição (`ENV.md`) |
+
+Pendências conhecidas:
+
+- O que o Nitro serve direto de `public/` e de `/assets/` não passa pelo `server.ts` e sai sem esses
+  cabeçalhos, Ficam para outro item. O `robots.txt` é rota do kit e responde `Disallow: /` fora de produção.
 
 ## 6. Segredos
 

@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { pageHead } from '#/lib/head'
+import { pageHead } from '#/lib/page-head'
 import { m } from '#/paraglide/messages'
 
 /**
@@ -13,8 +13,8 @@ import { m } from '#/paraglide/messages'
 export const Route = createFileRoute('/_public/')({
   head: () =>
     pageHead({
-      path: '/',
+      pathname: '/',
       title: m.meta_homeTitle(),
-      description: m.meta_description(),
+      description: m.site_description(),
     }),
 })

@@ -1,3 +1,5 @@
+import { env } from '#/env'
+
 /**
  * O que identifica o site nos metadados de toda rota.
  *
@@ -10,13 +12,13 @@
 export const SITE_TITLE = 'Maiyu'
 
 /**
- * O endereço público, sem barra no fim.
+ * O endereço público, sem barra no fim, vindo de `VITE_SITE_URL` (`lib/build-env.ts`): a mesma
+ * origem que o canônico, o sitemap e o `robots.txt` do kit usam, e não um segundo literal.
  *
- * Só para o que precisa de URL absoluta: sitemap, `canonical` e cartão de
- * link. Link interno é caminho relativo - cravar o domínio neles quebraria a
- * navegação em qualquer ambiente que não fosse produção.
+ * Só para o que precisa de URL absoluta. Link interno é caminho relativo - cravar o domínio
+ * neles quebraria a navegação em qualquer ambiente que não fosse produção.
  */
-export const SITE_URL = 'https://maiyu.com.br'
+export const SITE_URL = env.VITE_SITE_URL
 
 /**
  * A imagem do cartão de link, absoluta porque quem a lê é um rastreador de

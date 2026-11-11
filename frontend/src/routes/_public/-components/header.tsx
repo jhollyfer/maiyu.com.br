@@ -2,6 +2,8 @@ import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
+import { ThemeToggle } from '#/components/common/theme/theme-toggle'
 import { Button } from '#/components/ui/button'
 import {
   NavigationMenu,
@@ -22,11 +24,9 @@ import {
 import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
-import { LanguageSwitcher } from './language-switcher'
 import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 import { PillButton } from './pill-button'
-import { ThemeToggle } from './theme-toggle'
 import { useScrolled } from './use-scrolled'
 
 /**
@@ -82,7 +82,7 @@ export function Header(): React.JSX.Element {
 
         <div className="flex items-center gap-1.5 justify-self-end">
           <div className="hidden md:block">
-            <LanguageSwitcher />
+            <LocaleSwitcher className="w-36" />
           </div>
           <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
           <PillButton
@@ -175,7 +175,7 @@ function MobileMenu(): React.JSX.Element {
 
         <SheetFooter className="flex-row items-center justify-between gap-4 px-0">
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
+            <LocaleSwitcher className="w-36" />
             <ThemeToggle className="size-11 rounded-full" />
           </div>
           <PillButton

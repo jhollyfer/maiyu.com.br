@@ -1,89 +1,85 @@
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
+/**
+ * The router, born per request (`_standards/frontend.md` §1.4). Start calls `getRouter` on every
+ * SSR, so the `QueryClient` of `getContext` is never shared between visitors (`query-context.ts`).
+ *
+ * `ssr.nonce` is the other half of the CSP of `src/server.ts`: the policy carries `'nonce-...'`,
+ * and with a nonce present the browser ignores `'unsafe-inline'` (`lib/security-headers.ts`). Every
+ * inline script Start writes (hydration, `ScriptOnce`) needs this nonce, or the page opens as dead
+ * HTML. The value comes from the request scope that `src/server.ts` opened, never from module scope
+ * (`http.server.ts`); in the browser and in `vite dev` it is `undefined`
+ * (_doc-lib/tanstack-start.md#guide/environment-functions,
+ * https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-functions.md).
+ */
+import { createRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+import { createIsomorphicFn } from '@tanstack/react-start'
 
-import {
-  NotFoundPage,
-  NotFoundPageActions,
-  NotFoundPageDescription,
-  NotFoundPageHomeButton,
-  NotFoundPageSubtitle,
-  NotFoundPageTitle,
-} from '#/components/common/not-found-page'
-import { Button } from '#/components/ui/button'
-import { m } from '#/paraglide/messages'
+import { NotFoundPage } from '#/components/common/route-status/not-found-page'
+import { RouteError } from '#/components/common/route-status/route-error'
+import { requestScope } from '#/integrations/tanstack-query/http.server'
+import { getContext } from '#/integrations/tanstack-query/query-context'
 import {
   deLocalizeUrl,
   getLocale,
+  isExcludedByRouteStrategy,
   isServer,
   localizeUrl,
 } from '#/paraglide/runtime'
+import { routeTree } from '#/routeTree.gen'
 import { ValidationMessage } from '@maiyu/shared'
 
-import { getContext } from './integrations/tanstack-query/query-context'
-import { routeTree } from './routeTree.gen'
+/** This response's nonce on the server; the client build strips the server branch and its import. */
+const readNonce = createIsomorphicFn()
+  .server(() => requestScope()?.nonce)
+  .client(() => undefined)
 
 export function getRouter() {
-  /*
-   * O idioma das mensagens de validação é estado de módulo: no servidor seria um
-   * valor só para requisições paralelas em idiomas diferentes, então só o
-   * navegador o troca. Trocar de idioma é navegar para outro documento, que
-   * roda isto de novo (_doc-lib/paraglide.md#/tanstack-start).
-   */
+  // The validation language is module state: on the server it would be one value for parallel
+  // requests in different languages, so only the browser switches it. A language switch is a
+  // document navigation, which runs this again (_doc-lib/paraglide.md#/tanstack-start).
   if (!isServer) ValidationMessage.setLocale(getLocale())
 
   const context = getContext()
 
-  const router = createTanStackRouter({
+  const router = createRouter({
     routeTree,
     context,
-    scrollRestoration: true,
+    ssr: { nonce: readNonce() },
+    // One route tree for every language: `/es/x` comes in as `/x` and every link goes out with the
+    // current prefix (_doc-lib/tanstack-router.md#guide/url-rewrites). A route excluded in
+    // `routeStrategies` (`/health-check`, `/.well-known/*`) keeps its URL both ways, or the output
+    // rewrite would send it to `/pt-br/...` (`DECISIONS.md` #385; runtime `isExcludedByRouteStrategy`).
+    rewrite: {
+      input: ({ url }) => {
+        if (isExcludedByRouteStrategy(url)) return url
+        return deLocalizeUrl(url)
+      },
+      output: ({ url }) => {
+        if (isExcludedByRouteStrategy(url)) return url
+        return localizeUrl(url)
+      },
+    },
+    // The router preloads, the Query cache decides what is fresh
+    // (_doc-lib/tanstack-router.md#guide/preloading).
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
-
-    /*
-     * O idioma mora no prefixo do endereço (`/en/portfolio`), e as rotas não
-     * sabem disso: `routes/` declara `/portfolio` uma vez só. A entrada tira o
-     * prefixo antes de casar a rota, e a saída o devolve em todo `Link`, então
-     * quem navega em inglês continua em inglês sem que tela nenhuma monte URL
-     * com idioma à mão.
-     */
-    rewrite: {
-      input: ({ url }) => deLocalizeUrl(url),
-      output: ({ url }) => localizeUrl(url),
-    },
+    scrollRestoration: true,
     defaultNotFoundComponent: () => <NotFoundPage />,
-
-    /*
-     * A saída de tudo que falha e não foi tratado.
-     *
-     * Sem ela, rota sem `errorComponent` cai na tela embutida do TanStack, que
-     * em produção é um bloco de texto sem estilo. `reset` vem antes de "voltar
-     * ao início": refazer a tentativa costuma resolver sem perder o lugar.
-     */
-    defaultErrorComponent: ({ reset }) => (
-      <NotFoundPage code="500">
-        <NotFoundPageTitle>{m.error_title()}</NotFoundPageTitle>
-        <NotFoundPageSubtitle>{m.error_subtitle()}</NotFoundPageSubtitle>
-        <NotFoundPageDescription>
-          {m.error_description()}
-        </NotFoundPageDescription>
-        <NotFoundPageActions>
-          <Button size="lg" className="w-fit rounded-full px-6" onClick={reset}>
-            {m.error_retry()}
-          </Button>
-          <NotFoundPageHomeButton />
-        </NotFoundPageActions>
-      </NotFoundPage>
+    // Without a default, an unhandled loader failure falls to the router's unstyled built-in
+    // screen in production.
+    defaultErrorComponent: ({ error, reset }) => (
+      <RouteError error={error} resetErrorBoundary={reset} />
     ),
   })
 
+  // The one `QueryClientProvider` of the app wraps the router here (`query-context.ts`).
   setupRouterSsrQueryIntegration({ router, queryClient: context.queryClient })
 
   return router
 }
 
 declare module '@tanstack/react-router' {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- module augmentation only merges an `interface`, a `type` alias would not extend `Register`
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- declaration merging requires `interface`
   interface Register {
     router: ReturnType<typeof getRouter>
   }

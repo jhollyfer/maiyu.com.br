@@ -5,14 +5,15 @@ import {
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
-import { ThemeProvider } from 'next-themes'
 
-import { Toaster } from '#/components/ui/sonner'
+import { ThemeProvider } from '#/components/common/theme/theme-provider'
+import { ThemeProviderToaster } from '#/components/common/theme/theme-provider-toaster'
 import { TooltipProvider } from '#/components/ui/tooltip'
 import { AppDevtools } from '#/integrations/tanstack-query/devtools'
-import { SITE_IMAGE, SITE_TITLE } from '#/lib/site'
-import { ogLocale } from '#/lib/site-i18n'
-import { jsonLdScript, organizationJsonLd } from '#/lib/structured-data'
+import { jsonLd } from '#/lib/page-head'
+import { SITE_TITLE } from '#/lib/site'
+import { organizationJsonLd } from '#/lib/structured-data'
+import { THEME_CLASS, readTheme } from '#/lib/theme'
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
 
@@ -36,39 +37,31 @@ type RouterContext = {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
+  // O tema vem do cookie, lido no servidor: o primeiro HTML já sai com a classe certa e sem
+  // piscar (`frontend.md` §6, _doc-lib/shadcn.md#docs/dark-mode/tanstack-start).
+  loader: () => ({ theme: readTheme() }),
   head: () => ({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: m.meta_title() },
+      { title: m.site_title() },
       /*
        * Sem `description` o buscador monta o resumo com o que achar na página,
        * e o cartão de link em aplicativo de mensagem sai só com o título. Uma
        * rota que queira a sua a escreve no próprio `head`: o mais fundo vence
        * na fusão por nome.
        */
-      { name: 'description', content: m.meta_description() },
-      { name: 'robots', content: 'index, follow' },
+      { name: 'description', content: m.site_description() },
       /*
-       * Sem `og:url` nem `canonical` aqui, de propósito: a raiz do domínio
-       * responde 307 para `/pt-br` (`DECISIONS.md` #384), então um valor global
-       * declararia como canônica uma URL que redireciona e herdaria em toda
-       * rota que esquecesse o seu. Cada página os traz pelo `pageHead`, já
-       * prefixados.
+       * Sem `og:url`, `canonical`, `og:title` nem `og:image` aqui, de propósito: a
+       * raiz do domínio responde 307 para `/pt-br` (`DECISIONS.md` #384), então um
+       * valor global declararia como canônica uma URL que redireciona e herdaria em
+       * toda rota que esquecesse o seu. Cada página os traz pelo `pageHead` do kit,
+       * já prefixados e no idioma dela.
        */
       { property: 'og:site_name', content: SITE_TITLE },
-      { property: 'og:locale', content: ogLocale() },
       { property: 'og:type', content: 'website' },
-      { property: 'og:title', content: m.meta_title() },
-      { property: 'og:description', content: m.meta_description() },
-      { property: 'og:image', content: SITE_IMAGE },
-      { property: 'og:image:type', content: 'image/png' },
-      { property: 'og:image:width', content: '1080' },
-      { property: 'og:image:height', content: '1080' },
       { name: 'twitter:card', content: 'summary' },
-      { name: 'twitter:title', content: m.meta_title() },
-      { name: 'twitter:description', content: m.meta_description() },
-      { name: 'twitter:image', content: SITE_IMAGE },
     ],
     links: [
       /*
@@ -90,25 +83,35 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
     // A identidade do site em toda rota, e não só na home: quem chega por um
     // artigo compartilhado precisa que o rastreador saiba de quem é a página.
-    scripts: [jsonLdScript(organizationJsonLd(m.meta_description()))],
+    scripts: [
+      {
+        type: 'application/ld+json',
+        children: jsonLd(organizationJsonLd(m.site_description())),
+      },
+    ],
   }),
   shellComponent: RootDocument,
 })
 
 function RootDocument({
   children,
-}: {
-  children: React.ReactNode
-}): React.JSX.Element {
+}: Readonly<{ children: React.ReactNode }>): React.JSX.Element {
+  const { theme } = Route.useLoaderData()
+
   return (
     // `lang` do paraglide, e não literal como nos irmãos: aqui o site fala
     // três línguas de verdade, e o leitor de tela e o buscador precisam saber
     // qual é a desta resposta.
     //
-    // `suppressHydrationWarning` só aqui: o `next-themes` escreve
-    // `class="dark"` no `<html>` antes da hidratação, então servidor e cliente
-    // divergem neste elemento por construção.
-    <html lang={getLocale()} suppressHydrationWarning>
+    //
+    // `suppressHydrationWarning` só aqui: com `system`, o script que roda antes da
+    // hidratação escreve a classe no `<html>`, um nó que diverge por natureza
+    // (`frontend.md` §3.2).
+    <html
+      lang={getLocale()}
+      className={THEME_CLASS[theme]}
+      suppressHydrationWarning
+    >
       <head>
         {/*
           A cor da barra do sistema no celular, uma por tema. Aqui e não no
@@ -129,14 +132,9 @@ function RootDocument({
         <HeadContent />
       </head>
       <body>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
+        <ThemeProvider theme={theme}>
           <TooltipProvider delay={300}>{children}</TooltipProvider>
-          <Toaster position="bottom-right" />
+          <ThemeProviderToaster />
         </ThemeProvider>
         <AppDevtools />
         <Scripts />

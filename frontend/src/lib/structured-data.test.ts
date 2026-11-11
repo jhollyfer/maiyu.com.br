@@ -1,13 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  blogPostingJsonLd,
-  breadcrumbListJsonLd,
-  jsonLdScript,
-  organizationJsonLd,
-} from './structured-data'
-
-const HOME = { name: 'Início', url: 'https://maiyu.com.br/pt-br' }
+import { blogPostingJsonLd, organizationJsonLd } from './structured-data'
 
 describe('organizationJsonLd', () => {
   it('publica o telefone sem o prefixo do link', () => {
@@ -35,34 +28,6 @@ describe('url da organização', () => {
   })
 })
 
-describe('breadcrumbListJsonLd', () => {
-  it('não publica trilha de um degrau só', () => {
-    expect(breadcrumbListJsonLd(HOME, [])).toEqual([])
-  })
-
-  it('numera a partir de um, com a home no primeiro degrau', () => {
-    const data = breadcrumbListJsonLd(HOME, [
-      { name: 'Diário', url: 'https://maiyu.com.br/pt-br/blog' },
-    ])
-
-    // Na lista inteira, e não em `data[0]`: `toMatchObject` com array confere também que é um
-    // bloco só, e o índice tiparia `undefined` com `noUncheckedIndexedAccess`.
-    expect(data).toMatchObject([
-      {
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Início', item: HOME.url },
-          {
-            '@type': 'ListItem',
-            position: 2,
-            name: 'Diário',
-            item: 'https://maiyu.com.br/pt-br/blog',
-          },
-        ],
-      },
-    ])
-  })
-})
-
 describe('blogPostingJsonLd', () => {
   it('carrega a data de publicação', () => {
     const data = blogPostingJsonLd({
@@ -75,28 +40,5 @@ describe('blogPostingJsonLd', () => {
     })
 
     expect(data.datePublished).toBe('2024-05-15')
-  })
-})
-
-describe('jsonLdScript', () => {
-  it('serializa com o tipo que o buscador lê', () => {
-    expect(jsonLdScript({ '@type': 'Thing' })).toEqual({
-      type: 'application/ld+json',
-      children: '{"@type":"Thing"}',
-    })
-  })
-
-  it('escapa o fechamento de script vindo de um campo do registro', () => {
-    const { children } = jsonLdScript({
-      '@type': 'Thing',
-      name: '</script><script>alert(1)</script>',
-    })
-
-    expect(children).not.toContain('</script')
-    expect(children).not.toContain('<')
-    expect(JSON.parse(children)).toEqual({
-      '@type': 'Thing',
-      name: '</script><script>alert(1)</script>',
-    })
   })
 })

@@ -1,95 +1,46 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildSitemap, localizeEntries } from './sitemap'
+import { env } from '#/env'
 
-describe('buildSitemap', () => {
-  it('monta a URL absoluta sem barra dupla', () => {
-    const xml = buildSitemap('https://maiyu.com.br/', [{ path: '/portfolio' }])
+import { robotsTxt, sitemapXml } from './sitemap'
 
-    expect(xml).toContain('<loc>https://maiyu.com.br/portfolio</loc>')
+describe('sitemapXml', () => {
+  const xml = sitemapXml([
+    { pathname: '/about' },
+    { pathname: '/items/abc', lastModified: '2026-10-01T10:00:00Z' },
+  ])
+
+  it('when given two pages, writes one url per language for each', () => {
+    expect(xml.match(/<url>/g)).toHaveLength(6)
   })
 
-  it('a home fica sem barra no fim', () => {
-    const xml = buildSitemap('https://maiyu.com.br', [{ path: '/' }])
-
-    expect(xml).toContain('<loc>https://maiyu.com.br</loc>')
+  it('when writing the loc, prefixes every language, pt-BR included', () => {
+    expect(xml).toContain(`<loc>${env.VITE_SITE_URL}/pt-br/about</loc>`)
+    expect(xml).toContain(`<loc>${env.VITE_SITE_URL}/es/about</loc>`)
+    expect(xml).toContain(`<loc>${env.VITE_SITE_URL}/en/about</loc>`)
   })
 
-  it('escapa o & de uma query string', () => {
-    const xml = buildSitemap('https://maiyu.com.br', [
-      { path: '/blog?a=1&b=2' },
-    ])
-
-    expect(xml).toContain('a=1&amp;b=2')
-    expect(xml).not.toContain('a=1&b=2')
+  it('when writing a url, links the sibling hreflangs and x-default', () => {
+    expect(xml).toContain(`hreflang="es" href="${env.VITE_SITE_URL}/es/about"`)
+    expect(xml).toContain(
+      `hreflang="x-default" href="${env.VITE_SITE_URL}/pt-br/about"`,
+    )
   })
 
-  it('escreve lastmod e prioridade só quando existem', () => {
-    const xml = buildSitemap('https://maiyu.com.br', [
-      { path: '/blog/x', lastModified: '2024-05-15', priority: 0.5 },
-      { path: '/contact' },
-    ])
-
-    expect(xml).toContain('<lastmod>2024-05-15</lastmod>')
-    expect(xml).toContain('<priority>0.5</priority>')
-    expect(xml.match(/<lastmod>/g)).toHaveLength(1)
+  it('when only one page has updatedAt, writes lastmod only for it', () => {
+    expect(xml.match(/<lastmod>/g)).toHaveLength(3)
   })
 })
 
-describe('buildSitemap com alternates', () => {
-  it('escreve um xhtml:link por versão, com a URL absoluta', () => {
-    const xml = buildSitemap('https://maiyu.com.br', [
-      {
-        path: '/en/blog',
-        alternates: [
-          { hrefLang: 'en', path: '/en/blog' },
-          { hrefLang: 'x-default', path: '/pt-br/blog' },
-        ],
-      },
-    ])
+describe('robotsTxt', () => {
+  it('when indexable, allows everything and points at the absolute sitemap', () => {
+    const text = robotsTxt({ indexable: true })
 
-    expect(xml).toContain('xmlns:xhtml="http://www.w3.org/1999/xhtml"')
-    expect(xml).toContain(
-      '<xhtml:link rel="alternate" hreflang="en" href="https://maiyu.com.br/en/blog"/>',
-    )
-    expect(xml).toContain(
-      '<xhtml:link rel="alternate" hreflang="x-default" href="https://maiyu.com.br/pt-br/blog"/>',
-    )
-  })
-})
-
-describe('localizeEntries', () => {
-  it('gera uma entrada por idioma, todas prefixadas', () => {
-    const entries = localizeEntries([{ path: '/blog' }, { path: '/' }])
-
-    expect(entries.map((entry) => entry.path)).toEqual([
-      '/pt-br/blog',
-      '/pt-br',
-      '/en/blog',
-      '/en',
-      '/es/blog',
-      '/es',
-    ])
+    expect(text).toContain('Disallow:\n')
+    expect(text).toContain(`Sitemap: ${env.VITE_SITE_URL}/sitemap.xml`)
   })
 
-  it('cada entrada carrega as três versões e o x-default no idioma base', () => {
-    const [first] = localizeEntries([{ path: '/blog' }])
-
-    expect(first?.alternates).toEqual([
-      { hrefLang: 'pt-BR', path: '/pt-br/blog' },
-      { hrefLang: 'en', path: '/en/blog' },
-      { hrefLang: 'es', path: '/es/blog' },
-      { hrefLang: 'x-default', path: '/pt-br/blog' },
-    ])
-  })
-
-  it('nenhuma URL do sitemap fica sem prefixo', () => {
-    const xml = buildSitemap(
-      'https://maiyu.com.br',
-      localizeEntries([{ path: '/' }, { path: '/blog' }]),
-    )
-
-    expect(xml).not.toMatch(/<loc>https:\/\/maiyu\.com\.br(\/blog)?<\/loc>/)
-    expect(xml).toContain('<loc>https://maiyu.com.br/pt-br</loc>')
+  it('when not indexable, forbids everything', () => {
+    expect(robotsTxt({ indexable: false })).toBe('User-agent: *\nDisallow: /\n')
   })
 })

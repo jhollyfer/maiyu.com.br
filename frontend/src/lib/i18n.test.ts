@@ -38,7 +38,7 @@ describe('formatCurrency', () => {
 })
 
 describe('TIME_ZONE', () => {
-  it('is the Manaus time zone', () => {
-    expect(TIME_ZONE).toBe('America/Manaus')
+  it('is the western Amazonas time zone (UTC-5)', () => {
+    expect(TIME_ZONE).toBe('America/Eirunepe')
   })
 })
