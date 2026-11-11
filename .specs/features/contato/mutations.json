@@ -17,7 +17,7 @@
     "file": "backend/app/repositories/contact/contact.lucid.repository.ts",
     "old": "      .where('id', id)\n      .whereNull('answeredAt')\n      .update({ answeredAt, updatedAt })",
     "new": "      .where('id', id)\n      .update({ answeredAt, updatedAt })",
-    "proof": "cd backend && node ace test functional --files=\"app/features/administrator/contacts/answer/answer.e2e.spec.ts\" --tests=\"two answers at once give one 200 and one 409\"",
+    "proof": "cd backend && node ace test functional --files=\"app/repositories/contact/contact.repository.e2e.spec.ts\" --tests=\"claimAnswer writes the answer once and refuses the second\"",
     "label": "edge case: claimAnswer sem o answered_at IS NULL regrava answered_at"
   }
 ]
