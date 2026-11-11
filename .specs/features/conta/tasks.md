@@ -69,8 +69,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] corpo sem `email` nem `password` recusado; senha fora da regra recusada
-- [ ] Gate check passes: `pnpm --filter ./shared test:unit`
+- [x] corpo sem `email` nem `password` recusado; senha fora da regra recusada
+- [x] Gate check passes: `pnpm --filter ./shared test:unit`
 
 **Tests**: unit
 **Gate**: quick
