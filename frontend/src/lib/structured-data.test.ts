@@ -7,7 +7,7 @@ import {
   organizationJsonLd,
 } from './structured-data'
 
-const HOME = { name: 'Início', url: 'https://maiyu.com.br' }
+const HOME = { name: 'Início', url: 'https://maiyu.com.br/pt-br' }
 
 describe('organizationJsonLd', () => {
   it('publica o telefone sem o prefixo do link', () => {
@@ -27,6 +27,14 @@ describe('organizationJsonLd', () => {
   })
 })
 
+describe('url da organização', () => {
+  it('é a home prefixada no idioma base, nunca a raiz que redireciona', () => {
+    expect(organizationJsonLd('Consultoria').url).toBe(
+      'https://maiyu.com.br/pt-br',
+    )
+  })
+})
+
 describe('breadcrumbListJsonLd', () => {
   it('não publica trilha de um degrau só', () => {
     expect(breadcrumbListJsonLd(HOME, [])).toEqual([])
@@ -34,7 +42,7 @@ describe('breadcrumbListJsonLd', () => {
 
   it('numera a partir de um, com a home no primeiro degrau', () => {
     const data = breadcrumbListJsonLd(HOME, [
-      { name: 'Diário', url: 'https://maiyu.com.br/blog' },
+      { name: 'Diário', url: 'https://maiyu.com.br/pt-br/blog' },
     ])
 
     // Na lista inteira, e não em `data[0]`: `toMatchObject` com array confere também que é um
@@ -47,7 +55,7 @@ describe('breadcrumbListJsonLd', () => {
             '@type': 'ListItem',
             position: 2,
             name: 'Diário',
-            item: 'https://maiyu.com.br/blog',
+            item: 'https://maiyu.com.br/pt-br/blog',
           },
         ],
       },
@@ -60,7 +68,7 @@ describe('blogPostingJsonLd', () => {
     const data = blogPostingJsonLd({
       title: 'Título',
       description: 'Resumo',
-      url: 'https://maiyu.com.br/blog/x',
+      url: 'https://maiyu.com.br/pt-br/blog/x',
       image: 'https://maiyu.com.br/x.png',
       author: 'Maiyu',
       publishedAt: '2024-05-15',

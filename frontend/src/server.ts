@@ -8,6 +8,11 @@
  * o servidor renderizaria tudo em português e o navegador trocaria o texto na
  * hidratação.
  *
+ * `redirect: 'navigation'`: todo GET ou HEAD que aceita HTML recebe o 307 para
+ * `/pt-br` quando falta o prefixo, e não só o que traz `Sec-Fetch-Dest:
+ * document`. Sem isso curl e rastreador viam a página sem prefixo
+ * (_doc-lib/paraglide.md#/middleware, https://paraglidejs.com/middleware).
+ *
  * A requisição original segue para o handler, e não a que o middleware
  * devolve: quem tira o prefixo do caminho para casar a rota é o `rewrite` do
  * `router.tsx`, e tirá-lo aqui também faria o router perder o idioma.
@@ -20,6 +25,8 @@ import { paraglideMiddleware } from './paraglide/server'
 
 export default {
   fetch(request: Request): Promise<Response> {
-    return paraglideMiddleware(request, () => handler.fetch(request))
+    return paraglideMiddleware(request, () => handler.fetch(request), {
+      redirect: 'navigation',
+    })
   },
 }

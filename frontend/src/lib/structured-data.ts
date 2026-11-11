@@ -1,4 +1,7 @@
-import { CONTACT, SITE_IMAGE, SITE_TITLE, SITE_URL, SOCIALS } from './site'
+import { baseLocale } from '#/paraglide/runtime'
+
+import { localizedUrl } from './i18n'
+import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
 
 /**
  * O JSON-LD que o site publica, montado num lugar só.
@@ -17,6 +20,20 @@ import { CONTACT, SITE_IMAGE, SITE_TITLE, SITE_URL, SOCIALS } from './site'
 export type JsonLd = Record<string, unknown>
 
 /**
+ * O endereço da Maiyu como entidade: a home no idioma base (`/pt-br`).
+ *
+ * Não é a raiz do domínio, que responde 307 (`DECISIONS.md` #384): um `url` que
+ * redireciona obriga o buscador a seguir o salto para reconhecer a entidade.
+ * Também não é a home do idioma da requisição: a organização é uma só, e três
+ * `url` diferentes, um por língua, a partiriam em três para quem lê o grafo.
+ * O idioma base é o mesmo do `x-default` do `hreflang`
+ * (_doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
+ */
+function organizationUrl(): string {
+  return localizedUrl('/', baseLocale)
+}
+
+/**
  * A Maiyu como empresa.
  *
  * `ProfessionalService` e não `Organization`: é o tipo que o buscador usa para
@@ -33,7 +50,7 @@ export function organizationJsonLd(description: string): JsonLd {
     '@type': 'ProfessionalService',
     name: SITE_TITLE,
     description,
-    url: SITE_URL,
+    url: organizationUrl(),
     logo: SITE_IMAGE,
     image: SITE_IMAGE,
     email: CONTACT.email,
@@ -121,7 +138,11 @@ export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
     datePublished: article.publishedAt,
     // A autoria é da Maiyu como organização: os textos saem da equipe, e
     // `Person` anunciaria ao buscador uma pessoa que não assina nada.
-    author: { '@type': 'Organization', name: article.author, url: SITE_URL },
+    author: {
+      '@type': 'Organization',
+      name: article.author,
+      url: organizationUrl(),
+    },
     publisher: {
       '@type': 'Organization',
       name: SITE_TITLE,
@@ -161,7 +182,11 @@ export function projectListJsonLd(
         url: project.url,
         image: project.image,
         dateCreated: project.dateCreated,
-        creator: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+        creator: {
+          '@type': 'Organization',
+          name: SITE_TITLE,
+          url: organizationUrl(),
+        },
       },
     })),
   }

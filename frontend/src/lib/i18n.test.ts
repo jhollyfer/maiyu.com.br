@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
+import { locales } from '#/paraglide/runtime'
+
 import {
   alternateLinks,
   currentYear,
@@ -28,9 +30,9 @@ describe('currentYear', () => {
 })
 
 describe('localizedUrl', () => {
-  it('não prefixa o idioma base', () => {
+  it('prefixa o idioma base em minúsculas', () => {
     expect(localizedUrl('/portfolio', 'pt-BR')).toBe(
-      'https://maiyu.com.br/portfolio',
+      'https://maiyu.com.br/pt-br/portfolio',
     )
   })
 
@@ -38,11 +40,29 @@ describe('localizedUrl', () => {
     expect(localizedUrl('/portfolio', 'en')).toBe(
       'https://maiyu.com.br/en/portfolio',
     )
+    expect(localizedUrl('/blog', 'es')).toBe('https://maiyu.com.br/es/blog')
+  })
+
+  it('a raiz em pt-BR vira /pt-br, sem barra no fim', () => {
+    expect(localizedUrl('/', 'pt-BR')).toBe('https://maiyu.com.br/pt-br')
+    expect(localizedUrl('/', 'en')).toBe('https://maiyu.com.br/en')
+  })
+
+  it('/blog em inglês vira /en/blog', () => {
+    expect(localizedUrl('/blog', 'en')).toBe('https://maiyu.com.br/en/blog')
+  })
+
+  it('nunca devolve a URL sem prefixo', () => {
+    for (const locale of locales) {
+      expect(localizedUrl('/blog', locale)).not.toBe(
+        'https://maiyu.com.br/blog',
+      )
+    }
   })
 })
 
 describe('alternateLinks', () => {
-  it('publica um idioma por link, mais o x-default no base', () => {
+  it('publica um idioma por link, mais o x-default', () => {
     const links = alternateLinks('/blog')
 
     expect(links.map((link) => link.hrefLang)).toEqual([
@@ -51,6 +71,12 @@ describe('alternateLinks', () => {
       'es',
       'x-default',
     ])
-    expect(links.at(-1)?.href).toBe('https://maiyu.com.br/blog')
+  })
+
+  it('o x-default aponta para o idioma base prefixado, não para a raiz', () => {
+    const links = alternateLinks('/blog')
+
+    expect(links.at(-1)?.href).toBe('https://maiyu.com.br/pt-br/blog')
+    expect(alternateLinks('/').at(-1)?.href).toBe('https://maiyu.com.br/pt-br')
   })
 })
