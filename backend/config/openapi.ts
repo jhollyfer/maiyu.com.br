@@ -46,6 +46,15 @@ const tags: TagRule[] = [
     singular: 'arquivo',
     plural: 'arquivos',
   },
+  {
+    prefix: '/storefront/contacts',
+    name: 'Contato (vitrine)',
+    description:
+      'O formulário de contato do site. É a única escrita sem sessão: guarda a mensagem para a ' +
+      'equipe responder, com limite por IP e uma armadilha para robôs.',
+    singular: 'contato',
+    plural: 'contatos',
+  },
 ]
 
 const openapi = {

@@ -18,6 +18,10 @@
     {
       "name": "Arquivos",
       "description": "Upload em três passos: o `POST` abre e assina as URLs das partes, o navegador manda os bytes direto ao bucket e o `complete` confirma."
+    },
+    {
+      "name": "Contato (vitrine)",
+      "description": "O formulário de contato do site. É a única escrita sem sessão: guarda a mensagem para a equipe responder, com limite por IP e uma armadilha para robôs."
     }
   ],
   "paths": {
@@ -872,6 +876,66 @@
           }
         ]
       }
+    },
+    "/storefront/contacts": {
+      "post": {
+        "operationId": "storefrontContactsCreate",
+        "summary": "Enviar mensagem de contato",
+        "tags": [
+          "Contato (vitrine)"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado"
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StorefrontContactCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "O formulário de contato do site. **Pública**: não exige sessão, e por isso é a única escrita anônima da vitrine.\n\nGuarda o nome, o e-mail, a mensagem e o idioma, para a equipe responder a quem escreveu. O dado pessoal é guardado por 12 meses e apagado depois.\n\nResponde `201` sem corpo. O campo `website` é uma armadilha para robôs: preenchido, a resposta é a mesma `201` e nada é gravado, para o robô não aprender que foi barrado.\n\nLimite de 5 envios por hora por IP: o sexto responde `429`.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorefrontContactsCreateBody"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1543,6 +1607,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "STORAGES_FILE_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StorefrontContactCreateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STOREFRONT_CONTACT_CREATE_ERROR"
             ]
           },
           "errors": {
@@ -2299,6 +2397,44 @@
           "updatedAt",
           "deletedAt",
           "url"
+        ],
+        "additionalProperties": false
+      },
+      "StorefrontContactsCreateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "message": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000
+          },
+          "locale": {
+            "enum": [
+              "pt-BR",
+              "es",
+              "en"
+            ]
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "message",
+          "locale"
         ],
         "additionalProperties": false
       }

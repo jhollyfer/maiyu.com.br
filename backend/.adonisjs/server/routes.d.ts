@@ -17,6 +17,7 @@ export type ScannedRoutes = {
     'storages.files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'storages.files.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storefront.contacts.create': { paramsTuple?: []; params?: {} }
   }
   GET: {
     'health_check': { paramsTuple?: []; params?: {} }
@@ -42,6 +43,7 @@ export type ScannedRoutes = {
     'authentication.sessions.refresh': { paramsTuple?: []; params?: {} }
     'storages.files.create': { paramsTuple?: []; params?: {} }
     'storages.files.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'storefront.contacts.create': { paramsTuple?: []; params?: {} }
   }
   DELETE: {
     'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }

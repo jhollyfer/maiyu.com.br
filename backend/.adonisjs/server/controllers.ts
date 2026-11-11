@@ -55,4 +55,11 @@ export const controllers = {
       },
     },
   },
+  storefront: {
+    contacts: {
+      create: {
+        Create: () => import('#features/storefront/contacts/create/create.controller'),
+      },
+    },
+  },
 }

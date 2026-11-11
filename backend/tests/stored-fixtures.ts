@@ -1,3 +1,4 @@
+import ContactModel from '#models/contact'
 import StorageModel from '#models/storage'
 import UserModel from '#models/user'
 
@@ -23,6 +24,14 @@ export class Stored {
 
   static storages() {
     return StorageModel.all()
+  }
+
+  static contact(id: string) {
+    return ContactModel.find(id)
+  }
+
+  static contacts() {
+    return ContactModel.all()
   }
 
   /** Points the user's avatar at the file, as saving the profile does. */

@@ -29,4 +29,9 @@ export interface ApiDefinition {
       download: typeof routes['storages.files.download']
     }
   }
+  storefront: {
+    contacts: {
+      create: typeof routes['storefront.contacts.create']
+    }
+  }
 }

@@ -177,6 +177,19 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/download/download.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'storefront.contacts.create': {
+    methods: ["POST"]
+    pattern: '/storefront/contacts'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/storefront/contacts.validator').StorefrontContactCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/storefront/contacts.validator').StorefrontContactCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
 }
 
 export namespace Route {

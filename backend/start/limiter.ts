@@ -18,4 +18,13 @@
  * _doc-lib/adonisjs.md#guides/security/rate-limiting,
  * https://docs.adonisjs.com/guides/security/rate-limiting
  */
-export {}
+import limiter from '@adonisjs/limiter/services/main'
+
+/**
+ * The contact form, by IP: it has no session, so the address is the only key (the real one
+ * only with `TRUSTED_PROXIES` set). Five an hour covers a person who retypes a message; without
+ * a ceiling a loop would fill `contacts` with personal data nobody sent.
+ */
+export const contactThrottle = limiter.define('contact', function () {
+  return limiter.allowRequests(5).every('1 hour')
+})

@@ -152,12 +152,13 @@ T9 → T10
 
 **Done when**:
 
-- [ ] e2e: 201 e gravado; 422 por campo e nada gravado; honeypot 201 sem gravar; 429 no sexto; 403 de origem
-- [ ] `validators:check` com o par novo
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: 201 e gravado; 422 por campo e nada gravado; honeypot 201 sem gravar; 429 no sexto; 403 de origem
+- [x] `validators:check` com o par novo
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 

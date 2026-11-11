@@ -8,5 +8,6 @@
   "DELETE /storages/{id}": "authenticated",
   "POST /storages/{id}/complete": "authenticated",
   "GET /storages/{id}/download": "authenticated",
-  "GET /storages/{id}/parts": "authenticated"
+  "GET /storages/{id}/parts": "authenticated",
+  "POST /storefront/contacts": "anonymous"
 }

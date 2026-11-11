@@ -10,7 +10,9 @@
  * Anonymous routes that write by design, as `METHOD /path` (the key of the baseline): the
  * project's sign-up, an anonymous report. Any other anonymous route that is not `GET` fails.
  */
-export const PROJECT_ANONYMOUS_WRITES: readonly string[] = []
+export const PROJECT_ANONYMOUS_WRITES: readonly string[] = [
+  'POST /storefront/contacts',
+]
 
 /**
  * Path prefixes that are anonymous and read-only, such as `/storefront`. Each one must have

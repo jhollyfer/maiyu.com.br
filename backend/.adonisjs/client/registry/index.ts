@@ -86,6 +86,12 @@ const routes = {
     tokens: [[0,"storages"],[1,"id"],[0,"download"]],
     types: placeholder as Registry['storages.files.download']['types'],
   },
+  'storefront.contacts.create': {
+    methods: ["POST"],
+    pattern: '/storefront/contacts',
+    tokens: [[0,"storefront"],[0,"contacts"]],
+    types: placeholder as Registry['storefront.contacts.create']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }

@@ -12,6 +12,7 @@ import router from '@adonisjs/core/services/router'
 
 import { controllers } from '#generated/controllers'
 import { middleware } from '#start/kernel'
+import { contactThrottle } from '#start/limiter'
 import {
   refreshThrottle,
   signInAccountThrottle,
@@ -98,3 +99,20 @@ router
   })
   .prefix('storages')
   .use(middleware.auth())
+
+/**
+ * The public area: no session, so every write here is declared in
+ * `core/openapi/public-routes.ts` and carries its own limiter.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .post('/', [controllers.storefront.contacts.create.Create])
+          .as('storefront.contacts.create')
+          .use(contactThrottle)
+      })
+      .prefix('contacts')
+  })
+  .prefix('storefront')
