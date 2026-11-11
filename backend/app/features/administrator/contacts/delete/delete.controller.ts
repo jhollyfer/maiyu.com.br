@@ -5,8 +5,6 @@ import AdministratorContactDeleteUseCase from './delete.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
 import { IdentifierValidator } from '#core/validator'
-import ContactPolicy from '#policies/contact.policy'
-import { ContactRepository } from '#repositories/contact/contact.repository'
 
 @inject()
 export default class AdministratorContactDeleteController {
@@ -18,15 +16,10 @@ export default class AdministratorContactDeleteController {
       'Não há lixeira: o contato respondido ou pendente sai da mesma forma. Privilégio da equipe.',
   })
 
-  constructor(
-    private readonly useCase: AdministratorContactDeleteUseCase,
-    private readonly contacts: ContactRepository,
-  ) {}
+  constructor(private readonly useCase: AdministratorContactDeleteUseCase) {}
 
   async handle(context: HttpContext) {
     const { params } = await context.request.validateUsing(IdentifierValidator)
-    const contact = await this.contacts.findById(params.id)
-    await context.bouncer.with(ContactPolicy).authorize('manage', contact)
     const result = await this.useCase.execute(params)
     if (result.isLeft()) throw result.value
     return context.response.noContent()

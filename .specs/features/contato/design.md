@@ -37,7 +37,6 @@ graph TD
 | `LOCALES` | `shared/src/enums/locale.ts` | idioma do contato |
 | `ResponseRule.paginated` | `shared/src/responses/envelope.ts` | resposta da listagem |
 | `core/validator.ts` | backend | o `vine` configurado do par VineJS |
-| `session-scoped-policy.base.ts` | `app/policies/` | `ContactPolicy` com `hidden`/`forbidden` (#387) |
 | `_shared.refusal.base.ts` | `app/features/` | `_shared.contact-refusal.ts` |
 | `UnitOfWork`, `Clock`, `IdGenerator` | kit | transação, instante do `answered_at`, id |
 | `LucidMapping.page`, `PageCriteria`, `MemoryRows` | kit | listagem nas duas implementações |

@@ -7,11 +7,11 @@
     "label": "C17: guarda de 12 meses vira 13"
   },
   {
-    "file": "backend/app/policies/contact.policy.ts",
-    "old": "if (!STAFF_USER_ROLES.includes(actor.role))",
-    "new": "if (!STAFF_USER_ROLES.includes(actor.role) && false)",
+    "file": "backend/start/routes.ts",
+    "old": ".use([middleware.auth(), middleware.role(STAFF_USER_ROLES)])",
+    "new": ".use([middleware.auth()])",
     "proof": "cd backend && node ace test functional --files=\"app/features/administrator/contacts/delete/delete.e2e.spec.ts\" --tests=\"a member cannot delete\"",
-    "label": "C24: ContactPolicy deixa o MEMBER passar"
+    "label": "C24: o grupo administrator sem o role() deixa o MEMBER passar"
   },
   {
     "file": "backend/app/repositories/contact/contact.lucid.repository.ts",

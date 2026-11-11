@@ -165,10 +165,10 @@ T9 → T10
 
 ### T6: GET /administrator/contacts e GET :id
 
-**What**: `ContactPolicy`, use-cases, controllers, presenter e rotas do painel com `auth` e `role`.
+**What**: use-cases, controllers, presenter e rotas do painel com `auth` e `role`.
 **Where**: `backend/app/features/administrator/contacts/paginate/paginate.use-case.ts`
 **Depends on**: T5
-**Reuses**: `session-scoped-policy.base.ts`, `ResponseRule.paginated`
+**Reuses**: `ResponseRule.paginated`
 
 **Done when**:
 

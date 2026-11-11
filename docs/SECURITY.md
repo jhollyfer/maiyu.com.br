@@ -90,7 +90,7 @@ Não se aplica: o site não tem login nem sessão.
 O site (frontend) é todo público e de leitura. Na API há duas áreas:
 
 - `/storefront/*`, sem sessão: hoje só `POST /storefront/contacts`, a única escrita anônima, declarada em `backend/app/core/openapi/public-routes.ts`.
-- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, e a `ContactPolicy` é a segunda barreira no registro. Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota).
+- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, a única barreira de papel (a regra mora numa só, sem policy por registro). Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota).
 
 ## 5. Entrada e saída
 
