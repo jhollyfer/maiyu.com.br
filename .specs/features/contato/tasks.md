@@ -132,13 +132,14 @@ T9 → T10
 
 **Done when**:
 
-- [ ] o mesmo spec de contrato passa nas duas implementações
-- [ ] listagem com número de queries travado
-- [ ] bind no `providers/repository.provider.ts`
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] o mesmo spec de contrato passa nas duas implementações
+- [x] listagem com número de queries travado
+- [x] bind no `providers/repository.provider.ts`
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 
