@@ -38,10 +38,10 @@ export function Audience(): React.JSX.Element {
       <div className="mx-auto grid max-w-7xl gap-12 px-4 md:grid-cols-12 md:px-8">
         <div className={cn(REVEAL, 'md:col-span-5')}>
           <h2 className="text-display tracking-[-0.015em]">
-            {m.home_audienceTitle()}
+            {m.home_audience_title()}
           </h2>
           <p className="mt-6 max-w-[42ch] font-serif text-body-lg text-foreground/80">
-            {m.home_audienceDesc()}
+            {m.home_audience_desc()}
           </p>
         </div>
 
@@ -77,7 +77,7 @@ export function Audience(): React.JSX.Element {
               'mt-8 font-serif text-lead text-forest dark:text-brand-green',
             )}
           >
-            {m.home_audienceReach()}
+            {m.home_audience_reach()}
           </p>
         </div>
       </div>

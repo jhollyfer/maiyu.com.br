@@ -52,9 +52,9 @@ export function NotFoundPage({
           </p>
           {children ?? (
             <>
-              <NotFoundPageTitle>{m.notFound_title()}</NotFoundPageTitle>
+              <NotFoundPageTitle>{m.not_found_title()}</NotFoundPageTitle>
               <NotFoundPageDescription>
-                {m.notFound_description()}
+                {m.not_found_description()}
               </NotFoundPageDescription>
               <NotFoundPageActions>
                 <NotFoundPageHomeButton />
@@ -161,7 +161,7 @@ export function NotFoundPageHomeButton({
       render={
         <Link to={to}>
           <ArrowLeftIcon />
-          {children ?? m.notFound_returnHome()}
+          {children ?? m.not_found_return_home()}
         </Link>
       }
     />

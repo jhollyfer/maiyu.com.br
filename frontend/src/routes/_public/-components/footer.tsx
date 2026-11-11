@@ -111,7 +111,7 @@ export function Footer(): React.JSX.Element {
             type="button"
             size="icon-lg"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            aria-label={m.footer_backToTop()}
+            aria-label={m.footer_back_to_top()}
             className="size-11 rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:bg-brand-green motion-reduce:transition-none"
           >
             <ArrowUpIcon size={15} />

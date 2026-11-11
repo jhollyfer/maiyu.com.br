@@ -36,6 +36,7 @@ Fora, por lacuna do kit: `table/` e `list-shell/` (o kit não os torna opcionais
 uma rota com `ListSearch`), o domínio da API em `.env.production` (decisão do dono), o diário em Tiptap
 (R1.6) e o Dockerfile e workflows (PR própria). Os `<a>` externos dentro de `PillButton render` não
 têm par no `ui/`.
+As 117 chaves de mensagem do projeto passaram a `snake_case` por área (R3.5, `i18n.md` §2), sem mudar texto; as `kit_*` ficaram intactas.
 
 A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
 upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o

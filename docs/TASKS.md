@@ -115,7 +115,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
 | R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Parcial | #366 |
 | R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
-| R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Bloqueada | `i18n.md` |
+| R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
 
 ### Régua 4 · Testes e infra

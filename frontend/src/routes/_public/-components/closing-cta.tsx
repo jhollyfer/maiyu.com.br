@@ -24,18 +24,18 @@ export function ClosingCta(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className={cn(REVEAL, 'grid gap-10 md:grid-cols-12 md:gap-12')}>
           <h2 className="text-display-xl tracking-[-0.02em] text-foreground md:col-span-8">
-            {m.home_ctaTitle()}
+            {m.home_cta_title()}
           </h2>
           <div className="flex flex-col items-start md:col-span-4 md:justify-end">
             <p className="max-w-[40ch] font-serif text-lead text-foreground/80">
-              {m.home_ctaDesc()}
+              {m.home_cta_desc()}
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               <PillButton
                 className="rounded-xl"
                 render={
                   <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
-                    {m.home_startProject()}
+                    {m.home_start_project()}
                     <ArrowUpRightIcon />
                   </a>
                 }
@@ -43,7 +43,7 @@ export function ClosingCta(): React.JSX.Element {
               <PillButton
                 tone="outline"
                 className="rounded-xl"
-                render={<Link to="/portfolio">{m.home_viewWork()}</Link>}
+                render={<Link to="/portfolio">{m.home_view_work()}</Link>}
               />
             </div>
             <Link

@@ -27,20 +27,20 @@ type Principle = {
  */
 const PRINCIPLES: ReadonlyArray<Principle> = [
   {
-    title: () => m.career_principle1Title(),
-    description: () => m.career_principle1Desc(),
+    title: () => m.career_principle1_title(),
+    description: () => m.career_principle1_desc(),
   },
   {
-    title: () => m.career_principle2Title(),
-    description: () => m.career_principle2Desc(),
+    title: () => m.career_principle2_title(),
+    description: () => m.career_principle2_desc(),
   },
   {
-    title: () => m.career_principle3Title(),
-    description: () => m.career_principle3Desc(),
+    title: () => m.career_principle3_title(),
+    description: () => m.career_principle3_desc(),
   },
   {
-    title: () => m.career_principle4Title(),
-    description: () => m.career_principle4Desc(),
+    title: () => m.career_principle4_title(),
+    description: () => m.career_principle4_desc(),
   },
 ]
 
@@ -59,8 +59,8 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero
-        title={m.career_heroTitle()}
-        lead={m.career_heroDescription()}
+        title={m.career_hero_title()}
+        lead={m.career_hero_description()}
       />
 
       <div className="mx-auto max-w-7xl px-4 md:px-8">
@@ -74,9 +74,9 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="career-areas" className="py-24 md:py-32">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 md:grid-cols-12 md:px-8">
           <div className="md:col-span-4">
-            <h2 className="text-h2 lg:text-h1">{m.career_areasTitle()}</h2>
+            <h2 className="text-h2 lg:text-h1">{m.career_areas_title()}</h2>
             <p className="mt-5 max-w-[62ch] text-body-lg text-foreground/75">
-              {m.career_areasDescription()}
+              {m.career_areas_description()}
             </p>
           </div>
           <ul className="divide-y divide-border border-y border-border md:col-span-8">
@@ -117,10 +117,10 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="career-welcome" className="pb-24 md:pb-32">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-8 px-4 md:grid-cols-12 md:px-8">
           <h2 className="text-h1 text-balance md:col-span-7">
-            {m.career_welcomeTitle()}
+            {m.career_welcome_title()}
           </h2>
           <p className="max-w-[62ch] text-body-lg text-foreground/80 md:col-span-5 md:self-end">
-            {m.career_welcomeBody()}
+            {m.career_welcome_body()}
           </p>
         </div>
       </section>
@@ -131,7 +131,7 @@ function RouteComponent(): React.JSX.Element {
       >
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 md:grid-cols-12 md:px-8">
           <h2 className="text-h2 lg:text-h1 md:col-span-4">
-            {m.career_principlesTitle()}
+            {m.career_principles_title()}
           </h2>
           <ul className="divide-y divide-on-navy/20 border-y border-on-navy/20 md:col-span-8">
             {PRINCIPLES.map((principle, index) => (

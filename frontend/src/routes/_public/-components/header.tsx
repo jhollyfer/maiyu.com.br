@@ -63,7 +63,7 @@ export function Header(): React.JSX.Element {
         </Link>
 
         <NavigationMenu
-          aria-label={m.a11y_mainNav()}
+          aria-label={m.a11y_main_nav()}
           className="hidden flex-none lg:flex lg:pl-10"
         >
           <NavigationMenuList className="gap-1">
@@ -98,7 +98,7 @@ export function Header(): React.JSX.Element {
             render={
               <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
                 <WhatsappLogoIcon />
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
               </a>
             }
           />
@@ -129,7 +129,7 @@ function MobileMenu(): React.JSX.Element {
             variant="ghost"
             size="icon-lg"
             className="size-11 rounded-full lg:hidden"
-            aria-label={m.a11y_openMenu()}
+            aria-label={m.a11y_open_menu()}
           >
             <ListIcon />
           </Button>
@@ -146,11 +146,11 @@ function MobileMenu(): React.JSX.Element {
         */}
         <SheetHeader className="sr-only">
           <SheetTitle>{SITE_TITLE}</SheetTitle>
-          <SheetDescription>{m.a11y_mainNav()}</SheetDescription>
+          <SheetDescription>{m.a11y_main_nav()}</SheetDescription>
         </SheetHeader>
 
         <nav
-          aria-label={m.a11y_mainNav()}
+          aria-label={m.a11y_main_nav()}
           className="grid flex-1 auto-rows-min overflow-y-auto"
         >
           {MOBILE_NAVIGATION.map((item) => (
@@ -183,7 +183,7 @@ function MobileMenu(): React.JSX.Element {
             render={
               <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
                 <WhatsappLogoIcon />
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
               </a>
             }
           />

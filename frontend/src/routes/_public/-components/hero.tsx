@@ -25,10 +25,10 @@ export function Hero(): React.JSX.Element {
     <section data-slot="home-hero" className="pt-28 pb-16 md:pt-36 md:pb-24">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <h1 className="text-display-xl tracking-[-0.02em] text-foreground">
-          <span className={cn(REVEAL, 'block')}>{m.home_heroTitle1()}</span>
+          <span className={cn(REVEAL, 'block')}>{m.home_hero_title1()}</span>
           <span className={cn(REVEAL, 'block delay-100')}>
             <span className="text-forest dark:text-brand-green">
-              {m.home_heroTitle2()}
+              {m.home_hero_title2()}
             </span>
           </span>
         </h1>
@@ -45,17 +45,17 @@ export function Hero(): React.JSX.Element {
         >
           <div className="flex flex-col items-start gap-6 md:col-span-8 md:col-start-5">
             <p className="max-w-[48ch] font-serif text-lead leading-snug text-foreground/85">
-              {m.home_heroDescription()}
+              {m.home_hero_description()}
             </p>
             <div className="flex flex-wrap gap-2">
               <PillButton
                 className="rounded-xl"
-                render={<Link to="/contact">{m.home_startProject()}</Link>}
+                render={<Link to="/contact">{m.home_start_project()}</Link>}
               />
               <PillButton
                 tone="outline"
                 className="rounded-xl"
-                render={<Link to="/portfolio">{m.home_viewWork()}</Link>}
+                render={<Link to="/portfolio">{m.home_view_work()}</Link>}
               />
             </div>
           </div>

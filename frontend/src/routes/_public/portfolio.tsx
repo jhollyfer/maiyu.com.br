@@ -12,7 +12,7 @@ export const Route = createFileRoute('/_public/portfolio')({
     pageHead({
       pathname: '/portfolio',
       title: m.nav_portfolio(),
-      description: m.portfolio_heroDescription(),
+      description: m.portfolio_hero_description(),
       structuredData: [
         jsonLd(
           projectListJsonLd(

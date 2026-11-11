@@ -32,7 +32,7 @@ export const Route = createFileRoute('/_public/blog/$slug')({
     if (!loaderData)
       return {
         meta: [
-          { title: `${m.blogArticle_notFound()} · ${SITE_TITLE}` },
+          { title: `${m.blog_article_not_found()} · ${SITE_TITLE}` },
           { name: 'robots', content: 'noindex' },
         ],
       }

@@ -47,10 +47,10 @@ export const Route = createLazyFileRoute('/_public/blog/$slug')({
 function ArticleNotFound(): React.JSX.Element {
   return (
     <NotFoundPage className="min-h-[80dvh]">
-      <NotFoundPageTitle>{m.blogArticle_notFound()}</NotFoundPageTitle>
+      <NotFoundPageTitle>{m.blog_article_not_found()}</NotFoundPageTitle>
       <NotFoundPageActions>
         <NotFoundPageHomeButton to="/blog">
-          {m.blogArticle_returnToJournal()}
+          {m.blog_article_return_to_journal()}
         </NotFoundPageHomeButton>
       </NotFoundPageActions>
     </NotFoundPage>
@@ -150,7 +150,7 @@ function RouteComponent(): React.JSX.Element {
             </Avatar>
             <p className="text-small text-muted-foreground">
               <span className="block text-body font-medium text-foreground">
-                {m.blogArticle_author()}
+                {m.blog_article_author()}
               </span>
               <time dateTime={article.date}>{localizedDate(article.date)}</time>
               {', '}
@@ -193,7 +193,7 @@ function RouteComponent(): React.JSX.Element {
 
       <section data-slot="article-more" className="py-20 md:py-28">
         <div className="mx-auto max-w-4xl px-4 md:px-8">
-          <h2 className="text-h2">{m.blogArticle_moreTitle()}</h2>
+          <h2 className="text-h2">{m.blog_article_more_title()}</h2>
           <ul className="mt-8 divide-y divide-border border-y border-border">
             {more.map((other) => (
               <li key={other.slug}>
@@ -220,15 +220,17 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="article-cta" className="bg-secondary py-20 md:py-28">
         <div className="mx-auto flex max-w-4xl flex-col items-start gap-8 px-4 md:flex-row md:items-end md:justify-between md:px-8">
           <div>
-            <h2 className="text-h1 text-balance">{m.blogArticle_ctaTitle()}</h2>
+            <h2 className="text-h1 text-balance">
+              {m.blog_article_cta_title()}
+            </h2>
             <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
-              {m.blogArticle_ctaDescription()}
+              {m.blog_article_cta_description()}
             </p>
           </div>
           <PillButton
             render={
               <Link to="/contact">
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
                 <ArrowUpRightIcon />
               </Link>
             }
