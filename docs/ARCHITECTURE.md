@@ -44,19 +44,19 @@ para o dono (R2.10 de `TASKS.md`), e o frontend ainda não a chama (RB.5).
 ## 3. Estrutura de pastas
 
 Segue `_standards/architecture.md` §4 (frontend). O que o projeto usa e a árvore deixa opcional, ou
-muda por causa de três idiomas e ausência de API (motivos em `DECISIONS.md`):
+muda por causa dos três idiomas e do conteúdo em código (motivos em `DECISIONS.md`):
 
 | Pasta | Por quê |
 |---|---|
 | `src/server.ts` | embrulha o handler do Start com o `paraglideMiddleware`; o idioma de cada requisição é resolvido antes de renderizar (`DECISIONS.md` #2) |
-| `src/lib/projects.ts`, `articles.ts`, `jobs.ts` | conteúdo em código no lugar de `integrations/tanstack-query/queries.ts` (`DECISIONS.md` #3) |
+| `src/lib/projects.ts`, `articles.ts`, `jobs.ts` | conteúdo em código no lugar de `integrations/tanstack-query/queries.ts`, até o dono decidir o que vira recurso do backend (`DECISIONS.md` #3, R2.10 de `TASKS.md`); o corpo de cada artigo é um documento Tiptap em JSON por idioma, lido pelo `RichText` do kit |
 | `src/lib/i18n.ts`, `labels.ts` | `LocalizedText` do conteúdo de registro e rótulos de valor fechado como função |
-| `src/routes/_public/-components/` | peças da vitrine usadas só pela casca pública (`components/common/CLAUDE.md`) |
+| `src/routes/_public/-components/` | peças da vitrine usadas só pela casca pública (a régua de `components/common/` está em `_standards/architecture.md`: só sobe o que mais de uma rota usa) |
 | `src/routes/health-check.ts` | rota de servidor para o healthcheck do container |
 | `src/routes/sitemap[.]xml.ts` | sitemap gerado de `lib/sitemap.ts` |
 
-Ausentes de propósito: `src/start.ts` (`DECISIONS.md` #4) e `integrations/tanstack-query/http.ts`,
-`queries.ts`, `mutations.ts` (`DECISIONS.md` #3).
+Ausentes de propósito: `integrations/tanstack-query/queries.ts` e `mutations.ts` (`DECISIONS.md` #3).
+O `src/start.ts` e o cliente `http.ts` existem, do kit (`_standards/DECISIONS.md` #336).
 
 ## 4. Módulos (features)
 
@@ -123,10 +123,9 @@ idioma no escopo da requisição; o `rewrite` de `router.tsx` tira o prefixo par
 |---|---|---|---|
 | WhatsApp (`wa.me`) | "Agendar conversa" | `CALL_URL` em `lib/site.ts` | nenhuma |
 | GitHub e LinkedIn | links de rede social | `SOCIALS` em `lib/site.ts` | nenhuma |
-
 | Bucket S3 (R2 ou S3 em produção) | anexos da API, sempre privados | `backend/app/services/storage/` | `STORAGE_*` |
 
-O site ainda não chama a API em tempo de execução.
+O site ainda não chama a API em tempo de execução; o domínio dela (`api.maiyu.com.br`) já está em `frontend/.env.production`.
 
 ## 8. Autenticação e autorização
 

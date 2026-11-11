@@ -49,7 +49,7 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 
 ## 5. Fica de fora (nesta versão)
 
-- Backend e API: o site não tem servidor de dados; o conteúdo mora em `lib/`.
+- Dados do site vindos da API: o `backend/` existe (`api.maiyu.com.br`, com a conta do dono e os anexos), mas o site não o chama; o conteúdo mora em `lib/`.
 - Formulários de contato e de candidatura: o site não tem nenhum, só um aviso e os canais reais, e-mail e WhatsApp (`DECISIONS.md` #17). O de contato volta quando o backend tiver o recurso de contato; o de candidatura está fora por decisão do dono.
 - Painel de edição de conteúdo: artigos, projetos e vagas mudam por commit.
 - Área logada.
@@ -75,7 +75,7 @@ pelo dono (§8).
 - [ ] Quais as metas numéricas do site (conversas iniciadas por mês, idiomas mais usados)? Há ferramenta de métricas desejada? Quem responde: dono do produto.
 - [ ] O que o formulário de contato deve fazer quando o backend tiver o recurso (e-mail, planilha, CRM), e se a candidatura volta um dia? Quem responde: dono do produto.
 - [ ] Qual o contato de segurança a publicar em `SECURITY.md` §1? Quem responde: dono do produto.
-- [ ] Os workflows de `.github/workflows` ficam como estão ou o upstream ganha um modelo para site sem backend? Ver `DECISIONS.md` #6. Quem responde: dono do produto.
+- [ ] O que do site vira recurso do backend (contato, conteúdo do diário, portfólio e vagas) e em que ordem? Ver `TASKS.md` R2.10. Quem responde: dono do produto.
 - [ ] A política de dados pessoais (LGPD e equivalentes no Peru e na Colômbia) precisa de página pública? Quem responde: dono do produto.
 
 ## Histórico

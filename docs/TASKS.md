@@ -135,7 +135,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
 | RD.1 | `AGENTS.md` pelo modelo de `_templates/AGENTS.md`, `CLAUDE.md` com `@AGENTS.md` | P | Feita | branch `docs/regua-agents` |
-| RD.2 | `docs/` reescrito a partir dos modelos e do código; DECISIONS locais que eram desvio marcadas como substituídas | M | A fazer | #6, #8, #9, #10, #11, #14 |
+| RD.2 | `docs/` reescrito a partir dos modelos e do código; DECISIONS locais que eram desvio marcadas como substituídas | M | Feita | seções já iguais às dos modelos; conteúdo posto em dia com o backend, o kit e a saída dos workflows; #1 a #12, #14 e #15 marcadas (#6, #8 e #14 pelas #298, #290, #368 e #369 do upstream; #9, #10 e #11 pelo modelo, #192 e #299); perguntas ao dono em `PRD.md` §8 |
 | RD.3 | `ARCHITECTURE.md` §9.1 com o que o painel do Coolify faz | P | Feita | os dois recursos (site e API) pelo quadro de `tooling.md` §8.3; branch `docs/regua-docs` |
 | RD.4 | `frontend/README.md`, `frontend/AGENTS.md` e `components/common/CLAUDE.md` pela régua | P | A fazer | |
 

@@ -10,12 +10,12 @@
 
 | Nível | Ferramenta | Onde | Roda em |
 |---|---|---|---|
-| Unitário do backend | Não se aplica: sem backend | | |
-| E2E do backend | Não se aplica: sem backend | | |
-| `shared/` | Não se aplica: sem `shared/` | | |
-| Unitário do frontend | Vitest (`pnpm test`) | `frontend/src/**/*.test.ts` | todo PR (`ci.yml`) |
+| Unitário do backend | Japa (`pnpm --filter ./backend test:unit`) | `backend/app/**/*.unit.spec.ts` | hook local e sessão do agente antes do PR |
+| E2E do backend | Japa, suíte `functional` (`test:e2e`), contra o banco `maiyu_test` e o bucket de teste | `backend/app/**/*.e2e.spec.ts` | sessão do agente, uma vez, antes do PR |
+| `shared/` | Vitest (`test:unit`) | `shared/src/**/*.test.ts` | hook local |
+| Unitário do frontend | Vitest (`pnpm test:unit`) | `frontend/src/**/*.test.ts` | hook local |
 | Ciclo de chunk | `check-chunk-cycles.mjs` (`pnpm check-cycles`) | `frontend/scripts/` | depois do build |
-| E2E do frontend | Não se aplica: ainda não há Playwright (pendente) | | |
+| E2E do frontend | Playwright com axe (`frontend/e2e/`), as páginas públicas nos três idiomas | `frontend/e2e/*.spec.ts` | sessão do agente, antes do PR |
 
 ## 2. Fluxos críticos
 
@@ -54,11 +54,11 @@ Os requisitos do `PRD.md` §4 ainda não têm id EARS; a linha usa o número da 
 
 ## 4. Toda rota de API cobre
 
-Não se aplica: sem API.
+O que a régua pede de toda rota da API (`_standards/backend.md` §7) vale para as do kit: `authentication/sessions`, `storages/files` e `documentation`. O site não expõe rota de dados.
 
 ## 5. Dados de teste
 
-Não se aplica: sem banco. Os testes usam os registros de `lib/` e valores literais.
+Frontend: os registros de `lib/` e valores literais. Backend: banco `maiyu_test` e bucket `maiyu-test` locais, com os fixtures de `backend/tests/` (`ENV.md` §4).
 
 ## 6. Critério de pronto
 
