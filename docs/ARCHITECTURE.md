@@ -37,7 +37,7 @@ para o dono (R2.10 de `TASKS.md`), e o frontend ainda não a chama (RB.5).
 | API | AdonisJS 7, VineJS nos validators de request, `@adonisjs/i18n` (pt-BR, en, es) | ver `backend/package.json` | `_standards/backend.md` |
 | Banco | PostgreSQL pelo Lucid | 18 no compose local | `_standards/backend.md` §4.7 |
 | Fila | Não se aplica: sem e-mail nem tarefa fora da requisição | | |
-| Arquivos | bucket S3 privado (MinIO só em dev e teste), upload multipart assinado; imagens do site em `public/images` | | `_standards/backend.md` §5.4 |
+| Arquivos | bucket S3 privado (MinIO só em dev e teste), upload multipart assinado; imagens do site em `src/assets` | | `_standards/backend.md` §5.4 |
 | Contrato | `openapi.json` gerado e conferido por `openapi:check`, referência Scalar em `/documentation` | | `_standards/openapi.md` |
 | Deploy | imagem Docker Nitro no Coolify, publicada pelo GitHub Actions | | §9 |
 

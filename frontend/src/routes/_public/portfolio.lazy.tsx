@@ -2,6 +2,7 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import { createLazyFileRoute } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
@@ -33,13 +34,12 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
       ratio={1863 / 927}
       className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
     >
-      <img
+      <Picture
         src={project.image}
         alt={project.title}
         width={1863}
         height={927}
-        loading="lazy"
-        decoding="async"
+        placement="fold"
         style={{ objectPosition: project.focus }}
         className="size-full object-cover"
       />
@@ -114,12 +114,12 @@ function RouteComponent(): React.JSX.Element {
                 ratio={1863 / 927}
                 className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
               >
-                <img
+                <Picture
                   src={featuredProject.image}
                   alt={featuredProject.title}
                   width={1863}
                   height={927}
-                  fetchPriority="high"
+                  placement="lcp"
                   style={{ objectPosition: featuredProject.focus }}
                   className="size-full object-cover"
                 />
