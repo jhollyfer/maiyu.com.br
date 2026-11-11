@@ -164,7 +164,7 @@ seria um oráculo de senha para quem roubasse o cookie.
 | Desenvolvimento | site http://localhost:3000, API http://localhost:3333 | máquina local (`pnpm dev`) | Postgres do `backend/docker-compose.yml` na porta 5440 | não se aplica |
 | Preview / Homologação | Não se aplica | | | |
 | Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | push na `main` dispara o workflow |
-| Produção (API) | ainda sem recurso no Coolify: endereço a definir pelo dono | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
+| Produção (API) | https://api.maiyu.com.br (recurso ainda a criar no Coolify) | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
 
 Health check: `GET /health-check` (resposta `{ "status": "ok" }`, `no-store`), o nome exato que a
 régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECISIONS.md` #15).
@@ -175,6 +175,7 @@ régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECIS
 |---|---|---|
 | Recurso da API: *Base Directory* `/`, *Dockerfile Location* `/backend/Dockerfile-production`, *Watch Paths* `backend/**`, `shared/**`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` | painel do Coolify | a imagem constrói da raiz para ver o `shared/` e o lockfile único |
 | *Post-deployment command* da API: `node ace migration:run --force && node ace db:seed` (o Lucid recusa `--force` no seed, `_standards/DECISIONS.md` #372); *Pre-deployment* vazio | painel do Coolify | o *Pre-deployment* roda no container que sai; o seed do dono é `firstOrCreate` e pode rodar a cada deploy |
+| Domínio da API `api.maiyu.com.br` no recurso, com `APP_SERVER_URL=https://api.maiyu.com.br` e `CORS_ORIGINS=https://maiyu.com.br` | recurso da API no Coolify | o navegador do site em `maiyu.com.br` só escreve na API se a origem dele estiver em `CORS_ORIGINS`; endereço da API decidido pelo dono |
 | Healthcheck da API: campo vazio no painel, vale o `HEALTHCHECK` da imagem em `/health-check` | painel do Coolify | `_standards/tooling.md` §8.3 |
 | Variáveis de runtime da API (`APP_KEY`, `DATABASE_URL`, `CORS_ORIGINS`, `COOKIE_DOMAIN`, `TRUSTED_PROXIES`, `STORAGE_*`, `SEED_OWNER_*`) | recurso da API no Coolify | nunca no repositório (`ENV.md` §1.1) |
 | Postgres sem porta pública, URL interna no `DATABASE_URL` | recurso de banco do Coolify | `_standards/tooling.md` §8.3 |
