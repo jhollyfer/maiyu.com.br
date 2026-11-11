@@ -113,7 +113,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 |---|---|---|---|---|
 | R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Em andamento |kit do backend entrou (env, start, server, router, http, page-head, sitemap, route-error, hooks, rich-text); `table/` e `list-shell/` ficam fora até o kit torná-los opcionais |
 | R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
-| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Parcial | #366 |
+| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Em andamento | #366; seletores, tema e `route-status` do kit feitos; faltam `MaiyuCredit` e `Picture` |
 | R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |

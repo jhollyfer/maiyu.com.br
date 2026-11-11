@@ -2,13 +2,13 @@ import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { RichText } from '#/components/common/rich-text/rich-text'
 import {
   NotFoundPage,
   NotFoundPageActions,
   NotFoundPageHomeButton,
   NotFoundPageTitle,
-} from '#/components/common/not-found-page'
-import { RichText } from '#/components/common/rich-text/rich-text'
+} from '#/components/common/route-status/not-found-page'
 import { Avatar, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import {
