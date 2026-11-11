@@ -77,6 +77,104 @@ contexto assíncrono, confira a entrada daqui: a stdlib da linha 24 já resolve
 `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill
 executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Node.js 24: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Erros e falha do processo
+
+- **Identifique erro pelo `error.code`, não pela mensagem.** A doc manda usar `error.code`, porque o texto da mensagem pode mudar entre versões. [`#api/errors`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/errors.md)
+- **Toda API que devolve Promise pode rejeitar, e a rejeição é tratada.** A doc pede para sempre considerar a rejeição de método assíncrono. [`#api/errors`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/errors.md)
+- **Todo `EventEmitter` tem ouvinte de `'error'`.** Sem ele o evento `'error'` derruba o processo; a doc chama isso de boa prática obrigatória. [`#api/events`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/events.md) [`#api/errors`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/errors.md)
+- **`'uncaughtException'` é último recurso: o ouvinte só faz limpeza síncrona, registra e encerra; não retome a operação.** Depois dele a aplicação está em estado indefinido, e o reinício confiável vem de um monitor externo em outro processo. [`#api/process`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/process.md)
+- **Ouvinte de `'exit'` só executa operação síncrona, e `'beforeExit'` não substitui `'exit'`.** Trabalho assíncrono agendado no `'exit'` nunca roda. [`#api/process`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/process.md)
+- **Não use `node:domain`.** O módulo está deprecado. [`#api/events`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/events.md) [`#api/errors`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/errors.md)
+
+### Eventos e cancelamento
+
+- **Ouvinte em `AbortSignal` usa `{ once: true }` (ou `once()`), e o código confere `signal.aborted` antes de começar.** Assim o ouvinte sai assim que o `'abort'` é tratado. [`#api/globals#class-abortsignal`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/globals.md)
+- **`events.defaultMaxListeners` se muda com cuidado; o aviso de mais de 10 ouvintes indica vazamento.** O valor vale para todo emissor, inclusive os já criados. [`#api/events`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/events.md)
+- **Cancele timer com `clearTimeout()`/`clearInterval()`; use `node:timers/promises` para esperar com `AbortSignal`.** `timeout.close()` é legado, e a API de promise aceita `signal` para cancelar. [`#api/timers`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/timers.md) [`#api/timers#timers-promises-api`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/timers.md)
+
+### Contexto assíncrono e diagnóstico
+
+- **Contexto por requisição é `AsyncLocalStorage`, não implementação própria sobre `async_hooks`.** A doc diz que ele é performático e seguro em memória, com otimizações difíceis de reproduzir. [`#api/async_context`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/async_context.md)
+- **Use `asyncLocalStorage.run()`, não `enterWith()`, salvo razão forte.** `enterWith()` vaza o contexto para além do trecho síncrono que o chamou. [`#api/async_context`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/async_context.md)
+- **Não use `createHook`, `AsyncHook` nem `executionAsyncResource`.** A doc não recomenda: problemas de usabilidade, risco de segurança e custo de desempenho. [`#api/async_hooks`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/async_hooks.md)
+- **Nome de canal do `diagnostics_channel` inclui o nome do módulo, e o canal se cria uma vez no topo do arquivo e se reutiliza.** Evita colisão com outros módulos e o custo de criar canal dinamicamente. [`#api/diagnostics_channel`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/diagnostics_channel.md)
+- **Entrada de `performance.mark`/`measure` é limpa depois de observada, e `PerformanceObserver` se desconecta quando não serve mais.** Ficam na timeline global e o observador inscrito tem custo de desempenho. [`#api/perf_hooks`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/perf_hooks.md)
+
+### Streams e backpressure
+
+- **Encadeie streams com `pipeline` de `node:stream/promises`, não com `.pipe()`.** Com `.pipe()`, erro no `Readable` não fecha o destino e cada stream precisa ser fechado à mão para não vazar memória. [`#api/stream`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/stream.md) [`#api/stream#streams-promises-api`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/stream.md)
+- **Quando `write()` devolver `false`, pare de escrever e espere o `'drain'`.** Ignorar o retorno acumula dado em memória. [`#api/stream`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/stream.md) [`#learn/modules/backpressuring-in-streams`](https://raw.githubusercontent.com/nodejs/learn/main/pages/modules/backpressuring-in-streams.md)
+- **Em `Readable` próprio, nunca dê `.push()` sem ter sido pedido.** O guia de backpressure lista isso como regra junto com o respeito ao `'drain'`. [`#learn/modules/backpressuring-in-streams`](https://raw.githubusercontent.com/nodejs/learn/main/pages/modules/backpressuring-in-streams.md)
+- **Dado gerado sob demanda vira um `Readable` passado ao `pipeline`, não laço de `write()`.** A doc recomenda encapsular a lógica num `Readable` para respeitar backpressure. [`#api/stream`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/stream.md)
+- **Para fechar com flush use `end()`, não `destroy()`; quem implementa stream sobrescreve `_destroy()`, nunca `destroy()`.** `destroy()` descarta o que está no buffer. [`#api/stream`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/stream.md)
+
+### Buffer, zlib e sistema de arquivos
+
+- **Importe `Buffer` de `node:buffer` em vez de usar o global.** A doc recomenda a referência explícita. [`#api/buffer`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/buffer.md)
+- **Buffer novo é `Buffer.alloc()`/`Buffer.from()`; `new Buffer()` está deprecado e `allocUnsafe()` devolve memória não inicializada.** Memória não inicializada pode conter dado sensível de alocação anterior. [`#api/buffer`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/buffer.md)
+- **Não crie objeto zlib por requisição em laço; faça cache do resultado da compressão.** A doc marca o padrão como "DO NOT DO THIS" e lembra que o zlib usa o threadpool interno. [`#api/zlib`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/zlib.md)
+- **Não cheque `fs.access()` antes de abrir o arquivo: abra direto e trate o erro.** A doc não recomenda a checagem prévia: o estado pode mudar entre ela e o uso (condição de corrida). [`#api/fs#promises-api`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/fs.md)
+- **Feche todo `FileHandle` explicitamente.** O fechamento automático pelo GC emite aviso e não é garantido. [`#api/fs#promises-api`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/fs.md)
+- **Várias escritas concorrentes no mesmo arquivo exigem coordenação.** A doc avisa que podem corromper o dado. [`#api/fs#promises-api`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/fs.md)
+
+### URL, caminho e módulos
+
+- **Use a API WHATWG `URL`; `url.parse()` está deprecado e `url.format(string)` também.** O `url.parse()` legado tem comportamento inseguro de parse. [`#api/url`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/url.md)
+- **`fileURLToPath()` não protege contra directory traversal: valide o caminho à parte.** A doc diz que a aplicação não deve depender só dela. [`#api/url`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/url.md)
+- **Todo `package.json` declara `"type"`.** A doc diz que o campo deve estar sempre presente para definir como o `.js` é interpretado. [`#api/packages`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/packages.md) [`#api/modules`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/modules.md)
+- **Ponto de entrada de pacote novo é o campo `"exports"`, com alvos relativos começando em `./`; atalho interno usa `"imports"` com `#`.** O `"exports"` encapsula o pacote, e alvo fora da raiz do pacote é recusado por segurança. [`#api/packages`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/packages.md)
+- **Import relativo em ESM leva a extensão do arquivo.** O ESM do Node exige especificador completo. [`#api/esm`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/esm.md) [`#api/packages`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/packages.md)
+- **Caminho de arquivo em `import()` dinâmico passa por `url.pathToFileURL()`.** Caracteres especiais do caminho precisam de percent-encoding. [`#api/esm`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/esm.md)
+- **Não resolva módulo por pasta (`index.js` ou `main` de diretório): use subpath `exports`/`imports`.** "Folders as modules" é legado na doc. [`#api/modules`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/modules.md)
+
+### TypeScript nativo
+
+- **Para rodar `.ts` direto no Node, use TypeScript 5.8+ com `module: "nodenext"`, `rewriteRelativeImportExtensions`, `erasableSyntaxOnly` e `verbatimModuleSyntax`.** É a configuração que a doc recomenda para o type stripping. [`#api/typescript`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/typescript.md)
+- **No type stripping, código ESM usa `import`/`export` e CommonJS usa `require`/`module.exports`; o tipo vem da extensão e do `"type"`.** O Node não converte um sistema de módulo no outro. [`#api/typescript`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/typescript.md)
+
+### Linha de comando e ambiente
+
+- **Arquivo de ENV entra por `--env-file` (ou `--env-file-if-exists`) ou `process.loadEnvFile()`, sem biblioteca.** O Node lê o `.env` nativamente; a variante `-if-exists` não falha quando o arquivo falta. [`#api/cli`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/cli.md) [`#learn/command-line/how-to-read-environment-variables-from-nodejs`](https://raw.githubusercontent.com/nodejs/learn/main/pages/command-line/how-to-read-environment-variables-from-nodejs.md)
+- **Nunca use arquivo de configuração do Node (`--experimental-config-file`) de origem não confiável.** A doc avisa em maiúsculas. [`#api/cli`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/cli.md)
+- **Em produção, rode com `NODE_ENV=production`; qualquer outro valor é antipadrão.** Comportamento que muda por `NODE_ENV` deixa staging e produção diferentes e torna o teste não confiável. [`#learn/getting-started/nodejs-the-difference-between-development-and-production`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/nodejs-the-difference-between-development-and-production.md)
+- **Glob passado ao `node --test` vai entre aspas duplas.** Evita a expansão pelo shell, que muda o resultado entre sistemas. [`#api/test`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/test.md)
+- **Subteste criado com `t.test()` é aguardado (`await`).** Teste fora de suíte não espera o subteste terminar. [`#api/test`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/test.md)
+
+### Event loop e desempenho
+
+- **Nunca bloqueie o event loop: em servidor, nada de API síncrona de `fs`, `crypto`, `zlib` e `child_process`.** Uma entrada maliciosa que bloqueia a thread derruba todos os clientes (DoS). [`#learn/asynchronous-work/dont-block-the-event-loop`](https://raw.githubusercontent.com/nodejs/learn/main/pages/asynchronous-work/dont-block-the-event-loop.md)
+- **Regex sobre entrada do usuário evita padrão vulnerável a ReDoS, e `JSON.parse`/`JSON.stringify` têm teto de tamanho.** Os dois rodam no event loop e crescem com a entrada. [`#learn/asynchronous-work/dont-block-the-event-loop`](https://raw.githubusercontent.com/nodejs/learn/main/pages/asynchronous-work/dont-block-the-event-loop.md)
+- **Tarefa pesada de CPU vai para `worker_threads` com partição de tarefa; não crie um processo filho por cliente.** Worker não ajuda em I/O, e processo por cliente esgota a máquina. [`#learn/asynchronous-work/dont-block-the-event-loop`](https://raw.githubusercontent.com/nodejs/learn/main/pages/asynchronous-work/dont-block-the-event-loop.md) [`#api/worker_threads`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/worker_threads.md)
+- **Prefira `setImmediate()` a `process.nextTick()`.** A doc recomenda `setImmediate()` em todos os casos por ser mais fácil de raciocinar. [`#learn/asynchronous-work/event-loop-timers-and-nexttick`](https://raw.githubusercontent.com/nodejs/learn/main/pages/asynchronous-work/event-loop-timers-and-nexttick.md)
+
+### Processo filho, rede e DNS
+
+- **Nunca passe entrada do usuário sem sanitizar a `exec()` ou a `spawn()` com `shell`; prefira `execFile`/`spawn` sem shell.** O shell interpreta metacaracteres e permite injeção de comando (DEP0190). [`#api/child_process`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/child_process.md)
+- **Em requisição HTTP com handler de `'response'`, consuma o corpo (`resume()` ou leitura).** Até ser lido, o corpo ocupa memória e pode levar a 'process out of memory'. [`#api/http`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/http.md)
+- **Configure os timeouts do `http.Server` (`headersTimeout`, `requestTimeout`) e limite sockets (`maxSockets`, `maxRequestsPerSocket`).** Conexão lenta ou ociosa sem limite abre caminho para DoS tipo Slowloris. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md) [`#api/http`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/http.md)
+- **Não use `insecureHTTPParser`.** A opção abre request smuggling. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md)
+- **No `dns.lookup`, código novo usa a opção `order`, não a booleana `verbatim`; e `setServers()` não se chama com consulta em andamento.** `verbatim` vai ser deprecada em favor de `order`. [`#api/dns`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/dns.md)
+
+### Segurança
+
+- **Comparação de segredo usa `crypto.timingSafeEqual()`, e senha usa `scrypt` assíncrono.** Operação de tempo variável sobre segredo vaza informação (timing attack). [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md) [`#api/crypto`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/crypto.md)
+- **Em cifra autenticada, `setAAD()` vem antes de `update()`, `getAuthTag()` só depois de `final()`, e texto que falha na autenticação é descartado.** A doc fixa essa ordem para GCM/CCM/OCB e afins. [`#api/crypto`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/crypto.md)
+- **Não rode o inspector em produção, e desative-o no `SIGUSR1`.** O inspector dá execução de código a quem alcança a porta. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md)
+- **Instale em CI com lockfile imutável (`npm ci`), sem scripts (`--ignore-scripts`), versões fixas e auditoria automatizada.** É a lista de mitigação de cadeia de suprimento da página. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md)
+- **Contra prototype pollution: valide o corpo por schema, evite merge recursivo inseguro e métodos de `Object.prototype`; use `Object.create(null)` ou `Object.hasOwn`.** A página lista esses controles para entrada não confiável. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md)
+- **Não rode a aplicação de produção em máquina compartilhada.** A página trata isso como controle de memória e de segredo. [`#learn/getting-started/security-best-practices`](https://raw.githubusercontent.com/nodejs/learn/main/pages/getting-started/security-best-practices.md)
+- **O modelo de permissões (`--permission`) não é sandbox contra código malicioso.** A doc diz que ele não dá garantia de segurança na presença de código malicioso. [`#api/permissions`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/permissions.md)
+
+### APIs deprecadas
+
+- **Troque `util.isArray`, `util._extend`, `util.isNativeError` e afins por `Array.isArray`, `Object.assign`, `Error.isError`.** São APIs deprecadas do `node:util`. [`#api/util`](https://raw.githubusercontent.com/nodejs/node/v24.x/doc/api/util.md)
+
 ---
 
 ## Erros e assincronia
@@ -290,7 +388,8 @@ laço. Trabalho lento de I/O vai para fila (`backend.md` §4.12); código não c
 `argon2` (24.7), `webcrypto`.
 **Para que serve:** `timingSafeEqual` compara em tempo constante, exige os dois lados com o mesmo
 tamanho em bytes (lança se diferir) e não torna seguro o código em volta. `randomBytes` gera token
-opaco. `scrypt` e `argon2` existem, mas hash de senha da casa é o do framework.
+opaco. Hash de senha da casa é Argon2: o driver `argon` no Adonis, `crypto.argon2` (`argon2id`) no
+Fastify (`backend.md` §5.6, item 6).
 **Quando usar:** assinatura de webhook (`backend.md` §4.11), token de convite ou redefinição
 (`backend.md` §4.10), chave de objeto (`randomUUID`, §5.4). Senha: `hash` do Adonis
 (`_doc-lib/adonisjs.md#guides/security/hashing`).

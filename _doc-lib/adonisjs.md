@@ -43,6 +43,127 @@ carrega request, response, usuário autenticado e sessão através de toda a req
 
 **Skills:** `maiyu-backend`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com AdonisJS: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Configuração e ENV
+
+- **Variável de ambiente só se lê em `config/` (e em `start/env.ts`), nunca em controller, service ou outro código da aplicação.** O config é a fonte única da configuração, e o `env` garante que a variável obrigatória existe e falha no boot com erro claro. [`#configuration`](https://docs.adonisjs.com/configuration)
+- **Arquivo de config só importa utilitário do framework e lê `env`; valor compartilhado vem de `env.get`, não do serviço `config`.** O config carrega antes da aplicação, então importar model, service ou controller ali quebra, e o serviço `config` ainda não existe. [`#configuration`](https://docs.adonisjs.com/configuration)
+- **`APP_KEY` secreto, próprio de cada ambiente, fora do controle de versão e com cópia de segurança.** Quem tem a chave decifra os dados e forja sessão e URL assinada; perdida, o dado cifrado não volta. [`#configuration`](https://docs.adonisjs.com/configuration), [`#guides/security/encryption`](https://docs.adonisjs.com/guides/security/encryption)
+- **`.env.example` é versionado com todas as variáveis obrigatórias; os outros `.env` não.** Ele é o roteiro de quem monta o ambiente local, e em produção as variáveis vêm da plataforma. [`#configuration`](https://docs.adonisjs.com/configuration)
+- **Valor secreto que pode cair em log vai embrulhado em `Secret`.** O `Secret` imprime `[redacted]` e só entrega o valor por `release()`, uma rede contra vazamento em log. [`#reference/helpers`](https://docs.adonisjs.com/reference/helpers)
+- **`.adonisjs/` é versionado e nunca editado à mão; `tmp/` fica no `.gitignore` e fora do servidor.** Sem os gerados o TypeScript não resolve `#generated/*` e build e CI falham; o que se edita ali o dev server sobrescreve. [`#folder-structure`](https://docs.adonisjs.com/folder-structure), [`#guides/concepts/barrel-files`](https://docs.adonisjs.com/guides/concepts/barrel-files)
+- **Código do backend (model, service, transformer) nunca é importado no frontend.** A fronteira entre os dois lados é o contrato HTTP. [`#folder-structure`](https://docs.adonisjs.com/folder-structure)
+- **`tsconfig.json` mantém as opções de compilador que a doc marca como mínimo obrigatório.** O Adonis depende delas (decorators, módulos) para compilar e rodar. [`#dev-environment`](https://docs.adonisjs.com/dev-environment)
+- **Desenvolvimento usa o mesmo motor de banco da produção desde cedo.** Trocar SQLite por PostgreSQL no fim traz diferença de schema e de driver que só aparece no deploy. [`#dev-environment`](https://docs.adonisjs.com/dev-environment)
+- **`adonisrc.ts` não carrega lógica da aplicação nem depende do ambiente.** Ele é lido por ferramentas fora do processo da aplicação, que não têm container nem serviços. [`#reference/adonisrc-rcfile`](https://docs.adonisjs.com/reference/adonisrc-rcfile)
+- **`ace.js` não se edita; código que roda antes do Ace vai em `bin/console.ts`.** O `ace.js` é o ponto de entrada gerado. [`#guides/ace/introduction`](https://docs.adonisjs.com/guides/ace/introduction)
+
+### Deploy e produção
+
+- **Runtime com Node 24 ou mais, `NODE_ENV=production`, só a pasta `build` entregue e dependências instaladas pelo lockfile sem as de desenvolvimento.** Código-fonte, TypeScript e devDependencies não são necessários, e o `.env` fica fora do build de propósito: as variáveis vêm da plataforma. [`#deployment`](https://docs.adonisjs.com/deployment)
+- **Erro de TypeScript se corrige antes do build de produção.** O build compila para JavaScript e não entrega com erro de tipo. [`#deployment`](https://docs.adonisjs.com/deployment)
+- **`keepAliveTimeout` da API em `config/app.ts` maior que o tempo ocioso do proxy na frente (55000 contra os 50 s do Nginx).** Senão o Node fecha a conexão que o proxy acha aberta e o proxy responde 502. [`#deployment`](https://docs.adonisjs.com/deployment)
+- **Migration de produção roda com `node ace migration:run --force`, pelo gancho de pré-deploy da plataforma e não no boot da aplicação; rollback em produção não se usa, desfazer é migration nova.** Em produção ela fica desligada por padrão e o lock exclusivo segura deploys em paralelo. [`#deployment`](https://docs.adonisjs.com/deployment)
+- **Arquivo gravado em disco local fica num diretório fora de `build` que persiste entre deploys.** A pasta de build é substituída a cada entrega. [`#deployment`](https://docs.adonisjs.com/deployment)
+- **Arquivo estático em produção sai por proxy reverso ou CDN, com `dotFiles: 'ignore'`.** Cada arquivo ocupa o processo Node, e `'allow'` pode expor `.env` e `.git`. [`#guides/basics/static-file-server`](https://docs.adonisjs.com/guides/basics/static-file-server)
+- **`debug` desligado em produção (`!app.inProduction`), e o `report` do handler só registra, sem responder HTTP.** Assim o erro não vaza a estrutura interna da aplicação. [`#guides/basics/exception-handling`](https://docs.adonisjs.com/guides/basics/exception-handling), [`#guides/basics/debugging`](https://docs.adonisjs.com/guides/basics/debugging)
+- **Lógica própria de report respeita `shouldReport`, e status e códigos esperados (validação, 401/403) entram em `ignoreStatuses`/`ignoreCodes`.** Falha esperada do fluxo normal não é incidente e não vai para o monitoramento. [`#guides/basics/exception-handling`](https://docs.adonisjs.com/guides/basics/exception-handling)
+- **Log estruturado em JSON em produção, sem pretty-print.** O transporte configurado é que leva o log adiante. [`#guides/digging-deeper/logger`](https://docs.adonisjs.com/guides/digging-deeper/logger)
+
+### Rotas, controllers e validação
+
+- **Rota estática antes da dinâmica; parâmetro opcional e curinga só no fim do padrão.** A rota casa na ordem de definição, e `/posts/:id` antes engole `/posts/archived`. [`#guides/basics/routing`](https://docs.adonisjs.com/guides/basics/routing), [`#tutorial/hypermedia/forms-and-validation`](https://docs.adonisjs.com/tutorial/hypermedia/forms-and-validation)
+- **Parâmetro de rota chega sempre como string: converte e valida antes de usar.** O roteador não tipa o valor. [`#guides/basics/routing`](https://docs.adonisjs.com/guides/basics/routing), [`#guides/basics/http-context`](https://docs.adonisjs.com/guides/basics/http-context)
+- **URL se gera pelo nome da rota, nunca escrita à mão; rota sem controller recebe nome por `.as()`, e URL que sai da aplicação (e-mail) usa `prefixUrl`.** Mudar o caminho não obriga a caçar referência, e o link externo precisa do domínio. [`#guides/basics/url-builder`](https://docs.adonisjs.com/guides/basics/url-builder), [`#guides/basics/controllers`](https://docs.adonisjs.com/guides/basics/controllers)
+- **URL assinada só se cria no backend.** Ela depende da chave de cifra, que o frontend não pode ter. [`#guides/basics/url-builder`](https://docs.adonisjs.com/guides/basics/url-builder)
+- **Um controller por recurso, com `router.resource()`; controller de ação única só para operação sem irmãos de CRUD.** (A casa usa um controller por ação, decisão do dono registrada em `DECISIONS.md` #319.) É a organização que a doc recomenda e que o gerador segue. [`#tutorial/hypermedia/forms-and-validation`](https://docs.adonisjs.com/tutorial/hypermedia/forms-and-validation), [`#guides/basics/controllers`](https://docs.adonisjs.com/guides/basics/controllers)
+- **`HttpContext` é o primeiro parâmetro da action, dependências depois; resource de API usa `.apiOnly()`.** O container separa contexto e injeção pela posição, e API não serve as rotas de formulário. [`#guides/basics/controllers`](https://docs.adonisjs.com/guides/basics/controllers), [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection)
+- **Cabeçalho se define antes do corpo da resposta.** Depois do corpo enviado o cabeçalho não sai mais. [`#guides/basics/response`](https://docs.adonisjs.com/guides/basics/response)
+- **`validateUsing` não vai dentro de try/catch; falha tratada numa action específica usa `tryValidateUsing`.** O handler global já converte o erro de validação na resposta certa. [`#guides/basics/validation`](https://docs.adonisjs.com/guides/basics/validation)
+- **Validação de request é por validator VineJS, inclusive a de arquivo.** A doc o recomenda acima da validação inline por mensagem de erro consistente e teste mais fácil. [`#guides/basics/request`](https://docs.adonisjs.com/guides/basics/request), [`#guides/basics/file-uploads`](https://docs.adonisjs.com/guides/basics/file-uploads)
+- **Toda action que recebe corpo chama `request.validateUsing()`, e `@tuyau/core` tem a mesma versão no backend e no frontend.** Sem o validator o Tuyau não infere o tipo do corpo e cai em `any`. [`#guides/frontend/api-client`](https://docs.adonisjs.com/guides/frontend/api-client.md)
+- **Transformer não valida entrada e recebe a relação já carregada.** Ele só serializa e não consulta o banco. [`#guides/frontend/transformers`](https://docs.adonisjs.com/guides/frontend/transformers)
+- **Paginação sempre com `orderBy`; `database/schema.ts` nunca editado.** Sem ordem a página repete ou pula registro, e o schema é regerado a cada migration (customização vai no model). [`#guides/database/lucid`](https://docs.adonisjs.com/guides/database/lucid), [`#tutorial/hypermedia/database-and-models`](https://docs.adonisjs.com/tutorial/hypermedia/database-and-models)
+- **Validator se organiza por recurso, evento pelo ciclo de vida da ação, e listener e comando pelo nome da ação que fazem.** É a convenção de nomes dos geradores. [`#reference/commands`](https://docs.adonisjs.com/reference/commands)
+
+### Uploads e arquivos
+
+- **Nome de arquivo do cliente nunca é usado; o nome gravado é gerado (UUID).** O nome do cliente não é confiável e colide entre usuários. [`#guides/basics/file-uploads`](https://docs.adonisjs.com/guides/basics/file-uploads), [`#guides/digging-deeper/drive`](https://docs.adonisjs.com/guides/digging-deeper/drive)
+- **Upload acima de uns 100 MB vai direto do navegador para o storage.** O caminho pelo servidor segura o processo durante a transferência inteira. [`#guides/basics/file-uploads`](https://docs.adonisjs.com/guides/basics/file-uploads)
+- **Stream de upload passa todo pedaço por `reportChunk`.** É ele que aplica o teto de tamanho, as extensões e a detecção do tipo pelo conteúdo. [`#guides/basics/file-uploads`](https://docs.adonisjs.com/guides/basics/file-uploads)
+- **Disco do Drive escolhido por `DRIVE_DISK`, e teste usa `drive.fake()`.** Troca de provedor é variável de ambiente, e o fake redireciona tudo para um diretório temporário. [`#guides/digging-deeper/drive`](https://docs.adonisjs.com/guides/digging-deeper/drive), [`#guides/testing/test-doubles`](https://docs.adonisjs.com/guides/testing/test-doubles)
+
+### Middleware, DI e ciclo de vida
+
+- **Tipo do `HttpContext` só se aumenta em middleware de server ou router.** A mudança de tipo é global, e a propriedade só existiria nas rotas do middleware nomeado. [`#guides/basics/middleware`](https://docs.adonisjs.com/guides/basics/middleware)
+- **Código que roda fora de requisição (job, comando) recebe o que precisa por parâmetro, sem ler o `HttpContext` do AsyncLocalStorage.** Fora da requisição não há contexto. [`#guides/basics/http-context`](https://docs.adonisjs.com/guides/basics/http-context)
+- **Injeção por construtor com `@inject()` na classe (ou no método, antes dele), no lugar do serviço de container importado.** A doc diz que a injeção deixa o código mais testável, porque a dependência se troca no teste. [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection), [`#guides/concepts/container-services`](https://docs.adonisjs.com/guides/concepts/container-services)
+- **Classe com dependência que o container não resolve sozinho vira binding, registrado no `register` do provider, síncrono e sem I/O; binding por requisição vai no `container_bindings_middleware`.** Nesse momento os outros providers ainda não terminaram de registrar. [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection), [`#guides/concepts/service-providers`](https://docs.adonisjs.com/guides/concepts/service-providers)
+- **Recurso de vida longa não abre no `start` em modo warmup; trabalho operacional vai no `ready`, e o modo nunca muda binding, rota ou listener.** O `codegen` roda os hooks de `start` nesse modo e pula o `shutdown`, e a aplicação inspecionada tem de ser a mesma que roda. [`#guides/concepts/application-lifecycle`](https://docs.adonisjs.com/guides/concepts/application-lifecycle), [`#guides/concepts/service-providers`](https://docs.adonisjs.com/guides/concepts/service-providers), [`#reference/application`](https://docs.adonisjs.com/reference/application), [`#reference/commands`](https://docs.adonisjs.com/reference/commands)
+- **Saída derivada de rota se atualiza com `node ace codegen` no CI.** Bundler e test runner não rodam os hooks de rota do Assembler. [`#guides/concepts/assembler-hooks`](https://docs.adonisjs.com/guides/concepts/assembler-hooks)
+- **Macro se escreve com `function`, não arrow, e o `declare module` usa o caminho exato do import e o nome exato da classe.** Arrow não tem `this`, e caminho diferente faz o TypeScript ignorar a extensão. [`#guides/concepts/extending-adonisjs`](https://docs.adonisjs.com/guides/concepts/extending-adonisjs), [`#guides/basics/response`](https://docs.adonisjs.com/guides/basics/response)
+- **Getter singleton não guarda valor que muda.** Ele é calculado uma vez e reaproveitado. [`#guides/concepts/extending-adonisjs`](https://docs.adonisjs.com/guides/concepts/extending-adonisjs)
+
+### Autenticação e autorização
+
+- **API usa o guard de access tokens, com `expiresIn` definido; basic auth não vai para produção.** Token vazado dá acesso irrestrito e não expira por padrão, e basic auth manda a credencial em toda requisição. [`#guides/auth/introduction`](https://docs.adonisjs.com/guides/auth/introduction), [`#guides/auth/access-tokens-guard`](https://docs.adonisjs.com/guides/auth/access-tokens-guard), [`#guides/auth/basic-auth-guard`](https://docs.adonisjs.com/guides/auth/basic-auth-guard)
+- **Usuário autenticado se lê por `auth.getUserOrFail()`, nunca `auth.user!`.** Evita a asserção não nula. [`#guides/auth/access-tokens-guard`](https://docs.adonisjs.com/guides/auth/access-tokens-guard), [`#guides/auth/session-guard`](https://docs.adonisjs.com/guides/auth/session-guard), [`#guides/auth/basic-auth-guard`](https://docs.adonisjs.com/guides/auth/basic-auth-guard)
+- **Login por `AuthFinder`/`verifyCredentials`; troca sensível pede a senha atual com `validatePassword`.** O mixin compara hash mesmo quando o usuário não existe, o que evita ataque de tempo. [`#guides/auth/verifying-user-credentials`](https://docs.adonisjs.com/guides/auth/verifying-user-credentials)
+- **Guard próprio implementa `GuardContract` e busca o usuário por um user provider, sem consulta fixa.** O guard não deve saber como o usuário é lido do banco. [`#guides/auth/custom-auth-guard`](https://docs.adonisjs.com/guides/auth/custom-auth-guard)
+- **Login social: callback idêntico ao registrado no provedor, no mesmo domínio da rota de redirect, e modo stateless nos dois lados quando usado.** Senão o cookie de estado não volta e a verificação falha. [`#guides/auth/social-authentication`](https://docs.adonisjs.com/guides/auth/social-authentication)
+- **Autorização em policy ou ability do Bouncer, conferida antes de toda ação sensível, e policy testada direto.** A regra fica num lugar só em vez de espalhada nos controllers. [`#guides/auth/authorization`](https://docs.adonisjs.com/guides/auth/authorization), [`#tutorial/hypermedia/authorization`](https://docs.adonisjs.com/tutorial/hypermedia/authorization)
+
+### Segurança
+
+- **Auto-processamento de multipart só nas rotas que recebem arquivo (lista por padrão de rota, não URL), com rate limit forte em upload público.** A doc chama isso de primeira medida de segurança do upload. [`#guides/basics/file-uploads`](https://docs.adonisjs.com/guides/basics/file-uploads), [`#guides/basics/body-parser`](https://docs.adonisjs.com/guides/basics/body-parser)
+- **`trustProxy` nunca `true` em produção; confia só nos endereços do proxy real.** Com `true` qualquer cliente forja o IP por `X-Forwarded-For`. [`#guides/basics/request`](https://docs.adonisjs.com/guides/basics/request)
+- **CORS com a lista de origens que a API serve antes do deploy, nunca o `origin: true` do default.** O default reflete qualquer origem. [`#guides/security/cors`](https://docs.adonisjs.com/guides/security/cors)
+- **Limiter usa `consume`, nunca `remaining` seguido de `increment`, tem um banco Redis só dele, store `memory` configurado para teste e o store do ENV validado em `start/env.ts`.** Os dois passos separados criam corrida, e o `clear` apaga o banco inteiro. [`#guides/security/rate-limiting`](https://docs.adonisjs.com/guides/security/rate-limiting)
+- **Listener do evento de limite estourado só loga ou conta métrica, sem gravar no banco.** Ele roda a cada requisição recusada. [`#guides/security/rate-limiting`](https://docs.adonisjs.com/guides/security/rate-limiting)
+- **HSTS só depois de o HTTPS funcionar em todos os subdomínios, começando com `maxAge` curto; `nosniff` ligado.** O navegador guarda a política e passa a recusar HTTP. [`#guides/security/securing-ssr-applications`](https://docs.adonisjs.com/guides/security/securing-ssr-applications)
+- **Retorno de `decrypt` é conferido contra `null`, cifra usa `purpose`, e chave antiga só sai depois de recifrar os dados dela.** Sem a chave o dado fica ilegível para sempre. [`#guides/security/encryption`](https://docs.adonisjs.com/guides/security/encryption)
+- **Senha em Argon2; o driver antigo fica até todo hash ser refeito, e o driver de `hash.use()` está configurado no `list`.** Bcrypt corta a senha em 72 bytes, e `hash.verify` não reconhece o algoritmo do hash. [`#guides/security/hashing`](https://docs.adonisjs.com/guides/security/hashing)
+- **Cookie de sessão `httpOnly`, `secure` em produção (`app.inProduction`) e `sameSite: 'lax'`.** A doc manda manter `httpOnly` por segurança e recomenda `lax` para a maioria das aplicações. [`#guides/basics/session`](https://docs.adonisjs.com/guides/basics/session)
+- **Autenticação feita à mão chama `session.regenerate()` depois do login e liga `renewMissingSessionId: true`.** Sem isso há fixação de sessão e o ID de uma sessão destruída volta a ser usado. [`#guides/basics/session`](https://docs.adonisjs.com/guides/basics/session)
+- **Endpoint de readiness exposto exige cabeçalho secreto; liveness não confere dependência externa.** O relatório mostra a infraestrutura, e banco fora do ar não pode pôr o processo em loop de restart. [`#guides/digging-deeper/health-checks`](https://docs.adonisjs.com/guides/digging-deeper/health-checks)
+- **Mesmo check registrado mais de uma vez recebe nome único com `as`.** Senão o resultado de um sobrescreve o do outro. [`#guides/digging-deeper/health-checks`](https://docs.adonisjs.com/guides/digging-deeper/health-checks)
+
+### Fila, mail, SSE, locks e cache
+
+- **E-mail em produção sai pela fila; messenger em memória nunca em produção, e `attachData` nunca com `sendLater`.** E-mail na fila em memória se perde no restart, e stream não serializa para a fila. [`#guides/digging-deeper/mail`](https://docs.adonisjs.com/guides/digging-deeper/mail)
+- **View de e-mail recebe só dado serializável em JSON, e o limite de envio se faz pela fila.** O job reconstrói a view a partir do dado, e o Nodemailer 7 tirou `sendingRate`. [`#guides/digging-deeper/mail`](https://docs.adonisjs.com/guides/digging-deeper/mail)
+- **Unsubscribe de um clique aponta para endpoint `https` que aceita `POST` e descadastra na hora.** O provedor chama a URL sem o usuário abrir página nenhuma. [`#guides/digging-deeper/mail`](https://docs.adonisjs.com/guides/digging-deeper/mail)
+- **Fila em produção usa o adapter `redis` (ou `database`), `sync` só em desenvolvimento, com a versão do pacote fixada.** O Redis dá operação atômica, e atualização do pacote pode quebrar. [`#guides/digging-deeper/queues`](https://docs.adonisjs.com/guides/digging-deeper/queues)
+- **Worker de fila roda em processo separado sob supervisor, reiniciado a cada deploy; atualização para todos os processos antes de `queue:migrate`.** O worker guarda a versão dos jobs carregada no início, e a tabela antiga é migrada antes de a versão nova usá-la. [`#guides/digging-deeper/queues`](https://docs.adonisjs.com/guides/digging-deeper/queues)
+- **`timeout` de job em milissegundos inteiros até 2147483647.** É o teto do timer do Node. [`#guides/digging-deeper/queues`](https://docs.adonisjs.com/guides/digging-deeper/queues)
+- **`text/event-stream` fica fora do gzip do proxy; teste de SSE desliga o `transmit.on` logo depois da requisição.** SSE comprimido deixa a conexão instável, e o listener aberto recolhe broadcast de outro teste. [`#guides/digging-deeper/server-sent-events`](https://docs.adonisjs.com/guides/digging-deeper/server-sent-events)
+- **Lock com `tableName` explícito, lock manual liberado num `finally`, TTL `null` só com liberação garantida e `forceRelease` só em comando de administração.** O default é `verrou`, e lock não liberado só cai pelo TTL. [`#guides/digging-deeper/locks`](https://docs.adonisjs.com/guides/digging-deeper/locks)
+- **Cache guarda só valor serializável (`.serialize()` no model); várias instâncias usam cache em dois níveis.** O model volta do cache como objeto simples, e o L1 com L2 é o arranjo recomendado para produção com réplicas. [`#guides/digging-deeper/cache`](https://docs.adonisjs.com/guides/digging-deeper/cache)
+- **Cliente Redis tem listener de `error`; inscrição vem antes da publicação.** Sem listener o erro derruba o processo. [`#guides/database/redis`](https://docs.adonisjs.com/guides/database/redis)
+- **Listener que depende da ordem usa `emitSerial`; listener de classe define `handle`.** O `emit` comum roda os listeners ao mesmo tempo. [`#guides/digging-deeper/emitter`](https://docs.adonisjs.com/guides/digging-deeper/emitter)
+- **Log durante a requisição sai por `ctx.logger`, não pelo serviço importado.** O logger do contexto leva o id da requisição em toda linha. [`#guides/digging-deeper/logger`](https://docs.adonisjs.com/guides/digging-deeper/logger)
+- **SDK do OpenTelemetry é o primeiro import de `bin/server.ts`, com amostragem em produção de tráfego alto e sem `@spanAll` em toda classe.** Carregado depois, a instrumentação automática não alcança `http` e `knex`. [`#guides/digging-deeper/opentelemetry`](https://docs.adonisjs.com/guides/digging-deeper/opentelemetry)
+- **Texto exibido ao usuário sai de arquivo de tradução por chave.** Idioma novo não mexe no código. [`#guides/digging-deeper/i18n`](https://docs.adonisjs.com/guides/digging-deeper/i18n)
+
+### Comandos Ace
+
+- **Comando define `commandName` e `run`, liga `startApp` quando usa model ou service, e com `staysAlive` encerra a aplicação ao terminar ou falhar.** Sem `startApp` não há aplicação, e com `staysAlive` o processo não termina sozinho. [`#guides/ace/creating-commands`](https://docs.adonisjs.com/guides/ace/creating-commands)
+- **Erro tratado dentro do comando atualiza `exitCode` e `error`.** Senão o comando reporta sucesso. [`#guides/ace/creating-commands`](https://docs.adonisjs.com/guides/ace/creating-commands)
+- **Argumento opcional vem depois dos obrigatórios e o spread por último; flag sem a qual o comando não roda é `required: true`.** O Ace lê argumentos pela posição. [`#guides/ace/arguments`](https://docs.adonisjs.com/guides/ace/arguments), [`#guides/ace/flags`](https://docs.adonisjs.com/guides/ace/flags)
+- **Tarefa do `ui.tasks` reporta progresso por `task.update`, não por `console.log`.** A saída da tarefa é redesenhada pelo renderizador. [`#guides/ace/terminal-ui`](https://docs.adonisjs.com/guides/ace/terminal-ui)
+
+### Testes
+
+- **Teste roda com banco, Redis e storage separados de dev e de produção, já criados, e começa de estado conhecido.** Teste contra dado de produção pode apagar dado. [`#guides/testing/resetting-state-between-tests`](https://docs.adonisjs.com/guides/testing/resetting-state-between-tests), [`#guides/testing/introduction`](https://docs.adonisjs.com/guides/testing/introduction), [`#guides/testing/browser-tests`](https://docs.adonisjs.com/guides/testing/browser-tests)
+- **Consulta ao banco no teste vai ao banco real, sem mock do query builder; dependência externa se troca com `swap` do container; quem usa sinon chama `sinon.restore()` ao fim.** O `swap` restaura sozinho, o sinon não. [`#guides/testing/test-doubles`](https://docs.adonisjs.com/guides/testing/test-doubles), [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection)
+- **`hash.fake()` só em teste onde o hash não é o assunto.** O fake tira a lentidão de propósito do algoritmo. [`#guides/testing/test-doubles`](https://docs.adonisjs.com/guides/testing/test-doubles)
+- **Teste de comando volta o UI ao modo normal ao fim e prende o prompt antes de executar, com o título exato.** O modo raw guarda a saída em memória e afeta o próximo teste. [`#guides/testing/console-tests`](https://docs.adonisjs.com/guides/testing/console-tests)
+
 ---
 
 ## Começando
@@ -1826,15 +1947,14 @@ export default class BackfillCnpj extends BaseCommand {
 ```
 
 ```ts
-// básico: comando resolve a dependência pelo container dentro do `run`, não
-// no construtor — o Kernel do Ace já fixa a assinatura do construtor
+// básico: a dependência entra por `@inject()` no método do ciclo de vida, como a página
+// documenta em "Using dependency injection"; o construtor fica com a assinatura do Kernel do Ace
 export default class StoragesPrune extends BaseCommand {
   static commandName = 'storages:prune'
   static options: CommandOptions = { startApp: true }
 
-  async run() {
-    const { default: StorageDeleteUseCase } = await import('#features/storages/delete.use-case')
-    const useCase = await this.app.container.make(StorageDeleteUseCase)
+  @inject()
+  async run(useCase: StorageDeleteUseCase) {
     await useCase.execute({ olderThanHours: 24 })
   }
 }

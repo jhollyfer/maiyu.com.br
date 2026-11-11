@@ -137,6 +137,62 @@ nem sucesso nem erro.
 
 **Skills:** `maiyu-backend`, `observability-and-instrumentation`, `debugging-and-error-recovery`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Socket.IO: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Servidor e conexão
+
+- **Socket.IO e o servidor HTTP dividem o mesmo `http.Server`; `app.listen()` de um framework cria outro servidor e não serve.** A página de inicialização avisa que `app.listen(3000)` não funciona porque abre um servidor HTTP novo. [`#server-initialization`](https://socket.io/docs/v4/server-initialization/)
+- **Socket.IO não é WebSocket puro: o cliente é `socket.io-client` e a revisão do protocolo é a mesma nos dois lados.** Um cliente WebSocket comum não conecta num servidor Socket.IO, e vice-versa. [`#index`](https://socket.io/docs/v4/), [`#client-api`](https://socket.io/docs/v4/client-api/)
+- **`path` igual no servidor e no cliente.** Os dois valores precisam bater, salvo proxy que reescreva o caminho. [`#server-options`](https://socket.io/docs/v4/server-options/), [`#client-options`](https://socket.io/docs/v4/client-options/), [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **Opção de conexão (`transports`, `query`, `reconnectionDelayMax`) vai no `Manager`, não em `manager.socket()`.** Chaves de conexão passadas ao socket são ignoradas. [`#client-api`](https://socket.io/docs/v4/client-api/)
+- **`rememberUpgrade: true` no cliente só com TLS ou rede que não bloqueia WebSocket.** A opção pula o upgrade normal e tenta WebSocket direto, e a página recomenda ligá-la só nesses casos. [`#client-options`](https://socket.io/docs/v4/client-options/)
+- **`maxHttpBufferSize` (1 MB por padrão) é o teto de uma mensagem; acima dele o socket fecha.** Ajuste o valor à necessidade, para cima ou para baixo. [`#server-options`](https://socket.io/docs/v4/server-options/)
+- **`pingInterval` baixo carrega o servidor e `pingTimeout` alto atrasa a detecção de conexão quebrada.** A página descreve os dois lados da troca; os defaults (25 s e 20 s) ficam salvo motivo medido. [`#server-options`](https://socket.io/docs/v4/server-options/)
+
+### CORS e autenticação
+
+- **CORS é habilitado explicitamente com lista de origens; `origin: '*'` desliga a proteção.** A doc marca `'*'` como perigo: qualquer domínio alcança o servidor. [`#server-options`](https://socket.io/docs/v4/server-options/), [`#handling-cors`](https://socket.io/docs/v4/handling-cors/), [`#client-initialization`](https://socket.io/docs/v4/client-initialization/)
+- **CORS não protege a conexão WebSocket nem cliente fora do navegador; para restringir quem conecta, use `allowRequest`.** CORS só vale para navegador e só para o long-polling. [`#handling-cors`](https://socket.io/docs/v4/handling-cors/), [`#server-options`](https://socket.io/docs/v4/server-options/)
+- **Cookie cross-origin exige `credentials: true` no CORS do servidor e `withCredentials: true` no cliente.** Sem os dois o navegador não envia cookie nem cabeçalho de autorização. [`#server-options`](https://socket.io/docs/v4/server-options/), [`#client-options`](https://socket.io/docs/v4/client-options/)
+- **Credencial do cliente vai em `auth` e o servidor a lê em `socket.handshake.auth` dentro de um middleware `io.use`.** É o canal documentado para enviar credencial no handshake. [`#middlewares`](https://socket.io/docs/v4/middlewares/)
+- **Middleware chama `next()` sempre; recusa é `next(new Error(...))`.** Middleware que não chama `next` deixa a conexão pendurada; com erro, a conexão é recusada e o cliente recebe `connect_error`. Middleware de pacote (`socket.use`) que não chama `next` descarta o pacote em silêncio, então falha de autorização vai por `next(err)`. [`#middlewares`](https://socket.io/docs/v4/middlewares/), [`#server-socket-instance`](https://socket.io/docs/v4/server-socket-instance/), [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **O middleware de conexão roda uma vez por conexão, antes de o socket estar conectado.** Não há evento `disconnect` se a conexão falhar depois dele. [`#middlewares`](https://socket.io/docs/v4/middlewares/)
+- **Namespace dinâmico que depende de identidade, permissão ou tenant é por função, não por RegExp.** Uma RegExp deixa qualquer cliente criar namespace ao conectar num nome que casa, com consumo de recurso inesperado. [`#namespaces`](https://socket.io/docs/v4/namespaces/)
+- **`socket.id` não identifica usuário nem sessão.** É efêmero (muda a cada reconexão e por aba) e não tem fila de mensagens; use um ID de sessão de verdade, por cookie ou pelo `auth`. [`#server-socket-instance`](https://socket.io/docs/v4/server-socket-instance/), [`#server-api`](https://socket.io/docs/v4/server-api/), [`#client-socket-instance`](https://socket.io/docs/v4/client-socket-instance/), [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+- **Admin UI exige a opção `auth`; `auth: false` só com cautela.** A página declara a opção obrigatória e pede cuidado ao desligar a autenticação. [`#admin-ui`](https://socket.io/docs/v4/admin-ui/)
+
+### Eventos
+
+- **Payload de evento passa por validação; os tipos do TypeScript não validam nada.** A validação dos argumentos está fora do escopo da biblioteca e a página de TypeScript lembra de nunca confiar na entrada do usuário. [`#listening-to-events`](https://socket.io/docs/v4/listening-to-events/), [`#typescript`](https://socket.io/docs/v4/typescript/)
+- **Todo listener captura o próprio erro.** Não há tratamento de erro embutido no Socket.IO. [`#listening-to-events`](https://socket.io/docs/v4/listening-to-events/)
+- **Listeners do servidor são registrados antes de qualquer `await` no handler de `connection`.** Pacote que chega durante o `await` fica sem handler. [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+- **No cliente, listener nunca é registrado dentro do handler de `connect`.** O `connect` dispara a cada reconexão e registraria um handler novo a cada vez. [`#client-socket-instance`](https://socket.io/docs/v4/client-socket-instance/), [`#client-api`](https://socket.io/docs/v4/client-api/), [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+- **Nomes reservados não se usam como evento: `connect`, `connect_error`, `disconnect`, `disconnecting`, `newListener`, `removeListener`.** Emitir com eles lança erro. [`#client-socket-instance`](https://socket.io/docs/v4/client-socket-instance/), [`#emit-cheatsheet`](https://socket.io/docs/v4/emit-cheatsheet/), [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **`Map` e `Set` são serializados à mão antes de emitir.** Não sobrevivem à serialização padrão. [`#emitting-events`](https://socket.io/docs/v4/emitting-events/)
+- **Broadcast com acknowledgement exige `timeout()`.** A página marca a chamada como obrigatória nesse caso. [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **Para emitir a um socket pelo id, use `io.to(socket.id)`, não `socket.to(socket.id)`.** O segundo não entrega. [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **Use `fetchSockets()` ou `serverSideEmit()`, não `namespace.allSockets()`.** `allSockets` sai na próxima major. [`#server-api`](https://socket.io/docs/v4/server-api/)
+- **Sala só muda por `socket.join()` e `socket.leave()`.** As estruturas internas de salas não se modificam diretamente. [`#rooms`](https://socket.io/docs/v4/rooms/)
+
+### Entrega e reconexão
+
+- **A entrega padrão é "no máximo uma vez": evento perdido na queda não é reenviado e cliente desconectado não recebe broadcast.** Garantia adicional é responsabilidade da aplicação (ack com `retries` no cliente, persistência no servidor). [`#delivery-guarantees`](https://socket.io/docs/v4/delivery-guarantees), [`#broadcasting-events`](https://socket.io/docs/v4/broadcasting-events/), [`#tutorial/handling-disconnections`](https://socket.io/docs/v4/tutorial/handling-disconnections)
+- **Evento emitido com o cliente desconectado fica em buffer e chega em rajada na reconexão; para evitar, cheque `socket.connected` ou use `volatile`.** A página de comportamento offline lista as duas saídas. [`#client-offline-behavior`](https://socket.io/docs/v4/client-offline-behavior/)
+- **`connectionStateRecovery` com `maxDisconnectionDuration` finito e `skipMiddlewares` desligado, salvo decisão registrada.** Pular o middleware deixa um usuário bloqueado durante a queda reconectar sem validação; a recuperação nem sempre funciona e não é compatível com o adaptador Redis comum. [`#connection-state-recovery`](https://socket.io/docs/v4/connection-state-recovery), [`#server-options`](https://socket.io/docs/v4/server-options/)
+- **Socket.IO não serve para serviço em segundo plano de app móvel nem para plataforma serverless cobrada por duração.** As duas restrições aparecem na introdução e na página de problemas de conexão. [`#index`](https://socket.io/docs/v4/), [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+
+### Escala e infraestrutura
+
+- **Mais de um servidor Socket.IO exige adaptador no lugar do adaptador em memória.** Sem ele o broadcast não chega aos clientes conectados nos outros servidores. [`#adapter`](https://socket.io/docs/v4/adapter/)
+- **Mais de um servidor exige sessão fixa (sticky) ou só WebSocket no cliente.** Todas as requisições de uma sessão precisam chegar ao processo que a criou. [`#using-multiple-nodes`](https://socket.io/docs/v4/using-multiple-nodes/), [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+- **Timeout ocioso do proxy (`proxy_read_timeout`, `ProxyTimeout`, load balancer) maior que `pingInterval + pingTimeout` (45 s).** Senão o proxy fecha a conexão e o cliente recebe `transport close`. [`#using-multiple-nodes`](https://socket.io/docs/v4/using-multiple-nodes/), [`#reverse-proxy`](https://socket.io/docs/v4/reverse-proxy/), [`#troubleshooting-connection-issues`](https://socket.io/docs/v4/troubleshooting-connection-issues/)
+- **Redis do adaptador é infraestrutura interna: fora de rede não confiável, com ACL, autenticação, TLS e credencial dedicada de permissão mínima, sem compartilhar com aplicação alheia.** O adaptador assume Redis confiável e transmite os payloads por ele; segredo de longa duração não vai em evento sem essa proteção. [`#redis-adapter`](https://socket.io/docs/v4/redis-adapter/), [`#redis-streams-adapter`](https://socket.io/docs/v4/redis-streams-adapter/)
+- **Em desenvolvimento novo com Redis 7, prefira o adaptador sharded, com cliente `ioredis`.** A página recomenda o sharded e aponta problema do pacote `redis` ao restaurar inscrições após reconexão. [`#redis-adapter`](https://socket.io/docs/v4/redis-adapter/)
+
 ---
 
 ## Como funciona por baixo

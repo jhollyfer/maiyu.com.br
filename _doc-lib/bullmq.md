@@ -106,6 +106,74 @@ rodando as duas em paralelo, não convertendo código.
 
 **Skills:** `maiyu-backend`, `observability-and-instrumentation`, `debugging-and-error-recovery`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com BullMQ: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Redis e conexão
+
+- **Redis da fila roda com `maxmemory-policy=noeviction`.** Com outra política o Redis remove chaves e o BullMQ quebra de forma inesperada. [`#guide/connections`](https://docs.bullmq.io/guide/connections), [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production), [`#guide/troubleshooting`](https://docs.bullmq.io/guide/troubleshooting)
+- **Persistência do Redis ligada, de preferência AOF.** Muitos provedores não a ligam por padrão, e a doc recomenda AOF. [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production)
+- **Worker usa `maxRetriesPerRequest: null`; o aviso do BullMQ quando o valor é outro se corrige.** O worker espera a reconexão indefinidamente sem lançar, e sobrescrever o padrão tem consequências não intencionais. [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production)
+- **`Queue` que atende requisição HTTP falha rápido com `enableOfflineQueue: false`.** Sem isso o `add` espera a reconexão e segura a requisição; o produtor deve falhar rápido e o worker, esperar. [`#patterns/failing-fast-when-redis-is-down`](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down), [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production), [`#guide/connections`](https://docs.bullmq.io/guide/connections)
+- **O Redis precisa estar no ar quando a `Queue` é instanciada.** É uma limitação documentada, mesmo com `enableOfflineQueue: false`. [`#patterns/failing-fast-when-redis-is-down`](https://docs.bullmq.io/patterns/failing-fast-when-redis-is-down)
+- **Cliente ou adapter de conexão suporta `duplicate()`.** `Worker` e `QueueEvents` duplicam a conexão para os comandos bloqueantes. [`#guide/connections`](https://docs.bullmq.io/guide/connections)
+- **API de alto nível (`Queue`, `Worker`, `FlowProducer`) em vez de backend próprio.** Um `IQueueBackend` de produção exige atomicidade, lock e eventos corretos. [`#guide/connections`](https://docs.bullmq.io/guide/connections)
+- **Variável de ambiente usada em nome de fila ou opção é validada na inicialização.** Valor ausente vira erro escondido de script Lua em vez de falha rápida. [`#guide/troubleshooting`](https://docs.bullmq.io/guide/troubleshooting)
+
+### Dados do job
+
+- **Payload do job é serializável em JSON.** Ele passa por `JSON.stringify` e `JSON.parse` entre produtor e worker. [`#guide/jobs/job-data`](https://docs.bullmq.io/guide/jobs/job-data)
+- **Dado sensível não vai no job; se não houver jeito, a parte sensível é cifrada antes do `add`.** O `data` fica em texto claro no Redis. [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production)
+- **Evento de `QueueEvents` traz só o `jobId`, não o `Job`.** É assim por desempenho; quem precisa do job o busca. [`#quick-start`](https://docs.bullmq.io/quick-start)
+
+### IDs e deduplicação
+
+- **`jobId` próprio não contém `:` nem é só dígitos.** `:` é separador de chave do Redis e id só numérico colide com o id gerado. [`#guide/jobs/job-ids`](https://docs.bullmq.io/guide/jobs/job-ids), [`#guide/flows`](https://docs.bullmq.io/guide/flows)
+- **`add` com `jobId` já existente é ignorado.** É o mecanismo que a doc indica para evitar job duplicado; com auto-remoção, o job removido não bloqueia mais o mesmo id. [`#guide/jobs/job-ids`](https://docs.bullmq.io/guide/jobs/job-ids), [`#guide/queues/auto-removal-of-jobs`](https://docs.bullmq.io/guide/queues/auto-removal-of-jobs)
+- **Deduplicação exige um id que represente o job e não convive com remoção manual.** Apagar o job à mão desliga a deduplicação. [`#guide/jobs/deduplication`](https://docs.bullmq.io/guide/jobs/deduplication)
+- **Deduplicação não se usa em nó de flow.** Uma versão futura vai recusá-la; cada filho precisa de id conhecido. [`#guide/flows`](https://docs.bullmq.io/guide/flows)
+- **Falha de `addBulk` no Redis não prova que nenhum job entrou.** A fila é conferida antes de tentar de novo. [`#guide/queues/adding-bulks`](https://docs.bullmq.io/guide/queues/adding-bulks)
+
+### Falha, retry e idempotência
+
+- **Processador lança sempre `Error`.** Exceção que não é `Error` quebra o funcionamento do BullMQ. [`#guide/retrying-failing-jobs`](https://docs.bullmq.io/guide/retrying-failing-jobs)
+- **Retry automático exige `attempts` maior que 1, e `backoff` para não repetir na hora.** Sem `backoff` o job volta imediatamente; `jitter` fica entre 0 e 1. [`#guide/retrying-failing-jobs`](https://docs.bullmq.io/guide/retrying-failing-jobs)
+- **Falha irrecuperável lança `UnrecoverableError`.** Ela move o job para `failed` sem gastar as tentativas; o mesmo vale no timeout quando não se quer retry. [`#patterns/stop-retrying-jobs`](https://docs.bullmq.io/patterns/stop-retrying-jobs), [`#patterns/timeout-jobs`](https://docs.bullmq.io/patterns/timeout-jobs)
+- **Job é idempotente, atômico e simples.** Completar na primeira tentativa ou depois de falhar precisa dar o mesmo estado final. [`#patterns/idempotent-jobs`](https://docs.bullmq.io/patterns/idempotent-jobs)
+- **Job em passos usa o token do lock e sai com `DelayedError` ou `WaitingChildrenError`.** O erro especial avisa o worker para não completar nem falhar o job. [`#patterns/process-step-jobs`](https://docs.bullmq.io/patterns/process-step-jobs)
+- **Rate limit manual lança o erro especial e o worker recebe `limiter` nas opções.** `limiter.max` decide se a validação do limite roda; job limitado fica em `wait`. [`#guide/rate-limiting`](https://docs.bullmq.io/guide/rate-limiting)
+
+### Worker, concorrência e stalled
+
+- **Concorrência alta só para job de I/O.** Em job de CPU, aumentar a concorrência reduz a vazão. [`#guide/parallelism-and-concurrency`](https://docs.bullmq.io/guide/parallelism-and-concurrency)
+- **Vários workers é a forma recomendada de concorrência.** Além de paralelismo, dá disponibilidade. [`#guide/workers/concurrency`](https://docs.bullmq.io/guide/workers/concurrency)
+- **Concorrência ou limite do worker não sobrepõem os globais da fila.** O global é teto para todos. [`#guide/queues/global-concurrency`](https://docs.bullmq.io/guide/queues/global-concurrency), [`#guide/queues/global-rate-limit`](https://docs.bullmq.io/guide/queues/global-rate-limit)
+- **Worker devolve o controle ao event loop; CPU acima de 30 s por vez vira job stalled.** Lock não renovado marca o job como travado; `stalledInterval` normalmente não se mexe. [`#guide/workers/stalled-jobs`](https://docs.bullmq.io/guide/workers/stalled-jobs), [`#guide/jobs/stalled`](https://docs.bullmq.io/guide/jobs/stalled)
+- **Processador sandboxed mantém a concorrência em número são.** Cada job sandboxed é um processo. [`#guide/workers/sandboxed-processors`](https://docs.bullmq.io/guide/workers/sandboxed-processors)
+- **Desligamento chama `await worker.close()` em `SIGINT` e `SIGTERM`.** Fecha o worker antes do restart para minimizar job stalled. [`#guide/workers/graceful-shutdown`](https://docs.bullmq.io/guide/workers/graceful-shutdown), [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production)
+- **O processo trata `uncaughtException` e `unhandledRejection` com log.** Por padrão o Node cai na exceção não tratada. [`#guide/going-to-production`](https://docs.bullmq.io/guide/going-to-production)
+
+### Prioridade, atraso e consulta
+
+- **Prioridade vai de 1 a 2 097 151, menor é mais prioritário, e 0 (sem prioridade) roda antes de todos.** Job prioritizado custa O(log n) para entrar e se lê com `getJobs` ou `getPrioritized`. [`#guide/jobs/prioritized`](https://docs.bullmq.io/guide/jobs/prioritized), [`#guide/architecture`](https://docs.bullmq.io/guide/architecture)
+- **Só job em `delayed` tem o atraso alterado.** É a restrição de `changeDelay`. [`#guide/jobs/delayed`](https://docs.bullmq.io/guide/jobs/delayed)
+- **`getWaiting` e `getWaitingCount` não contam job atrasado já vencido.** Backlog de delayed vencido não aparece na contagem de espera. [`#guide/jobs/getters`](https://docs.bullmq.io/guide/jobs/getters)
+
+### Recorrência e flows
+
+- **Job recorrente usa `upsertJobScheduler`, com `tz: 'UTC'` para cron em UTC.** Repeatable job, `repeat.utc` e `debounce` saíram na v6; o job do scheduler não aceita id próprio. [`#guide/job-schedulers`](https://docs.bullmq.io/guide/job-schedulers), [`#guide/migrations/migrate-from-v5-to-v6`](https://docs.bullmq.io/guide/migrations/migrate-from-v5-to-v6)
+- **A opção `immediately` está deprecated.** O primeiro disparo de um scheduler novo já é imediato. [`#guide/job-schedulers/repeat-options`](https://docs.bullmq.io/guide/job-schedulers/repeat-options)
+- **Flow se cria com `FlowProducer`, e as opções de fila vão no segundo parâmetro.** Opção fora do lugar causa comportamento inesperado; remover o pai remove os filhos. [`#guide/flows`](https://docs.bullmq.io/guide/flows)
+- **Pai com `failParentOnFailure` só vai a `failed` quando um worker o processa.** A transição depende de worker na fila do pai. [`#guide/flows/fail-parent`](https://docs.bullmq.io/guide/flows/fail-parent)
+
+### Retenção e versão
+
+- **Em produção, `removeOnComplete` e `removeOnFail` limitam os jobs guardados.** Sem limite o Redis enche de dado inútil; a remoção ignora o nome do job. [`#guide/queues/auto-removal-of-jobs`](https://docs.bullmq.io/guide/queues/auto-removal-of-jobs)
+- **Na v6, `queue.resume()` é aguardado e o upgrade passa antes pela última v5.** `resume` virou assíncrono e o caminho recomendado sobe primeiro até a última v5. [`#guide/migrations/migrate-from-v5-to-v6`](https://docs.bullmq.io/guide/migrations/migrate-from-v5-to-v6)
+
 ---
 
 ## Fundamentos

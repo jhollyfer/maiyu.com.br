@@ -25,7 +25,7 @@ Cada biblioteca tem um arquivo próprio em `_doc-lib/`. Dentro dele, o cabeçalh
 - **Para que serve** o que ela ensina.
 - **Quando usar**, ou seja, o gatilho concreto que faz valer a pena abrir.
 
-O objetivo é escolher o link certo sem visitar os outros 2421.
+O objetivo é escolher o link certo sem visitar os outros 2737.
 
 ---
 
@@ -48,6 +48,14 @@ O objetivo é escolher o link certo sem visitar os outros 2421.
 | **Japa**             | [`_doc-lib/japa.md`](_doc-lib/japa.md)                             | Runner de teste do Adonis: suítes unit/functional, api-client, hooks, datasets, pin |   27  |
 | **Node.js 24**       | [`_doc-lib/nodejs.md`](_doc-lib/nodejs.md)                         | O runtime: erro, sinal, timeout, stream, contexto, crypto, processo filho, ESM, flags |   37  |
 | **OpenTimestamps**   | [`_doc-lib/opentimestamps.md`](_doc-lib/opentimestamps.md)         | Carimbo do tempo no Bitcoin; sem site de doc, a página descreve a API instalada        |    0  |
+| **PostgreSQL** | [`_doc-lib/postgresql.md`](_doc-lib/postgresql.md) | pg_dump, restore, banco template por worker de teste | 7 |
+| **ioredis** | [`_doc-lib/ioredis.md`](_doc-lib/ioredis.md) | Cliente Redis do BullMQ e do limiter; TLS, retry e fila offline | 10 |
+| **argon2** | [`_doc-lib/argon2.md`](_doc-lib/argon2.md) | Hash de senha Argon2 (argon2id) e os parâmetros | 6 |
+| **AWS SDK S3** | [`_doc-lib/aws-sdk-s3.md`](_doc-lib/aws-sdk-s3.md) | S3 e R2 em produção: cliente, URL pré-assinada, multipart | 7 |
+| **MinIO** | [`_doc-lib/minio.md`](_doc-lib/minio.md) | S3 de teste local (sem manutenção: ver aviso no arquivo) | 5 |
+| **@poppinss/ts-exec** | [`_doc-lib/ts-exec.md`](_doc-lib/ts-exec.md) | Loader de TypeScript do Adonis 7 (bin/, testes) | 6 |
+| **proxy-addr** | [`_doc-lib/proxy-addr.md`](_doc-lib/proxy-addr.md) | Formato do TRUSTED_PROXIES (endereço, CIDR, loopback/linklocal/uniquelocal) | 3 |
+| **gray-matter** | [`_doc-lib/gray-matter.md`](_doc-lib/gray-matter.md) | Frontmatter de Markdown na importação (engine JS desligada) | 6 |
 
 AdonisJS e Fastify ocupam a **mesma camada** e não se somam: um projeto tem um ou o outro. Lucid e
 FlyDrive não dependem dessa escolha, e o frontend inteiro menos ainda; o schema depende (VineJS no
@@ -60,13 +68,13 @@ o container e a convenção de controller que o Adonis traz de fábrica.
 
 | Biblioteca          | Arquivo                                                      | O que resolve                                                                                    | Links |
 | ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------ | :---: |
-| **shadcn/ui**       | [`_doc-lib/shadcn.md`](_doc-lib/shadcn.md)                   | Componentes copiados para o repositório, sobre Tailwind e primitivas headless                    |  107  |
+| **shadcn/ui**       | [`_doc-lib/shadcn.md`](_doc-lib/shadcn.md)                   | Componentes copiados para o repositório, sobre Tailwind e primitivas headless                    |  109  |
 | **Base UI**         | [`_doc-lib/base-ui.md`](_doc-lib/base-ui.md)                 | A primitiva headless por baixo do shadcn: comportamento, teclado, acessibilidade, posicionamento |  53   |
 | **React Hook Form** | [`_doc-lib/react-hook-form.md`](_doc-lib/react-hook-form.md) | Formulário sem re-render a cada tecla: campo, validação por resolver, erro do servidor           |  48   |
 | **use-mask-input**  | [`_doc-lib/use-mask-input.md`](_doc-lib/use-mask-input.md)   | Máscara de digitação no campo, sobre o motor Inputmask                                           |  11   |
-| **TanStack Query**  | [`_doc-lib/tanstack-query.md`](_doc-lib/tanstack-query.md)   | Estado de servidor: cache, revalidação, mutações, invalidação                                    |  57   |
+| **TanStack Query**  | [`_doc-lib/tanstack-query.md`](_doc-lib/tanstack-query.md)   | Estado de servidor: cache, revalidação, mutações, invalidação                                    |  60   |
 | **TanStack Router** | [`_doc-lib/tanstack-router.md`](_doc-lib/tanstack-router.md) | Roteamento com tipagem de ponta a ponta, incluindo search params                                 |  61   |
-| **TanStack Start**  | [`_doc-lib/tanstack-start.md`](_doc-lib/tanstack-start.md)   | Camada full-stack sobre o Router: SSR, server functions, deploy                                  |  45   |
+| **TanStack Start**  | [`_doc-lib/tanstack-start.md`](_doc-lib/tanstack-start.md)   | Camada full-stack sobre o Router: SSR, server functions, deploy                                  |  46   |
 | **TanStack Table**  | [`_doc-lib/tanstack-table.md`](_doc-lib/tanstack-table.md)   | Motor de tabela headless (v9): features opt-in, ordenação, filtro, paginação, seleção            |  46   |
 | **dnd kit**         | [`_doc-lib/dnd-kit.md`](_doc-lib/dnd-kit.md)                 | Arrastar, soltar e reordenar em React (API nova e migração do `@dnd-kit/core`)                  |  21   |
 | **Luxon**           | [`_doc-lib/luxon.md`](_doc-lib/luxon.md)                     | Data e hora imutável: zona explícita, locale por Intl, ISO no transporte, `DateTime` do Lucid   |  69   |
@@ -76,8 +84,17 @@ o container e a convenção de controller que o Adonis traz de fábrica.
 | **Recharts**        | [`_doc-lib/recharts.md`](_doc-lib/recharts.md)               | Gráficos React em SVG por composição, a base do `chart` do shadcn                               |  111  |
 | **Tuyau**           | [`_doc-lib/tuyau.md`](_doc-lib/tuyau.md)                     | Cliente HTTP tipado do Adonis por nome de rota; transporte sob o `http.ts`, não o contrato     |   2   |
 | **TanStack Store**  | [`_doc-lib/tanstack-store.md`](_doc-lib/tanstack-store.md)   | Estado de cliente que não é do servidor nem cabe na URL                                          |   4   |
+| **TanStack Virtual** | [`_doc-lib/tanstack-virtual.md`](_doc-lib/tanstack-virtual.md) | Lista longa virtualizada: só o visível vira DOM; feed ancorado no fim (chat, log) |   5   |
 | **Tailwind CSS**    | [`_doc-lib/tailwindcss.md`](_doc-lib/tailwindcss.md)         | Utilitário sobre CSS, v4 configurada em CSS: tema por token, variantes, modo escuro              |  42   |
 | **Tiptap**          | [`_doc-lib/tiptap.md`](_doc-lib/tiptap.md)                   | Editor de texto rico headless sobre ProseMirror: schema, extensão própria, round-trip de HTML    |  538   |
+| **Shiki** | [`_doc-lib/shiki.md`](_doc-lib/shiki.md) | Realce de código pelo lib/highlighter.tsx | 21 |
+| **tailwind-merge** | [`_doc-lib/tailwind-merge.md`](_doc-lib/tailwind-merge.md) | O cn(): junta classes e resolve conflito do Tailwind | 11 |
+| **React Compiler** | [`_doc-lib/react-compiler.md`](_doc-lib/react-compiler.md) | Memoização automática pelo babel-plugin-react-compiler no Vite | 17 |
+| **react-error-boundary** | [`_doc-lib/react-error-boundary.md`](_doc-lib/react-error-boundary.md) | Fronteira de erro com reset (QueryErrorResetBoundary) | 8 |
+| **Testing Library (React)** | [`_doc-lib/testing-library-react.md`](_doc-lib/testing-library-react.md) | Teste de componente no Vitest: render, queries, user-event | 40 |
+| **Fontsource** | [`_doc-lib/fontsource.md`](_doc-lib/fontsource.md) | Fonte servida pelo próprio app (pacote variável, preload) | 9 |
+| **Leaflet + React Leaflet** | [`_doc-lib/leaflet.md`](_doc-lib/leaflet.md) | Mapa no cliente (sem SSR), atribuição e política de tiles do OSM | 17 |
+| **Vite PWA + fake-indexeddb** | [`_doc-lib/vite-pwa.md`](_doc-lib/vite-pwa.md) | PWA, service worker e teste de IndexedDB | 26 |
 
 ## Build e ferramentas
 
@@ -92,6 +109,14 @@ o container e a convenção de controller que o Adonis traz de fábrica.
 | **dependency-cruiser** | [`_doc-lib/dependency-cruiser.md`](_doc-lib/dependency-cruiser.md) | Regra de camada e ciclo do backend no CI |   6   |
 | **Playwright** | [`_doc-lib/playwright.md`](_doc-lib/playwright.md) | E2E do frontend: config, localizador, fixture, auth, rede, a11y, trace e CI |  72   |
 | **TypeScript** | [`_doc-lib/typescript.md`](_doc-lib/typescript.md) | Linguagem e tsc 6.x: narrowing, tipos derivados, módulos, tsconfig estrito; o que muda no 7 |  75   |
+| **Prettier** | [`_doc-lib/prettier.md`](_doc-lib/prettier.md) | Formatação; config, ignore, integração com o lint | 20 |
+| **Husky** | [`_doc-lib/husky.md`](_doc-lib/husky.md) | Hooks de git: pre-commit e commit-msg | 5 |
+| **tsup** | [`_doc-lib/tsup.md`](_doc-lib/tsup.md) | Build do backend Fastify (sem manutenção, indica o tsdown) | 2 |
+| **tsdown** | [`_doc-lib/tsdown.md`](_doc-lib/tsdown.md) | Sucessor do tsup sobre Rolldown; migração | 36 |
+| **@swc-node/register** | [`_doc-lib/swc-node.md`](_doc-lib/swc-node.md) | Decorator em teste com o mesmo SWC do dev | 4 |
+| **shoehorn** | [`_doc-lib/shoehorn.md`](_doc-lib/shoehorn.md) | Dublê tipado em teste sem as | 4 |
+| **@axe-core/playwright** | [`_doc-lib/axe-core-playwright.md`](_doc-lib/axe-core-playwright.md) | Teste de acessibilidade no E2E | 3 |
+| **Coolify** | [`_doc-lib/coolify.md`](_doc-lib/coolify.md) | Deploy: Dockerfile, healthcheck, auto deploy, banco, backup, S3 | 35 |
 
 ---
 

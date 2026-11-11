@@ -78,6 +78,64 @@ VineJS e o `date-fns` do `react-day-picker` são dependência transitiva e não 
 `Settings.now`). Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa
 (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Luxon: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação
+
+- **No TypeScript, os tipos do Luxon vêm de `@types/luxon` como dependência de desenvolvimento.** O pacote `luxon` não traz declarações próprias; a página de instalação manda instalar o `@types/luxon`. [`#install`](https://moment.github.io/luxon/docs/install.md)
+
+### Zona
+
+- **Servidor trabalha em UTC e não pensa em hora local.** A página de zonas pede o servidor configurado em UTC e o código dele escrito em UTC. [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **Zona é questão de formatação: a aplicação só sabe que são "9:00" na hora de mostrar ao usuário.** Assim se evita pensar em fuso no meio da regra de negócio. [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **Evite abreviação de zona (EST, EDT) ao especificar hora por código; use nome IANA ou offset fixo.** A abreviação é ambígua e não identifica a regra de horário de verão. [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **`DateTime.now()` e `fromJSDate` nascem na zona padrão, que é a do sistema que roda o código.** `Settings.defaultZone` muda essa zona só para instâncias novas, não as existentes, e `"system"` volta à do sistema. [`#DateTime.now`](https://moment.github.io/luxon/api-docs/index.html#datetimenow) [`#DateTime.fromJSDate`](https://moment.github.io/luxon/api-docs/index.html#datetimefromjsdate) [`#Settings.defaultZone`](https://moment.github.io/luxon/api-docs/index.html#settingsdefaultzone)
+- **Desde a 3.0, a zona `"system"` é sempre a do sistema, qualquer que seja a zona padrão configurada.** É a única quebra da 3.0 listada no guia de atualização. [`#upgrading`](https://moment.github.io/luxon/docs/upgrading.md)
+- **`setZone` mantém o instante e muda só a hora local exibida; `keepLocalTime: true` faz o contrário e altera o instante.** O autor recomenda não usar o `keepLocalTime` se ele confundir. [`#DateTime#setZone`](https://moment.github.io/luxon/api-docs/index.html#datetimesetzone) [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **Algumas horas locais não existem (salto do horário de verão) e outras se repetem.** Um `DateTime` é um instante; a zona é metadado de como humanos leem esse instante. [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **Valide nome de zona com `IANAZone.isValidZone`; `isValidSpecifier` está obsoleto.** `isValidSpecifier` só confere o formato da string e encaminha para `isValidZone` por compatibilidade. [`#IANAZone`](https://moment.github.io/luxon/api-docs/index.html#ianazone) [`#IANAZone.isValidZone`](https://moment.github.io/luxon/api-docs/index.html#ianazoneisvalidzone)
+- **`hasSame` ignora a zona e compara a hora local do calendário; converta com `setZone` antes, se preciso.** As unidades de ordem maior também precisam ser iguais para dar `true`. [`#DateTime#hasSame`](https://moment.github.io/luxon/api-docs/index.html#datetimehassame)
+
+### Transporte e leitura
+
+- **Data entre sistemas trafega em ISO 8601 com offset ou `Z`.** O tour chama o ISO de formato padrão de transporte, e a página de zonas pede ISO porque ele identifica o milissegundo exato. [`#tour`](https://moment.github.io/luxon/docs/tour.md) [`#zones`](https://moment.github.io/luxon/docs/zones.md)
+- **`fromISO` sem offset na string usa a opção `zone` (padrão `'local'`); com offset, `zone` só muda a zona em que o resultado é expresso.** `setZone: true` mantém a zona que veio na string. [`#DateTime.fromISO`](https://moment.github.io/luxon/api-docs/index.html#datetimefromiso)
+- **`fromSQL` usa `en-US` quando nenhum locale é dado, qualquer que seja o locale do sistema.** A doc do método diz isso explicitamente. [`#DateTime.fromSQL`](https://moment.github.io/luxon/api-docs/index.html#datetimefromsql)
+- **Na leitura, unidade de ordem menor ausente vira o mínimo possível (dia 1, meia-noite).** O parser sempre devolve um `DateTime` completo. [`#parsing`](https://moment.github.io/luxon/docs/parsing.md)
+- **Ano de dois dígitos (`yy`, `kk`) depende de `Settings.twoDigitCutoffYear`.** Acima do corte vira 19xx, igual ou abaixo vira 20xx. [`#parsing`](https://moment.github.io/luxon/docs/parsing.md) [`#Settings.twoDigitCutoffYear`](https://moment.github.io/luxon/api-docs/index.html#settingstwodigitcutoffyear)
+- **Use `fromFormat` e `fromFormatExplain`; `fromString` e `fromStringExplain` estão obsoletos.** A API marca os dois como *Deprecated*. [`#api-docs`](https://moment.github.io/luxon/api-docs/index.html) [`#DateTime`](https://moment.github.io/luxon/api-docs/index.html#datetime)
+- **Parser criado por `buildFormatParser` só serve para chamada com o mesmo locale.** A doc exige o mesmo locale entre o parser e a chamada. [`#DateTime.fromFormat`](https://moment.github.io/luxon/api-docs/index.html#datetimefromformat)
+
+### Exibição e locale
+
+- **Texto para o usuário sai de `toLocaleString` (formatos predefinidos); evite formato montado à mão.** A página de formatação diz para usar os formatos localizados sempre que mostrar hora ao usuário e não criar formato ad hoc. [`#formatting`](https://moment.github.io/luxon/docs/formatting.md) [`#DateTime#toLocaleString`](https://moment.github.io/luxon/api-docs/index.html#datetimetolocalestring) [`#moment`](https://moment.github.io/luxon/docs/moment.md)
+- **`toFormat` e `fromFormat` usam `en-US` por padrão, não o locale do sistema.** Formato fixo não respeita a ordem de cada idioma, por isso a lib não usa o locale do sistema; `Settings.defaultLocale` também altera esses dois. [`#intl`](https://moment.github.io/luxon/docs/intl.md) [`#DateTime#toFormat`](https://moment.github.io/luxon/api-docs/index.html#datetimetoformat) [`#Settings.defaultLocale`](https://moment.github.io/luxon/api-docs/index.html#settingsdefaultlocale)
+- **Locale e zona usam o `Intl` nativo; Node sem ICU completo não formata outros idiomas.** A página de Intl avisa que isso importa no Node e manda conferir os dados ICU pelo guia de instalação. [`#intl`](https://moment.github.io/luxon/docs/intl.md)
+- **`toRelative` só internacionaliza onde existe `Intl.RelativeTimeFormat`; `Info.features()` diz se o ambiente tem.** Alguns recursos não existem em todo ambiente, e a função existe para conferir. [`#DateTime#toRelative`](https://moment.github.io/luxon/api-docs/index.html#datetimetorelative) [`#Info.features`](https://moment.github.io/luxon/api-docs/index.html#infofeatures)
+- **Mês no Luxon começa em 1, não em 0 como no `Date`.** A comparação com o Moment registra a diferença. [`#moment`](https://moment.github.io/luxon/docs/moment.md)
+
+### Validade
+
+- **Data inválida não lança erro: cria instância inválida que devolve `NaN`, `'Invalid DateTime'` e `{}`; confira `isValid`.** O motivo está em `invalidReason` (código estável) e `invalidExplanation`. [`#validity`](https://moment.github.io/luxon/docs/validity.md) [`#DateTime#isValid`](https://moment.github.io/luxon/api-docs/index.html#datetimeisvalid)
+- **`toISO()` devolve `string | null`.** A assinatura da API marca o `null`, que é o caso da instância inválida. [`#DateTime#toISO`](https://moment.github.io/luxon/api-docs/index.html#datetimetoiso)
+- **`Settings.throwOnInvalid = true` faz a lib lançar ao criar data inválida; em produção, só com `try/catch` apropriado.** A página de validade permite deixar ligado em produção desde que o erro seja capturado. [`#validity`](https://moment.github.io/luxon/docs/validity.md) [`#Settings.throwOnInvalid`](https://moment.github.io/luxon/api-docs/index.html#settingsthrowoninvalid)
+- **`Interval` com fim antes do início, ou feito de data inválida, é inválido.** A página de validade lista esses casos. [`#validity`](https://moment.github.io/luxon/docs/validity.md) [`#Interval.fromDateTimes`](https://moment.github.io/luxon/api-docs/index.html#intervalfromdatetimes)
+
+### Comparação e cálculo
+
+- **`Interval` é semiaberto: inclui o início e exclui o fim.** O tour e o `contains` seguem essa regra. [`#tour`](https://moment.github.io/luxon/docs/tour.md) [`#Interval#contains`](https://moment.github.io/luxon/api-docs/index.html#intervalcontains)
+- **`equals` exige o mesmo milissegundo, a mesma zona e o mesmo locale; para comparar só o instante, use `+dt1 === +dt2`.** É a definição de igualdade da API. [`#DateTime#equals`](https://moment.github.io/luxon/api-docs/index.html#datetimeequals)
+- **Somar dia (`plus({ days: 1 })`) mantém a hora local através do horário de verão; somar 24 horas não.** Dia varia de duração com o horário de verão, hora sempre tem 3.600.000 ms. [`#math`](https://moment.github.io/luxon/docs/math.md) [`#zones`](https://moment.github.io/luxon/docs/zones.md) [`#DateTime#plus`](https://moment.github.io/luxon/api-docs/index.html#datetimeplus)
+- **Faça `diff` nas unidades que vai usar.** A diferença é um `Duration`, uma pilha de unidades sem conversão posterior confiável. [`#math`](https://moment.github.io/luxon/docs/math.md) [`#DateTime#diff`](https://moment.github.io/luxon/api-docs/index.html#datetimediff)
+
+### Configuração global
+
+- **`Settings.resetCaches()` só é necessário em teste.** A API diz isso do método. [`#Settings`](https://moment.github.io/luxon/api-docs/index.html#settings) [`#Settings.resetCaches`](https://moment.github.io/luxon/api-docs/index.html#settingsresetcaches)
+
 ---
 
 ## Começo

@@ -74,6 +74,98 @@ A mensagem de erro em pt-BR mora no schema do `shared/`, não no formulário: ou
 **Skills:** `maiyu-frontend`, `web-accessibility`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 `advanced-usage` — mais a referência de API, que é o que mais se abre depois da primeira semana.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com React Hook Form: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Registro e nome de campo
+
+- **Todo campo tem `name`, único (exceto radio e checkbox nativos), sem começar por número, sem número como chave solta e sem caractere especial; caminho só com ponto (`a.0.b`), nunca colchete.** É a chave do registro, e a tipagem só aceita a sintaxe de ponto. [`#docs/useform/register`](https://react-hook-form.com/docs/useform/register) [`#get-started#Registerfields`](https://react-hook-form.com/get-started#Registerfields)
+- **Nunca use `type`, `root`, `ref`, `types`, `message` ou `form` como nome de campo.** Colidem com a forma interna de `FieldError`/`GlobalError`. [`#docs/useform/seterror`](https://react-hook-form.com/docs/useform/seterror)
+- **Componente que não expõe o `ref` do input entra por `Controller`/`useController`; componente que repassa o ref pode usar `register`.** O `Controller` cuida do registro de componente controlado. [`#get-started#IntegratingwithUIlibraries`](https://react-hook-form.com/get-started#IntegratingwithUIlibraries) [`#get-started#IntegratingControlledInputs`](https://react-hook-form.com/get-started#IntegratingControlledInputs) [`#advanced-usage#ControlledmixedwithUncontrolledComponents`](https://react-hook-form.com/advanced-usage#ControlledmixedwithUncontrolledComponents)
+- **Campo sob `Controller` não é registrado de novo com `register`.** O `Controller` já registra. [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller)
+- **No `Controller`, espalhe `field` no input antes de sobrescrever `onChange`/`value`, ligue `onBlur` e entregue `field.ref` ao elemento focável.** Sem `ref` o RHF não foca o campo inválido; sem `onBlur` o `isTouched` não muda. [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller) [`#advanced-usage#TransformandParse`](https://react-hook-form.com/advanced-usage#TransformandParse) [`#advanced-usage#AccessibilityA11y`](https://react-hook-form.com/advanced-usage#AccessibilityA11y)
+- **Não chame `setValue` à mão para o campo de um `Controller`; use o `onChange` do `field`.** O `onChange` já atualiza o `formState`. [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller)
+- **Valor de `Controller` nunca é `undefined`: vazio é `null` ou `""`, e número vazio é `null` (renderizado como `""`), nunca `NaN`.** `undefined` no primeiro render faz o input nascer não controlado. [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller)
+- **`defaultValue` do `Controller` só é lido no primeiro registro.** Trocar a prop depois não muda o input. [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller)
+- **Conversão de tipo (string do DOM para número/data) fica no `Controller` ou no hook do campo, não só em `valueAsNumber`.** Valor do DOM é sempre string, e `valueAsNumber` ainda deixa `NaN`/`null` para tratar; `setValueAs` é ignorado com `valueAsNumber`/`valueAsDate`. [`#advanced-usage#TransformandParse`](https://react-hook-form.com/advanced-usage#TransformandParse) [`#docs/useform/register`](https://react-hook-form.com/docs/useform/register)
+- **Valor que o usuário vê mas não muda e precisa ir no envio usa `readOnly`, não `disabled`; dado oculto usa input `hidden`.** Só input registrado e habilitado entra no envio. [`#docs/useform/register`](https://react-hook-form.com/docs/useform/register) [`#docs/useform`](https://react-hook-form.com/docs/useform)
+- **`shouldUnregister` não se combina com `useFieldArray`.** O unregister roda a cada desmontagem, remontagem e reordenação. [`#docs/useform/register`](https://react-hook-form.com/docs/useform/register) [`#docs/usecontroller/controller`](https://react-hook-form.com/docs/usecontroller/controller) [`#docs/usefieldarray`](https://react-hook-form.com/docs/usefieldarray)
+
+### Valores iniciais
+
+- **`defaultValues` do formulário inteiro no `useForm`, em vez de `defaultValue` por input.** É a fonte única para `reset`, `isDirty` e `dirtyFields`. [`#docs/useform`](https://react-hook-form.com/docs/useform) [`#docs/useform/formstate`](https://react-hook-form.com/docs/useform/formstate) [`#docs/useform/watch`](https://react-hook-form.com/docs/useform/watch)
+- **Nenhum valor default é `undefined`, e nenhum é objeto com protótipo (Moment, Luxon).** `undefined` conflita com componente controlado. [`#docs/useform`](https://react-hook-form.com/docs/useform)
+- **Dado vindo da API entra por `values`, não por `reset` dentro de `useEffect`.** `defaultValues` fica em cache na montagem: objeto novo depois é ignorado. [`#docs/useform`](https://react-hook-form.com/docs/useform) [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Formulário de edição monta só quando o dado já chegou (carregamento e erro tratados no pai).** `defaultValues` não carrega outro registro depois de montado. [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Nunca `reset` incondicional a cada render ou a cada objeto de dados recriado.** Apaga a edição do usuário. [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+
+### Validação
+
+- **Com `resolver`, nada de regra embutida por campo (`required`, `min`...) nem `validate` do `useForm`.** O resolver não convive com os validadores embutidos, e só ele roda se os dois estiverem configurados. [`#docs/useform`](https://react-hook-form.com/docs/useform)
+- **Resolver Zod v4 exige `@hookform/resolvers` ^3.10 e `moduleResolution` `bundler` (ou `node16`/`nodenext`).** Versão ou resolução erradas dão "Cannot find module '@hookform/resolvers/zod'". [`#get-started#Applyvalidation`](https://react-hook-form.com/get-started#Applyvalidation)
+- **Resolver próprio devolve `{ values, errors }`, com chaves de erro hierárquicas, e o schema é memorizado (ou definido fora do componente).** É o contrato do resolver. [`#docs/useform`](https://react-hook-form.com/docs/useform) [`#advanced-usage#CustomHookwithResolver`](https://react-hook-form.com/advanced-usage#CustomHookwithResolver)
+- **`mode: "onChange"` só quando validar a cada tecla ajuda o usuário.** Ele causa muitos re-renders e pesa no desempenho. [`#docs/useform`](https://react-hook-form.com/docs/useform) [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Com `mode: "onTouched"` e `Controller`, o `onBlur` do render tem de estar ligado.** A validação começa no blur. [`#docs/useform`](https://react-hook-form.com/docs/useform)
+- **Objeto ou array validam por `validate` (ou pelo schema), não por `required`/`minLength`.** As regras embutidas valem para string, número e booleano. [`#docs/useform/register`](https://react-hook-form.com/docs/useform/register)
+- **`trigger` é `await`; não o chame em `onChange`.** Retorna `Promise<boolean>`, sempre verdadeira num `if`, e a validação já acontece pelo modo. [`#docs/useform/trigger`](https://react-hook-form.com/docs/useform/trigger)
+- **Formulário em passos valida só os campos do passo com `trigger` antes de avançar; passos montados sob um pai compartilham um `useForm` via `FormProvider`.** Passo em rota própria usa formulário próprio e armazenamento compartilhado. [`#docs/useform/trigger`](https://react-hook-form.com/docs/useform/trigger) [`#advanced-usage#WizardFormFunnel`](https://react-hook-form.com/advanced-usage#WizardFormFunnel)
+- **Rascunho de formulário que precisa sobreviver a reload tem estratégia explícita e nunca guarda campo sensível (senha) no storage do navegador.** A doc exige as duas coisas. [`#advanced-usage#WizardFormFunnel`](https://react-hook-form.com/advanced-usage#WizardFormFunnel)
+
+### Envio e erro do servidor
+
+- **`handleSubmit` não engole erro do `onSubmit`: requisição assíncrona tem tratamento de erro explícito.** A doc recomenda `try/catch` e tratar a falha para o usuário. [`#docs/useform/handlesubmit`](https://react-hook-form.com/docs/useform/handlesubmit)
+- **Renderize `errors`.** Sem isso o formulário inválido parece ignorar o clique, porque `handleSubmit` só chama o handler com tudo válido. [`#docs/useform/handlesubmit`](https://react-hook-form.com/docs/useform/handlesubmit)
+- **O `onSubmit` devolve a promise do envio.** `isSubmitting` só fica `true` enquanto ela está pendente. [`#docs/useform/formstate`](https://react-hook-form.com/docs/useform/formstate)
+- **O servidor valida de novo; erro de campo vai por `setError` no campo e falha que não é de um campo vai em `root.server`.** Validação do cliente é só retorno rápido. [`#advanced-usage`](https://react-hook-form.com/advanced-usage) [`#docs/useform/seterror`](https://react-hook-form.com/docs/useform/seterror)
+- **Do retorno da API, mapeie só nomes de campo conhecidos; confira `response.ok` e mantenha os campos para corrigir e reenviar.** O `fetch` não rejeita em erro HTTP, e chave arbitrária do servidor não é caminho de formulário. [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **`setError` não bloqueia o envio; erro que precisa bloquear vira regra de validação.** `isValid` sai só das validações registradas. [`#docs/useform/seterror`](https://react-hook-form.com/docs/useform/seterror)
+- **`shouldFocus` de `setError` só funciona com ref registrado e input habilitado.** Sem ref não há o que focar. [`#docs/useform/seterror`](https://react-hook-form.com/docs/useform/seterror) [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Com Server Action/`useActionState`, chame o dispatcher dentro de `startTransition` depois de o `handleSubmit` validar; sem `useEffect` sincronizando estado.** O React precisa do contexto de Action para o pendente; o servidor ainda valida e autoriza. [`#advanced-usage#ServerActionsuseActionState`](https://react-hook-form.com/advanced-usage#ServerActionsuseActionState)
+
+### reset
+
+- **Nunca `reset` dentro do `onSubmit`; faça em `useEffect` quando `formState.isSubmitSuccessful` virar `true`.** O `handleSubmit` atualiza o estado de envio depois do handler, então o reset ali limpa valores e não o estado. [`#docs/useform/reset`](https://react-hook-form.com/docs/useform/reset)
+- **`reset` recebe o `defaultValues` inteiro.** Assim todo input, sobretudo controlado, volta certo; `reset(values)` também troca os defaults, salvo `keepDefaultValues`. [`#docs/useform/reset`](https://react-hook-form.com/docs/useform/reset)
+
+### Observar valor e estado
+
+- **Observe só o campo necessário (`watch("country")`, não `watch()`), e prefira `useWatch` no componente que exibe o valor.** `watch()` no topo re-renderiza o formulário inteiro a cada mudança. [`#docs/useform/watch`](https://react-hook-form.com/docs/useform/watch) [`#docs/usewatch`](https://react-hook-form.com/docs/usewatch) [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Efeito colateral por mudança de valor usa `subscribe` (com cleanup), não `useEffect` dependendo de `watch()`.** `watch()` devolve objeto novo a cada render e o efeito roda sempre. [`#docs/useform/watch`](https://react-hook-form.com/docs/useform/watch) [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **Valor lido só num handler sai de `getValues`; erro, dirty e envio exibidos perto da UI saem de `useFormState`.** É a divisão de subscrições da doc. [`#advanced-usage`](https://react-hook-form.com/advanced-usage)
+- **`formState` é lido durante o render (e o objeto inteiro entra na dependência de `useEffect`).** É um Proxy: valor lido só em handler ou condicionalmente não é assinado e fica desatualizado. [`#docs/useform/formstate`](https://react-hook-form.com/docs/useform/formstate) [`#docs/useformcontext`](https://react-hook-form.com/docs/useformcontext)
+- **Não dependa do objeto de retorno inteiro do `useForm`.** O padrão vai quebrar quando a memorização sair. [`#docs/useform`](https://react-hook-form.com/docs/useform)
+- **`useWatch` subscreve antes de o valor mudar.** Atualização feita antes da subscrição é ignorada. [`#docs/usewatch`](https://react-hook-form.com/docs/usewatch)
+- **`setValue` nunca durante o render; mira o nome do campo (`"a.0.b"`), com o campo já registrado; peça `shouldValidate`/`shouldDirty`/`shouldTouch` quando precisar desses estados.** Por padrão ele só troca o valor. [`#docs/useform/setvalue`](https://react-hook-form.com/docs/useform/setvalue)
+
+### Contexto
+
+- **Nunca aninhe `FormProvider`, e passe a ele todos os métodos do `useForm`.** O contexto não se mescla: campos do provider interno somem do `handleSubmit` do externo, e método faltando chega `undefined`. [`#docs/formprovider`](https://react-hook-form.com/docs/formprovider) [`#docs/useformcontext`](https://react-hook-form.com/docs/useformcontext)
+- **Dentro do `FormProvider`, estado do formulário sai de `useFormState`, não de `formState` desestruturado do `useFormContext()`; use do contexto só os métodos necessários.** Desestruturar o Proxy não assina a mudança. [`#docs/useformcontext`](https://react-hook-form.com/docs/useformcontext)
+- **O genérico de `useFormContext<T>` é só asserção; embrulhe-o num hook tipado.** O tipo não é conferido contra o formulário real. [`#docs/useformcontext`](https://react-hook-form.com/docs/useformcontext)
+- **Devtools junto de `FormProvider` pode pesar; o provider re-renderiza a árvore em cada atualização.** A doc avisa e mostra a otimização. [`#advanced-usage#FormProviderPerformance`](https://react-hook-form.com/advanced-usage#FormProviderPerformance)
+
+### Arrays
+
+- **`key` de item de `useFieldArray` é `field.id`, nunca o índice.** O índice quebra os campos no re-render. [`#docs/usefieldarray`](https://react-hook-form.com/docs/usefieldarray)
+- **Cada item do array é objeto, não primitivo; ações (`append`, `remove`...) não se empilham em sequência.** O `useFieldArray` não suporta array plano. [`#docs/usefieldarray`](https://react-hook-form.com/docs/usefieldarray)
+- **Total ou leitura de valores do array sai de `useWatch` num filho.** Só ele re-renderiza. [`#docs/usefieldarray`](https://react-hook-form.com/docs/usefieldarray)
+- **`keyName` não se usa; no v8 a linha usa sempre `key`.** A prop sai no v8. [`#docs/usefieldarray`](https://react-hook-form.com/docs/usefieldarray)
+- **Lista virtualizada perde o valor do item que sai da viewport; o item que volta precisa receber o valor atual.** O item sai do DOM e volta com o default. [`#advanced-usage#Workingwithvirtualizedlists`](https://react-hook-form.com/advanced-usage#Workingwithvirtualizedlists)
+
+### Acessibilidade
+
+- **Todo input tem rótulo visível, erro em texto ligado por `aria-describedby`, `aria-invalid` no input e `role="alert"` na mensagem nova; nunca só cor.** `aria-invalid` expõe o estado, `aria-describedby` liga dica e erro, `role="alert"` anuncia. [`#advanced-usage#AccessibilityA11y`](https://react-hook-form.com/advanced-usage#AccessibilityA11y) [`#get-started#Handleerrors`](https://react-hook-form.com/get-started#Handleerrors)
+- **O ref registrado fica ligado ao elemento real.** É o que permite focar o primeiro campo inválido no envio; sem ref no DOM não há foco. [`#advanced-usage#AccessibilityA11y`](https://react-hook-form.com/advanced-usage#AccessibilityA11y) [`#docs/useform`](https://react-hook-form.com/docs/useform) [`#get-started#Integratinganexistingform`](https://react-hook-form.com/get-started#Integratinganexistingform)
+
+### Tipos e testes
+
+- **`NestedValue` está obsoleto: valor não primitivo é tipado normal e ligado por `Controller`.** Sai numa versão futura. [`#ts`](https://react-hook-form.com/ts)
+- **Handler de envio tipado por `SubmitHandler<T>` (e `SubmitErrorHandler<T>`), com o tipo de saída diferente só quando o resolver remodela os dados.** É o tipo que a doc define para o `onValid`. [`#ts#SubmitHandler`](https://react-hook-form.com/ts#SubmitHandler) [`#ts#SubmitErrorHandler`](https://react-hook-form.com/ts#SubmitErrorHandler) [`#ts`](https://react-hook-form.com/ts)
+- **Teste de formulário com Testing Library, esperando a UI por `find*`/`waitFor`, sem envolver `render()` em `act()`.** A validação inicial é assíncrona e gera outro render. [`#advanced-usage#TestingForm`](https://react-hook-form.com/advanced-usage#TestingForm)
+
 ---
 
 ## Começando

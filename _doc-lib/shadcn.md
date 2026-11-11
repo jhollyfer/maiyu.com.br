@@ -46,9 +46,79 @@ quebra o modo escuro depois.
 props. O campo "Quando usar" abaixo foca em **qual componente escolher**, que é a dúvida real, já que
 vários resolvem problemas parecidos.
 
-**Links:** 107.
+**Links:** 109.
 
 **Skills:** `shadcn`, `maiyu-frontend`, `compound-pattern`, `react-composition-patterns`, `dialog-pattern`, `sheet-pattern`, `accessibility`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
+
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com shadcn/ui: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e CLI
+
+- **Projeto TanStack Start novo sai de `npx shadcn@latest init -t start` (ou do comando gerado no shadcn/create); no `@tanstack/cli create`, não adicione o add-on `shadcn`.** O `init` do shadcn configura tudo depois; projeto antigo precisa de Tailwind e alias `@/*` antes. [`#docs/installation/tanstack`](https://ui.shadcn.com/docs/installation/tanstack.md) [`#docs/installation`](https://ui.shadcn.com/docs/installation.md)
+- **Antes de rodar a CLI sobre componentes existentes, commite as mudanças.** A CLI sobrescreve os componentes. [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md)
+- **`components.json` é obrigatório para usar a CLI, com os aliases de `components`, `ui`, `lib`, `hooks` e `utils`.** Os aliases dizem à CLI onde gravar cada coisa. [`#docs/components-json`](https://ui.shadcn.com/docs/components-json.md)
+- **`style`, `tailwind.baseColor` e `tailwind.cssVariables` não mudam depois do `init`.** Trocar exige apagar e reinstalar os componentes (ou `migrate base-color`, para a cor base). [`#docs/components-json`](https://ui.shadcn.com/docs/components-json.md) [`#docs/cli`](https://ui.shadcn.com/docs/cli.md)
+- **No Tailwind v4, `tailwind.config` do `components.json` fica em branco.** O v4 não usa arquivo de config. [`#docs/components-json`](https://ui.shadcn.com/docs/components-json.md)
+- **O estilo `default` está obsoleto; use `new-york`.** Projeto novo já nasce com ele. [`#docs/components-json`](https://ui.shadcn.com/docs/components-json.md) [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md)
+- **Troca de biblioteca de ícones, cor base, suporte RTL e imports do Radix vão pelos comandos `shadcn migrate icons|base-color|rtl|radix`; rodada restrita a arquivos não atualiza o `components.json`.** As migrações reescrevem os componentes e o `components.json` de uma vez. [`#docs/cli`](https://ui.shadcn.com/docs/cli.md)
+- **Projeto em Tailwind v3 continua no `tailwind-merge` v2; no v4, `shadcn migrate cn` troca `clsx`/`tailwind-merge` pelo pacote `cn` (config própria em `cn/config`).** O motor do `cn` suporta v4 como o `tailwind-merge` v3, e os componentes atuais importam `cn` de `"cn"`. [`#docs/cli`](https://ui.shadcn.com/docs/cli.md) [`#chart`](https://ui.shadcn.com/docs/components/base/chart.md)
+- **Com alias por `package.json#imports`, o especificador começa com `#`, e o TS precisa de `moduleResolution: "bundler"` e `resolvePackageJsonImports: true`.** Sem isso a CLI e o TS não resolvem os `#...`. [`#docs/package-imports`](https://ui.shadcn.com/docs/package-imports.md) [`#docs/components-json`](https://ui.shadcn.com/docs/components-json.md)
+- **Em monorepo, cada workspace tem o próprio `components.json` com aliases corretos, e o pacote compartilhado exporta todo caminho usado por outro workspace.** A doc exige as três condições. [`#docs/monorepo`](https://ui.shadcn.com/docs/monorepo.md)
+- **Use TypeScript.** A doc recomenda TS também no projeto. [`#docs/javascript`](https://ui.shadcn.com/docs/javascript.md)
+- **Teste a aplicação depois de instalar dependência nova.** A doc pede isso ao resolver peer dependency do React 19. [`#docs/react-19`](https://ui.shadcn.com/docs/react-19.md)
+
+### Tailwind v4 e tema
+
+- **Tema por variáveis CSS; token novo é declarado no `:root`/`.dark` e exposto em `@theme inline` como `--color-<nome>`.** É o modo recomendado e o que gera `bg-<nome>`/`text-<nome>-foreground`. [`#docs/theming`](https://ui.shadcn.com/docs/theming.md)
+- **Cores em OKLCH, sem `hsl()` em volta da variável (`var(--chart-1)`, não `hsl(var(--chart-1))`).** O v4 do shadcn converteu HSL para OKLCH. [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md) [`#chart`](https://ui.shadcn.com/docs/components/base/chart.md)
+- **Componente sem `forwardRef`, com `ref` como prop, e toda parte com `data-slot`.** É o formato dos componentes no Tailwind v4 com React 19. [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md)
+- **`tailwindcss-animate` está obsoleto; use `tw-animate-css`.** A doc o substituiu. [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md)
+- **Antes de subir para o v4, leia a compatibilidade do Tailwind e rode o codemod `@tailwindcss/upgrade`.** O codemod tira utilitários obsoletos e atualiza a config. [`#docs/tailwind-v4`](https://ui.shadcn.com/docs/tailwind-v4.md)
+
+### Modo escuro
+
+- **No TanStack Start, o tema se aplica por `ScriptOnce` antes da hidratação, com `suppressHydrationWarning` no `<html>`.** O script roda antes do React e evita o flash de tema. [`#docs/dark-mode/tanstack-start`](https://ui.shadcn.com/docs/dark-mode/tanstack-start.md)
+- **`useTheme` só dentro do `ThemeProvider`.** Fora dele o hook lança erro. [`#docs/dark-mode/tanstack-start`](https://ui.shadcn.com/docs/dark-mode/tanstack-start.md) [`#docs/dark-mode/vite`](https://ui.shadcn.com/docs/dark-mode/vite.md)
+
+### Formulário
+
+- **Formulário com React Hook Form usa os componentes `Field` com `Controller`, resolver Zod (`zodResolver`) no `useForm`.** É a abordagem do guia para formulário acessível. [`#docs/forms/react-hook-form`](https://ui.shadcn.com/docs/forms/react-hook-form.md)
+- **Campo com erro: `data-invalid` no `Field` e `aria-invalid` no controle (`Input`, `SelectTrigger`, `Checkbox`...).** Um estiliza, o outro informa a tecnologia assistiva. [`#docs/forms/react-hook-form`](https://ui.shadcn.com/docs/forms/react-hook-form.md) [`#field`](https://ui.shadcn.com/docs/components/base/field.md) [`#select`](https://ui.shadcn.com/docs/components/base/select.md) [`#native-select`](https://ui.shadcn.com/docs/components/base/native-select.md)
+- **Grupo de controles vai em `FieldSet` com `FieldLegend`; `FieldSeparator` com moderação.** O agrupamento é o que o leitor de tela e o teclado usam. [`#field`](https://ui.shadcn.com/docs/components/base/field.md) [`#docs/forms/react-hook-form`](https://ui.shadcn.com/docs/forms/react-hook-form.md)
+- **Em `useFieldArray`, a `key` de cada item é `field.id`.** A doc exige isso. [`#docs/forms/react-hook-form`](https://ui.shadcn.com/docs/forms/react-hook-form.md)
+- **Mantenha validação básica do navegador em produção.** O `noValidate` dos exemplos é só para a demo. [`#docs/forms/react-hook-form`](https://ui.shadcn.com/docs/forms/react-hook-form.md) [`#docs/forms/tanstack-form`](https://ui.shadcn.com/docs/forms/tanstack-form.md)
+- **Campo obrigatório usa o atributo `required`.** É o modo indicado pela página do input. [`#input`](https://ui.shadcn.com/docs/components/base/input.md)
+- **`InputGroupAddon` vem depois do `InputGroupInput`/`InputGroupTextarea` no DOM; a posição visual sai de `align`.** A ordem do DOM é a do foco. [`#input-group`](https://ui.shadcn.com/docs/components/base/input-group.md)
+
+### Componentes
+
+- **Link nunca é `Button` com `nativeButton={false}`; use `buttonVariants` num `<a>`.** O `Button` do Base UI força `role="button"` e apaga a semântica de link. [`#button`](https://ui.shadcn.com/docs/components/base/button.md)
+- **A aplicação inteira fica dentro de `SidebarProvider` quando usa `Sidebar`.** O provider guarda o estado e o contexto. [`#sidebar`](https://ui.shadcn.com/docs/components/base/sidebar.md)
+- **`TooltipProvider` na raiz da aplicação.** É passo da instalação do tooltip. [`#tooltip`](https://ui.shadcn.com/docs/components/base/tooltip.md)
+- **`ChartContainer` leva `min-h-[...]`; cor de série por variável CSS.** Sem altura mínima o gráfico não é responsivo. [`#chart`](https://ui.shadcn.com/docs/components/base/chart.md)
+- **`Calendar` recebe `timeZone` com o fuso do usuário.** Sem ele a data selecionada pode sair deslocada em um dia. [`#calendar`](https://ui.shadcn.com/docs/components/base/calendar.md)
+- **`Drawer` agora é Base UI, não Vaul; área rolável dentro dele é item flex, nunca `h-full`; direção é `up`/`down`, não `top`/`bottom`.** `h-full` não resolve em drawer dimensionado pelo conteúdo, e algumas props do Vaul não têm equivalente. [`#drawer`](https://ui.shadcn.com/docs/components/base/drawer.md)
+- **`ButtonGroup` com botões fora da variante `outline` leva separador.** A doc o recomenda para a hierarquia visual. [`#button-group`](https://ui.shadcn.com/docs/components/base/button-group.md)
+- **Data table com TanStack Table v9 declara as features usadas em `tableFeatures`.** O que não é registrado sai do bundle. [`#data-table`](https://ui.shadcn.com/docs/components/base/data-table.md)
+- **`direction` do `Carousel` igual ao `dir`.** A doc exige que batam. [`#carousel`](https://ui.shadcn.com/docs/components/base/carousel.md)
+- **RTL: `DirectionProvider` na raiz e fonte com suporte ao idioma.** O provider define a direção, e a doc recomenda fonte adequada. [`#direction`](https://ui.shadcn.com/docs/components/base/direction.md) [`#docs/rtl/start`](https://ui.shadcn.com/docs/rtl/start.md)
+- **Divisor com rótulo (`Marker`) não leva `role="separator"`.** A doc proíbe. [`#marker`](https://ui.shadcn.com/docs/components/base/marker.md)
+- **Reação interativa em `Bubble` é botão, e botão só de ícone tem `aria-label`; `align` vai no `Bubble`, não no `BubbleGroup`.** A doc manda os dois. [`#bubble`](https://ui.shadcn.com/docs/components/base/bubble.md)
+
+### Chat em streaming
+
+- **Auto-scroll nunca é o padrão; seleção de texto, teclado, link ou busca param o movimento.** O leitor nunca é movido contra a intenção dele. [`#message-scroller`](https://ui.shadcn.com/docs/components/base/message-scroller.md)
+- **`MessageScroller` com CSP recebe `nonce`, e o script de restauração não se usa com `"last-anchor"`.** A doc exige o `nonce` e proíbe a combinação. [`#message-scroller`](https://ui.shadcn.com/docs/components/base/message-scroller.md) [`#docs/react/message-scroller`](https://ui.shadcn.com/docs/react/message-scroller.md)
+
+### Registry de terceiros
+
+- **Componente de registry da comunidade é revisado antes de instalar: `registry.json`, `files`, `target`, dependências, `registryDependencies` e `envVars`; ref fixada por SHA de 40 caracteres.** Registry de terceiro instala código e pode puxar outros registries. [`#docs/directory`](https://ui.shadcn.com/docs/directory.md) [`#docs/registry/github`](https://ui.shadcn.com/docs/registry/github.md)
+- **Registry privado só por HTTPS, com token em variável de ambiente, nunca commitado, e de preferência com expiração.** O token trafega e dá acesso ao registry. [`#docs/registry/authentication`](https://ui.shadcn.com/docs/registry/authentication.md) [`#docs/registry/namespace`](https://ui.shadcn.com/docs/registry/namespace.md)
+- **Registry só entra configurado explicitamente em `components.json`.** A CLI nunca descobre registry sozinha. [`#docs/registry/namespace`](https://ui.shadcn.com/docs/registry/namespace.md)
 
 ---
 
@@ -2990,6 +3060,92 @@ import { Kbd } from '@/components/ui/kbd'
 
 // CERTO: símbolo condicional ao sistema operacional
 <Kbd>{navigator.platform.includes('Mac') ? '⌘' : 'Ctrl'}</Kbd>
+```
+
+#### code-block
+[doc](https://ui.shadcn.com/docs/components/base/code-block) | [markdown](https://ui.shadcn.com/docs/components/base/code-block.md)
+**O que é:** o bloco de código, saída de terminal e diff, com cabeçalho, número de linha e botão de
+copiar. Instala junto o hook `useHighlightedCode` e o `lib/highlighter.tsx`, que realçam com Shiki
+pelo motor de regex em JavaScript, sem WASM.
+**Para que serve:** mostrar código que o usuário lê e copia: aula, documentação, post técnico.
+**Quando usar:** sempre que houver código na tela. A regra de uso da casa está em
+`_standards/frontend.md` §6.6.
+
+```tsx
+// básico: exatamente como a doc oficial mostra
+import { CodeBlock, CodeBlockContent } from '@/components/ui/code-block'
+
+<CodeBlock>
+  <CodeBlockContent lineNumbers>{code}</CodeBlockContent>
+</CodeBlock>
+```
+
+```tsx
+// caso real da stack: cabeçalho, copiar e realce; o rótulo vem do i18n
+const lines = useHighlightedCode(code, 'tsx')
+
+<CodeBlock>
+  <CodeBlockHeader>
+    <CodeBlockTitle>src/routes/index.tsx</CodeBlockTitle>
+    <CodeBlockActions>
+      <CodeBlockCopyButton value={code} aria-label={m.code_copy()} />
+    </CodeBlockActions>
+  </CodeBlockHeader>
+  <CodeBlockContent lineNumbers>
+    {lines.map((line, index) => <CodeBlockLine key={index}>{line}</CodeBlockLine>)}
+  </CodeBlockContent>
+</CodeBlock>
+```
+
+```tsx
+// armadilha
+// ERRADO: <pre><code>{code}</code></pre> com um segundo realçador (highlight.js, Prism)
+// — dois motores no bundle, sem copiar, sem foco por teclado no bloco que rola
+
+// CERTO: CodeBlock + o highlighter que veio com ele. Linguagem fora da lista de
+// lib/highlighter.tsx sai como texto puro, sem erro: confira a lista.
+```
+
+#### trace
+[doc](https://ui.shadcn.com/docs/components/base/trace) | [markdown](https://ui.shadcn.com/docs/components/base/trace.md)
+**O que é:** uma lista de linhas de ícone e título, com estado (`running`, `error`, `pending`) e
+detalhe que abre por `TraceCollapsible`, link, dialog ou sheet.
+**Para que serve:** passos em sequência com status. A doc o apresenta para raciocínio e chamada de
+ferramenta de IA, mas a peça é genérica.
+**Quando usar:** resultado por item, progresso em etapas, linha do tempo. A regra de uso da casa está
+em `_standards/frontend.md` §6.7.
+
+```tsx
+// básico: exatamente como a doc oficial mostra
+import { Trace, TraceIcon, TraceLine, TraceTitle } from '@/components/ui/trace'
+
+<Trace>
+  <TraceLine status="running">
+    <TraceIcon><CircleIcon /></TraceIcon>
+    <TraceTitle>Running pnpm build</TraceTitle>
+  </TraceLine>
+</Trace>
+```
+
+```tsx
+// caso real da stack: o estado vai no título, não só no ícone
+<Trace>
+  {steps.map((step) => (
+    <TraceLine key={step.id} status={STEP_STATUS[step.state]}>
+      <TraceIcon><StepIcon state={step.state} /></TraceIcon>
+      <TraceTitle>{m.lesson_step_title({ title: step.title, state: step.state })}</TraceTitle>
+    </TraceLine>
+  ))}
+</Trace>
+```
+
+```tsx
+// armadilha
+// ERRADO: status="success" — não existe; o passo concluído é a linha SEM status
+// ERRADO: o título diz só "Questão 3" e o erro fica na cor do ícone, que o
+// leitor de tela não lê (TraceIcon é aria-hidden)
+
+// CERTO: "Questão 3: errada" no TraceTitle
 ```
 
 #### marker

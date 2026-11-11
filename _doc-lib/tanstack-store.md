@@ -53,6 +53,19 @@ Router ou Query, ele **já está no bundle**, então não custa dependência nov
 **Skills:** `maiyu-frontend`, `react-render-optimization`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 está anotado aqui veio do `.d.ts`, não do site.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com TanStack Store: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Store no React
+
+- **Leitura de store no componente é `useSelector(store, seletor)`; `useStore` é alias deprecated.** O componente só re-renderiza quando a fatia selecionada muda. [`#framework/react/quick-start`](https://raw.githubusercontent.com/tanstack/store/main/docs/framework/react/quick-start.md)
+- **Store se atualiza por `setState(updater)` imutável, devolvendo objeto novo.** É a forma mostrada para mudar o estado. [`#framework/react/quick-start`](https://raw.githubusercontent.com/tanstack/store/main/docs/framework/react/quick-start.md) [`#quick-start`](https://raw.githubusercontent.com/tanstack/store/main/docs/quick-start.md)
+- **Assinatura manual por `subscribe` guarda o `unsubscribe` e o chama na limpeza.** A página mostra o `unsubscribe` como o passo de limpeza. [`#quick-start`](https://raw.githubusercontent.com/tanstack/store/main/docs/quick-start.md)
+- **Várias atualizações seguidas vão dentro de `batch()`.** Os assinantes disparam uma vez só, com o estado final. [`#quick-start`](https://raw.githubusercontent.com/tanstack/store/main/docs/quick-start.md)
+
 ---
 
 ## Fundamentos

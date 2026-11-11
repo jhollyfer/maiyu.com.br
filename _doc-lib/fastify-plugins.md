@@ -60,6 +60,81 @@ anos, conferido em 2026-10 por `scripts/doc-lib/audit.mjs` (seção de repositó
 `_audit/REPORT.md`). Não quer dizer quebrado: quer dizer que o defeito que aparecer é seu.
 Prefira o oficial ou um sem marca que resolva o mesmo.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Fastify — plugins: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### fastify-type-provider-zod
+
+- **Registre `validatorCompiler` e `serializerCompiler` do pacote e declare as rotas com `withTypeProvider<ZodTypeProvider>()` (ou `FastifyPluginAsyncZod` num plugin).** É o uso documentado para o schema Zod validar a entrada, serializar a resposta e tipar o `request`. [`#fastify-type-provider-zod`](https://raw.githubusercontent.com/turkerdev/fastify-type-provider-zod/main/README.md)
+- **A partir da v7 o pacote exige Zod 4.2 ou maior, e a resposta é serializada pelo tipo de saída (`z.output`), não pelo de entrada.** O serializador espera o valor já transformado pelo schema. [`#fastify-type-provider-zod`](https://raw.githubusercontent.com/turkerdev/fastify-type-provider-zod/main/README.md)
+- **O error handler reconhece erro de validação por `hasZodFastifySchemaValidationErrors(err)` (issues em `err.validation`) e erro de resposta fora do schema por `isResponseSerializationError(err)` (500).** São os dois predicados que o README usa para customizar a resposta de erro. [`#fastify-type-provider-zod`](https://raw.githubusercontent.com/turkerdev/fastify-type-provider-zod/main/README.md)
+- **Com `@fastify/swagger`, passe `transform: jsonSchemaTransform` (e `transformObject: jsonSchemaTransformObject` para gerar `$ref` dos schemas registrados no registry global do Zod com `id`).** Sem o transform o documento não sai do schema Zod. [`#fastify-type-provider-zod`](https://raw.githubusercontent.com/turkerdev/fastify-type-provider-zod/main/README.md)
+- **O alvo do JSON Schema segue a versão do OpenAPI: `openapi-3.0` para 3.0.x e `draft-2020-12` para 3.1.x; para forçar, use `createJsonSchemaTransform({ zodToJsonConfig: { target } })`.** É o default documentado e a forma de trocá-lo. [`#fastify-type-provider-zod`](https://raw.githubusercontent.com/turkerdev/fastify-type-provider-zod/main/README.md)
+
+### @fastify/helmet
+
+- **Helmet registrado na raiz vale para todas as rotas (`global: true`, o default); exceção é por rota com `{ helmet: false }` ou configuração própria.** O plugin adiciona um hook `onRequest` com os cabeçalhos de segurança e a CSP default do helmet. [`#@fastify/helmet`](https://raw.githubusercontent.com/fastify/fastify-helmet/HEAD/README.md)
+
+### @fastify/cors
+
+- **`origin: true` (refletir a origem) não vai para produção.** O README marca o uso como não recomendado em produção porque habilita exploração por reflexão. [`#@fastify/cors`](https://raw.githubusercontent.com/fastify/fastify-cors/HEAD/README.md)
+- **`origin` como RegExp ou função é escrito com cuidado extremo.** Pode abrir negação de serviço. [`#@fastify/cors`](https://raw.githubusercontent.com/fastify/fastify-cors/HEAD/README.md)
+
+### @fastify/csrf-protection
+
+- **Proteção contra CSRF é responsabilidade do desenvolvedor, não só do plugin.** O README diz que o módulo não protege sozinho sem o estudo do OWASP Cheat Sheet e recomenda o `@fastify/helmet` para parte das mitigações. [`#@fastify/csrf-protection`](https://raw.githubusercontent.com/fastify/csrf-protection/HEAD/README.md)
+- **O `secret` nunca fica no código, no `.env` versionado nem no repositório; é lido em runtime de um cofre, longo e aleatório.** É a lista de cuidados com o segredo da página. [`#@fastify/csrf-protection`](https://raw.githubusercontent.com/fastify/csrf-protection/HEAD/README.md)
+- **A checagem roda em `onRequest`; se o token vem no corpo, em `preValidation` ou `preHandler`.** No `onRequest` o corpo ainda não existe. [`#@fastify/csrf-protection`](https://raw.githubusercontent.com/fastify/csrf-protection/HEAD/README.md)
+- **Forneça `getToken` lendo um cabeçalho próprio.** Recomendado por desempenho e segurança (técnica de cabeçalho customizado do OWASP). [`#@fastify/csrf-protection`](https://raw.githubusercontent.com/fastify/csrf-protection/HEAD/README.md)
+- **Cookie de sessão e token só trafegam em HTTPS.** O README e o do `@fastify/cookie` chamam o HTTPS de extremamente importante contra MITM. [`#@fastify/csrf-protection`](https://raw.githubusercontent.com/fastify/csrf-protection/HEAD/README.md), [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+
+### @fastify/rate-limit
+
+- **Mais de um servidor exige store externo (`redis` com `ioredis`), com `connectTimeout` e `maxRetriesPerRequest` ajustados.** O store default é em memória, e o default do ioredis não é bom para limite de taxa. [`#@fastify/rate-limit`](https://raw.githubusercontent.com/fastify/fastify-rate-limit/HEAD/README.md)
+- **Limite por rota vai em `config.rateLimit`, com `global: false` quando o plugin não deve valer para todo o escopo.** `global` aplica o limite a todas as rotas do escopo de encapsulamento. [`#@fastify/rate-limit`](https://raw.githubusercontent.com/fastify/fastify-rate-limit/HEAD/README.md)
+- **O 404 também é limitado: `setNotFoundHandler({ preHandler: fastify.rateLimit() }, ...)`.** Sem isso um atacante adivinha URLs válidas pelos 404. [`#@fastify/rate-limit`](https://raw.githubusercontent.com/fastify/fastify-rate-limit/HEAD/README.md)
+- **A chave default é o IP de `request.ip`, que só vem de `X-Forwarded-For` com `trustProxy` configurado.** Atrás de proxy sem `trustProxy` o limite conta o IP do proxy; `keyGenerator` customizado substitui o default. [`#@fastify/rate-limit`](https://raw.githubusercontent.com/fastify/fastify-rate-limit/HEAD/README.md)
+
+### @fastify/jwt
+
+- **Verificação fixa os algoritmos aceitos em `verify.algorithms` (ex.: `['RS256']`).** Por padrão todos os algoritmos são aceitos. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+- **Chave assimétrica entra como `secret: { private, public }` em PEM; só verificação usa `{ public }`.** O `secret` é obrigatório nas opções. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+- **Emissor e audiência entram nos defaults de `verify` (`allowedIss`, `allowedAud`) e o prazo em `maxAge`.** As opções de `verify` vêm do `fast-jwt` e valem para toda verificação que não as sobrescreve. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+- **Opções no formato plano antigo e no aninhado (`sign`/`verify`/`decode`) não se misturam.** Opção misturada é recusada. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+- **JWT em cookie exige `@fastify/cookie` registrado; cookie assinado usa `cookie.signed: true`.** O plugin procura `request.cookies`, decoração do `@fastify/cookie`; `onlyCookie` serve ao refresh token. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+- **Revogação seletiva vai em `trusted(request, decodedToken)`, que só decide aceitar ou recusar.** O retorno nunca vira o usuário: `request.user` é o payload verificado. [`#@fastify/jwt`](https://raw.githubusercontent.com/fastify/fastify-jwt/HEAD/README.md)
+
+### @fastify/cookie
+
+- **Registre o `@fastify/cookie` antes de qualquer hook `onRequest` que dependa dele.** O parsing acontece no `onRequest` do plugin. [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+- **Cookie assinado usa `sha256` ou mais forte e `secret` com pelo menos 20 bytes.** Recomendação da seção de segurança. [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+- **Cookie de sessão é `httpOnly` e leva o prefixo `__Host-`.** `httpOnly` contra XSS; o prefixo evita cookie tossing. [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+- **Rotação de segredo: lista curta, a primeira chave assina, e cookie antigo é regravado com a nova assim que possível.** Percorrer todas as chaves é caro e o cookie antigo continua aceito só durante a transição. [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+- **`partitioned` e `priority` não são padrão fechado e podem mudar sem respeitar semver.** O README avisa nos dois atributos. [`#@fastify/cookie`](https://raw.githubusercontent.com/fastify/fastify-cookie/HEAD/README.md)
+
+### @fastify/multipart
+
+- **Defina `limits` explícitos (`fieldSize`, `fields`, `files`, `parts`, `fileSize`).** O multipart não passa pelo `bodyLimit` do Fastify, que só dá o default de `fileSize` por arquivo; sem limites a requisição total não tem teto (defaults: 1000 partes, 1 MiB por arquivo). [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+- **Todo stream de arquivo é consumido.** Arquivo não consumido deixa a Promise do processamento sem resolver. [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+- **Arquivo que bateu `fileSize` é detectado (`file.truncated`, evento `limit` ou erro do `toBuffer()`) e o parcial gravado é apagado.** O README mostra a checagem depois do pipeline. [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+- **`filename` do cliente não vira caminho em disco sem cuidado.** O exemplo avisa de permissão e de sobrescrever arquivo sensível. [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+- **No formulário, os campos de valor vêm antes dos arquivos.** A ordem dos campos determina o que o plugin consegue entregar. [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+- **Com `attachFieldsToBody`, use `onFile` para não acumular os arquivos em memória.** Sem `onFile` os arquivos já foram lidos para a memória e não há stream. [`#@fastify/multipart`](https://raw.githubusercontent.com/fastify/fastify-multipart/HEAD/README.md)
+
+### @fastify/mongodb
+
+- **`client` passado pronto não é fechado no `fastify.close()`; com `url`, `forceClose: true` fecha.** O README documenta os dois comportamentos e reduz o timeout de conexão para 7,5 s para falhar antes do timeout de plugin. [`#@fastify/mongodb`](https://raw.githubusercontent.com/fastify/fastify-mongodb/HEAD/README.md)
+
+### @fastify/swagger
+
+- **Registre o `@fastify/swagger` antes de qualquer rota.** Rota registrada antes não aparece no documento. [`#@fastify/swagger`](https://raw.githubusercontent.com/fastify/fastify-swagger/HEAD/README.md)
+- **Com pnpm, `openapi-types` vai em `devDependencies`.** O layout estrito não expõe a dependência transitiva e a extensão de tipos é ignorada em silêncio. [`#@fastify/swagger`](https://raw.githubusercontent.com/fastify/fastify-swagger/HEAD/README.md)
+- **`definitions` e `$defs` não ficam dentro de um schema do documento.** Swagger e OpenAPI não aceitam; o plugin os move para fora com nome derivado. [`#@fastify/swagger`](https://raw.githubusercontent.com/fastify/fastify-swagger/HEAD/README.md)
+- **Toda resposta declara `description`.** É obrigatória pela especificação; sem ela o plugin escreve `'Default Response'`. [`#@fastify/swagger`](https://raw.githubusercontent.com/fastify/fastify-swagger/HEAD/README.md)
+
 ---
 
 ## Fundamentos

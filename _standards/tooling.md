@@ -1,7 +1,7 @@
 # Padrão de tooling
 
 Ferramental comum a todo projeto TypeScript: gerenciador de pacote, versão de
-runtime, flags do compilador, ESLint, Prettier, hooks de commit, portões de CI,
+runtime, flags do compilador, ESLint, Prettier, hooks de commit, portões antes do PR,
 entrega (Docker e deploy), `.github` e a definição de pronto, revisão e
 depuração. Vale para backend, frontend e `shared/`, Fastify ou Adonis.
 
@@ -50,7 +50,8 @@ casa é decisão, não atualização de rotina: o critério é **o código conti
 |---|---|---|
 | TypeScript | fica na **última 6.x** (`typescript@~6`) em todos os apps, inclusive typecheck. Sem TypeScript 7 (`typescript@7`, `typescript-native`, `@typescript/native-preview`), nem como alias só para o typecheck | a API do 7 mudou e a migração quebrou projeto. Volta a ser avaliado quando houver segurança; aí a migração é planejada (mapear o que mudou, aplicar em todo o código de uma vez) e vira decisão nova |
 | `mongodb` (driver) e servidor MongoDB | **sempre a última major**, mesmo com mudança de API: mapear o que mudou pelo changelog e pela `_doc-lib/mongodb.md`, ajustar o código e atualizar | é a base de dados do perfil Fastify; ficar para trás no driver custa correção de segurança e recurso novo |
-| pré-lançamento que a stack exige (hoje `nitro` 3 beta) | **versão exata** da última beta, subida à mão lendo `docs/migration`; vira `^<major>` quando sair a estável | faixa sobre pré-lançamento só casa outro pré-lançamento do mesmo `[major, minor, patch]` (README do `semver`), então `^` não anda para a beta seguinte; e a API muda entre betas (`_doc-lib/nitro.md`) |
+| `@tanstack/react-query` e os pacotes `@tanstack/*-query*` | **versão exata** (patch), subida à mão | a doc considera mudança de tipo não quebradora e a publica em patch, e recomenda travar o pacote num patch específico (_doc-lib/tanstack-query.md#typescript, `DECISIONS.md` #319); cobrado pelo `pattern:check` (`query-exact-version`, `DECISIONS.md` #359) |
+| pré-lançamento que a stack exige (hoje `nitro` 3 RC) | **versão exata** da última beta, subida à mão lendo `docs/migration`; vira `^<major>` quando sair a estável | faixa sobre pré-lançamento só casa outro pré-lançamento do mesmo `[major, minor, patch]` (README do `semver`), então `^` não anda para a beta seguinte; e a API muda entre betas (`_doc-lib/nitro.md`) |
 
 Dependabot ignora major do TypeScript (`ignore` com `update-types: ["version-update:semver-major"]`
 para `typescript`) e abre PR de major do `mongodb` normalmente (configuração na §9).
@@ -61,13 +62,29 @@ para `typescript`) e abre PR de major do `mongodb` normalmente (configuração n
 
 Uma biblioteca por papel, em todo projeto e nos dois lados. A segunda do mesmo papel é desvio e
 migra, como a terceira lib de schema (`AGENTS.md`, "Regras que não se negociam"; `DECISIONS.md` #241).
+A stack inteira é fechada e vale estritamente para todo projeto (`DECISIONS.md` #322); a única
+exceção nomeada é o **lowcodejs**, que fica em Fastify com MongoDB (driver `mongodb`) e Postgres.
+Dentro do Adonis, o que o framework já traz vence lib de fora.
 
 | Papel | Biblioteca | Fora |
 |---|---|---|
-| data e hora | **Luxon** (`luxon`, `DateTime`) | `date-fns`, `dayjs`, `moment`, `Date` cru em regra de negócio |
+| backend | **AdonisJS 7**, a última versão publicada (`@adonisjs/core@^7`); Fastify só no lowcodejs | Express, Nest, Fastify em projeto novo |
+| banco e ORM | **Lucid + PostgreSQL** (`@adonisjs/lucid`, `pg`); no lowcodejs, driver `mongodb` + `pg` | Prisma, Drizzle, TypeORM, Mongoose, Sequelize |
+| frontend | **TanStack Start** (React 19, Vite, Router, Query) em todo frontend | Next, Remix, React Router puro, SPA sem Start |
+| UI base | **Base UI** pelo **shadcn** (`components/ui/`) | `@radix-ui/*` (nem por dependência do registry), MUI, Chakra, Mantine |
+| cliente da API | **Tuyau** (`@tuyau/core`), gerado das rotas do backend, como transporte dentro do `request()` (Adonis, `frontend.md` §3.3), na mesma versão nos dois lados; no lowcodejs, `fetch` dentro do `request()` (`DECISIONS.md` #324) | `axios`, `fetch` solto por tela (o `ky` não está aqui: é dependência do Tuyau) |
+| i18n | **Paraglide JS** (`@inlang/paraglide-js`) no frontend; **`@adonisjs/i18n`** no backend Adonis (mensagens do VineJS e erros de negócio, `i18n.md` §3) | `react-i18next`, `next-intl`, `i18next`, Paraglide no backend |
+| teste do backend | **Japa** (funcional e unitário do Adonis) + **Vitest** (`shared/` e unitário puro); no lowcodejs só Vitest | Jest, Mocha, AVA |
+| teste de ponta a ponta | **Playwright** (`@playwright/test`) em todo frontend | Cypress, Puppeteer, Selenium |
+| build do backend | o do Adonis (`node ace build`); **tsup** no backend Fastify | `tsc` solto, webpack, esbuild à mão |
+| fila | **`@adonisjs/queue`** no Adonis, com a versão **fixada** (a doc o marca como experimental), adapter `redis` em produção e worker em processo separado (`node ace queue:work`); BullMQ só no lowcodejs | BullMQ, Bee-Queue, Agenda em projeto Adonis; `setInterval` como agendador |
+| hash de senha | **Argon2** (`argon2id`): driver `argon` no Adonis, `crypto.argon2` no Fastify (`backend.md` §5.6, item 6) | `bcrypt`, `bcryptjs`, `scrypt` novo, MD5/SHA puro |
+| data e hora | **Luxon** (`luxon`, `DateTime`), no backend e no frontend | `date-fns`, `dayjs`, `moment`, `Date` cru em regra de negócio |
 | ícones | **Phosphor** (`@phosphor-icons/react`; `"iconLibrary": "phosphor"` no `components.json`, _doc-lib/shadcn.md) | `lucide-react`, `react-icons`, `@tabler/icons-react`, SVG de ícone colado à mão |
 | schema | **Zod** (`zod`) em frontend, `shared/` e backend Fastify; **VineJS** (`@vinejs/vine`) só no backend Adonis, onde é nativo (`DECISIONS.md` #241) | `yup`; `@vinejs/vine` fora do backend Adonis |
-| texto rico e Markdown | Tiptap (`@tiptap/react`, `@tiptap/static-renderer`, `@tiptap/markdown`) | `react-markdown`, `remark-*`, `rehype-*`, `marked`, `markdown-it` |
+| texto rico e Markdown | **Tiptap**: editor `@tiptap/react`, leitura pelo renderer estático `@tiptap/static-renderer` (também para Markdown, via `@tiptap/markdown`) | `react-markdown`, `remark-*`, `rehype-*`, `marked`, `markdown-it` |
+| kit comum | componente, `lib/`, integração, código comum do backend e checks de `_templates/code/`, pelo sync; não se edita no projeto (`frontend.md` §8, `DECISIONS.md` #343) | cópia local editada, registry do shadcn como fonte do kit |
+| realce de código | **Shiki** (`shiki`), só pelo `lib/highlighter.tsx` que o `code-block` do shadcn instala (`frontend.md` §6.6) | `highlight.js`, `lowlight`, `@tiptap/extension-code-block-lowlight`, `prismjs`, `react-syntax-highlighter` |
 
 - **Luxon**: o Lucid já hidrata coluna de data como `DateTime` do Luxon (Adonis); no Fastify e no
   frontend, a mesma lib. Exibição sai de `DateTime` com `setLocale` do idioma da requisição e zona
@@ -122,14 +139,16 @@ o pacote compartilhado, a correção acontece num arquivo só e some o espelho +
   depois `pnpm --filter ./<app> --prod deploy /out`, _doc-lib/pnpm.md#cli/deploy, #docker).
 - **Filtro**: um app só é `--filter ./backend`; o app **com** o que ele usa do workspace é
   `--filter "{./backend}..."` (ou o nome, `--filter @<projeto>/backend...`), a forma que a página
-  documenta. `./backend...` não aparece lá (_doc-lib/pnpm.md#filtering). No CI, `--fail-if-no-match`
-  impede que um caminho errado passe verde sem rodar nada.
+  documenta. Os pacotes se chamam `@<projeto>/backend`, `@<projeto>/frontend` e `@<projeto>/shared`
+  (`DECISIONS.md` #355). `./backend...` não aparece lá (_doc-lib/pnpm.md#filtering). Nos portões, `--fail-if-no-match`
+  impede que um caminho errado passe verde sem rodar nada, e `failIfNoMatch: true` no
+  `pnpm-workspace.yaml` liga o mesmo para todo comando.
 - Dependência que precisa de script de build é liberada em `allowBuilds` do
   `pnpm-workspace.yaml` da raiz, cada entrada com o motivo.
 
 Versão do pnpm em `devEngines.packageManager` no `package.json` da raiz, a forma atual da doc; o
 campo `packageManager` é o legado (_doc-lib/pnpm.md#package_json). A versão resolvida fica gravada
-no `pnpm-lock.yaml` e é a mesma em toda máquina, no CI e na imagem; a faixa é a major atual:
+no `pnpm-lock.yaml` e é a mesma em toda máquina, no hook e na imagem; a faixa é a major atual:
 
 ```json
 {
@@ -188,7 +207,7 @@ framework; o piso acima se soma por cima e nunca é afrouxado.
 |---|---|---|---|
 | Backend AdonisJS | `"extends": "@adonisjs/tsconfig/tsconfig.app.json"` | a do preset (`NodeNext`) | alias pelo campo `imports` do `package.json` (`#features/*`) |
 | Backend Fastify | sem preset | `"module": "ESNext"`, `"moduleResolution": "bundler"` (o build é `tsup`) | `experimentalDecorators` + `emitDecoratorMetadata` (DI por decorator, _doc-lib/fastify-decorators.md#Services and dependency injection); `"types": ["node"]` |
-| Frontend | `"extends": "nitro/tsconfig"` | `"moduleResolution": "bundler"` | `"jsx": "react-jsx"`, `"noEmit": true`, `"types": ["vite/client"]`; alias `#/*` no `package.json#imports` **e** repetido em `compilerOptions.paths`: o runner do Playwright só lê `paths` do tsconfig (_doc-lib/playwright.md#docs/test-typescript) |
+| Frontend | `"extends": "nitro/tsconfig"` | `"moduleResolution": "bundler"` | `"verbatimModuleSyntax": false` (a única flag do piso que o frontend desliga: a doc do TanStack Start diz que ligada ela pode vazar bundle de servidor para o cliente, _doc-lib/tanstack-start.md#build-from-scratch, `DECISIONS.md` #319); `"jsx": "react-jsx"`, `"noEmit": true`, `"types": ["vite/client"]`; alias `#/*` no `package.json#imports` **e** repetido em `compilerOptions.paths`: o runner do Playwright só lê `paths` do tsconfig (_doc-lib/playwright.md#docs/test-typescript) |
 | `shared/` | sem preset | `"module": "NodeNext"`, `"moduleResolution": "NodeNext"` | import relativo com extensão: o que compila em `NodeNext` também compila em `bundler`, então o pacote serve aos dois consumidores |
 
 - **`noUncheckedIndexedAccess`**: acrescenta `undefined` ao campo **não declarado**: acesso por index
@@ -196,7 +215,7 @@ framework; o piso acima se soma por cima e nunca é afrouxado.
   regex. `Record<'a' | 'b', V>` tem as chaves declaradas e continua `V`. **Por quê**: sem a flag,
   `row[0]` ou `users[id]` tipam como `T` mesmo quando o índice não existe, e o `undefined` encontra
   o primeiro `.campo` só em produção.
-- **`verbatimModuleSyntax`**: import sem `type` fica no JS emitido, import com `type` some; o
+- **`verbatimModuleSyntax`** (backend e `shared/`; desligada no frontend, tabela acima): import sem `type` fica no JS emitido, import com `type` some; o
   compilador não decide por inferência o que remove. Exige `import type` só de símbolo que é **só
   tipo** (`type`, `interface`); classe é valor, e o import dela fica como está. Quem pede
   `import type` numa classe usada só em posição de tipo é a regra `consistent-type-imports` (§4.1),
@@ -261,13 +280,25 @@ const OUTSIDE_THE_HOUSE = [
   { name: 'react-markdown', message: 'Markdown: Tiptap (tooling.md §0.1).' },
   { name: 'marked', message: 'Markdown: Tiptap (tooling.md §0.1).' },
   { name: 'markdown-it', message: 'Markdown: Tiptap (tooling.md §0.1).' },
+  { name: 'highlight.js', message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).' },
+  { name: 'lowlight', message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).' },
+  {
+    name: '@tiptap/extension-code-block-lowlight',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+  { name: 'prismjs', message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).' },
+  {
+    name: 'react-syntax-highlighter',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
 ]
 
 const OUTSIDE_PATTERNS = [
   {
     group: [
       'date-fns/*', 'dayjs/*', 'moment/*', 'lucide-react/*', 'react-icons/*',
-      '@tabler/icons-react/*', 'yup/*', 'remark-*', 'rehype-*',
+      '@tabler/icons-react/*', 'yup/*', 'remark-*', 'rehype-*', 'highlight.js/*',
+      'prismjs/*', 'react-syntax-highlighter/*',
     ],
     message: 'Biblioteca fora da casa (tooling.md §0.1).',
   },
@@ -399,9 +430,11 @@ diagnóstico do `tsc` basta (_doc-lib/eslint.md#rules/consistent-type-imports). 
 duas: a flag é a que reprova o build, a regra é a que corrige com `--fix` e a que pega a classe
 importada só como tipo, que a flag deixa passar (§3).
 
-`no-restricted-syntax` carrega **só** a regra de `new`: é o que permite desligá-la no
+`no-restricted-syntax` carrega **só** a regra de `new` no bloco comum: é o que permite desligá-la no
 `*.unit.spec.ts` sem soltar outra proibição junto. Proibição nova de sintaxe entra em
-`no-restricted-properties` ou numa regra própria.
+`no-restricted-properties` ou numa regra própria. A exceção é o elemento interativo cru do
+frontend (`frontend.md` §6.5), que só um seletor de AST pega: entra num bloco com `files` próprio
+(`src/routes/**`, `src/components/common/**`) e repete o seletor de `new`.
 
 `Seeder` está no seletor ao lado dos outros cinco papéis: `new XSeeder(...)` fora do container
 escapava pelo mesmo motivo que os outros não escapam, só porque o nome não casava com o regex.
@@ -442,6 +475,16 @@ export default defineConfig([
     rules: {
       // queryKey e queryFn soltos, fora da fábrica de queryOptions (frontend.md §2.1).
       '@tanstack/query/prefer-query-options': 'error',
+      // throw redirect() e throw notFound() são o fluxo do router (_doc-lib/tanstack-router.md#eslint/eslint-plugin-router).
+      '@typescript-eslint/only-throw-error': [
+        'error',
+        {
+          allow: [
+            { from: 'package', package: '@tanstack/router-core', name: 'Redirect' },
+            { from: 'package', package: '@tanstack/router-core', name: 'NotFoundError' },
+          ],
+        },
+      ],
       // HTML cru é XSS: rich text renderiza pelo componente único de components/common/.
       'react/no-danger': 'error',
       'no-restricted-properties': [
@@ -514,10 +557,10 @@ adotar o config de uma lib oficial reduz a chance de o próximo projeto divergir
 `prettier.config.js` por app, igual nos três e em todo projeto: mora em `_templates/code/<app>/` e o
 sync cobra (`code-diverge:`, `DECISIONS.md` #280). O `@adonisjs/prettier-config` não entra: ele traz
 `printWidth: 100`, e o mesmo arquivo sairia formatado diferente em cada projeto. Projeto que ainda está com `semi: true` migra na
-próxima reformatação em massa (`MIGRATIONS.md`), não num commit avulso. O CI roda
+próxima reformatação em massa (`MIGRATIONS.md`), não num commit avulso. O `check` roda
 `prettier --check` (§7), pelo script `format:check`: `backend/`, `frontend/` e `shared/` têm, cada
 um, `"format": "prettier --write ."` e `"format:check": "prettier --check ."`, e o `check` do
-pacote inclui `format:check`. Sem o script, o `pnpm --filter ./<app> format:check` do workflow cai
+pacote inclui `format:check`. Sem o script, o `pnpm --filter ./<app> format:check` cai
 em `pnpm exec`, falha em 20 ms e não diz o motivo (`DECISIONS.md` #284).
 
 ---
@@ -525,7 +568,9 @@ em `pnpm exec`, falha em 20 ms e não diz o motivo (`DECISIONS.md` #284).
 ## 6. Husky, commitlint e hooks *(opinião da casa)*
 
 **Um Husky, na raiz** (`.husky/`, `architecture.md` §9): `package.json` da raiz com `husky` e
-`@commitlint/cli` + `@commitlint/config-conventional` em `devDependencies` e `"prepare": "husky"`.
+`@commitlint/cli` + `@commitlint/config-conventional` em `devDependencies` e
+`"prepare": "node .husky/install.mjs"`, que não falha quando o install não traz as devDependencies;
+na imagem, `HUSKY=0` no `install` (§8.2; _doc-lib/husky.md#how-to.html, `DECISIONS.md` #337).
 Nunca `backend/.husky` com `prepare: cd ..`: o hook da raiz cobre os três pacotes e o `commit-msg`.
 
 **`commit-msg`** chama `pnpm exec commitlint --edit "$1"`. `.commitlintrc.json` estende
@@ -541,6 +586,10 @@ final. O cabeçalho tem até 72 caracteres *(opinião da casa)*: a base fixa `he
   "rules": { "header-max-length": [2, "always", 72] }
 }
 ```
+
+O corpo herda da base o `body-max-line-length` de 100 (linha só com URL fica isenta): uma linha
+longa reprova o commit inteiro, então o corpo se quebra perto de 72 colunas, como o cabeçalho
+(`DECISIONS.md` #310; mesma entrada de `_doc-lib`, e o `src/index.ts` do pacote, aberto).
 
 Corpo diz o porquê, e é obrigatório em breaking change, correção de segurança, migration de dado e revert. O resto da convenção de
 commit está em `backend.md` §9.
@@ -569,12 +618,14 @@ não basta: ferramenta de agente injeta o trailer por padrão.
    esac
    ```
 
-3. **CI no PR** (job `repository` do `ci.yml`, que roda até em PR só de texto, §7):
-   `git log --format='%an <%ae>%n%B' "origin/<base>..${{ github.event.pull_request.head.sha }}"` (por
-   `env:`, nunca interpolado no `run:`) e o mesmo `grep`; achou trailer de agente ou autor diferente,
-   o job falha. Até o head do PR, não até o `HEAD`: no `pull_request` o `HEAD` é o merge sintético que
-   o GitHub cria com o e-mail noreply do autor e reprovaria todo PR. Pega o commit feito com
-   `--no-verify` ou numa máquina sem o hook.
+3. **Antes de abrir o PR** (§7), o agente roda `git log --format='%an <%ae>%n%B' origin/<base>..HEAD`
+   e o mesmo `grep`; achou trailer de agente ou autor diferente, reescreve antes do push. Pega o
+   commit feito com `--no-verify` ou numa máquina sem o hook.
+
+4. **Depois de abrir ou editar o PR pela ferramenta**, o agente relê o corpo publicado. A integração
+   do GitHub da sessão acrescenta sozinha um rodapé "Generated by Claude Code", que a camada 1 não
+   cobre; o corpo é reeditado sem ele na hora (`DECISIONS.md` #310; comportamento observado no
+   academy, sem página).
 
 Commit que já entrou com a marca é corrigido reescrevendo o histórico da branch (`git rebase` com
 `--exec`/`filter-branch`), nunca deixado para depois; na `main` compartilhada, só com o dono.
@@ -589,27 +640,44 @@ Commit que já entrou com a marca é corrigido reescrevendo o histórico da bran
 - **Nunca `claude`, `anthropic`, `codex`, `cursor` ou nome de outro agente** no título do PR, no
   nome da branch, no corpo do PR ou no assunto do commit. Branch que a ferramenta cria com prefixo de
   agente (`claude/...`) é renomeada antes do push (`git branch -m`), e o PR sai da branch renomeada.
-- **CI no PR** (`commitlint.yml`): título e branch chegam por `env:`, nunca interpolados no `run:`
-  (§9), e o job falha se o título não passar no commitlint, se a branch fugir do padrão ou se
-  qualquer um dos dois citar agente:
+- **Conferência antes de abrir o PR**: o agente passa título e branch pelo mesmo critério, no
+  terminal, e só abre o PR se os três passarem:
 
-  ```yaml
-  - name: Título e branch do PR
-    env:
-      PR_TITLE: ${{ github.event.pull_request.title }}
-      PR_BRANCH: ${{ github.head_ref }}
-    run: |
-      printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
-      printf '%s\n' "$PR_BRANCH" | grep -qE '^(feat|fix|refactor|docs|test|chore|ci|build|perf|style|revert)/[a-z0-9][a-z0-9-]*$' \
-        || { echo "branch fora do padrão <tipo>/<escopo>-<assunto>: $PR_BRANCH" >&2; exit 1; }
-      if printf '%s\n%s\n' "$PR_TITLE" "$PR_BRANCH" | grep -qiE 'claude|anthropic|codex|cursor'; then
-        echo "nome de agente no título ou na branch do PR" >&2; exit 1
-      fi
+  ```sh
+  printf '%s\n' "$PR_TITLE" | pnpm exec commitlint
+  printf '%s\n' "$PR_BRANCH" | grep -qE '^(feat|fix|refactor|docs|test|chore|ci|build|perf|style|revert)/[a-z0-9][a-z0-9-]*$' \
+    || { echo "branch fora do padrão <tipo>/<escopo>-<assunto>: $PR_BRANCH" >&2; exit 1; }
+  if printf '%s\n%s\n' "$PR_TITLE" "$PR_BRANCH" | grep -qiE 'claude|anthropic|codex|cursor'; then
+    echo "nome de agente no título ou na branch do PR" >&2; exit 1
+  fi
   ```
 
+- **Toda mudança entra por PR, com merge do dono** (`DECISIONS.md` #298). Ninguém empurra para a
+  `main`; o agente abre a branch, empurra e entrega o PR, e quem faz o merge é o dono.
+- **O merge é um commit de merge com a mensagem padrão do git** (`Merge branch '<branch>'`, ou o
+  `Merge pull request #N from ...` que o GitHub escreve). Nunca `merge: ...`: `merge` não é tipo do
+  Conventional Commits e o commitlint reprova. A mensagem padrão passa porque o commitlint ignora
+  commit de merge com `defaultIgnores: true`, o padrão (_doc-lib/commitlint.md#reference/configuration,
+  https://commitlint.js.org/reference/configuration; a lista dos ignorados, com `Merge branch` e
+  `Merge pull request`, está em `@commitlint/is-ignored/src/defaults.ts`).
+
 **`pre-commit`, por app, filtrado por pasta, com o alvo rápido** (X1, `DECISIONS.md` #113 C9): roda
-o `check` e a suíte **unitária** só do app que o commit toca. A suíte E2E fica no CI: precisa de
-banco e serviços em container e deixaria o hook lento o bastante para ser pulado com `--no-verify`.
+o `check` e a suíte **unitária** só do app que o commit toca; o `commit-msg` roda o commitlint. É o
+que roda em todo commit. A suíte E2E fica na sessão antes do PR (§7): precisa de banco e serviços em
+container e deixaria o hook lento o bastante para ser pulado com `--no-verify`.
+
+**Teste pesado na sessão, antes do PR** (`DECISIONS.md` #298): nenhum hook local (`pre-commit`,
+`pre-push`) roda suíte que precisa de banco, fila, bucket ou navegador: a funcional do backend
+(`node ace test` inteiro, Japa contra Postgres e MinIO), a de integração e a E2E (Playwright). Hook
+que roda a funcional inteira trava cada commit por minutos, e a resposta de quem espera é o
+`--no-verify`, que desliga também o lint. Elas rodam na sessão do agente, uma vez, com tudo pronto e
+antes de abrir o PR (§7), e o resultado vai no corpo do PR: o comando de cada suíte, quantos testes
+passaram e o tempo. Não existe GitHub Actions para rodá-las depois.
+
+**O deploy é observado, sempre**: depois do merge na `main`, o agente acompanha o deploy do Coolify
+até o fim (status do deploy pelo painel ou pela API dele) e roda a conferência de produção de §10.1.
+Deploy vermelho ou conferência que falha é tarefa do agente na hora (§10.3): lê o log do deploy,
+reproduz, corrige e abre outro PR. "Fiz o merge" não é "pronto" (§10.1).
 
 ```sh
 # .husky/pre-commit
@@ -620,18 +688,18 @@ touches() {
 }
 
 if touches shared; then
-  pnpm --filter ./shared check && pnpm --filter ./shared test:unit || exit 1
+  pnpm --filter ./shared check || exit 1
 fi
 if touches backend || touches shared; then
-  pnpm --filter ./backend check && pnpm --filter ./backend test:unit || exit 1
+  pnpm --filter ./backend check || exit 1
 fi
 if touches frontend || touches shared; then
-  pnpm --filter ./frontend check && pnpm --filter ./frontend test:unit || exit 1
+  pnpm --filter ./frontend check || exit 1
 fi
 ```
 
-Nome dos scripts, igual nos três pacotes: `check` (o de `backend.md` §10 no backend; Paraglide +
-lint + typecheck no frontend; lint + typecheck no `shared/`), `test:unit`, `test:e2e`. Mexer em
+Nome dos scripts, igual nos três pacotes: `check` (a fórmula de §7, que já roda `test:unit`),
+`test:unit`, `test:e2e`. Mexer em
 `shared/` testa os dois consumidores, porque é o contrato deles.
 
 **Autoria**: autor e committer de todo commit são `Jhollyfer Rodrigues <jhollyfer.fr@gmail.com>`
@@ -642,133 +710,126 @@ entrou assim é reescrito (autor + mensagem) e a branch recebe `--force-with-lea
 **Conflito de merge** se resolve pela intenção dos dois lados (commit e PR de cada um), nunca por
 `--abort` nem escolhendo um lado inteiro; depois, `check` e testes antes do commit de merge.
 
+**Agentes em paralelo não dividem a árvore** (`DECISIONS.md` #311). Cada subagente que edita
+trabalha numa worktree própria (`git worktree add <pasta> -b <branch> origin/main`, skill
+`superpowers:using-git-worktrees`), numa branch própria, e a worktree sai depois do merge. Commit é
+sempre com pathspec explícito (`git commit -- <arquivos>`), nunca `git add -A` nem `commit -a`:
+arquivo modificado que não é da tarefa é trabalho em andamento de outro agente, e fica como está até
+ele mesmo fazer o commit, com os testes dele. Commit por cima leva trabalho pela metade, sem teste, e
+atropela o que o outro ainda está escrevendo. Pasta de worktree nunca entra no índice
+(`.claude/worktrees/` no `.gitignore`, §9): versionada, ela vira gitlink sem `.gitmodules` e quebra o
+checkout de quem clona.
+
 **Guarda do agente** (`.claude/settings.json`, hook `PreToolUse`): bloqueia `git reset --hard`,
 `git clean -f`, `git branch -D`, `git checkout .`, `git restore .` e `git push --force` sem
 `--with-lease`. `git push` comum e `--force-with-lease` passam: o fluxo da casa empurra branch.
+Na sessão de nuvem, o modo automático do agente pode recusar até o `--force-with-lease`. Por isso a
+mensagem, o autor e o commit de merge saem certos **antes do primeiro push** (commitlint e a
+conferência da camada 3 rodam antes), e nada depende de reescrever a branch depois. Pelo mesmo
+motivo, o PR entregue para merge já tem todos os commits: commit empurrado depois que o dono fez o
+merge fica fora dele e vira outro PR (`DECISIONS.md` #310).
 
 ---
 
-## 7. Portões de CI *(opinião da casa)*
+## 7. Portões antes do PR *(opinião da casa)*
 
-Todo passo falha o job. Ordem pensada para reprovar cedo: o que é barato vem antes do que sobe
-container. **O CI nunca chama o `maiyu-pattern`**: nem clone, nem `sync:check`, nem script de lá
-(`backend.md` §11). A cópia da régua commitada no projeto basta.
+**Não há GitHub Actions em projeto da casa** (`DECISIONS.md` #298): nem CI de PR, nem workflow de
+push, de imagem ou de deploy. Os portões rodam em dois lugares. O hook local (§6) roda o `check` e a
+suíte unitária do app tocado em todo commit, e o commitlint na mensagem. A sessão do agente roda o
+resto, uma vez, antes de abrir o PR, e o resultado vai no corpo dele. O merge na `main` dispara o
+*Auto Deploy* do Coolify (§8.3). **Nada disso chama o `maiyu-pattern`**: nem clone, nem
+`sync:check`, nem script de lá (`backend.md` §11). A cópia da régua commitada no projeto basta.
 
-**Comum a todo job**: `actions/checkout`, `pnpm/setup` (instala o pnpm na versão de
-`devEngines.packageManager` **e** o Node pelo `runtime`, sem `actions/setup-node`; `cache: true`
-guarda o store) e `pnpm install --frozen-lockfile` na raiz, explícito (`install: false` na action)
-para o passo aparecer no log (_doc-lib/pnpm.md#continuous-integration). Action pinada por SHA (§9).
-A v3 instala o pnpm travado no `pnpm-lock.yaml` quando o `devEngines` dá faixa; a v2 baixava o último
-da faixa e reprovava a própria conferência quando o pnpm trocava para a versão do lock. Lockfile desincronizado é erro de CI, nunca resolvido por um install que reescreve o lock.
+Antes de tudo, `pnpm install --frozen-lockfile` na raiz. Lockfile desincronizado é erro, nunca
+resolvido por um install que reescreve o lock. Filtro de app com `--fail-if-no-match` (§1): sem ele,
+caminho errado não casa com projeto nenhum e o passo sai verde sem rodar nada.
 
-```yaml
-- uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
-  with:
-    runtime: node@24
-    cache: true
-    install: false
-- run: pnpm install --frozen-lockfile
+As suítes rodam com `CI=1` no ambiente do comando. É a variável que liga o `forbidOnly` e o
+`reuseExistingServer: false` do Playwright e o `disallowPinnedTests` do Japa (§10.1): teste fixado
+ou `.only` esquecido reprova a rodada em vez de rodar só ele. A leitura é sempre
+`Boolean(process.env.CI)` (`disallowPinnedTests({ disallow: Boolean(process.env.CI) })`): comparar
+com `=== 'true'` não liga com `CI=1` (`DECISIONS.md` #350).
+
+**Fórmula do `check`, uma por app** (`DECISIONS.md` #338). É a única: o hook (§6), `backend.md` §10 e
+os passos abaixo apontam para cá.
+
+```
+backend  = build:deps + format:check + lint + typecheck + openapi:check + pattern:check
+           + authz:check (+ validators:check no Adonis) + test:unit
+frontend = build:deps + i18n:compile + i18n:check + lint + typecheck + format:check + test:unit
+shared   = lint + typecheck + test:unit
 ```
 
-Filtro de app nos passos abaixo com `--fail-if-no-match` (§1): sem ele, caminho errado não casa com
-projeto nenhum e o passo sai verde sem rodar nada.
+**Backend**, na ordem:
 
-**Backend** (`main-check-backend.yml`):
+1. `pnpm --filter ./backend check`: a fórmula acima
+2. `pnpm --filter ./backend depcruise`: direção das camadas e ciclo (`domain.md` §8)
+3. serviços de pé pelo `docker compose -f backend/docker-compose.yml up -d` (§8.4), com a espera
+   pelo **estado** (o banco aceita conexão, o bucket existe e responde), não por `sleep`
+4. `pnpm --filter ./backend test:e2e` *(teste)* contra esses serviços, nunca contra ambiente
+   compartilhado
+5. `pnpm --filter ./backend di:check` (boota a aplicação; usa os mesmos serviços)
+6. `pnpm --filter ./backend build`: typecheck de dev e build de produção usam configs diferentes o
+   bastante para um passar e o outro falhar
 
-1. `pnpm --filter ./backend lint`
-2. `pnpm --filter ./backend typecheck`
-3. `pnpm --filter ./backend pattern:check && pnpm --filter ./backend authz:check` (`backend.md` §10)
-4. `pnpm --filter ./backend depcruise`: direção das camadas e ciclo (`domain.md` §8)
-5. `openapi:check` (`openapi:generate --check --strict`): documento commitado desatualizado ou
-   operação sem resposta reprova (`openapi.md`)
-6. `pnpm --filter ./backend test:unit`
-7. serviços de pé: banco (Postgres ou Mongo) e Redis como `services:` com `--health-cmd`; o que
-   precisa de `command` (MinIO) sobe por `docker run` num passo, e a espera é pelo **estado** (o
-   bucket existe e responde), não por `sleep`
-8. `pnpm --filter ./backend test:e2e`, contra esses serviços, nunca contra ambiente compartilhado
-9. `pnpm --filter ./backend di:check` (boota a aplicação; fica no job que já tem os serviços)
-10. `pnpm --filter ./backend build`: typecheck de dev e build de produção usam configs diferentes o
-    bastante para um passar e o outro falhar
+**Frontend**, na ordem:
 
-**Frontend** (`main-check-frontend.yml`; no `main.yml`, `main-build-frontend.yml` repete estes
-passos e publica o `.output` como artifact):
-
-1. Paraglide compila as mensagens (`src/paraglide/` não é versionado, `i18n.md`), antes de tudo que
-   lê tipo. O compilador baixa os plugins declarados em `modules` do `project.inlang/settings.json`,
-   que são URLs do jsDelivr: o job precisa de rede para `cdn.jsdelivr.net`, e cada URL leva a versão
-   fixada, nunca `@latest` (_doc-lib/paraglide.md#/file-formats). Atualizar o plugin é PR como
-   qualquer dependência (§0)
-2. `npx @inlang/cli check --project ./project.inlang` (versão da devDependency, por `pnpm exec`):
-   tradução faltando, variável e plural faltando, mensagem sem uso (`i18n.md` §4)
-3. `lint`
-4. `typecheck`: o `tsc --noEmit` do frontend inclui `e2e/` no `include` do `tsconfig.json`. O runner
-   do Playwright não checa tipo e roda o teste mesmo com erro de compilação
-   (_doc-lib/playwright.md#docs/test-typescript)
-5. `prettier --check .`
-6. `test:unit` (Vitest, `src/**/*.test.{ts,tsx}`, `architecture.md` §8)
-7. `build`, e depois `node scripts/check-chunk-cycles.mjs`, que lê `.output/server` e reprova ciclo
-   de chunk que quebra o SSR
-8. **Playwright** (`test:e2e`) em job próprio, **em paralelo** ao `check` (sem `needs`: o job faz
-   o próprio build), com o backend em container (banco e serviços como no job do backend):
-   `pnpm exec playwright install --with-deps chromium`, sem cache de navegador (a doc não
-   recomenda); **matriz por projeto de viewport** (`strategy.matrix.project: [mobile, tablet,
-   desktop]`, `fail-fast: false`), um job e um banco por projeto, com
-   `pnpm exec playwright test --project=${{ matrix.project }} --workers=1 --add-reporter=github`
-   (o `--project` puxa o `setup` e o teardown pelas `dependencies`,
-   _doc-lib/playwright.md#docs/test-projects); relatório HTML como artifact
-   `playwright-report-<projeto>` com `if: ${{ !cancelled() }}`, para chegar também quando o teste
-   falha (_doc-lib/playwright.md#docs/ci, #docs/ci-intro). O Playwright roda **só no PR**: o
-   reutilizável recebe `e2e: false` no `main.yml`, que já entra com o PR provado
+1. `pnpm --filter ./frontend check`: a fórmula acima. O `i18n:compile` é o Paraglide compilando as
+   mensagens (`src/paraglide/` não é versionado, `i18n.md`); o `i18n:check` é o `inlang check` pela
+   devDependency (tradução, variável e plural faltando, mensagem sem uso, `i18n.md` §4); o typecheck
+   (`tsc --noEmit`) inclui `e2e/`, porque o runner do Playwright não checa tipo
+   (_doc-lib/playwright.md#docs/test-typescript); o `format:check` é o `prettier --check .`; o
+   `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` (`architecture.md` §8). O compilador do Paraglide baixa os plugins
+   declarados em `modules` do `project.inlang/settings.json`, que são URLs do jsDelivr com a versão
+   fixada, nunca `@latest` (_doc-lib/paraglide.md#/file-formats): quem roda precisa de rede para
+   `cdn.jsdelivr.net`
+2. `build`, depois `git diff --exit-code src/routeTree.gen.ts` e `node scripts/check-chunk-cycles.mjs`,
+   que lê `.output/server` e reprova ciclo de chunk que quebra o SSR
+3. **Playwright** (`test:e2e`) *(teste)* com o backend do passo 3 de pé:
+   `pnpm exec playwright install --with-deps chromium` na primeira vez, depois
+   `pnpm exec playwright test` com os três projetos de viewport (`mobile`, `tablet`, `desktop`; o
+   `--project` puxa o `setup` e o teardown pelas `dependencies`, _doc-lib/playwright.md#docs/test-projects)
+   e `--workers=1`. Relatório HTML em `playwright-report/`, fora do git
 
 `playwright.config.ts` da casa (_doc-lib/playwright.md#docs/test-configuration):
 `forbidOnly: Boolean(process.env.CI)`, `retries: 0` (padrão da biblioteca; retry sem condição
 transforma teste quebrado em intermitente, _doc-lib/playwright.md#docs/test-retries; teste instável
-é bug com tarefa), `globalTimeout` sempre definido (sem ele a execução não tem teto, e o job morto
-pelo provedor não gera relatório; `timeout-minutes` do job, se houver, fica acima dele,
+é bug com tarefa), `globalTimeout` sempre definido (sem ele a execução não tem teto,
 _doc-lib/playwright.md#docs/test-timeouts), `trace: 'retain-on-failure'`,
 `screenshot: 'only-on-failure'`, `baseURL` e credenciais por env sem default (`E2E_OWNER_PASSWORD`,
 como o seeder), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
 `[['html', { open: 'never' }]]`. Fluxo crítico roda `@axe-core/playwright` e reprova violação séria
-ou crítica (_doc-lib/playwright.md#docs/accessibility-testing).
+ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
+projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
 
-- **`workers` no CI** *(opinião da casa sobre a doc)*: `--workers=1` no passo, como a doc recomenda
-  para runner hospedado; a config fica sem ternário (`typescript.md` §13). Paralelismo maior vem por
-  job, não por worker: primeiro a matriz por projeto (cada teste roda num job só, então o `github`
-  não se multiplica).
-- **Shard** (`--shard=x/y`) só quando um projeto sozinho passar do tempo aceitável: cada shard com
-  reporter `blob` e um job final com `merge-reports`; o `github` sai nesse caso, porque a anotação
-  se multiplica (_doc-lib/playwright.md#docs/test-sharding, #docs/test-reporters).
+**`shared/`**: `check` *(teste)*, antes do backend.
 
-**PR que só mexe em texto não roda a suíte.** O `ci.yml` tem um job `changes` que lista os arquivos
-do PR (`git diff --name-only base...head`) e só chama `main-check-backend` e `main-check-frontend`
-quando algum arquivo **não** casa com `*.md`, `docs/`, `_standards/`, `_doc-lib/`, `.claude/` ou
-`_templates/`. Sem filtro de terceiro: é shell no próprio job. O job pulado aparece como *skipped*,
-o que satisfaz o check obrigatório (página oficial do GitHub não conferida). O job `repository`
-(autoria, audit, segredo) roda sempre.
-
-**`shared/`**: `check` + `test:unit` no mesmo workflow do backend, antes dele.
-
-**Repositório inteiro** (`ci.yml`):
+**Repositório inteiro**:
 
 - `pnpm audit --prod --audit-level=high` reprova vulnerabilidade alta em dependência de produção;
   dev tool fica fora do portão. Correção é atualização revisada (§0), nunca `audit fix` automático.
-- Varredura de segredo no diff (secret scanning do GitHub ou `gitleaks`). *Sem `_doc-lib`.*
-- `commitlint` em workflow próprio (`commitlint.yml`), gatilho `pull_request`, `fetch-depth: 0`,
-  `--from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }}`,
-  versão da devDependency (`pnpm exec`, nunca `npx commitlint@N`). Mensagem inválida não espera
-  nem bloqueia a suíte.
-- Vitrine pública (opcional): Lighthouse CI em workflow próprio contra 2 ou 3 URLs, como o
-  commitlint, para não segurar o build.
+- Varredura de segredo no diff da branch (`gitleaks` ou o secret scanning do GitHub). *Sem `_doc-lib`.*
+- Título e branch do PR pela conferência de §6.
 
-**ENV no passo, não no job.** Variável de placeholder que só um passo precisa (o `openapi:check`
-boota a aplicação e valida `start/env.ts`) vai no `env:` **daquele passo**. No job inteiro ela
-venceria o `.env.test` dos passos seguintes, porque variável de processo tem precedência sobre
-arquivo, e a suíte apontaria para um banco que não existe. Segredo real vem de `secrets.*`, só no
-passo que o usa. Valor de segredo nunca aparece escrito no workflow, nem como default de
-placeholder que funcione em produção (chave de teste do provedor, senha de seed).
+**PR que só mexe em texto não roda as suítes.** Se nenhum arquivo do diff fugir de `*.md`, `docs/`,
+`_standards/`, `_doc-lib/`, `.claude/` ou `_templates/`, o corpo do PR diz "só texto, sem suíte".
 
-**CI vermelho**: ler o log do job (`gh run view <id> --log`), achar o trecho que falhou, e só então
-mexer. Nunca re-run cego, nunca ramo `if (process.env.CI)` para passar.
+**ENV das suítes vem do `.env.test`.** Variável de processo vence o arquivo: exportar placeholder no
+shell da sessão faz a suíte apontar para um banco que não existe. Valor de segredo nunca aparece
+escrito em script nem como default que funcione em produção (chave de teste do provedor, senha de
+seed).
+
+**Uma execução de suíte por vez contra o mesmo banco de teste** *(opinião da casa, `DECISIONS.md`
+#304)*. A funcional migra no começo e limpa as tabelas entre testes (`testUtils.db().truncate()`,
+_doc-lib/adonisjs.md#guides/testing/resetting-state-between-tests): duas execuções juntas, ou um
+`node ace test` órfão de uma rodada interrompida, se atropelam, e a suíte cai com lock de migration
+e tabela sumindo no meio, sem defeito no código. Antes de rodar, `pgrep -af 'ace test'` sai vazio;
+processo que sobrou morre antes. Sessão cujo container reiniciou perdeu os serviços que subiu: o
+compose (ou o banco e o S3 locais) sobe de novo, com a espera pelo estado do passo 3, e o bucket só
+se cria depois que o S3 responde.
+
+**Suíte vermelha**: ler a saída, achar o trecho que falhou, e só então mexer. Nunca rodar de novo às
+cegas, nunca ramo `if (process.env.CI)` para passar.
 
 **Hook `SessionStart`** do agente (sessão na nuvem), quando o projeto tiver: idempotente, não
 interativo, e validado rodando lint num arquivo e um teste.
@@ -777,61 +838,35 @@ interativo, e validado rodando lint num arquivo e um teste.
 
 ## 8. Entrega *(opinião da casa)*
 
-### 8.1 Workflows
+### 8.1 Sem workflows; código comum pelo sync
 
-```
-.github/workflows/
-├── ci.yml                    # pull_request → main: chama main-check-backend e main-check-frontend
-├── commitlint.yml            # pull_request
-├── main.yml                  # push em main: orquestra os reutilizáveis
-├── main-check-backend.yml    # workflow_call (§7)
-├── main-check-frontend.yml   # workflow_call (§7)
-├── main-build-frontend.yml   # workflow_call: §7 + carimbo de revisão + artifact .output
-├── main-docker-backend.yml   # workflow_call
-├── main-docker-frontend.yml  # workflow_call
-└── main-deploy-coolify.yml   # workflow_call
-```
+**O repositório não tem `.github/workflows/`** (`DECISIONS.md` #298). Teste e conferência rodam no
+hook e na sessão (§6, §7); quem constrói e publica é o Coolify, que puxa o commit da `main` pelo
+GitHub App dele e constrói cada app pelo `Dockerfile-production` (§8.2, §8.3). O sync apaga a pasta
+`.github/workflows/` que o projeto ainda tiver e avisa para tirar o check do Actions da proteção de
+branch (§9) e apagar os secrets do Actions.
 
-**Os nove arquivos são iguais em todo projeto da stack** e moram em `_templates/workflows/`, com o
-nome do projeto (`name` do `package.json` da raiz) como `__PROJECT__`. O `sync-to-project.mjs` grava em
-`.github/workflows/` e o `--check` reprova divergência (`workflow-diverge:`): workflow não se edita no
-projeto, muda aqui (`DECISIONS.md` #279). O que varia por projeto fica fora do YAML: secrets do §8.3,
-inclusive `VITE_API_URL` e `VITE_SITE_URL` (sem barra final, lidos pelo build de produção e pelo
-smoke test, `DECISIONS.md` #283) e o `backend/.env.test`.
+**Código que tem de ser igual em todo projeto da stack** mora em `_templates/code/<caminho>`: o sync
+grava em `<caminho>` no projeto e o `--check` reprova divergência (`code-diverge:`). Só o arquivo que
+existe ali é cobrado; o resto do projeto continua dele. Bug achado num projeto num arquivo desses se
+corrige aqui e volta para todos (`DECISIONS.md` #280).
 
-O mesmo vale para **código** que tem de ser igual em todo projeto da stack: mora em
-`_templates/code/<caminho>`, o sync grava em `<caminho>` no projeto e o `--check` reprova divergência
-(`code-diverge:`). Só o arquivo que existe ali é cobrado; o resto do projeto continua dele. Bug achado
-num projeto num arquivo desses se corrige aqui e volta para todos (`DECISIONS.md` #280).
-
-**Perfil sem `backend/`** (`DECISIONS.md` #286). O projeto que só tem `frontend/` (site sem API, sem
-E2E contra backend e sem MinIO) não usa os nove arquivos: o sync detecta a falta do diretório
-`backend/` e grava sete. São os de `workflows/` sem `main-check-backend.yml` e
-`main-docker-backend.yml`, com `ci.yml`, `main.yml`, `main-check-frontend.yml`,
-`main-build-frontend.yml` e `main-deploy-coolify.yml` trocados pelos de
-`_templates/workflows-frontend/`. A troca tira só o que depende do backend (job de backend, build
-de `shared/`, job de E2E com Postgres e MinIO, `VITE_API_URL`, `COOLIFY_API_UUID` e o smoke test de
-`/health-check`); pins de action, permissões e o resto são os mesmos. O fluxo do `main.yml` vira
-`build-frontend` → `docker-frontend` → `deploy`. O `--check` cobre o mesmo conjunto: arquivo de
-backend num projeto assim aparece como `workflow-diverge: ... a mais` e o sync o remove. Quem nasce
-sem `backend/` e ganha um depois passa ao conjunto completo no sync seguinte.
-
-`main.yml`: `check-backend` ∥ `build-frontend` → `docker-backend` ∥ `docker-frontend` → `deploy`.
-O deploy espera as **duas** imagens: implantar o frontend contra uma API que não passou é publicar
-meia versão. O PR e o push chamam o **mesmo** reutilizável de check: o PR não passa por uma régua
-diferente da do deploy. A única diferença é o Playwright, que roda só no PR (`e2e: false` no
-push): o merge entra com o E2E já provado, e repeti-lo atrasa o deploy em uns dez minutos.
+- **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
+- **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,
+  com a *branch* `develop`, *Auto Deploy* e domínio e variáveis próprios; a régua não a exige.
 
 ### 8.2 Imagem Docker
 
-`Dockerfile-production` em cada app, **construído a partir da raiz do workspace** (para enxergar
-`shared/` e o lockfile único): `docker build -f backend/Dockerfile-production .`.
+`Dockerfile-production` em cada app, **que constrói sozinho** e **a partir da raiz do workspace**
+(para enxergar `shared/` e o lockfile único): `docker build -f backend/Dockerfile-production .`. O
+Coolify constrói direto do Git (§8.3) e não recebe artefato de fora, então o Dockerfile instala, compila
+e empacota tudo, sem depender de `.output/`, `build/` ou `dist/` vindos de fora (`DECISIONS.md` #290).
 
 - Multi-stage sobre `node:24-alpine`, fixado por digest (`node:24-alpine@sha256:<digest>`) e atualizado
   pelo Dependabot (§9), porque tag móvel muda o que foi auditado sem commit (skill `security-audit`,
   SUPPLY-CHAIN-AND-RELEASE.md); o pnpm entra pelo caminho da página de instalação, sem
   Corepack (`npx get-pnpm`), e troca para a versão de `devEngines.packageManager` no primeiro uso,
-  a mesma do CI (_doc-lib/pnpm.md#installation, #docker). A doc também aceita partir da imagem
+  a mesma do hook local (_doc-lib/pnpm.md#installation, #docker). A doc também aceita partir da imagem
   `ghcr.io/pnpm/pnpm`; a casa fica com a imagem do Node *(opinião da casa)*, uma base só para os
   dois estágios.
 - Estágio de build: copia `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` (carrega o
@@ -841,6 +876,8 @@ push): o merge entra com o E2E já provado, e repeti-lo atrasa o deploy em uns d
   app e o `dist/` do `shared/` no `node_modules`, sem dev tool, _doc-lib/pnpm.md#cli/deploy). É assim
   que o `shared/` entra em produção: dentro da imagem do app, nunca como imagem ou pacote próprio
   (§1).
+- `HUSKY=0` no `install` do estágio de build: na imagem o hook não serve, e o `prepare` não roda o
+  Husky (_doc-lib/husky.md#how-to.html, `DECISIONS.md` #337).
 - Variável que o build exige só para validar o schema de ENV entra como placeholder **no estágio de
   build**; segredo de placeholder (`APP_KEY`) vai inline no `RUN`, nunca em `ENV`, que vira
   metadado da imagem.
@@ -871,84 +908,78 @@ push): o merge entra com o E2E já provado, e repeti-lo atrasa o deploy em uns d
   log do deploy.
 - Nunca `--inspect`, `--insecure-http-parser` ou `insecureHTTPParser` em `CMD`, `NODE_OPTIONS` ou
   config de produção.
-- Frontend: Nitro com preset node (_doc-lib/nitro.md#deploy/runtimes/node); a imagem empacota o
-  `.output` do artifact do build.
-- Publicação (`docker/build-push-action`): multi-arch `linux/amd64,linux/arm64`, cache
-  `type=gha` com `scope` por app, tags `latest` **e** o SHA do commit. A tag SHA é o que torna o
-  rollback um redeploy, não um rebuild. `context: .` (a raiz) e `file: backend/Dockerfile-production`:
-  com o contexto na pasta do app o Docker não enxerga `shared/` nem o lockfile.
+- Frontend: Nitro com preset node (_doc-lib/nitro.md#deploy/runtimes/node). O estágio de build
+  faz o mesmo que o backend com `{./frontend}...`: `pnpm install --frozen-lockfile`, o build do
+  `shared/`, `i18n:compile` (o compilador do Paraglide baixa os plugins do jsDelivr: o servidor do
+  Coolify precisa alcançar `cdn.jsdelivr.net`, §7) e o `build` do app. O estágio final leva só o
+  `.output/`, com `USER node` e o `HEALTHCHECK` acima.
+- **`VITE_*` de produção vêm do `frontend/.env.production` versionado**, só com valor público
+  (`backend.md` §6, `frontend.md`): o Vite lê o arquivo no build em modo `production`
+  (_doc-lib/vitejs.md#env-and-mode), e é assim que o endereço da API entra no bundle sem build arg
+  nem secret. Antes do `build`, o estágio de build reprova `VITE_API_URL` ou `VITE_SITE_URL` vazia,
+  sem `https://` ou com barra no fim: imagem que fala com `localhost` ou com http não sai.
 - **`.dockerignore` na raiz**, um para as duas imagens, com a lista da página do pnpm
-  (_doc-lib/pnpm.md#docker): `node_modules`, `.git`, `.gitignore`, `*.md`, `dist`, mais `.output`,
-  `coverage` e `.env*`. O `dist` fica de fora para a imagem compilar o `shared/` do código, e não
-  levar um `dist/` velho da máquina de quem rodou o build.
-- **Coolify que constrói do Git** (em vez de puxar a imagem do CI): *Base Directory* `/` e
-  *Dockerfile Location* `/backend/Dockerfile-production` (ou `/frontend/...`). O Coolify usa a
-  *Base Directory* como contexto do build e lê o Dockerfile relativo a ela; com `/backend` ali, o
-  `COPY shared/` falha. Em *Watch Paths*, `backend/**`, `shared/**`, `pnpm-lock.yaml` e
-  `pnpm-workspace.yaml`, para mudança no `shared/` redeployar os dois apps e mudança só no
-  frontend não redeployar a API. *(Doc do Coolify, `coollabsio/coolify-docs@3b7c416`:
-  `applications/builds/dockerfile`, `applications/configuration/general`,
-  `applications/deployments/automatic-deployments`; sem entrada em `_doc-lib/` ainda.)*
+  (_doc-lib/pnpm.md#docker) em padrões `**/`, para valer em todo pacote: `**/node_modules`, `**/.git`,
+  `**/*.md`, `**/dist`, mais `**/.output`, `**/build`, `**/coverage` e `**/.env*`, com a exceção
+  `!frontend/.env.production` (modelo em `_templates/code/root/.dockerignore`, `DECISIONS.md` #327), a única de ambiente que
+  entra no contexto. `dist`, `build` e `.output` ficam de fora para a imagem compilar do código, e
+  não levar um artefato velho da máquina de quem rodou o build; `.env` de verdade, com segredo, nunca
+  entra.
+- Sem publicação em registry: a imagem nasce e fica no servidor do Coolify. Multi-arch, cache
+  `type=gha` e tag por SHA no Docker Hub saíram com os workflows (`DECISIONS.md` #290, #298).
 
-### 8.3 Deploy e prova de revisão
+### 8.3 Deploy pelo Coolify
 
-- Disparo do Coolify por `curl -sS -X POST .../api/v1/deploy -o <arquivo> -w '%{http_code}'`
-  (`GET` responde 405): status fora de 2xx reprova **imprimindo o status e os primeiros 300
-  caracteres do corpo** (a mensagem do Coolify ou o HTML de quem respondeu), nunca `-f` sozinho, que
-  esconde o corpo e deixa um 404 sem causa. A resposta **precisa** conter `deployment_uuid`: sem
-  ele o pedido foi aceito e nada foi enfileirado (uuid errado ou sem alcance pelo token).
-- **Endereço e alvo do deploy em secret, nunca no workflow.** O repositório tem estes secrets
-  no GitHub Actions, com estes nomes:
+**O Coolify constrói e publica; o repositório não tem passo de deploy** (`DECISIONS.md` #290). Cada
+app (API, frontend e, quando houver, o worker da fila) é um recurso *Application* no Coolify,
+configurado assim:
 
-  | Secret | Valor |
-  |---|---|
-  | `DOCKERHUB_USERNAME` | usuário do Docker Hub (imagens `<usuário>/<projeto>-api` e `-app`) |
-  | `DOCKERHUB_TOKEN` | access token do Docker Hub, com escrita |
-  | `COOLIFY_URL` | base do **painel** do Coolify, sem caminho (`https://coolify.<domínio>`) |
-  | `COOLIFY_TOKEN` | token de API do Coolify, com permissão de deploy |
-  | `COOLIFY_API_UUID` | UUID da aplicação da API (fim da URL da aplicação no painel) |
-  | `COOLIFY_APP_UUID` | UUID da aplicação do frontend |
+| Campo do recurso | Valor |
+|---|---|
+| Origem | repositório privado pelo **GitHub App** do Coolify (não deploy key nem token pessoal) |
+| *Branch* | `main` (homologação, se houver: outro recurso com `develop`, §8.1) |
+| *Build Pack* | `Dockerfile` |
+| *Base Directory* | `/` (a raiz: com `/backend` o `COPY shared/` falha, porque o contexto do build é a *Base Directory*) |
+| *Dockerfile Location* | `/backend/Dockerfile-production` ou `/frontend/Dockerfile-production` |
+| *Watch Paths* | um padrão por linha (vírgula não separa): `backend/**` (ou `frontend/**`), `shared/**`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, relativos à raiz do repositório e não à *Base Directory*: mudança no `shared/` redeploya os dois, mudança só no frontend não redeploya a API. Provados com um commit só de documentação antes de confiar neles (`DECISIONS.md` #355) |
+| *Auto Deploy* | ligado: o push do merge na `main` dispara o build. No Coolify 4.6 fica em *Advanced* → *Deployment* e só aparece em recurso com origem Git |
+| *Pre-deployment command* | vazio (§8.2: roda no container que sai, antes do build) |
+| *Post-deployment command* | API: `node ace migration:run --force && node ace db:seed --force`, nunca `migration:refresh`, `reset` nem `fresh` (`backend.md` §4.13; seeder que roda a cada deploy, `backend.md` §6.2); frontend: vazio |
+| *Health Check* | vazio: vale o `HEALTHCHECK` da imagem, que aponta para `/health-check` (`architecture.md` §7; _doc-lib/coolify.md#applications/configuration/health-checks, `DECISIONS.md` #328) |
+| Variáveis | as de runtime (`DATABASE_URL`, `APP_KEY`, `COOKIE_DOMAIN`, `TRUSTED_PROXIES`...), no recurso, nunca no repositório; o frontend não precisa de nenhuma de build, porque os `VITE_*` vêm do `.env.production` (§8.2). `NODE_ENV` sem *Available at Buildtime*: marcada, ela entra no build como `production` e o `pnpm install` do estágio de build pula as `devDependencies` que compilam o app |
 
-  O `main.yml` repassa cada um ao workflow reutilizável, que os declara `required`. O passo de
-  deploy tira espaço e quebra de linha de cada valor (`tr -d '[:space:]'`: secret colado com `\n`
-  vira header quebrado), reprova com o nome do secret vazio e com `COOLIFY_URL` que traga caminho
-  (`/api`), antes do `curl`, e monta o endpoint como `${COOLIFY_URL%/}/api/v1/deploy`. URL ou UUID escrito no YAML é desvio: o host do site no lugar
-  do painel responde a rota com o HTML de 404 do app, e o deploy nunca chega ao Coolify.
-- **Endereços públicos em secrets de Actions, criados antes do primeiro push na `main`.** O build
-  de produção embute `VITE_API_URL` e `VITE_SITE_URL` no bundle e o smoke test as lê. Ficam junto
-  dos demais valores do deploy, na aba **Secrets** do repositório (Settings, Secrets and
-  variables, Actions, Secrets), com estes nomes:
+*(_doc-lib/coolify.md, "Decisões que a doc impõe": `#applications/configuration/general`,
+`#applications/deployments/automatic-deployments`, `#applications/configuration/health-checks`,
+`#applications/sources/github/app`. Onde esta régua diz "pré-deploy", o campo do Coolify é o
+*Post-deployment command*, `DECISIONS.md` #355.)*
 
-  | Secret | Valor |
-  |---|---|
-  | `VITE_API_URL` | `https://` + endereço público da API, sem barra no fim |
-  | `VITE_SITE_URL` | `https://` + endereço público do site, sem barra no fim |
-
-  O `main.yml` repassa os dois ao `main-build-frontend.yml` (que os passa ao
-  `main-check-frontend.yml`) e ao `main-deploy-coolify.yml`; o PR não os usa e builda com os
-  endereços locais. O passo "Endereços de produção" reprova secret vazio, sem `https` ou com
-  barra final, antes do build; reprovando, o deploy não roda (o `deploy-to-coolify` espera o
-  build e as duas imagens). Os valores de produção de cada projeto moram no `docs/ENV.md` dele, e
-  o repositório nunca os escreve no YAML. Não existem em *Variables*: o workflow lê só
-  `secrets.`, e um valor criado na aba errada chega vazio. Workflow novo vindo do sync num projeto
-  que ainda não tem os secrets fica vermelho na primeira `main`: o sync avisa disso ao gravar os
-  workflows.
-- **Perfil sem `backend/`** (§8.1, `DECISIONS.md` #286): valem só `DOCKERHUB_USERNAME`,
-  `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL`. Não existem
-  `COOLIFY_API_UUID` nem `VITE_API_URL`; o `main-deploy-coolify.yml` dispara só o app e o passo
-  "Endereço de produção" confere só `VITE_SITE_URL`. O disparo e a prova abaixo valem iguais, sem a
-  parte da API: o smoke test termina em `VITE_SITE_URL/revision.txt` igual a `GITHUB_SHA`.
-- O disparo é assíncrono, então o job termina num **smoke test**: a API responde `200` em
-  `/health-check`, e o app serve `/revision.txt` com corpo **igual a `GITHUB_SHA`**. Conferência pelo
-  corpo, nunca pelo status: o catch-all de SSR responde `200` com HTML para arquivo ausente.
-  Tentativas com intervalo e teto (dois minutos), imprimindo tipo e primeiros bytes da resposta
-  errada.
-- `revision.txt` é carimbado **antes** do build, em `frontend/public/`; o Nitro serve `public/` por
-  um manifesto congelado no build, e arquivo escrito depois cai no catch-all
-  (_doc-lib/nitro.md#docs/assets). O build confere a entrada no manifesto
-  (`grep '"/revision.txt"' .output/server/index.mjs`) e reprova sem ela.
+- **Sem secret de deploy no Actions.** `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`,
+  `COOLIFY_TOKEN`, `COOLIFY_API_UUID`, `COOLIFY_APP_UUID`, `VITE_API_URL` e `VITE_SITE_URL` deixam de
+  existir no repositório: projeto que os tem apaga em Settings, Secrets and variables, Actions. O
+  endereço público de cada app mora no `docs/ENV.md` (e, o do bundle, no `frontend/.env.production`).
+- **A prova do deploy é o healthcheck do Coolify.** O deploy só troca o container quando o novo
+  responde `/health-check`; reprovando, o antigo fica no ar e o deploy aparece como falho no painel.
+  O agente acompanha o deploy até o fim pelo painel ou pela API do Coolify (lista de deployments da
+  aplicação, status `finished`) e confere `curl -fsS <endereço público>/health-check` de cada app
+  (§10.1).
+- **Perfil sem `backend/`** (§8.1, `DECISIONS.md` #286): um recurso só, o do frontend, com o mesmo
+  quadro sem *Post-deployment command*.
+- **Troca de recurso** (de *Docker Image* para repositório, ou qualquer recurso novo no lugar de um
+  antigo) segue esta lista, na ordem (`DECISIONS.md` #296):
+  1. copiar **todas** as variáveis do recurso antigo, uma a uma (`COOKIE_DOMAIN`, `CORS_ORIGINS`,
+     `TRUSTED_PROXIES`, `REDIS_URL`, as de SMTP e de storage...), conferindo com `docs/ENV.md`;
+     variável esquecida não reprova o build, só o comportamento;
+  2. configurar o recurso novo pelo quadro acima (*Post-deployment*, *Watch Paths*, *Auto Deploy*,
+     *Health Check* vazio, `NODE_ENV` só em runtime);
+  3. **parar e remover o recurso antigo** antes de apontar o domínio para o novo. Dois containers com
+     o mesmo domínio dividem as requisições no Traefik e misturam configuração: metade do tráfego
+     cai no antigo, com as variáveis velhas, e o defeito parece intermitente;
+  4. rodar a conferência de produção de §10.1.
+  *(Coolify 4.6, lido no painel; página oficial não conferida.)*
 - **Rollback decidido antes do deploy.** Toda entrega com migration registra no PR (ou na linha de
-  `docs/TASKS.md`) o gatilho de rollback e o passo: redeploy da tag SHA anterior. Isso só funciona se
+  `docs/TASKS.md`) o gatilho de rollback e o passo: no Coolify, a aba *Rollback* do recurso, com as
+imagens anteriores guardadas no servidor, ou o redeploy do commit anterior (página oficial não
+conferida). Isso só funciona se
   a migration for compatível com a imagem anterior (expandir, migrar, contrair); passo destrutivo
   (apagar coluna, tabela) é deploy à parte, depois que a versão nova se provou.
 - O que a plataforma faz e o repositório não (comando de migration do deploy, `COOKIE_DOMAIN`, worker de fila,
@@ -957,19 +988,42 @@ push): o merge entra com o E2E já provado, e repeti-lo atrasa o deploy em uns d
 
 - **Banco e Redis sem porta pública.** Postgres, Mongo e Redis no Coolify ficam só na rede interna;
   Redis com senha no `REDIS_URL`; `docs/ARCHITECTURE.md` lista cada porta pública e o motivo
-  (skill `security-audit`, CLOUD-AND-DEPLOYMENT.md).
+  (skill `security-audit`, CLOUD-AND-DEPLOYMENT.md). No Coolify (`DECISIONS.md` #295): o
+  `REDIS_URL` (e o `DATABASE_URL`) usa a URL **interna** que o Coolify mostra no recurso, com o
+  banco e a API na mesma rede (mesmo projeto e ambiente, ou a rede do Docker ligada no recurso);
+  nenhum mapeamento de porta do Redis para o host (nada de `3000:6379` nas portas do recurso); e nada de
+  `--cap-add SYS_ADMIN` nem outra capacidade extra nas opções do container. Com `REDIS_URL` presente,
+  o recurso do worker (`node ace queue:work`, mesmo repositório e `Dockerfile-production` da API,
+  sem healthcheck HTTP e sem domínio) existe antes do deploy que liga a fila (`backend.md` §4.12).
+  (_doc-lib/coolify.md#databases.)
 
 ### 8.4 `docker-compose.yml`
 
 Só infraestrutura local (banco, Redis, MinIO, SMTP de teste), em `backend/`. A aplicação roda
-fora dele (`pnpm dev`). Portas próprias por projeto, para dois projetos subirem juntos na mesma
-máquina; nome de container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta
+fora dele (`pnpm dev`). Portas próprias por projeto, pela tabela abaixo, para dois projetos subirem juntos na mesma
+máquina, sempre com bind em `127.0.0.1` (`127.0.0.1:5433:5432`), nunca na rede toda; nome de container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta
 ou sem tag de versão).
+Postgres é o 18 (`postgres:18-alpine`).
+
+**Portas da casa** (`DECISIONS.md` #355). Projeto novo pega a próxima linha livre; interclasse e
+curupira mudam de porta, porque colidiam com academy e aporta:
+
+| Projeto | Banco | Storage (S3) | Console | Redis ou outro |
+|---|---|---|---|---|
+| simple-hub | 5432 | 9000 | 9001 | Redis 6379 |
+| adacaibs | 5433 | 9002 | 9003 | |
+| academy | 5434 | 9004 | 9005 | Redis 6382 |
+| aporta | 5435 | 9006 | 9007 | |
+| curupira | 5436 | 9010 | 9011 | |
+| interclasse | 5437 | 9008 | 9009 | |
+| matiscraft | 5438 | 9012 | 9013 | |
+| manganga | 5439 | 9014 | 9015 | |
+| lowcodejs | Postgres 5532 | 9100 | 9101 | Mongo 27117 |
 
 **MinIO só para teste; produção é S3 ou R2** *(decisão do dono; `DECISIONS.md` #209 e #210)*
 
 - **MinIO jamais vai para produção.** Ele existe só no `backend/docker-compose.yml`, para dev e para
-  os testes e2e (máquina, sessão de agente e CI). Produção usa **S3** ou **R2**, pelo driver da
+  os testes e2e (máquina e sessão de agente). Produção usa **S3** ou **R2**, pelo driver da
   FlyDrive (`_doc-lib/flydrive.md#services/s3`, `#services/r2`). `Dockerfile-production`, compose de
   produção, workflow de deploy e `docs/ENV.md` de produção nunca citam MinIO; o `pattern:check`
   reprova `minio` fora de `backend/docker-compose.yml` e `backend/infra/minio/`.
@@ -986,7 +1040,7 @@ ou sem tag de versão).
   lá). O build precisa de `proxy.golang.org`, `sum.golang.org` e `storage.googleapis.com` na rede.
 
 ```dockerfile
-# backend/infra/minio/Dockerfile — teste local e CI; nunca produção
+# backend/infra/minio/Dockerfile — teste local; nunca produção
 FROM golang:1.24-alpine AS build
 ARG MINIO_RELEASE=RELEASE.2025-10-15T17-29-55Z
 ARG MC_RELEASE=RELEASE.2025-08-13T08-35-41Z
@@ -1048,8 +1102,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 - A aplicação usa `STORAGE_KEY`/`STORAGE_SECRET` (usuário de escopo mínimo), nunca o root; o root
   só existe para o setup. Valores de teste no `.env.test`, nunca credencial real.
-- No CI o MinIO sobe por `docker run` da imagem compilada (com cache da camada de build) e o `mc` roda
-  o mesmo script; a espera é pelo bucket existir (§7, passo 7).
+- A espera pelo MinIO é pelo bucket existir (§7, backend, passo 3).
 - CORS: no MinIO é global (`MINIO_API_CORS_ALLOW_ORIGIN`); no R2 e no S3 é por bucket, com `ETag` em
   `ExposeHeaders`. O teste local prova o fluxo; o CORS de produção fica conferido em `docs/SECURITY.md`.
 
@@ -1057,21 +1110,16 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 ## 9. `.github` *(opinião da casa)*
 
-- **Action pinada por SHA**, com a versão em comentário: `uses: actions/checkout@<sha> # v4`. Tag
-  móvel (`@v4`) muda de conteúdo sem mudar de nome. A mesma major da mesma action em todos os
-  workflows.
-- **`permissions`** declaradas no topo de cada workflow, mínimas (`contents: read`); só o job que
-  precisa ganha mais.
-- **`concurrency`** em todo workflow de PR e de push:
-
-  ```yaml
-  concurrency:
-    group: ${{ github.workflow }}-${{ github.ref }}
-    cancel-in-progress: true
-  ```
-
+- **Sem `.github/workflows/`** (§8.1, `DECISIONS.md` #298).
+- **Proteção de branch em `main` e `develop`** (`DECISIONS.md` #298): só aceitam merge por PR, sem
+  push direto (nem do dono) e sem check obrigatório do Actions, que não existe mais. Quem segura o
+  PR é o hook local e a rodada de suítes da sessão, com o resultado no corpo do PR (§7). Configura-se
+  no GitHub (Settings, Branches, ou Rulesets), fora do repositório: o sync não alcança, e o agente
+  confere ao entrar no projeto (`gh api repos/<dono>/<repo>/branches/main/protection`). Check
+  obrigatório que sobrou de um workflow apagado trava todo PR para sempre e sai da regra (página
+  oficial do GitHub não conferida).
 - **Dependabot** (`.github/dependabot.yml`): um bloco `npm` por pacote do workspace e um
-  `github-actions`; semanal, `open-pull-requests-limit: 5`, um grupo para patch. Major do
+  `docker`, sem o ecossistema `github-actions`, porque não há workflow (`DECISIONS.md` #355); semanal, `open-pull-requests-limit: 5`, um grupo para patch. Major do
   TypeScript ignorada (§0); major do `mongodb` passa normalmente. *Comportamento do Dependabot com
   pnpm workspace: página oficial não conferida.*
 
@@ -1087,17 +1135,10 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
       ignore:
         - dependency-name: typescript
           update-types: [version-update:semver-major]
-    - package-ecosystem: github-actions
-      directory: /
-      schedule: { interval: weekly }
     - package-ecosystem: docker
       directories: [/backend, /frontend]
       schedule: { interval: weekly }
   ```
-
-- **Workflow sem injeção** *(skill `security-audit`, SUPPLY-CHAIN-AND-RELEASE.md)*: `pull_request_target`
-  não entra; `${{ github.event.* }}` nunca é interpolado dentro de `run:`, só passa por `env:`. O CI
-  confere as duas coisas com `grep` nos próprios workflows.
 
 - **`.gitignore` na raiz**, obrigatório, cada bloco com um comentário dizendo o motivo. Ignora
   `node_modules/`, `build/`, `.output/`, `.env` (o `.env.example` e o `.env.test` são versionados,
@@ -1107,7 +1148,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
   §10.4).
 - **Artefato gerado é commitado e conferido por `--check`**: `openapi.json` e
   `schema.generated.ts` (`openapi:check`), `authz-baseline.json` (`authz:check`),
-  `routeTree.gen.ts` (o CI roda o build e reprova `git diff --exit-code` no arquivo). Saída de
+  `routeTree.gen.ts` (a rodada antes do PR faz o build e reprova `git diff --exit-code` no arquivo, §7). Saída de
   compilador que todo build regenera (`src/paraglide/`, `.output/`, `build/`) não é commitada.
 
 ---
@@ -1136,10 +1177,29 @@ Processo das etapas 5 a 7 do `AGENTS.md`. As skills (`systematic-debugging`,
   (aplicar o padrão, migração, refatoração) abre com uma fase 0 que sobe o compose uma vez, escreve
   ou confere os E2E de caracterização dos fluxos críticos que o plano toca (cadastro, login,
   dinheiro, permissão, webhook) e registra o resultado como linha de base. As fases do meio seguem
-  só com unitário; a final roda tudo e compara com a linha de base. O CI continua rodando E2E em todo PR (§7): a regra é do ritmo da sessão, não do portão.
+  só com unitário; a final roda tudo e compara com a linha de base. Fora de plano, toda branch roda as suítes uma vez antes do PR (§7).
 - **Critério atrás de ENV, sem instância real que se possa exercitar com segurança** (produção, por
   exemplo): prova-se pelo mecanismo de gating já exercitado em outro ambiente, e o relatório diz
   que é evidência indireta, não execução direta.
+- **Pronto é a rodada antes do PR verde e, depois do merge na `main`, o deploy do Coolify concluído
+  com o healthcheck verde**, os dois feitos ou acompanhados pelo agente até o fim e relatados (§6,
+  §7, §8.3, `DECISIONS.md` #298): a rodada de §7 no `HEAD` empurrado, com o resultado no corpo do PR,
+  prova portões e suítes; o deploy `finished` no Coolify e o `/health-check` de cada app respondendo
+  `200` provam que o merge virou entrega. Vermelho em qualquer um é tarefa do agente na hora
+  (§10.3).
+- **Depois do primeiro deploy e de toda troca de infraestrutura** (recurso novo no Coolify, proxy,
+  Cloudflare, Redis, domínio), pronto inclui a conferência em produção, feita pelo agente e
+  relatada com o comando e o resultado (`DECISIONS.md` #296):
+  - `curl -fsS <endereço>/health-check` da API e do frontend, `200` nos dois;
+  - preflight CORS com credenciais: `curl -i -X OPTIONS <api>/<rota de escrita>` com `Origin` do
+    frontend e `Access-Control-Request-Method: POST`, esperando `Access-Control-Allow-Origin` igual à
+    origem (nunca `*`) e `Access-Control-Allow-Credentials: true`;
+  - tempo de um `POST` de cadastro com corpo inválido: `422` em menos de um segundo. Lento aí é a
+    requisição presa antes da validação (Redis, banco, proxy);
+  - login de verdade com a conta do dono, pelo navegador ou pelo `curl` com o cookie, e uma rota
+    privada respondendo depois dele.
+  O E2E local não substitui essa conferência: ele roda sem Cloudflare, Redis de produção nem
+  Coolify, e uma suíte E2E inteira verde convive com cadastro e login quebrados em produção.
 - **Verificar não amplia escopo**: ao verificar não se edita produto nem se acrescenta teste fora do
   critério. Achado vira linha em `docs/TASKS.md`.
 - **Atalho de teste é proibido** e cobrado (§4, §7): `.only`, `.skip` ou `test.fixme` sem motivo e
@@ -1147,7 +1207,7 @@ Processo das etapas 5 a 7 do `AGENTS.md`. As skills (`systematic-debugging`,
   Enfraquecer teste para passar é a regra de `domain.md` §10.
 - **Japa**: `tests/bootstrap.ts` registra `disallowPinnedTests({ disallow: Boolean(process.env.CI) })`
   (de `@japa/runner/plugins`) em `plugins`. Com `.pin()` esquecido, o runner roda só o teste fixado
-  e o CI fica verde sem a suíte; o plugin reprova (_doc-lib/japa.md#docs/filtering-tests).
+  e a rodada fica verde sem a suíte; com `CI=1` (§7) o plugin reprova (_doc-lib/japa.md#docs/filtering-tests).
 - Entrega sem `// TODO` sem dono, sem `// ...` e sem stub no lugar do que foi pedido.
 
 ### 10.2 Revisão de código
@@ -1229,7 +1289,7 @@ terceiro.
 Todo planejamento é do **Opus 5.5** (`claude-opus-5-5`): brainstorming, spec, design, plano, quebra em
 tarefas, decisão de arquitetura e replanejamento quando a execução sai do plano. Toda execução do
 plano é do **Sonnet 5.5** (`claude-sonnet-5-5`): implementar tarefa, escrever teste, corrigir lint ou
-CI, migrar arquivo. Revisão final do diff (etapa 7) volta para o Opus, porque é o mesmo julgamento do
+suíte, migrar arquivo. Revisão final do diff (etapa 7) volta para o Opus, porque é o mesmo julgamento do
 plano. Etapas: 1 e 3 Opus; 4 a 6 Sonnet; 7 Opus (`AGENTS.md`, fluxo).
 
 Como se cobra:
@@ -1273,18 +1333,63 @@ projetos fazem o mesmo, e a casa adota:
 
 | Peça | Regra | Contrato |
 |---|---|---|
-| Banco | sobe **uma vez** por execução (serviço do CI ou `globalSetup`), migra e semeia uma vez; cada worker ganha um clone: no Postgres, `CREATE DATABASE <worker> TEMPLATE <base>`; no Mongo, banco próprio do worker, limpo por `deleteMany` entre arquivos e reaplicando o seed salvo | `_doc-lib/vitest.md#config/globalsetup`; `_doc-lib/japa.md#docs/test-suites` |
+| Banco | sobe **uma vez** por execução (compose ou `globalSetup`), migra e semeia uma vez; cada worker ganha um clone: no Postgres, `CREATE DATABASE <worker> TEMPLATE <base>`; no Mongo, banco próprio do worker, limpo por `deleteMany` entre arquivos e reaplicando o seed salvo | `_doc-lib/vitest.md#config/globalsetup`; `_doc-lib/japa.md#docs/test-suites` |
 | Aplicação | o kernel sobe uma vez por worker e a rota é chamada por `inject`/`supertest`, sem porta aberta; `isolate: false`, e o spec que suja estado global vai para um projeto isolado à parte | `_doc-lib/vitest.md#config/isolate`, `#improving-performance` |
 | Redis e fila | um prefixo por worker (`test:<worker>:`), a mesma regra de namespace de `backend.md` §5.7 item 15; nada de uma instância de Redis por fatia | `backend.md` §5.7 |
 | Paralelismo | vários workers (`maxWorkers`), cada um no seu banco e no seu prefixo | `_doc-lib/vitest.md#config/maxworkers` |
-| CI | suíte inteira **sempre no CI**, em matriz de shards (`--shard=i/N` no Vitest, no Japa e no Playwright), relatório juntado por blob + `merge-reports`; reexecução só do que falhou (`--last-failed` no Playwright) | `_doc-lib/vitest.md#improving-performance`; `_doc-lib/playwright.md#docs/test-sharding`, `#docs/ci` |
+| Rodada antes do PR | suíte inteira **uma vez por branch**, antes do PR (§7); shards (`--shard=i/N` no Vitest, no Japa e no Playwright) só quando a rodada passar do tempo aceitável; reexecução só do que falhou (`--last-failed` no Playwright) | `_doc-lib/vitest.md#improving-performance`; `_doc-lib/playwright.md#docs/test-sharding`; `_doc-lib/japa.md#docs/filtering-tests` (shard na mesma máquina tem banco, cache e porta próprios) |
 | Navegador | Playwright só nas jornadas críticas (login, dinheiro, a feature principal), login reaproveitado por `storageState` e dado criado pela API, não clicado | `_doc-lib/playwright.md#docs/auth`, `#docs/test-parallel` |
 | Tela e componente | Vitest + Testing Library com rede mockada (MSW ou `fetch` mockado); a resposta mockada passa pelo schema Zod de `shared/`, para o front quebrar quando o contrato mudar | `_doc-lib/vitest.md`, `_doc-lib/zod.md#basics` |
 
-**Na sessão do agente, nunca a suíte inteira.** A sessão roda o unitário, a integração **afetada**
-(`vitest run --changed origin/main`; no Japa, `--files` dos specs tocados) e as jornadas Playwright da
-feature (`--only-changed origin/main`). A suíte completa é do CI, que sobrevive à queda do container;
-o agente lê o resultado do job e corrige o que falhou. Isso ajusta #212 e #242: a "fase final" do plano
-passa a ser o CI verde no PR, não uma execução local de horas.
+**Durante o trabalho, só o afetado; a suíte inteira uma vez, antes do PR.** Enquanto a branch anda, a
+sessão roda o unitário, a integração **afetada** (`vitest run --changed origin/main`; no Japa,
+`--files` dos specs tocados) e as jornadas Playwright da feature (`--only-changed origin/main`),
+pelo script `test:changed` de cada app, que compara com `origin/main` (`DECISIONS.md` #348). Com a
+branch pronta, a rodada de §7 roda as suítes inteiras uma vez e o resultado vai no corpo do PR
+(`DECISIONS.md` #298). Sem Actions, essa rodada é a última prova antes do merge.
 
 *MSW sem entrada na `_doc-lib`: não coberto; entra quando um projeto o adotar, com a página aberta.*
+
+### 10.7 Orquestração de sessões e agentes *(opinião da casa; `DECISIONS.md` #364)*
+
+Trabalho que passa de um projeto, ou de uma fase dentro de um projeto, é orquestrado: nenhum agente e
+nenhuma sessão recebe um bloco grande sozinho. O defeito que isso evita é o agente que carrega uma fase
+inteira, perde o contexto no meio, marca como pronto o que não fez e ninguém confere.
+
+Camadas, cada uma com a sua ferramenta:
+
+| Camada | Quem | Ferramenta |
+|---|---|---|
+| Regente geral (entre projetos e upstream) | a sessão em que o dono conversa | `send_message` para as regentes de projeto, quadro em `_standards/_map/<rodada>/QUADRO.md` |
+| Regente do projeto | uma sessão por projeto (`create_session` com o repositório dele) | quebra cada fase do plano em itens, despacha, revisa, abre a PR; não executa item |
+| Item G (fase 2 ou 3 do plano, feature) | subagentes do projeto | `tlc-plan` (plano aprovado pelo dono) e `tlc-implement` (lotes, verificador independente, provas por script) |
+| Item P ou M | um subagente por item | `superpowers:subagent-driven-development`, worktree e branch próprias (#311) |
+| Mapeamento ou auditoria em massa | fan-out de leitura | `Workflow` (fatia por projeto e lado, cético que tenta refutar cada achado grave, consolidação) |
+
+Regras:
+
+- **Um item por agente, escopo fechado.** Item G vira vários. A regente do projeto pode abrir
+  sub-sessões (`create_session`, com o mesmo repositório) para uma frente inteira (backend, frontend,
+  uma migração G) quando isso divide melhor o trabalho; a sub-sessão reporta à regente do projeto, que
+  continua sendo a única a falar com a regente geral. Agente que edita usa worktree e branch
+  próprias; ninguém faz commit do trabalho de outro.
+- **Autor nunca verifica o próprio trabalho.** Todo item fecha com um verificador novo (o do
+  `tlc-implement`, o revisor da `subagent-driven-development` ou o cético do `Workflow`).
+- **As sessões conversam.** A regente do projeto reporta à regente geral cada item fechado, bloqueio e
+  pergunta para o dono por `send_message`; onde a sessão não consegue responder, a regente geral lê o
+  transcrito (`list_events`). O estado de cada projeto fica no `docs/TASKS.md` dele, o geral no
+  `QUADRO.md`.
+- **Lacuna de régua ou de kit nunca se corrige no projeto.** A regente do projeto manda para a regente
+  geral; a correção sai no `maiyu-pattern` e volta pelo sync (#226).
+- **O que um projeto resolve vira roteiro do próximo.** A regente geral repassa o diff e a lição na
+  ordem do plano (gêmeos primeiro), para nenhuma sessão resolver de novo o mesmo problema.
+- **Segurança em paralelo, o resto em ordem.** A fase 0 de todos os projetos corre junta; as fases 1 a
+  4 seguem a ordem do plano, uma regra de passagem por passo (`--check` limpo, `check` verde, suítes
+  pesadas antes da PR).
+- **Limites que nenhuma camada passa:** merge, rotação de credencial e reescrita de histórico são do
+  dono; nenhuma PR, branch ou commit leva nome de agente (§6). Custo: o fan-out gasta mais token por
+  tarefa e compra cobertura e verificação; tarefa pequena (até três passos) não se orquestra.
+
+Ferramenta de terceiro (claude-flow/Ruflo, Agent Army e parecidas) não entra: o TLC cobre a porta de
+verificação e a checagem de tarefa marcada como pronta sem prova, e as sessões e o `Workflow` cobrem o
+paralelismo.

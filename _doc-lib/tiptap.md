@@ -114,6 +114,77 @@ Onde fica a fronteira, na prática:
 
 **Skills:** `maiyu-frontend`, `compound-pattern`, `react-composition-patterns`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Tiptap: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e React
+
+- **`@tiptap/pm` é dependência obrigatória, e todo pacote do ProseMirror vem dele.** Sem ele o editor não funciona, e importar pelo `@tiptap/pm` garante a mesma versão do ProseMirror que o Tiptap usa, sem choque de versão. [`#getting-started/install/react`](https://tiptap.dev/docs/editor/getting-started/install/react) [`#core-concepts/prosemirror`](https://tiptap.dev/docs/editor/core-concepts/prosemirror)
+- **Com SSR, o editor nasce com `immediatelyRender: false`.** É a opção que garante a inicialização só no cliente e impede o render no servidor. [`#getting-started/install/react`](https://tiptap.dev/docs/editor/getting-started/install/react) [`#guides/performance`](https://tiptap.dev/docs/guides/performance)
+- **No React, estado do editor (como `isActive()`) é lido por `useEditorState` com seletor que devolve só o necessário.** O estado não é reativo por desempenho, e `isActive()` lido direto fica preso ao estado inicial. [`#editor/getting-started/style-editor/custom-menus`](https://tiptap.dev/docs/editor/getting-started/style-editor/custom-menus.md) [`#getting-started/install/react`](https://tiptap.dev/docs/editor/getting-started/install/react) [`#guides/performance`](https://tiptap.dev/docs/guides/performance) [`#guides/react-composable-api`](https://tiptap.dev/docs/guides/react-composable-api)
+- **O editor fica isolado no próprio componente, longe do que não o afeta.** Render de vizinho (abrir uma barra lateral) não deve renderizar o editor de novo; `shouldRerenderOnTransaction: false` dá controle extra. [`#guides/performance`](https://tiptap.dev/docs/guides/performance)
+- **Atualização de estado do React dentro de callback do Tiptap vai em `queueMicrotask`.** É a correção que a doc dá para o aviso de `flushSync` chamado no meio do ciclo de render. [`#guides/performance`](https://tiptap.dev/docs/guides/performance)
+- **Na API composta, código novo usa `useTiptap()`, não `useCurrentEditor`.** `useCurrentEditor` fica só por compatibilidade. [`#guides/react-composable-api`](https://tiptap.dev/docs/guides/react-composable-api)
+- **`BubbleMenu` e `FloatingMenu` no React entram como componente, não como extensão; mais de uma instância pede `pluginKey` distinta.** Com o componente a extensão não é registrada no editor, e chave repetida mistura os menus. [`#extensions/functionality/bubble-menu`](https://tiptap.dev/docs/editor/extensions/functionality/bubble-menu) [`#extensions/functionality/floatingmenu`](https://tiptap.dev/docs/editor/extensions/functionality/floatingmenu)
+- **`injectCSS` fica `true`.** O CSS padrão do ProseMirror que ele injeta é importante para o Tiptap funcionar. [`#getting-started/configure`](https://tiptap.dev/docs/editor/getting-started/configure)
+- **Com Content-Security-Policy de `nonce`, o editor recebe `injectNonce`.** É o que leva o nonce aos elementos que o editor cria. [`#api/editor`](https://tiptap.dev/docs/editor/api/editor)
+- **Ouvinte que precisa ser removido é registrado com `.on()` e removido com `.off()`.** Os callbacks da configuração não se desligam. [`#api/events`](https://tiptap.dev/docs/editor/api/events)
+- **Com `Collaboration`, o `UndoRedo` do `StarterKit` é desligado.** A colaboração traz histórico próprio e os dois conflitam. [`#getting-started/configure`](https://tiptap.dev/docs/editor/getting-started/configure) [`#extensions/functionality/collaboration`](https://tiptap.dev/docs/editor/extensions/functionality/collaboration)
+- **Atualizando da v2, `@floating-ui/dom` é dependência obrigatória e o `tippy.js` sai.** Os menus passaram a posicionar pelo Floating UI. [`#guides/upgrade-tiptap-v2`](https://tiptap.dev/docs/guides/upgrade-tiptap-v2)
+- **Conteúdo do editor é estilizado por CSS global com `@apply`.** A doc recomenda esse caminho para conteúdo escrito pelo usuário, no lugar de classes no `renderHTML`. [`#getting-started/style-editor`](https://tiptap.dev/docs/editor/getting-started/style-editor)
+
+### Schema e conteúdo
+
+- **O documento é guardado em JSON do Tiptap.** É o formato recomendado para guardar e trabalhar com o documento; HTML é possível, mas menos flexível. [`#core-concepts/introduction`](https://tiptap.dev/docs/editor/core-concepts/introduction) [`#core-concepts/persistence`](https://tiptap.dev/docs/editor/core-concepts/persistence)
+- **Entrada do usuário é sempre validada, seja JSON ou HTML.** A doc diz que nenhum dos dois formatos é mais seguro por si. [`#guides/output-json-html`](https://tiptap.dev/docs/guides/output-json-html)
+- **A lista de extensões é obrigatória, mesmo para um editor só de parágrafos.** O schema nasce das extensões. [`#api/editor`](https://tiptap.dev/docs/editor/api/editor)
+- **Com `schemaSpec`, todo nó e marca do spec tem extensão local com o mesmo nome e tipo, e vice-versa.** A doc exige os mesmos nomes dos dois lados; campo omitido usa o padrão do ProseMirror. [`#api/editor`](https://tiptap.dev/docs/editor/api/editor) [`#core-concepts/schema`](https://tiptap.dev/docs/editor/core-concepts/schema)
+- **Conteúdo que nenhuma extensão reconhece é descartado em silêncio.** `<strong>` sem a extensão vira texto puro, e `enableContentCheck: false` (o padrão) remove o que não cabe no schema. [`#core-concepts/schema`](https://tiptap.dev/docs/editor/core-concepts/schema) [`#guides/invalid-schema`](https://tiptap.dev/docs/guides/invalid-schema)
+- **Com `enableContentCheck: true`, trate o erro em `onContentError`.** O tratador padrão lança o erro; a checagem é exata para conteúdo JSON. [`#guides/invalid-schema`](https://tiptap.dev/docs/guides/invalid-schema)
+- **Atributo sem `default` é obrigatório.** É como o schema interpreta a ausência de padrão. [`#core-concepts/schema`](https://tiptap.dev/docs/editor/core-concepts/schema)
+- **`generateHTML` / `generateJSON` do `@tiptap/core` são só do navegador; no servidor, os do `@tiptap/html`.** O de `@tiptap/html` usa DOM virtual no servidor; a doc pede atenção ao export certo. [`#api/utilities/html`](https://tiptap.dev/docs/editor/api/utilities/html)
+- **O static renderer converte JSON sem editor, e nele plugins, `onCreate`, `onUpdate` e hooks de transação não rodam.** Node view precisa de mapeamento próprio para o tipo de nó. [`#api/utilities/static-renderer`](https://tiptap.dev/docs/editor/api/utilities/static-renderer)
+
+### Markdown
+
+- **`@tiptap/markdown` é early release.** A doc avisa que a API pode mudar e há casos de borda sem suporte. [`#markdown`](https://tiptap.dev/docs/editor/markdown)
+- **Conteúdo Markdown entra com `contentType: 'markdown'`.** Sem ele o conteúdo é tratado como HTML. [`#editor/markdown/getting-started/basic-usage`](https://tiptap.dev/docs/editor/markdown/getting-started/basic-usage.md) [`#editor/markdown/getting-started/installation`](https://tiptap.dev/docs/editor/markdown/getting-started/installation.md)
+- **Tokenizer próprio tem nome único, regex ancorada no início, devolve `undefined` quando não casa e põe o trecho inteiro em `raw`.** São as regras da página de tokenizers. [`#Custom Markdown Tokenizers`](https://tiptap.dev/docs/editor/markdown/advanced-usage/custom-tokenizer)
+- **`parseInline` recebe só token inline e o de bloco só token de bloco.** A lib não confere o tipo do token. [`#Custom Markdown Parsing`](https://tiptap.dev/docs/editor/markdown/advanced-usage/custom-parsing)
+- **Nó de bloco cuja linha em branco precisa sobreviver à ida e volta usa `helpers.parseBlockChildren`.** Preserva os parágrafos vazios implícitos. [`#Integration Markdown in Custom Extensions`](https://tiptap.dev/docs/editor/markdown/guides/integrate-markdown-in-your-extension)
+
+### Extensões
+
+- **As regras do `Typography` se configuram uma a uma, e a página mostra como desligar cada regra (a `emDash` troca `--` por travessão).** A seção "Disabling rules" é o mecanismo. [`#Typography extension`](https://tiptap.dev/docs/editor/extensions/functionality/typography)
+- **No `Link`, a validação de URL é por `isAllowedUri` e o autolink por `shouldAutoLink`; `validate` está obsoleto.** `isAllowedUri` substitui a verificação padrão, e `shouldAutoLink` impõe protocolo e domínio no autolink. [`#extensions/marks/link`](https://tiptap.dev/docs/editor/extensions/marks/link)
+- **O `rel` padrão do `Link` é `noopener noreferrer nofollow`; muda por `HTMLAttributes`.** `rel: null` remove e um valor próprio sobrescreve. [`#extensions/marks/link`](https://tiptap.dev/docs/editor/extensions/marks/link)
+- **Toda extensão tem nome único; `this.parent?.()` pode ser `undefined`.** A página de estender extensão pede o encadeamento opcional. [`#extensions/custom-extensions/extend-existing`](https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing)
+- **Atributo lido do HTML vai no `parseHTML` dentro de `addAttributes()`.** É o lugar recomendado pela doc. [`#extensions/custom-extensions/extend-existing`](https://tiptap.dev/docs/editor/extensions/custom-extensions/extend-existing)
+- **Em `dispatchTransaction` de extensão, chame `next(transaction)`.** Sem a chamada a transação é bloqueada e nunca chega ao editor. [`#editor/extensions/custom-extensions/create-new/extension`](https://tiptap.dev/docs/editor/extensions/custom-extensions/create-new/extension.md)
+- **Em atalho de teclado, `Shift` não se escreve para caractere que já exige Shift.** O prefixo fica implícito. [`#core-concepts/keyboard-shortcuts`](https://tiptap.dev/docs/editor/core-concepts/keyboard-shortcuts)
+- **Comandos encadeiam com `.chain()` e executam com `.run()`; comando próprio confere se deve despachar, para funcionar com `.can()`.** Sem `.run()` nada é executado. [`#api/commands`](https://tiptap.dev/docs/editor/api/commands)
+
+### Node views e decorações
+
+- **Nó com node view guarda no HTML um marcador distinguível.** É o que permite restaurar o conteúdo a partir do HTML. [`#extensions/custom-extensions/node-views`](https://tiptap.dev/docs/editor/extensions/custom-extensions/node-views)
+- **Em `NodeViewContent`, a tag de `as` não muda em tempo de execução.** A doc marca isso como limitação. [`#extensions/custom-extensions/node-views/react`](https://tiptap.dev/docs/editor/extensions/custom-extensions/node-views/react)
+- **Node view com filhos declara no schema do pai quais filhos aceita e insere a estrutura inteira de uma vez.** Assim o documento sempre tem os filhos esperados. [`#guides/nested-node-view-content`](https://tiptap.dev/docs/guides/nested-node-view-content.md)
+- **Decoração não altera nem serializa o documento.** Muda só o que o usuário vê. [`#core-concepts/decorations`](https://tiptap.dev/docs/editor/core-concepts/decorations) [`#editor/api/decorations`](https://tiptap.dev/docs/editor/api/decorations.md) [`#guides/decorations-react`](https://tiptap.dev/docs/guides/decorations-react.md)
+- **Dentro de `create()` e `createInRange()`, leia o documento do argumento `state`, não de `editor.state`, e nunca lance erro.** A lib avisa em desenvolvimento quando lê `editor.state` ali. [`#core-concepts/decorations`](https://tiptap.dev/docs/editor/core-concepts/decorations) [`#editor/api/decorations`](https://tiptap.dev/docs/editor/api/decorations.md)
+- **Decoração de widget tem `key` obrigatória, estável e única no editor.** Widget com estado usa o id estável do item; chave repetida gera aviso. [`#core-concepts/decorations`](https://tiptap.dev/docs/editor/core-concepts/decorations) [`#editor/api/decorations`](https://tiptap.dev/docs/editor/api/decorations.md) [`#guides/decorations-react`](https://tiptap.dev/docs/guides/decorations-react.md)
+- **`createInRange` devolve só decorações que começam dentro de `[from, to)`.** Fora disso vaza decoração duplicada que nunca é limpa; dependência fora da faixa usa a estratégia `document`. [`#core-concepts/decorations`](https://tiptap.dev/docs/editor/core-concepts/decorations) [`#editor/api/decorations`](https://tiptap.dev/docs/editor/api/decorations.md)
+- **`getPos()` é chamado na hora do uso e nunca guardado.** A posição muda enquanto o usuário edita. [`#guides/decorations-react`](https://tiptap.dev/docs/guides/decorations-react.md)
+- **Popup de sugestão usa `props.mount` e chama a limpeza em `onExit`.** É o caminho recomendado, e sem a chamada o laço de reposicionamento e o ouvinte de clique ficam vivos. [`#editor/api/utilities/suggestion`](https://tiptap.dev/docs/editor/api/utilities/suggestion.md)
+- **Corretor ortográfico não troca `innerHTML` nem edita nó de texto do DOM.** A troca vai por transação do editor. [`#guides/spellcheck`](https://tiptap.dev/docs/guides/spellcheck.md)
+
+### Acessibilidade
+
+- **O Tiptap não entrega interface: teclado em todo recurso, `role="textbox"` no editor, `toolbar` na barra, `menu` / `menuitem` nos menus.** A acessibilidade da interface é de quem a monta. [`#guides/accessibility`](https://tiptap.dev/docs/guides/accessibility.md) [`#editor/getting-started/style-editor/custom-menus`](https://tiptap.dev/docs/editor/getting-started/style-editor/custom-menus.md)
+- **O usuário sempre consegue sair, pelo teclado, de menu ou modal aberto no editor.** A página lista isso entre as armadilhas. [`#guides/accessibility`](https://tiptap.dev/docs/guides/accessibility.md)
+
 ---
 
 ## Fundamentos
@@ -2696,7 +2767,7 @@ leitura.
 | [Blockquote extension](https://tiptap.dev/docs/editor/extensions/nodes/blockquote) | Citação (`<blockquote>`), no StarterKit | já vem no StarterKit |
 | [BulletList extension](https://tiptap.dev/docs/editor/extensions/nodes/bullet-list) | Lista com marcadores (`@tiptap/extension-list`), no StarterKit | já vem no StarterKit |
 | [CodeBlock extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block) | Bloco de código sem realce, no StarterKit | já vem no StarterKit |
-| [CodeBlockLowlight extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block-lowlight) | Bloco de código com realce pelo lowlight | artigo técnico; troca o `codeBlock` do StarterKit (`codeBlock: false`) |
+| [CodeBlockLowlight extension](https://tiptap.dev/docs/editor/extensions/nodes/code-block-lowlight) | Bloco de código com realce pelo lowlight | não entra: o realce da casa é o Shiki do `code-block` do shadcn (`tooling.md` §0.1, `frontend.md` §6.6) |
 | [Details extension](https://tiptap.dev/docs/editor/extensions/nodes/details) | Bloco recolhível (`<details>`) | FAQ e conteúdo opcional dentro do texto |
 | [DetailsContent extension](https://tiptap.dev/docs/editor/extensions/nodes/details-content) | Conteúdo do `details` | junto com `details` |
 | [DetailsSummary extension](https://tiptap.dev/docs/editor/extensions/nodes/details-summary) | Resumo clicável do `details` | junto com `details` |
@@ -2787,7 +2858,7 @@ Demonstrações com código aberto. Exemplo não é extensão suportada: copie a
 | [Mentions in Tiptap](https://tiptap.dev/docs/examples/advanced/mentions) | Menções com o Suggestion | menção de usuário |
 | [Bubble & floating menu implementation](https://tiptap.dev/docs/examples/advanced/menus) | Bubble menu e floating menu | barra contextual |
 | [React rendering performance](https://tiptap.dev/docs/examples/advanced/react-performance) | Renderização em React com desempenho | junto de `guides/performance` |
-| [Using the CodeBlockLowlight extension in Tiptap](https://tiptap.dev/docs/examples/advanced/syntax-highlighting) | Realce de código com CodeBlockLowlight | artigo técnico |
+| [Using the CodeBlockLowlight extension in Tiptap](https://tiptap.dev/docs/examples/advanced/syntax-highlighting) | Realce de código com CodeBlockLowlight | não entra, pelo mesmo motivo da linha da extensão |
 | [Default text editor](https://tiptap.dev/docs/examples/basics/default-text-editor) | Editor padrão com StarterKit e barra | ponto de partida |
 | [Formatting](https://tiptap.dev/docs/examples/basics/formatting) | Formatação de texto e alinhamento | como referência ao montar o recurso equivalente |
 | [Images](https://tiptap.dev/docs/examples/basics/images) | Imagens no editor | como referência ao montar o recurso equivalente |

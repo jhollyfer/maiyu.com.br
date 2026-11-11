@@ -3,7 +3,7 @@
 Stack: TypeScript em tudo. Backend AdonisJS 7 + Lucid + Postgres **ou** Fastify + fastify-decorators +
 driver mongodb + BullMQ + socket.io + isolated-vm. Frontend React 19 + TanStack Start/Router/Query/Table +
 react-hook-form + Zod (VineJS só no backend Adonis) + shadcn (Base UI) + Tailwind v4 + Tiptap + Paraglide. Pacote `shared/` no pnpm
-workspace. Vite, Nitro, Vitest/Japa/Playwright. GitHub Actions. Deploy Coolify/Docker.
+workspace. Vite, Nitro, Vitest/Japa/Playwright. Sem GitHub Actions. Deploy Coolify/Docker.
 
 Fontes: `.claude/skills/*` (projeto, 223), `~/.claude/skills/*` (usuário), plugins em cache (caveman,
 context-mode, ponytail, superpowers, engineering, design, figma, anthropic-skills, searchfit-seo).
@@ -35,7 +35,7 @@ repositório, uma vez por sessão: `code-review-graph build` na raiz do projeto.
   `cargo install rtk` instala o errado). Instalação: `brew install rtk` ou o `install.sh` do
   repositório; depois `rtk init -g`, que liga o hook do Claude Code. Edição `rtk` (Apache-2.0 + BUSL-1.1,
   com o motor de compressão) ou `rtk-oss` (só Apache-2.0, sem o motor); as duas instalam o mesmo
-  binário e não convivem. Máquina sem `rtk` (container de sessão na nuvem, CI): o comando roda cru,
+  binário e não convivem. Máquina sem `rtk` (container de sessão na nuvem): o comando roda cru,
   com a saída cortada no próprio comando (`--stat`, `-n`, `| head`) ou processada pelo `context-mode`;
   nunca despejada inteira na conversa.
   Sessão na nuvem: `scripts/cloud-setup.sh` vai no "Setup script" do ambiente e instala o rtk a cada
@@ -63,11 +63,13 @@ tarefa").
 | plano de trabalho não-feature (3) | `superpowers:writing-plans` | `tlc-plan` corta PRD/design já decidido; `legacy-migration-planner` para migrar camada (model direto → repository) |
 | executar plano (4) | `superpowers:executing-plans` / `superpowers:subagent-driven-development` | `tlc-implement` executa checklist com verificador |
 | paralelizar (4) | `superpowers:dispatching-parallel-agents` | `superpowers:using-git-worktrees` para isolar |
+| orquestrar trabalho que passa de um projeto ou de uma fase (3, 4) | regente geral e uma sessão regente por projeto (`tooling.md` §10.7) | item G: `tlc-plan` e `tlc-implement`; item P ou M: `superpowers:subagent-driven-development`; varredura em massa: `Workflow` (`workflow-authoring`) com cético por achado (#364) |
 | código de produção (4) | `superpowers:test-driven-development` | `engineering:testing-strategy` para decidir nível e borda do teste |
-| bug, teste falhando (5) | `superpowers:systematic-debugging` → `surgical-patch` | `diagnosing-bugs` (bug difícil ou regressão de performance), `gh-fix-ci` (CI), `chrome-devtools` (página viva) |
+| bug, teste falhando (5) | `superpowers:systematic-debugging` → `surgical-patch` | `diagnosing-bugs` (bug difícil ou regressão de performance), `chrome-devtools` (página viva) |
 | antes de concluir (6) | `superpowers:verification-before-completion` | `verify-and-stop` quando o pedido é só verificar |
 | revisão (7) | `superpowers:requesting-code-review` · `code-review` | `engineering:code-review` (checklist de injeção, SSRF, path traversal, N+1, consulta sem limite); `the-judge` só para postar review em PR real |
 | entrar no projeto (0) | `claude-code-setup` (`claude-automation-recommender`) | só leitura; recomendação que contradiz a régua (pasta fora da árvore, `docs/adr/`, formatter diferente) é descartada |
+| conferir e atualizar os links de `_doc-lib/` (página nova, removida, lib depreciada) | `doc-lib-check` | edita só no upstream; no projeto só relata (`DECISIONS.md` #321) |
 | auditoria dos cinco fundamentos (0, antes de plano grande) | `maiyu-audit` | só leitura e só roteiro: cada fundamento chama a skill que já existe (`superpowers:test-driven-development`, `security-audit`, `maiyu-backend`, `safe-refactor`), nessa ordem (`DECISIONS.md` #242) |
 | varredura de segurança (0, 7) | `claude-security` (`/claude-security`) | "Scan codebase" ao entrar no projeto; "Scan changes" em `high` no diff de borda; "Suggest patches" para corrigir (`tooling.md` §10.4) |
 | revisão de segurança (7) | `security-best-practices` | `security-threat-model` (conteúdo de `docs/SECURITY.md` §2); `security-audit` em modo guia para revisar um fluxo de borda por classe de ataque |
@@ -110,7 +112,7 @@ tarefa").
 | Design doc de feature | `create-technical-design-doc` | só rollback e segurança entram; o resto é `.specs/features/<f>/design.md` |
 | Decisão (registro) | `the-jury` | `the-fool`, `create-rfc`; ADR é linha em `docs/DECISIONS.md`, nunca `docs/adr/` |
 | Commit / PR | `caveman-commit` | `gh-address-comments`; regras em `code-pattern` §9 |
-| CI (GitHub Actions) | `gh-fix-ci` | `setup-pre-commit` |
+| Hooks locais (`pre-commit`, `commit-msg`) | `setup-pre-commit` | — |
 | Deploy | `engineering:deploy-checklist` | — |
 | Criar skill/agente | `skill-architect` | `superpowers:writing-skills`, `subagent-creator` |
 
@@ -254,8 +256,9 @@ vendor escolhido para aquele projeto). Nunca por garantia.
   em TanStack Start)
 - **Mobile/nativo**: react-native-expert, mobile-native, animate-expo, write-swift
 - **Nx**: nx-generate, nx-run-tasks, nx-workspace, nx-ci-monitor
-- **Deploy de vendor não escolhido**: cloudflare-deploy, netlify-deploy, render-deploy, aws-advisor
-  (a `vercel-deploy` saiu do espelho: a casa não usa Vercel, `DECISIONS.md` #287)
+- **Deploy de vendor não escolhido**: aws-advisor (fica só como consulta de S3). As skills de deploy
+  de outra plataforma (`vercel-deploy`, `cloudflare-deploy`, `netlify-deploy`, `render-deploy`) saíram
+  do espelho: a publicação é só pelo Coolify (`DECISIONS.md` #287, #369)
 - **PM de vendor**: jira-assistant, confluence-assistant
 - **Vídeo**: `hyperframes` (vídeo de HTML: `changelog-video`, `pr-to-video`, `product-launch-video`) e
   `remotion-*` (vídeo em React). Só para peça de divulgação, em repositório próprio, nunca dentro do

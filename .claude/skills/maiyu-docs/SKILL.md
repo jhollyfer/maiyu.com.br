@@ -40,8 +40,8 @@ do projeto, `_standards/` ou resposta do dono. Sem fonte, pergunte, ou escreva "
    - `project.inlang/` + `messages/` e `resources/lang/` → idiomas em ARCHITECTURE §2 (`i18n.md`).
    - `styles.css` + `components.json` + `components/common/` → DESIGN (valores reais dos tokens,
      componentes do kit com variante e estado).
-   - Specs (`*.unit.spec.ts`, `*.e2e.spec.ts`, `*.test.ts(x)`, `e2e/*.spec.ts`) e CI
-     (`.github/workflows/`) → TEST-PLAN.
+   - Specs (`*.unit.spec.ts`, `*.e2e.spec.ts`, `*.test.ts(x)`, `e2e/*.spec.ts`), hooks
+     (`.husky/`) e a rodada antes do PR (`_standards/tooling.md` §7) → TEST-PLAN.
    - `git log --oneline` + tags → CHANGELOG (releases existentes; sem tag, só `[Não lançado]`).
    - Docs fora do conjunto (`CLAUDE.md` gordo, README antigo, `docs/adr/`, `CONTEXT.md`,
      `.specs/STATE.md`, `<repo>-threat-model.md`, `*-MAP.md`, `_doc-*.md`): o que é do projeto migra

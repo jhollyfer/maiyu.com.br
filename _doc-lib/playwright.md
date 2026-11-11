@@ -89,6 +89,113 @@ para teste unitário de hook ou de função de `lib/` (Vitest) nem para teste de
 **Skills:** `maiyu-frontend`, `playwright-skill`, `superpowers:test-driven-development`,
 `web-accessibility`, `chrome-devtools` (depurar a página que o teste abriu), `code-pattern`
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Playwright: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Configuração do runner
+
+- **Opção do runner (`retries`, `workers`, `timeout`, `testDir`...) fica no topo do config, nunca dentro de `use`.** `use` só leva opção de navegador e contexto. [`#docs/test-configuration`](https://playwright.dev/docs/test-configuration)
+- **Arquivo de `globalSetup`/`globalTeardown` exporta uma única função.** A página exige o formato. [`#docs/test-configuration`](https://playwright.dev/docs/test-configuration), [`#docs/test-global-setup-teardown`](https://playwright.dev/docs/test-global-setup-teardown)
+- **Preparação global entra como projeto `setup` em `dependencies`, com o código escrito em `test()`, em vez de `globalSetup`.** É a abordagem recomendada: entra no relatório HTML, grava trace e usa fixture; o projeto dependente só roda depois que o `setup` passa. [`#docs/test-global-setup-teardown`](https://playwright.dev/docs/test-global-setup-teardown), [`#docs/test-projects`](https://playwright.dev/docs/test-projects)
+- **Com `globalSetup` que grava trace, o trace é parado também quando a preparação lança erro.** A página exige iniciar e parar o tracing à mão nesse caso. [`#docs/test-global-setup-teardown`](https://playwright.dev/docs/test-global-setup-teardown)
+- **`webServer` declara `url` ou `port`, com `reuseExistingServer: !process.env.CI`; `baseURL` vai em `use` e os testes navegam por caminho relativo.** Em CI o servidor sobe do zero; o `baseURL` evita repetir a URL inteira. [`#docs/test-webserver`](https://playwright.dev/docs/test-webserver)
+- **Ao espalhar `devices[...]`, `viewport` e `isMobile` próprios vêm depois do spread.** O descritor do dispositivo também define esses campos e sobrescreveria os seus. [`#docs/emulation`](https://playwright.dev/docs/emulation)
+- **Para o user agent da plataforma que roda o teste, remova `userAgent` do descritor.** É o que a página recomenda nesse caso. [`#docs/emulation`](https://playwright.dev/docs/emulation)
+- **Todo valor de `extraHTTPHeaders` é string.** A página exige o tipo. [`#docs/test-use-options`](https://playwright.dev/docs/test-use-options)
+- **Os timeouts de baixo nível pré-configurados não se mexem; teste instável tem a causa em outro lugar.** A página diz que quem chega ali por intermitência está procurando no lugar errado. [`#docs/test-timeouts`](https://playwright.dev/docs/test-timeouts)
+- **Tag de teste começa com `@`.** A página exige o prefixo. [`#docs/test-annotations`](https://playwright.dev/docs/test-annotations)
+- **Rode o compilador TypeScript ao lado do Playwright, de preferência com `tsconfig.json` próprio na pasta de testes.** O runner transpila sem checar tipo; a página recomenda as duas coisas. [`#docs/test-typescript`](https://playwright.dev/docs/test-typescript), [`#docs/library`](https://playwright.dev/docs/library)
+
+### CI
+
+- **Em CI, `workers: 1`.** A página recomenda para estabilidade e reprodutibilidade. [`#docs/ci`](https://playwright.dev/docs/ci)
+- **`globalTimeout` sempre definido no config; timeout de job, se houver, fica bem acima dele.** Assim o Playwright para primeiro e o relatório ainda sai. [`#docs/ci`](https://playwright.dev/docs/ci), [`#docs/ci-intro`](https://playwright.dev/docs/ci-intro)
+- **Depois de uma rodada com `--only-changed`, rode a suíte inteira.** A detecção por grafo de dependência é heurística e pode perder testes. [`#docs/ci`](https://playwright.dev/docs/ci)
+- **Não faça cache dos binários de navegador no CI; instale só o necessário (`install chromium --with-deps`, `--only-shell` no headless).** Restaurar o cache leva o mesmo tempo que baixar. [`#docs/ci`](https://playwright.dev/docs/ci), [`#docs/browsers`](https://playwright.dev/docs/browsers), [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+- **Relatório e trace só vão para armazenamento de artefato confiável, ou cifrados.** Eles carregam dado da aplicação testada. [`#docs/ci-intro`](https://playwright.dev/docs/ci-intro)
+- **Os testes rodam em todo commit e pull request, pelo workflow de CI.** A página recomenda o workflow do GitHub Actions gerado no `init`. Conflito registrado: a casa não tem Actions (`DECISIONS.md` #298), e a suíte roda na sessão do agente antes de cada PR (`tooling.md` §7). [`#docs/best-practices`](https://playwright.dev/docs/best-practices), [`#docs/intro`](https://playwright.dev/docs/intro)
+- **Em Docker, a imagem é fixada numa versão, com `--init` e `--ipc=host` (Chromium); a imagem não visita site não confiável sem usuário separado e perfil seccomp.** É a configuração recomendada; a imagem não traz o pacote `@playwright/test`, que se instala à parte. [`#docs/docker`](https://playwright.dev/docs/docker), [`#docs/ci`](https://playwright.dev/docs/ci)
+- **Com sharding, `fullyParallel: true` e reporter `blob` no CI, juntado depois por `merge-reports`.** Sem `fullyParallel` a divisão é por arquivo e os shards ficam desequilibrados. [`#docs/test-sharding`](https://playwright.dev/docs/test-sharding)
+- **O reporter `github` não se usa com matriz de jobs.** As anotações de falha se multiplicam e poluem a visão do arquivo. [`#docs/test-reporters`](https://playwright.dev/docs/test-reporters)
+
+### Trace, vídeo e depuração
+
+- **Falha de CI se investiga pelo trace viewer, não por vídeo e screenshot; trace em `on-first-retry` com retries ou `retain-on-failure` sem eles, nunca `on`.** `on` grava em todo teste e pesa no desempenho. [`#docs/best-practices`](https://playwright.dev/docs/best-practices), [`#docs/trace-viewer`](https://playwright.dev/docs/trace-viewer)
+- **Contexto criado à mão é fechado com `await browserContext.close()`.** Sem isso o vídeo não é salvo. [`#docs/videos`](https://playwright.dev/docs/videos)
+- **Depuração local pela UI Mode ou pela extensão do VS Code.** A página recomenda as duas para ver cada passo antes, durante e depois. [`#docs/running-tests`](https://playwright.dev/docs/running-tests), [`#docs/debug`](https://playwright.dev/docs/debug), [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+- **`auth.json` gravado pelo codegen fica só na máquina local.** Contém dado sensível de sessão. [`#docs/codegen`](https://playwright.dev/docs/codegen)
+- **Automação de Chrome usa diretório de dados de usuário próprio.** Desde o Chrome 136 o diretório padrão não é acessível por ferramenta automatizada. [`#docs/codegen`](https://playwright.dev/docs/codegen)
+
+### Isolamento e paralelismo
+
+- **Cada teste é isolado e independente: prepara o que precisa no próprio teste ou numa fixture e nunca conta com outro ter rodado antes.** Cada teste tem seu contexto, storage e cookies; a falha descarta o worker inteiro e o próximo começa limpo. [`#docs/best-practices`](https://playwright.dev/docs/best-practices), [`#docs/test-parallel`](https://playwright.dev/docs/test-parallel), [`#docs/browser-contexts`](https://playwright.dev/docs/browser-contexts), [`#docs/test-retries`](https://playwright.dev/docs/test-retries)
+- **Identificador de dado vem de `testInfo.testId` (ou `workerIndex`), para testes paralelos não colidirem.** A página manda derivar o id único do teste. [`#docs/test-parallel`](https://playwright.dev/docs/test-parallel)
+- **Modo `serial` não é recomendado; teste que disputa recurso compartilhado leva `lock` com nome.** Testes com o mesmo lock nunca rodam juntos, e o resto segue em paralelo. [`#docs/test-parallel`](https://playwright.dev/docs/test-parallel), [`#docs/release-notes`](https://playwright.dev/docs/release-notes)
+- **Não declare teste direto em arquivo de helper, e evite "test list".** Test list é suportado só como melhor esforço. [`#docs/test-parallel`](https://playwright.dev/docs/test-parallel)
+- **Hooks ficam fora do `forEach` de parametrização.** Assim rodam uma vez, não uma por parâmetro. [`#docs/test-parameterize`](https://playwright.dev/docs/test-parameterize)
+
+### Fixtures e autenticação
+
+- **Setup comum vira fixture de `test.extend`, e os specs importam `test` do arquivo de fixtures, não de `@playwright/test`.** Fixture agrupa teste pelo significado e só monta o que é usado. [`#docs/test-fixtures`](https://playwright.dev/docs/test-fixtures), [`#docs/test-parallel`](https://playwright.dev/docs/test-parallel), [`#docs/auth`](https://playwright.dev/docs/auth)
+- **Nome de fixture começa com letra ou sublinhado e só tem letras, números e sublinhado.** A página exige o formato. [`#docs/test-fixtures`](https://playwright.dev/docs/test-fixtures)
+- **Login é feito num projeto `setup` que grava `storageState`, e os projetos de teste o usam; `playwright/.auth` entra no `.gitignore`.** O arquivo guarda cookie e token. [`#docs/auth`](https://playwright.dev/docs/auth)
+- **Teste que altera estado do servidor usa uma conta por worker, autenticada em ambiente limpo (storage state zerado).** Conta compartilhada só serve a teste que não muda estado no servidor. [`#docs/auth`](https://playwright.dev/docs/auth)
+- **Arquivo que precisa estar deslogado zera o `storageState` (`test.use({ storageState: { cookies: [], origins: [] } })`).** A página mostra o reset por arquivo. [`#docs/auth`](https://playwright.dev/docs/auth)
+
+### Locators
+
+- **Locator por papel e nome acessível (`getByRole(role, { name })`) primeiro; depois label, placeholder e texto; `getByTestId` quando não há atributo do usuário.** A página prioriza atributo que o usuário vê e contrato explícito. [`#docs/locators`](https://playwright.dev/docs/locators), [`#docs/best-practices`](https://playwright.dev/docs/best-practices), [`#docs/other-locators`](https://playwright.dev/docs/other-locators)
+- **CSS e XPath não são recomendados.** O DOM muda e o teste quebra. [`#docs/locators`](https://playwright.dev/docs/locators), [`#docs/other-locators`](https://playwright.dev/docs/other-locators), [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+- **Seletor de layout (`:left-of`, `:near`...) está depreciado, e `:visible` cede lugar à opção `visible` do `filter`.** Podem sair numa versão futura. [`#docs/other-locators`](https://playwright.dev/docs/other-locators), [`#docs/release-notes`](https://playwright.dev/docs/release-notes)
+- **Locator de filtro é relativo ao locator original; pai se acha por `filter({ has })`, não por subida no DOM.** A página manda filtrar pelo filho. [`#docs/locators`](https://playwright.dev/docs/locators), [`#docs/other-locators`](https://playwright.dev/docs/other-locators)
+- **`ElementHandle` é desencorajado: use `Locator` e asserção web-first.** Fica só para travessia extensa de página estática. [`#docs/handles`](https://playwright.dev/docs/handles), [`#docs/puppeteer`](https://playwright.dev/docs/puppeteer)
+- **Texto se digita com `locator.fill()`.** É o caso comum que a página indica. [`#docs/input`](https://playwright.dev/docs/input)
+
+### Asserções e espera
+
+- **Sem espera manual: ação e asserção web-first esperam sozinhas.** O Playwright espera o elemento ficar acionável antes de agir. [`#docs/writing-tests`](https://playwright.dev/docs/writing-tests), [`#docs/testing-library`](https://playwright.dev/docs/testing-library), [`#docs/puppeteer`](https://playwright.dev/docs/puppeteer)
+- **Asserção com retry é assíncrona e sempre aguardada; asserção manual sobre valor lido (`expect(await locator.isVisible())`) não se usa.** Use `toBeVisible()` e afins; a regra `@typescript-eslint/no-floating-promises` pega o `await` esquecido. [`#docs/test-assertions`](https://playwright.dev/docs/test-assertions), [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+- **Sem asserção que sirva, `expect.poll`.** É a saída indicada no lugar de `waitFor` manual. [`#docs/testing-library`](https://playwright.dev/docs/testing-library)
+- **O `expect` é o do `@playwright/test`, não a biblioteca `expect`.** A outra não está integrada ao runner. [`#docs/test-assertions`](https://playwright.dev/docs/test-assertions)
+- **Navegação sem link direto espera com `page.waitForURL()`.** É o recomendado quando a URL muda por script. [`#docs/navigations`](https://playwright.dev/docs/navigations)
+- **Controle interativo fica desabilitado até a hidratação terminar.** Clique e digitação antes da hidratação se perdem, e a página aponta isso como a correção certa. [`#docs/navigations`](https://playwright.dev/docs/navigations)
+
+### Rede e mocks
+
+- **Não teste site externo nem serviço de terceiro que você não controla: responda pela Network API.** O teste fica lento e frágil por causa alheia. [`#docs/best-practices`](https://playwright.dev/docs/best-practices), [`#docs/mock`](https://playwright.dev/docs/mock)
+- **Glob de `page.route` casa a URL inteira; casamento complexo usa RegExp.** Glob parcial não casa. [`#docs/network`](https://playwright.dev/docs/network)
+- **HAR gravado com `update: true` é commitado.** A página recomenda gravar pelo `update` e versionar o arquivo. [`#docs/mock`](https://playwright.dev/docs/mock)
+- **Mock de API do navegador entra por `addInitScript`, antes da página carregar, e dispara os mesmos eventos da implementação real.** A página pode chamar a API cedo no carregamento. [`#docs/mock-browser-apis`](https://playwright.dev/docs/mock-browser-apis)
+- **Valor do teste chega ao `page.evaluate` como argumento, nunca por closure.** Teste e página rodam em processos diferentes. [`#docs/evaluating`](https://playwright.dev/docs/evaluating)
+- **Banco usado pelo teste tem dado controlado, e staging usado no teste não muda.** A página exige controle do dado. [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+
+### Tempo, diálogo, download
+
+- **Relógio fixo por `page.clock.setFixedTime`; `setSystemTime` só em caso avançado; `install` antes de qualquer outra chamada de relógio.** A página recomenda o `setFixedTime` e exige a ordem do `install`. [`#docs/clock`](https://playwright.dev/docs/clock)
+- **Listener `page.on('dialog')` trata o diálogo (`accept`/`dismiss`).** Sem isso a ação que abriu o diálogo nunca termina. [`#docs/dialogs`](https://playwright.dev/docs/dialogs)
+- **Download é salvo com `download.saveAs()` antes de fechar o contexto.** O arquivo é apagado quando o contexto que o gerou fecha. [`#docs/downloads`](https://playwright.dev/docs/downloads)
+- **Seletor customizado é registrado antes de criar a página.** A página exige a ordem. [`#docs/extensibility`](https://playwright.dev/docs/extensibility)
+
+### Snapshot visual e acessibilidade
+
+- **Screenshot de referência é gerado e comparado no mesmo ambiente (SO, navegador, headless), e a pasta de snapshots é commitada.** A renderização varia por SO, versão, hardware e modo. [`#docs/test-snapshots`](https://playwright.dev/docs/test-snapshots), [`#docs/best-practices`](https://playwright.dev/docs/best-practices)
+- **Antes do screenshot, o mouse sai de cima de elemento com efeito de hover.** Hover muda a imagem. [`#docs/test-snapshots`](https://playwright.dev/docs/test-snapshots)
+- **Varredura de acessibilidade espera a página chegar ao estado desejado antes de `analyze()`, e snapshot de violação usa fingerprint, nunca o array inteiro.** O array inteiro quebra a cada mudança irrelevante. [`#docs/accessibility-testing`](https://playwright.dev/docs/accessibility-testing)
+- **Teste automático de acessibilidade não substitui avaliação manual nem teste com usuário.** A página recomenda combinar os três. [`#docs/accessibility-testing`](https://playwright.dev/docs/accessibility-testing), [`#docs/locators`](https://playwright.dev/docs/locators)
+
+### Componente
+
+- **Teste de componente não acessa método interno nem instância do componente; screenshot é do locator raiz, não da página.** A página não suporta o acesso interno e manda observar como o usuário. [`#docs/test-components`](https://playwright.dev/docs/test-components)
+
+### APIs removidas e agentes
+
+- **`videosPath`/`videoSize` saíram (use `recordVideo`); `logger` do `connect` saiu (use tracing); `lineNumber`/`columnNumber` da mensagem de console estão depreciados (use `location().line`/`column`).** Removidos ou depreciados nas notas de versão. [`#docs/release-notes`](https://playwright.dev/docs/release-notes)
+- **Import de `.css`, `.less` ou `.scss` em arquivo de teste aponta para arquivo que existe.** Agora carrega como módulo vazio em vez de sumir. [`#docs/release-notes`](https://playwright.dev/docs/release-notes)
+- **Definições dos Test Agents são regeneradas a cada atualização do Playwright.** Trazem ferramentas e instruções da versão instalada. [`#docs/test-agents`](https://playwright.dev/docs/test-agents)
+
 ---
 
 ## Getting Started

@@ -44,6 +44,97 @@ se ele não pertence à URL.
 
 > Conferido contra `@tanstack/react-router@1.170.42` (`@tanstack/router-core@1.171.35`, latest).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com TanStack Router: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e geração da árvore
+
+- **Roteamento por arquivo é o padrão; roteamento por código não é recomendado para a maioria das aplicações.** Várias páginas repetem que o file-based é o modo preferido e recomendado. [`#quick-start`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/quick-start.md) [`#routing/route-trees`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/routing/route-trees.md) [`#routing/file-based-routing`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/routing/file-based-routing.md) [`#routing/code-based-routing`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/routing/code-based-routing.md) [`#installation/migrate-from-react-location`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/installation/migrate-from-react-location.md)
+- **`@tanstack/router-plugin` vem antes de `@vitejs/plugin-react` na lista de plugins.** As páginas de instalação e de code splitting pedem essa ordem. [`#installation/with-vite`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/installation/with-vite.md) [`#installation/manual`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/installation/manual.md) [`#guide/code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/code-splitting.md)
+- **A CLI do Router só se usa sem bundler suportado.** Com Vite, quem gera a árvore é o plugin. [`#installation/with-router-cli`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/installation/with-router-cli.md)
+- **O arquivo da rota raiz se chama `__root.tsx` e fica na raiz do `routesDirectory`.** A convenção de nomes marca isso como obrigatório. [`#routing/file-naming-conventions`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/routing/file-naming-conventions.md)
+- **`routeTree.gen.ts` é commitado no git.** A FAQ manda commitar para que outros consigam buildar. [`#faq`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/faq.md)
+- **O tipo do router se registra por declaration merging (`declare module '@tanstack/react-router' { interface Register { router: ... } }`).** A página marca a seção como "não pule": sem o registro, a segurança de tipo some. [`#guide/creating-a-router`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/creating-a-router.md)
+- **TypeScript 5.3 ou superior, na versão mais nova.** A biblioteca suporta as últimas cinco minors e recomenda a mais nova para evitar problema. [`#quick-start`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/quick-start.md)
+
+### Code splitting
+
+- **Propriedade de rota (`component`, `loader` etc.) não se exporta do arquivo da rota.** É regra do code splitting automático. [`#guide/automatic-code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/automatic-code-splitting.md)
+- **O `loader` fica no bundle inicial, salvo motivo específico.** Ele precisa ser buscado e executado antes de a rota renderizar e é o principal ativo de preload. [`#guide/automatic-code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/automatic-code-splitting.md) [`#guide/code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/code-splitting.md)
+- **`__root.tsx` não tem code splitting.** A raiz sempre renderiza, qualquer que seja a rota. [`#guide/code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/code-splitting.md)
+- **Em arquivo separado da rota, use `getRouteApi('<id>')` em vez de importar `Route`.** Importar o objeto da rota tende a criar dependência circular. [`#guide/code-splitting`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/code-splitting.md) [`#guide/data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md)
+
+### Navegação e links
+
+- **Param, search e hash nunca se interpolam na string do `to`; vão nas opções `params`, `search` e `hash`.** A página marca a interpolação com aviso. [`#guide/navigation`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/navigation.md)
+- **O que o usuário clica é `Link`, não `useNavigate`.** `Link` dá `href`, ctrl/cmd+clique e estado ativo; navegação imperativa fica para efeito colateral. [`#guide/navigation`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/navigation.md)
+- **Redirecionamento antes de montar a aplicação é redirect de servidor, não navegação no cliente.** A página indica o redirect do servidor para esse caso. [`#guide/navigation`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/navigation.md)
+- **Opções de link reaproveitáveis passam por `linkOptions`.** Objeto solto só é checado pelo TypeScript quando é espalhado no `Link`. [`#guide/link-options`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/link-options.md)
+- **Componente de terceiro vira link do router por `createLink`; `Button` usado como link recebe `component` `a`.** É a receita da página de link customizado. [`#guide/custom-link`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/custom-link.md)
+- **Saída de tela com estado não salvo mostra confirmação, por `useBlocker`.** A página diz que um prompt ou UI própria deve confirmar a saída. [`#guide/navigation-blocking`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/navigation-blocking.md)
+- **O componente `<ScrollRestoration>` está deprecated; restauração de rolagem é a opção `scrollRestoration` do router.** O componente ainda funciona, mas foi depreciado. [`#guide/scroll-restoration`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/scroll-restoration.md)
+
+### Path params e search params
+
+- **`params.parse` é determinístico e sem efeito colateral.** Ele roda no planejamento da rota e pode ser avaliado mais de uma vez. [`#guide/path-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/path-params.md)
+- **Search param se valida em `validateSearch` antes de ser consumido.** É fronteira de serialização: o valor precisa estar num formato confiável. [`#guide/search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/search-params.md) [`#how-to/validate-search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/how-to/validate-search-params.md)
+- **Com Zod v4, o schema vai direto em `validateSearch`, sem adapter.** A página manda usar o schema diretamente no Zod v4. [`#guide/search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/search-params.md)
+- **Search malformado cai em `.catch()` (valor de recuperação) quando não deve parar o usuário; `.default()` só quando o erro deve aparecer.** A página prefere não interromper a navegação por parâmetro ruim; erro de validação vai para `onError` e `errorComponent`. [`#guide/search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/search-params.md)
+- **Array e objeto em search se atualizam criando valor novo, nunca mutando; `Date` não serializa.** Mutação em lugar não atualiza o link, e `Date` precisa virar string. [`#how-to/arrays-objects-dates-search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/how-to/arrays-objects-dates-search-params.md)
+- **Estrutura aninhada em search tem limite de profundidade.** O checklist pede evitar objeto muito aninhado pelo tamanho da URL. [`#how-to/arrays-objects-dates-search-params`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/how-to/arrays-objects-dates-search-params.md)
+- **Search compartilhado entre níveis de rota usa nomes distintos por nível.** O checklist pede nomes distintos para evitar conflito. [`#how-to/share-search-params-across-routes`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/how-to/share-search-params-across-routes.md)
+- **Serialização customizada de search usa os utilitários de codificação binária segura da página, não `atob`/`btoa` direto.** `atob` e `btoa` não garantem caractere fora de UTF-8 e Base64 de entrada do usuário pode colidir com a leitura da URL. [`#guide/custom-search-param-serialization`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/custom-search-param-serialization.md)
+
+### Carregamento de dados
+
+- **`loaderDeps` devolve só o que o `loader` usa, nunca o `search` inteiro.** Devolver tudo recarrega a rota a cada parâmetro alheio ao loader. [`#guide/data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md)
+- **`loaderDeps` é determinístico e sem efeito: mesmo search validado, mesmo valor, sem navegar nem mutar estado.** Ele define a chave de cache no planejamento da rota. [`#guide/data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md)
+- **Search usado no `loader` entra em `loaderDeps`.** Sem isso, o cache guarda e mostra a página errada. [`#guide/data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md)
+- **Dado crítico de renderização se pré-carrega no `loader`; com biblioteca externa (Query), o `loader` dispara a busca e o componente lê pelo hook da biblioteca.** Evita cascata e flash de carregamento. [`#guide/external-data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/external-data-loading.md) [`#guide/deferred-data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/deferred-data-loading.md) [`#integrations/query`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/integrations/query.md)
+- **Controle fino de preload, cache e coleta de lixo é do TanStack Query, não do cache do router.** A página de preload aponta a biblioteca externa para esse controle. [`#guide/preloading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/preloading.md) [`#guide/data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md)
+- **Em React 19, `use()` substitui `<Await>` para dado adiado.** A página indica o hook do React 19. [`#guide/deferred-data-loading`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/deferred-data-loading.md)
+- **Dado que passa do servidor ao cliente no SSR é serializado.** A página de SSR exige serialização na fronteira de rede. [`#guide/ssr`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/ssr.md)
+- **O router é criado de forma igual no servidor e no cliente.** A página de SSR pede criação consistente nos dois ambientes. [`#guide/ssr`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/ssr.md)
+
+### Integração com TanStack Query
+
+- **`prefetchQuery` e `ensureQueryData` estão deprecated em favor de `queryClient.query`.** A página de integração registra a depreciação. [`#integrations/query`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/integrations/query.md)
+- **Query que não deve ir no HTML se exclui por `dehydrateOptions.shouldDehydrateQuery`.** É a opção de exclusão do payload. [`#integrations/query`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/integrations/query.md)
+- **Query não aguardada nem retornada no `loader` começa no servidor e faz stream ao cliente sem bloquear o SSR.** É o comportamento documentado para dado secundário. [`#integrations/query`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/integrations/query.md)
+
+### Contexto, autenticação e erros
+
+- **Contexto tipado da raiz nasce em `createRootRouteWithContext<T>()`, não em `createRootRoute()`.** É o que restringe o tipo do contexto do router. [`#guide/router-context`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/router-context.md)
+- **Hook do React não se chama em `beforeLoad` nem em `loader`.** As regras de hooks continuam valendo ali. [`#guide/router-context`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/router-context.md)
+- **`beforeLoad` da rota pai roda antes dos filhos e protege a subárvore, mas endpoint com dado privado autoriza a própria requisição.** O endpoint é alcançável sem passar pela rota. [`#guide/authenticated-routes`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/authenticated-routes.md)
+- **`NotFoundRoute` está deprecated; use `notFoundComponent`.** A API antiga será removida. [`#guide/not-found-errors`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/not-found-errors.md)
+- **Recurso inexistente lança `notFound()` pelo desenvolvedor, de preferência no `loader`, não no componente.** No `loader` o tipo do dado fica certo e não há flicker. [`#guide/not-found-errors`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/not-found-errors.md)
+- **A raiz tem `notFoundComponent` ou o router tem `defaultNotFoundComponent`.** A página recomenda fortemente; rota folha nunca trata not-found. Ressalva: o `notFound()` lançado no `loader` é tratado pela própria rota, com o `notFoundComponent` dela (seção "Throwing your own notFound errors"). [`#guide/not-found-errors`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/not-found-errors.md)
+
+### Cabeçalho do documento
+
+- **`HeadContent` e `Scripts` são obrigatórios e ficam no `<head>` e no `<body>` do layout raiz; o head de cada rota sai de `head`.** Sem eles o head e os scripts não renderizam. [`#guide/document-head-management`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/document-head-management.md)
+- **Script que precisa rodar antes da hidratação (tema, por exemplo) usa `ScriptOnce`.** É o caminho indicado para código crítico pré-hidratação. [`#guide/document-head-management`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/document-head-management.md)
+
+### Tipos e render
+
+- **Hook em componente de rota recebe `from`; componente compartilhado entre rotas usa `strict: false`.** Com `from` errado o hook lança em runtime; sem ele o tipo vira palpite. [`#guide/type-safety`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/type-safety.md)
+- **Evite tipo interno sem estreitar (`LinkProps` cru); estreite com `from`/`to` ou `as const satisfies`.** Tipo largo pesa no checker. [`#guide/type-safety`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/type-safety.md)
+- **Tipo interno do Router está sujeito a quebra; utilitário público recebe `TRouter` especificado.** A página avisa que a maioria dos tipos expostos é interna. [`#guide/type-utilities`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/type-utilities.md)
+- **Seletor que monta objeto novo usa structural sharing (`structuralSharing: true` ou `defaultStructuralSharing`).** Evita re-render por referência nova. [`#guide/render-optimizations`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/render-optimizations.md)
+- **UI reativa usa `useRouterState`, `useSearch` e `useParams`; assinatura manual de evento devolve o `unsubscribe` na limpeza.** Sem limpeza o listener fica vivo depois do unmount. [`#guide/router-events`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/router-events.md) [`#how-to/debug-router-issues`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/how-to/debug-router-issues.md)
+
+### Lint e ferramentas
+
+- **`@tanstack/eslint-plugin-router` com `flat/recommended`.** O plugin cobra boas práticas e erros comuns. [`#eslint/eslint-plugin-router`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/eslint/eslint-plugin-router.md)
+- **Com `only-throw-error` ligado (`recommended-type-checked`), `Redirect` e `NotFoundError` de `@tanstack/router-core` entram em `allow`.** Sem isso a regra conflita com `throw redirect()` e `throw notFound()`. [`#eslint/eslint-plugin-router`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/eslint/eslint-plugin-router.md)
+- **Ordem das propriedades na rota: `params`/`validateSearch`, `loaderDeps`/`search.middlewares`/`ssr`, `context`, `beforeLoad`, `loader`, depois `onEnter`/`head`/etc.** A ordem importa para a inferência de tipo. [`#eslint/create-route-property-order`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/eslint/create-route-property-order.md)
+- **Devtools importados como `TanStackRouterDevtools` não aparecem em produção; em produção só por `TanStackRouterDevtoolsInProd`.** É o comportamento documentado. [`#devtools`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/devtools.md)
+- **A API de SSR do Router é experimental até o Start ficar estável.** A página de SSR avisa. [`#guide/ssr`](https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/ssr.md)
+
 ---
 
 ## Fundamentos

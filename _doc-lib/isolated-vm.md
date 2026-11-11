@@ -94,6 +94,51 @@ para o isolate do Node.js — ou seja, controle completo do processo.
 
 **Skills:** `maiyu-backend`, `security-best-practices`, `security-and-hardening`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com isolated-vm: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Segurança
+
+- **Usar isolated-vm não torna seguro rodar código não confiável.** O README diz que o problema exige muito cuidado e que descuido ou mau uso pode vazar dado sensível ou conceder privilégio ao isolate. [`#security`](https://github.com/laverdet/isolated-vm#security)
+- **Nenhum objeto do isolated-vm (`Reference`, `ExternalCopy`...) chega ao código não confiável.** É trivial usá-lo como trampolim de volta ao isolate do Node, com controle total do processo. [`#security`](https://github.com/laverdet/isolated-vm#security)
+- **Isolate roda num processo Node separado da infraestrutura crítica.** O V8 sempre tem formas novas de travar, derrubar ou explorar o processo, e a aplicação precisa ser resiliente a isso. [`#security`](https://github.com/laverdet/isolated-vm#security)
+- **Node em dia nas versões de correção que atualizam o V8, e nunca versão ímpar do Node.** As atualizações do V8 trazem correções de segurança; versões ímpares quebram ABI e não são suportadas. [`#security`](https://github.com/laverdet/isolated-vm#security), [`#compatibility`](https://github.com/laverdet/isolated-vm#compatibility)
+- **`snapshot` e `cachedData` nunca vêm do usuário.** Os dois contêm código de máquina compilado, e aceitá-los permite execução arbitrária. [`#new ivm.Isolate(options)`](https://github.com/laverdet/isolated-vm#new-ivmisolateoptions), [`#cacheddataoptions`](https://github.com/laverdet/isolated-vm#cacheddataoptions)
+- **Não use `Isolate.createSnapshot`.** O README manda não usar: é instável, não tem a proteção de isolamento (estoura memória ou trava o processo) e falha com recursos novos do V8. [`#ivm.Isolate.createSnapshot(scripts, warmup_script)`](https://github.com/laverdet/isolated-vm#ivmisolatecreatesnapshotscripts-...)
+- **`Reference` criada com `unsafeInherit` nunca vai para código não confiável, e `get` com `accessors: true` só em código confiável.** O primeiro segue a cadeia de protótipos; o segundo invoca getter e proxy sem timeout possível. [`#class-reference-transferable`](https://github.com/laverdet/isolated-vm#class-reference-transferable)
+- **Para expor função simples ao isolate, prefira `Callback` a `Reference`.** Argumentos e retorno são sempre copiados como `ExternalCopy`, o que o README descreve como mais fácil e mais seguro. [`#class-callback-transferable`](https://github.com/laverdet/isolated-vm#class-callback-transferable)
+- **`vm`, `vm2` e `worker_threads` não servem para código não confiável.** A tabela de alternativas marca os três sem bloqueio de capacidade insegura do Node e sem limite de memória; só o isolated-vm tem os dois. [`#alternatives`](https://github.com/laverdet/isolated-vm#alternatives)
+- **Módulo, função ou objeto do Node não entram no isolate; I/O passa por um delegado no Node que devolve o resultado.** O isolate tem heap próprio; o FAQ manda passar só código e, para arquivo e rede, um shim no processo principal. [`#frequently-asked-question`](https://github.com/laverdet/isolated-vm#frequently-asked-question)
+
+### Limites de recurso
+
+- **`memoryLimit` é guia, não teto rígido.** Um atacante determinado chega a 2 ou 3 vezes o limite antes de ser encerrado; o default é 128 MB e o mínimo 8 MB. [`#new ivm.Isolate(options)`](https://github.com/laverdet/isolated-vm#new-ivmisolateoptions)
+- **Toda execução passa `timeout` (`context.eval`, `evalClosure`, `script.run`, `reference.apply`, `module.evaluate`).** O default é sem timeout. [`#context.eval(code, options)`](https://github.com/laverdet/isolated-vm#contextevalcode-options-promise), [`#context.evalClosure(code, arguments, options)`](https://github.com/laverdet/isolated-vm#contextevalclosurecode-arguments...), [`#script.run(context, options)`](https://github.com/laverdet/isolated-vm#scriptruncontext-options-promise), [`#reference.apply(receiver, arguments, options)`](https://github.com/laverdet/isolated-vm#referenceapplyreceiver-arguments-options-promise), [`#module.evaluate(options)`](https://github.com/laverdet/isolated-vm#moduleevaluateoptions-promise)
+- **Em `module.evaluate`, o `timeout` só cobre a execução até o primeiro `await`; para esperar o módulo inteiro use `promise: true`.** Com top-level await o valor de retorno quebra, e a opção faz a chamada aguardar o fim e rejeitar com o erro. [`#module.evaluate(options)`](https://github.com/laverdet/isolated-vm#moduleevaluateoptions-promise)
+- **`onCatastrophicError` registra o erro, para de servir, conclui o pendente e encerra com `process.abort()`.** Nesse ponto o V8 perdeu o controle do isolate e os recursos são irrecuperáveis. [`#new ivm.Isolate(options)`](https://github.com/laverdet/isolated-vm#new-ivmisolateoptions)
+
+### Ciclo de vida
+
+- **Chame `isolate.dispose()` no isolate que terminou.** Devolve a memória na hora, em vez de esperar o coletor, e invalida toda referência obtida dele. [`#class-isolate-transferable`](https://github.com/laverdet/isolated-vm#class-isolate-transferable), [`#isolate.dispose()`](https://github.com/laverdet/isolated-vm#isolatedispose)
+- **Libere com `reference.release()` as referências trocadas entre isolates quando terminar.** Sem isso isolates podem ficar sem memória porque outros ainda não coletaram. [`#reference.release()`](https://github.com/laverdet/isolated-vm#referencerelease)
+
+### API
+
+- **Função síncrona não é chamada de dentro de função assíncrona, salvo se pertence ao isolate corrente.** É uma das regras de contexto da API; as síncronas bloqueiam a thread. [`#api-documentation`](https://github.com/laverdet/isolated-vm#api-documentation)
+- **Variante `Ignored` engole exceção; use só quando a falha não importa.** O README avisa que isso dificulta achar problema. [`#api-documentation`](https://github.com/laverdet/isolated-vm#api-documentation)
+- **`applySyncPromise` só em função do isolate default, chamada de thread que não é a default.** Mau uso pode travar isolates em deadlock. [`#reference.apply(receiver, arguments, options)`](https://github.com/laverdet/isolated-vm#referenceapplyreceiver-arguments-options-promise)
+- **Só valor transferível cruza isolates; objeto complexo vai por `copy`, `externalCopy`, `reference` ou `promise` nas `TransferOptions`.** Sem a opção, a função pode ignorar o valor, lançar ou embrulhá-lo numa referência. [`#transferoptions`](https://github.com/laverdet/isolated-vm#transferoptions), [`#api-documentation`](https://github.com/laverdet/isolated-vm#api-documentation)
+- **`filename` do `ScriptOrigin` usa um esquema de URI válido (`file:///...`).** Recomendação do README para stack trace e devtools funcionarem. [`#scriptorigin`](https://github.com/laverdet/isolated-vm#scriptorigin)
+
+### Requisitos e versão
+
+- **Node 20 ou maior roda com `--no-node-snapshot`.** O README marca a flag como obrigatória nessas versões. [`#requirements`](https://github.com/laverdet/isolated-vm#requirements)
+- **A major do isolated-vm acompanha a do Node: 22 usa 5.x ou 4.x, 24 usa 6.x ou 5.x, 26 usa 7.x.** A tabela de compatibilidade define a versão pelo Node em uso. [`#compatibility`](https://github.com/laverdet/isolated-vm#compatibility)
+- **A imagem de build tem compilador (no Alpine, `python3 make g++`).** O módulo é nativo e o `install` falha sem compilador. [`#requirements`](https://github.com/laverdet/isolated-vm#requirements)
+
 ---
 
 ## Por que isolated-vm, e o que ele não resolve

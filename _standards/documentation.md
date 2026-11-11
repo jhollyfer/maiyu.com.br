@@ -57,10 +57,15 @@ solto (seção "Linguagem do domínio" de `ARCHITECTURE.md`, `DECISIONS.md` #118
 `<projeto>-threat-model.md` na raiz (§2 de `SECURITY.md`), `LESSONS.md` e `.notebook/` (lição vira
 regra no upstream ou some; estado vai para `MEMORY.md`).
 
+`docs/` não descreve peça do kit (`components/common/` e o resto que vem de `_templates/code/`): cita a
+peça pelo nome e aponta para o `KIT` do upstream, porque a peça é o mesmo arquivo em todo projeto e a
+descrição local envelheceria sozinha (`DECISIONS.md` #343).
+
 **"O que a plataforma faz e o repositório não"** mora em `ARCHITECTURE.md` §9.1: comando de
 migration do deploy (`migration:run --force`; no Coolify, o *Post-deployment command*, `tooling.md` §8.2), variável que só existe no painel (`COOKIE_DOMAIN`), segundo
-serviço (worker de fila), regra de proxy (gzip sem `text/event-stream`), healthcheck configurado no
-painel, CORS do bucket (com `ETag` exposto, `backend.md` §5.4). É o que se perde quando só o `CLAUDE.md` sabia.
+serviço (worker de fila), regra de proxy (gzip sem `text/event-stream`), cron do orquestrador (o
+comando, o horário e o recurso que o roda, `DECISIONS.md` #351), o campo de healthcheck do painel
+vazio porque vale o da imagem (`tooling.md` §8.3), CORS do bucket (com `ETag` exposto, `backend.md` §5.4). É o que se perde quando só o `CLAUDE.md` sabia.
 
 ## 2. Nome e idioma
 
@@ -115,7 +120,8 @@ No **mesmo commit** da mudança que motivou, nunca num "commit de docs" depois:
 - Variável de ambiente nova → `ENV.md` **e** `.env.example` juntos (`backend.md` §6).
 - Decisão tomada → linha nova em `DECISIONS.md`, com o custo aceito.
 - Fluxo ou tela nova → `USER-FLOWS.md`.
-- Componente novo no kit (`components/common/`) ou variante nova → `DESIGN.md` §7 (Componentes).
+- Componente de domínio novo em `components/common/` ou variante nova → `DESIGN.md` §7 (Componentes);
+  peça do kit só é citada (§1).
 - Rota pública nova, integração, upload ou papel novo → modelo de ameaças (`SECURITY.md` §2).
 - Rota nova ou valor novo de enum → linha na matriz de `TEST-PLAN.md`.
 - Passo manual de deploy ou configuração que só existe no painel → `ARCHITECTURE.md` §9.1.
@@ -186,6 +192,6 @@ produto. Viu contradição entre o pedido e o PRD, pergunte.
 ## 9. Como verificar
 
 - `node scripts/sync-to-project.mjs <dir> --check`, rodado à mão a partir do `maiyu-pattern`,
-  acusa arquivo do conjunto que falta. Nunca no CI do projeto (`backend.md` §11).
+  acusa arquivo do conjunto que falta. Nunca no hook nem no build do projeto (`backend.md` §11).
 - Na revisão: o diff mexeu em env sem tocar `ENV.md`? Fechou tarefa sem tocar `TASKS.md`? Volta.
 - Conteúdo desatualizado ainda não é checado por script: não coberto.
