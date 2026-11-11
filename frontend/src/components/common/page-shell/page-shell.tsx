@@ -47,27 +47,25 @@ export function PageShell({
   )
 }
 
+/**
+ * A linha divisória embaixo é da peça; conteúdo que já tem borda tira a dela por `className`
+ * (`border-b-0`), sem prop booleana de layout (KIT.md §1 item 6).
+ */
 type PageShellHeaderProps = Merge<
   React.ComponentProps<'div'>,
-  {
-    readonly children: React.ReactNode
-    /** A linha divisória embaixo. Desligue quando o conteúdo já tiver borda. */
-    readonly borderBottom?: boolean
-  }
+  { readonly children: React.ReactNode }
 >
 
 export function PageShellHeader({
   children,
   className,
-  borderBottom = true,
   ...props
 }: PageShellHeaderProps): React.JSX.Element {
   return (
     <div
       data-slot="page-shell-header"
       className={cn(
-        'flex shrink-0 flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between',
-        borderBottom && 'border-b',
+        'flex shrink-0 flex-col gap-2 border-b pb-3 sm:flex-row sm:items-center sm:justify-between',
         className,
       )}
       {...props}
