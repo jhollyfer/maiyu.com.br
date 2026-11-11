@@ -1,6 +1,6 @@
 # contato proofs
 
-**HEAD**: 14bf313
+**HEAD**: 7ec19eb
 **Tree**: clean
 **Result**: 33 pass, 0 fail; mutations 3 killed, 0 not
 
@@ -45,5 +45,5 @@
 | Mutation | Location | Killed |
 | --- | --- | --- |
 | C17: guarda de 12 meses vira 13 | `backend/app/features/administrator/contacts/prune/prune.use-case.ts:13` | yes |
-| C24: o grupo administrator sem o role() deixa o MEMBER passar | `backend/start/routes.ts:148` | yes |
+| C24: o grupo administrator sem o role() deixa o MEMBER passar | `backend/start/routes.ts:171` | yes |
 | edge case: claimAnswer sem o answered_at IS NULL regrava answered_at | `backend/app/repositories/contact/contact.lucid.repository.ts:84` | yes |

@@ -1,6 +1,6 @@
 # conta proofs
 
-**HEAD**: c8b6787
+**HEAD**: 7ec19eb
 **Tree**: clean
 **Result**: 21 pass, 0 fail; mutations 3 killed, 0 not
 
