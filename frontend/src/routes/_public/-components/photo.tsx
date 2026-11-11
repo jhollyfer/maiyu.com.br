@@ -1,8 +1,10 @@
 import type * as React from 'react'
 
+import { Picture } from '#/components/common/picture/picture'
+import type { PicturePlacement } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { localized } from '#/lib/i18n'
-import { PHOTOS, PHOTO_WIDTHS } from '#/lib/photos'
+import { PHOTOS } from '#/lib/photos'
 import type { PhotoKey } from '#/lib/photos'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
@@ -18,11 +20,11 @@ type PhotoProps = {
   className?: string
 }
 
-/** Os atributos de carregamento pelo valor de `priority`, por lookup e não por ternário. */
-const LOADING = {
-  true: { loading: 'eager', fetchPriority: 'high' },
-  false: { loading: 'lazy', fetchPriority: 'auto' },
-} as const satisfies Record<`${boolean}`, object>
+/** A posição pelo valor de `priority`, por lookup e não por ternário. */
+const PLACEMENT = {
+  true: 'lcp',
+  false: 'fold',
+} as const satisfies Record<`${boolean}`, PicturePlacement>
 
 /**
  * Uma foto de terceiro com a legenda e o crédito que a licença pede.
@@ -31,7 +33,7 @@ const LOADING = {
  * exige autor e licença junto da obra, e deixar isso para quem usa o
  * componente é como uma foto acaba publicada sem crédito.
  *
- * `width` e `height` vão no `img` para o navegador reservar o espaço antes de
+ * `width` e `height` vão no `Picture` para o navegador reservar o espaço antes de
  * baixar: sem eles a página pula quando a foto chega (CLS).
  */
 export function Photo({
@@ -42,10 +44,7 @@ export function Photo({
   className,
 }: PhotoProps): React.JSX.Element {
   const photo = PHOTOS[name]
-  const srcSet = PHOTO_WIDTHS.map(
-    (width) => `${photo.src}-${width}.webp ${width}w`,
-  ).join(', ')
-  const loading = LOADING[`${priority}`]
+  const placement = PLACEMENT[`${priority}`]
 
   return (
     <figure data-slot="photo" className={cn('flex flex-col gap-3', className)}>
@@ -53,15 +52,14 @@ export function Photo({
         ratio={ratio}
         className="overflow-hidden rounded-[1.25rem] bg-secondary"
       >
-        <img
-          src={`${photo.src}-1280.webp`}
-          srcSet={srcSet}
+        <Picture
+          src={photo.src}
+          srcSet={photo.srcSet}
           sizes={sizes}
           width={photo.width}
           height={photo.height}
           alt={localized(photo.alt)}
-          decoding="async"
-          {...loading}
+          placement={placement}
           className="size-full object-cover"
         />
       </AspectRatio>

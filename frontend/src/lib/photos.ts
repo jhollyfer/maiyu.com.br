@@ -1,3 +1,12 @@
+import town1280 from '#/assets/photos/benjamin-constant-1280.webp'
+import town1920 from '#/assets/photos/benjamin-constant-1920.webp'
+import town640 from '#/assets/photos/benjamin-constant-640.webp'
+import sunset1280 from '#/assets/photos/leticia-1280.webp'
+import sunset1920 from '#/assets/photos/leticia-1920.webp'
+import sunset640 from '#/assets/photos/leticia-640.webp'
+import river1280 from '#/assets/photos/rio-solimoes-1280.webp'
+import river1920 from '#/assets/photos/rio-solimoes-1920.webp'
+import river640 from '#/assets/photos/rio-solimoes-640.webp'
 import type { LocalizedText } from '@maiyu/shared'
 
 /**
@@ -13,8 +22,10 @@ import type { LocalizedText } from '@maiyu/shared'
  * desenhada.
  */
 export type Photo = {
-  /** O caminho sem a largura: os arquivos são `<src>-640.webp`, `-1280` e `-1920`. */
+  /** O arquivo de 1280 px, o do `src` do `img`. */
   src: string
+  /** Os três tamanhos (640, 1280 e 1920 px) no formato do `srcset`, importados de `src/assets` para ganhar hash. */
+  srcSet: string
   width: number
   height: number
   alt: LocalizedText
@@ -25,12 +36,10 @@ export type Photo = {
   sourceUrl: string
 }
 
-/** As larguras geradas de cada foto, para o `srcset`. */
-export const PHOTO_WIDTHS = [640, 1280, 1920] as const
-
 export const PHOTOS = {
   town: {
-    src: '/images/photos/benjamin-constant',
+    src: town1280,
+    srcSet: `${town640} 640w, ${town1280} 1280w, ${town1920} 1920w`,
     width: 1920,
     height: 1080,
     alt: {
@@ -50,7 +59,8 @@ export const PHOTOS = {
     sourceUrl: 'https://commons.wikimedia.org/w/index.php?curid=149127809',
   },
   river: {
-    src: '/images/photos/rio-solimoes',
+    src: river1280,
+    srcSet: `${river640} 640w, ${river1280} 1280w, ${river1920} 1920w`,
     width: 1920,
     height: 1080,
     alt: {
@@ -71,7 +81,8 @@ export const PHOTOS = {
     sourceUrl: 'https://commons.wikimedia.org/w/index.php?curid=149127797',
   },
   sunset: {
-    src: '/images/photos/leticia',
+    src: sunset1280,
+    srcSet: `${sunset640} 640w, ${sunset1280} 1280w, ${sunset1920} 1920w`,
     width: 1920,
     height: 1080,
     alt: {

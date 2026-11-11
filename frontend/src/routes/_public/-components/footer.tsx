@@ -2,8 +2,9 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
+import { Picture } from '#/components/common/picture/picture'
 import { Button } from '#/components/ui/button'
-import { currentLocalYear } from '#/lib/i18n'
 import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
@@ -19,8 +20,6 @@ import { navLinkVariants } from './nav-link'
  * de 0.9, engolia o clique.
  */
 export function Footer(): React.JSX.Element {
-  const year = currentLocalYear()
-
   return (
     <footer
       data-slot="site-footer"
@@ -31,7 +30,14 @@ export function Footer(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid grid-cols-1 border-y border-border md:grid-cols-4 md:divide-x md:divide-border">
           <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
-            <img src="/maiyu-symbol.svg" alt="" className="mb-5 size-9" />
+            <Picture
+              src="/maiyu-symbol.svg"
+              alt=""
+              width={36}
+              height={36}
+              placement="fold"
+              className="mb-5 size-9"
+            />
             <p className="max-w-xs font-serif text-body-lg leading-snug text-foreground/85">
               {m.footer_tagline()}
             </p>
@@ -104,9 +110,7 @@ export function Footer(): React.JSX.Element {
         </div>
 
         <div className="relative z-10 flex flex-col items-center gap-4 pt-16 pb-8 text-center">
-          <p className="text-small text-foreground/70">
-            © {year} {SITE_TITLE}. {m.footer_rights()}. {m.footer_signoff()}
-          </p>
+          <MaiyuCredit className="text-small text-foreground/70" />
           <Button
             type="button"
             size="icon-lg"

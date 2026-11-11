@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
+import { Picture } from '#/components/common/picture/picture'
 import { ThemeToggle } from '#/components/common/theme/theme-toggle'
 import { Button } from '#/components/ui/button'
 import {
@@ -56,7 +57,14 @@ export function Header(): React.JSX.Element {
           aria-label={m.a11y_home()}
           className="flex items-center gap-2 justify-self-start py-2"
         >
-          <img src="/maiyu-symbol.svg" alt="" className="size-7" />
+          <Picture
+            src="/maiyu-symbol.svg"
+            alt=""
+            width={28}
+            height={28}
+            placement="lcp"
+            className="size-7"
+          />
           <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase dark:text-brand-green">
             {SITE_TITLE}
           </span>

@@ -1,6 +1,7 @@
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
+import { Picture } from '#/components/common/picture/picture'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
@@ -68,13 +69,12 @@ function Shot({
         className,
       )}
     >
-      <img
+      <Picture
         src={project.image}
         alt={project.title}
         width={1863}
         height={927}
-        loading="lazy"
-        decoding="async"
+        placement="fold"
         style={{ objectPosition: project.focus }}
         className="aspect-[2/1] size-full object-cover"
       />
