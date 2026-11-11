@@ -49,9 +49,93 @@ componente. Declare-os juntos num `queryOptions()` e reuse esse objeto em toda p
 prefetch, `getQueryData`, invalidação. É o que a regra de ESLint `prefer-query-options` cobra, e o
 que impede a mesma chave de acabar com duas funções diferentes.
 
-**Links:** 57.
+**Links:** 60.
 
 **Skills:** `maiyu-frontend`, `react-data-fetching`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
+
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com TanStack Query: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação, versão e ferramentas
+
+- **`@tanstack/eslint-plugin-query` entra junto com a biblioteca, com `flat/recommended` (ou `flat/recommended-strict`).** A instalação recomenda o plugin para pegar bug e inconsistência. [`#installation`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/installation.md) [`#eslint/eslint-plugin-query`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/eslint-plugin-query.md)
+- **A versão do pacote se trava num patch específico e se sobe esperando mudança de tipo entre releases.** A página de TypeScript recomenda fortemente o lock por patch. [`#typescript`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/typescript.md)
+- **Devtools só entram no bundle quando `NODE_ENV === 'development'`; em produção só por lazy load explícito.** Ficam fora do build de produção sem configuração. [`#devtools`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/devtools.md)
+- **`broadcastQueryClient` é experimental; usado em produção, a versão fica travada no patch.** A página avisa e pede o lock. [`#plugins/broadcastQueryClient`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/plugins/broadcastQueryClient.md)
+- **`createSyncStoragePersister` está deprecated; use `@tanstack/query-async-storage-persister`.** Será removido na próxima major. [`#plugins/createSyncStoragePersister`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/plugins/createSyncStoragePersister.md)
+
+### Tipos
+
+- **Dado sem tipo (fetch que devolve `any`) se extrai para função de query com retorno tipado.** É assim que a inferência flui para o hook. [`#typescript`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/typescript.md)
+- **`Register['defaultError']` é `unknown` quando o call site deve estreitar o erro.** A página mostra o registro global para obrigar o narrowing. [`#typescript`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/typescript.md)
+- **Tipo registrado de `meta` estende `Record` e o de chave estende `Array`.** A página marca as duas restrições como obrigatórias. [`#typescript`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/typescript.md)
+
+### Chaves e funções de query
+
+- **A chave inclui toda variável que a função de query usa e que muda.** A chave descreve unicamente o dado buscado. [`#guides/query-keys`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-keys.md) [`#eslint/exhaustive-deps`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/exhaustive-deps.md)
+- **A função de query lança erro (ou rejeita) na falha; `fetch` exige `throw` manual quando `!response.ok`.** Sem lançar, o Query não sabe que a query falhou. [`#guides/query-functions`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-functions.md)
+- **A função de query sempre devolve valor; "nada" se guarda como `null`, nunca `undefined`/void.** Função void gera comportamento inesperado no cache. [`#guides/query-functions`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-functions.md) [`#eslint/no-void-query-fn`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/no-void-query-fn.md)
+- **`queryKey` e `queryFn` saem de `queryOptions`, e métodos do `QueryClient` reaproveitam a `queryKey` dele.** A regra `prefer-query-options` (strict) cobra isso. [`#eslint/prefer-query-options`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/prefer-query-options.md) [`#guides/query-options`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-options.md)
+- **Método que modifica dado no servidor é mutation, não query.** A página de queries recomenda mutations para escrita. [`#guides/queries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/queries.md)
+
+### Frescor, refetch e retry
+
+- **`staleTime` é o meio recomendado de evitar refetch excessivo; `'static'` nunca refaz, nem com invalidação.** Os padrões marcam dado como velho de imediato. [`#guides/important-defaults`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/important-defaults.md)
+- **Structural sharing só funciona com valor compatível com JSON; outro tipo exige `structuralSharing` próprio.** Valor não JSON é sempre visto como mudado. [`#guides/important-defaults`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/important-defaults.md)
+- **`retryDelay` fica no padrão (backoff exponencial).** A página diz que sobrescrever não é recomendado. [`#guides/query-retries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-retries.md)
+- **Query acionada à mão usa `enabled: false`; `skipToken` não funciona com `refetch`.** A página marca a incompatibilidade como importante. [`#guides/disabling-queries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/disabling-queries.md)
+- **Texto que depende de tempo (aviso de demora) usa timer próprio, não o ciclo de polling.** A página manda atualizar UI dependente de tempo com timer separado. [`#guides/polling`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/polling.md)
+
+### Cascata e prefetch
+
+- **Requisições em série que podiam ser paralelas são cascata: prefira endpoint que entregue tudo numa query só.** Série custa o dobro do tempo; a página manda reestruturar a API quando possível. [`#guides/dependent-queries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/dependent-queries.md) [`#guides/request-waterfalls`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/request-waterfalls.md)
+- **Várias queries suspensas no mesmo componente usam `useSuspenseQueries`.** Hooks separados criam cascata. [`#guides/request-waterfalls`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/request-waterfalls.md)
+- **Lista dinâmica de queries paralelas usa `useQueries`.** É o hook para quantidade variável. [`#guides/parallel-queries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/parallel-queries.md)
+- **`prefetchQuery` e `ensureQueryData` estão deprecated; o prefetch é `queryClient.query`.** As dicas da página substituem os dois métodos. [`#guides/prefetching`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/prefetching.md)
+- **Dado crítico sem o qual a rota não funciona se aguarda e o erro se trata; o secundário segue com `.catch(noop)`.** A página separa crítico de secundário. [`#guides/prefetching`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/prefetching.md)
+- **No servidor, `staleTime` padrão maior que 0.** Evita refetch imediato no cliente depois da hidratação. [`#guides/prefetching`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/prefetching.md) [`#guides/ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/ssr.md)
+
+### SSR e hidratação
+
+- **O `QueryClient` nasce dentro da aplicação, um por requisição no servidor, nunca compartilhado entre requisições.** Cliente de módulo vaza dado entre usuários. [`#guides/ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/ssr.md) [`#guides/advanced-ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/advanced-ssr.md) [`#eslint/stable-query-client`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/stable-query-client.md)
+- **O `QueryClient` não se recria a cada render.** A regra `stable-query-client` cobra uma instância para o ciclo de vida da aplicação. [`#eslint/stable-query-client`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/stable-query-client.md)
+- **Toda query que deve sair renderizada do servidor se pré-busca.** Sem prefetch, o HTML sai com estado de carregamento e a query refaz no cliente. [`#guides/ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/ssr.md)
+- **Estado desidratado embutido no HTML se serializa com biblioteca segura contra XSS (devalue, serialize-javascript), não com `JSON.stringify`.** A página recomenda serializador seguro. [`#guides/ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/ssr.md)
+- **Server Action não busca dado em `queryFn`.** Pode deixar a query presa em pending ou a action nunca rodar. [`#guides/advanced-ssr`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/advanced-ssr.md)
+
+### Dados iniciais e de transição
+
+- **`initialData` não recebe dado parcial ou provisório; isso é `placeholderData`.** `initialData` é persistido no cache. [`#guides/initial-query-data`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/initial-query-data.md)
+- **Dado inicial vindo de outra query informa `initialDataUpdatedAt` com o `dataUpdatedAt` da fonte, em vez de `staleTime` artificial.** É a sugestão da página. [`#guides/initial-query-data`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/initial-query-data.md)
+- **Lista paginada mantém o dado anterior durante a troca de página (`placeholderData`).** Evita o estado de carregamento duro entre chaves. [`#guides/placeholder-query-data`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/placeholder-query-data.md) [`#comparison`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/comparison.md)
+- **Query infinita mantém a mesma estrutura de `pages` e `pageParams`, tem `initialPageParam` e não chama `fetchNextPage` enquanto `isFetching`.** A página marca as três coisas. [`#guides/infinite-queries`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/infinite-queries.md)
+
+### Mutations e invalidação
+
+- **`mutateAsync` devolve promessa que rejeita no erro; `mutate` não.** Use `mutateAsync` quando precisa da promessa. [`#guides/mutations`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/mutations.md)
+- **Mutations que não podem correr em paralelo recebem `scope` com `id`.** O escopo serializa as mutations. [`#guides/mutations`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/mutations.md)
+- **O `onSuccess` devolve a promessa da invalidação.** Assim o `isPending` dura até o dado estar atualizado. [`#guides/invalidations-from-mutations`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/invalidations-from-mutations.md) [`#guides/optimistic-updates`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/optimistic-updates.md)
+- **`setQueryData` é imutável; nunca escreva no cache mutando o dado lido dele.** A página proíbe a mutação no lugar. [`#guides/updates-from-mutation-responses`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/updates-from-mutation-responses.md)
+- **Atualização otimista cancela as queries em voo, guarda o snapshot, desfaz no erro e refaz sempre no fim (`onSettled`).** É a receita da página; com um único ponto de exibição, `variables` basta. [`#guides/optimistic-updates`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/optimistic-updates.md)
+- **`invalidateQueries` aceita `exact: true` para não atingir chaves filhas.** É a forma de restringir a invalidação. [`#guides/query-invalidation`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-invalidation.md) [`#guides/filters`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/filters.md)
+- **Query cancelada por sinal de aborto precisa repassar o `signal` ao fetch.** Só assim o fetch é abortado junto. [`#guides/query-cancellation`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/query-cancellation.md)
+
+### Render
+
+- **`select` recorta o que o componente assina; função de `select` inline vai para referência estável.** Evita re-render e recomputação. [`#guides/render-optimizations`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/render-optimizations.md)
+- **Erro de dado inválido se trata no `queryFn`, não no `select`.** A página recomenda o `queryFn` para falhar por dado incorreto. [`#guides/render-optimizations`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/render-optimizations.md)
+- **O resultado da query não se desestrutura com rest (`...rest`).** Desliga o rastreamento de propriedades e re-renderiza a cada mudança. [`#eslint/no-rest-destructuring`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/no-rest-destructuring.md)
+- **O objeto devolvido pelo hook não vai inteiro no array de dependências; desestruture e passe os campos.** O objeto muda de referência a cada render. [`#eslint/no-unstable-deps`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/no-unstable-deps.md)
+- **Ordem de propriedades de `useInfiniteQuery` e `useMutation` segue a regra do plugin.** A ordem importa para a inferência. [`#eslint/infinite-query-property-order`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/infinite-query-property-order.md) [`#eslint/mutation-property-order`](https://raw.githubusercontent.com/tanstack/query/main/docs/eslint/mutation-property-order.md)
+
+### Estado e testes
+
+- **TanStack Query não substitui estado local/de cliente.** Ele é para estado de servidor. [`#guides/does-this-replace-client-state`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/does-this-replace-client-state.md)
+- **Teste usa `QueryClient` novo (ou limpo) por teste e sem paralelismo sobre o mesmo cliente; retry desligado.** Cliente compartilhado faz um teste influenciar o outro, e retry padrão estoura o timeout. [`#guides/testing`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/testing.md)
+- **Persistência: `gcTime` igual ou maior que o `maxAge` do persister.** Senão o cache restaurado é coletado. [`#plugins/persistQueryClient`](https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/plugins/persistQueryClient.md)
 
 ---
 
@@ -1398,6 +1482,34 @@ const queryClient = new QueryClient({
 // A diferença para o persistQueryClient: aqui a chave de gravação é o hash da
 // query, um item por query. Lá é um item só com tudo dentro.
 ```
+
+## Migração
+
+#### guides/migrating-to-v5
+[doc](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-v5) | [markdown](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-v5.md)
+
+**O que é:** o que mudou da v4 para a v5: assinatura única por objeto (`useQuery({ queryKey, queryFn })`),
+fim dos callbacks `onSuccess`/`onError`/`onSettled` em query, `isLoading` virou `isPending`,
+`keepPreviousData` virou `placeholderData: keepPreviousData`, `useErrorBoundary` virou `throwOnError`,
+`Hydrate` virou `HydrationBoundary`. Também avisa que os métodos imperativos do `QueryClient`
+(`fetchQuery`, `ensureQueryData`, `prefetchQuery`) estão depreciados em favor de `queryClient.query` e
+`queryClient.infiniteQuery`, e saem na v6.
+**Para que serve:** reconhecer código escrito para a v4 e trocar pela forma atual.
+**Quando usar:** ao migrar projeto ou ao revisar exemplo antigo que usa a assinatura posicional.
+
+#### guides/migrating-to-react-query-4
+[doc](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-react-query-4) | [markdown](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-react-query-4.md)
+
+**O que é:** a passagem da v3 para a v4 (pacote `@tanstack/react-query`, query key sempre array).
+**Para que serve:** histórico; código da v3 ainda circula em material antigo.
+**Quando usar:** só ao migrar projeto muito atrás.
+
+#### guides/migrating-to-react-query-3
+[doc](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-react-query-3) | [markdown](https://tanstack.com/query/latest/docs/framework/react/guides/migrating-to-react-query-3.md)
+
+**O que é:** a passagem da v2 para a v3.
+**Para que serve:** histórico.
+**Quando usar:** não se aplica a projeto da casa; fica pela completude da lista oficial.
 
 ## Fora de escopo
 

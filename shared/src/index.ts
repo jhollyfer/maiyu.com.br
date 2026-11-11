@@ -1,0 +1,22 @@
+// The package's entry point. It is the project's file (KIT.md §3.4): the sync creates this
+// skeleton with the kit's modules when it is missing and never overwrites it, because the
+// project adds its own enums, records, responses and validators here.
+export * from './either.js'
+export * from './enums/active-status.js'
+export * from './enums/locale.js'
+export * from './enums/sort-direction.js'
+export * from './enums/storage-mimetype.js'
+export * from './enums/trashed-mode.js'
+export * from './enums/upload-status.js'
+export * from './enums/user-role.js'
+export * from './merge.js'
+export * from './records/pagination.js'
+export * from './responses/envelope.js'
+export * from './responses/storages/files.response.js'
+export * from './rich-text-schema.js'
+export * from './validator.js'
+export * from './validators/authentication/actor.validator.js'
+export * from './validators/authentication/sessions.validator.js'
+export * from './validators/client/table-layout.validator.js'
+export * from './validators/client/upload-resume.validator.js'
+export * from './validators/storages/files.validator.js'

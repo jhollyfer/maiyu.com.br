@@ -104,6 +104,46 @@ Um único "subir/descer" de item não justifica a dependência: dois botões res
 ponteiro no teste de UI, `frontend.md` §11.2), `superpowers:test-driven-development`. Dispare junto
 com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com dnd kit: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Pacotes e migração
+
+- **O pacote é `@dnd-kit/react` (mais `@dnd-kit/helpers` para listas ordenáveis); `@dnd-kit/core`, `@dnd-kit/sortable` e `@dnd-kit/utilities` são o legado.** O guia de migração troca os três pelos novos e `DndContext` por `DragDropProvider`. [`#react/quickstart`](https://dndkit.com/react/quickstart.md) [`#react/guides/migration`](https://dndkit.com/react/guides/migration.md)
+- **Cancelamento se trata em `onDragEnd` pelo `event.canceled`; não há mais `onDragCancel`.** O guia de migração substitui o handler pelo campo do evento. [`#react/guides/migration`](https://dndkit.com/react/guides/migration.md)
+- **`SortableContext` não existe mais.** A migração o marca como desnecessário. [`#react/guides/migration`](https://dndkit.com/react/guides/migration.md)
+- **Detector de colisão vem de `@dnd-kit/collision`, sem instalar à parte; sem `collisionDetector` vale o `defaultCollisionDetection`.** O pacote já é dependência transitiva de `@dnd-kit/react`. [`#react/guides/collision-detection`](https://dndkit.com/react/guides/collision-detection.md)
+
+### Provider, plugins e sensores
+
+- **`sensors`, `plugins` e `modifiers` do `DragDropProvider` na forma de função (`(defaults) => [...defaults, X]`) para estender o padrão.** Array substitui todos os defaults, o que pode desligar auto-scroll e acessibilidade. [`#react/components/drag-drop-provider`](https://dndkit.com/react/components/drag-drop-provider.md) [`#react/guides/feedback`](https://dndkit.com/react/guides/feedback.md)
+- **`PointerSensor` e `KeyboardSensor` já vêm registrados em todo `DragDropProvider`; o teclado é o caminho de acessibilidade.** A doc diz que os defaults funcionam sem configuração. [`#react/guides/sensors`](https://dndkit.com/react/guides/sensors.md)
+- **Ativação diferente para toque e mouse sai de `activationConstraints` como função de `event.pointerType`.** É a forma recomendada pela doc, e o toque usa atraso maior para não sequestrar o scroll. [`#react/guides/sensors`](https://dndkit.com/react/guides/sensors.md)
+- **Alça de arraste dentro do item é o ref `handle` de `useDraggable`/`useSortable`; `activatorElements` só para alça fora do item.** A doc reserva `activatorElements` ao caso incomum. [`#react/guides/sensors`](https://dndkit.com/react/guides/sensors.md)
+- **Elemento interativo dentro do item arrastável não inicia arraste por padrão (`preventActivation`).** Clique em botão dentro de um card não começa drag. [`#react/guides/sensors`](https://dndkit.com/react/guides/sensors.md)
+- **Tecla do `KeyboardSensor` é nomeada no casing de `KeyboardEvent.key`; códigos físicos como `NumpadEnter` são trocados pelo valor que produzem.** É a regra de configuração das teclas. [`#react/guides/sensors`](https://dndkit.com/react/guides/sensors.md)
+
+### Hooks
+
+- **`id` de draggable, droppable e sortable é único dentro do mesmo `DragDropProvider`.** A doc o exige único por provider. [`#react/hooks/use-draggable`](https://dndkit.com/react/hooks/use-draggable.md) [`#react/hooks/use-droppable`](https://dndkit.com/react/hooks/use-droppable.md) [`#react/hooks/use-sortable`](https://dndkit.com/react/hooks/use-sortable.md) [`#quickstart`](https://dndkit.com/quickstart.md)
+- **Hooks do dnd kit (`useDragDropMonitor`, `useDragOperation`...) só dentro de componente envolvido por `DragDropProvider`.** Fora dele o hook não tem o contexto. [`#react/hooks/use-drag-drop-monitor`](https://dndkit.com/react/hooks/use-drag-drop-monitor.md)
+- **Para reagir ao arraste em andamento use `useDragOperation`; `useDragDropMonitor` só quando precisar de atualização por movimento do ponteiro.** `useDragOperation` re-renderiza só quando `source` ou `target` mudam. [`#react/hooks/use-drag-operation`](https://dndkit.com/react/hooks/use-drag-operation.md)
+- **Prefira os hooks de alto nível a `useDragDropManager`.** A doc os indica para a maioria dos casos (UI por estado do drag, reordenar em `onDragEnd`). [`#react/hooks/use-drag-drop-manager`](https://dndkit.com/react/hooks/use-drag-drop-manager.md)
+- **Opções avançadas de alinhamento e afins ficam no padrão.** A doc diz que a maioria dos consumidores não deve precisar delas. [`#react/hooks/use-draggable`](https://dndkit.com/react/hooks/use-draggable.md) [`#react/hooks/use-sortable`](https://dndkit.com/react/hooks/use-sortable.md)
+
+### DragOverlay
+
+- **`DragOverlay` é renderizado uma vez só por `DragDropProvider`; conteúdo diferente por item sai de children como função de `source`.** Os hooks não têm efeito dentro do overlay. [`#react/components/drag-overlay`](https://dndkit.com/react/components/drag-overlay.md) [`#react/guides/migration`](https://dndkit.com/react/guides/migration.md)
+
+### Estado da lista ordenável
+
+- **Com ordenação otimista (padrão), trate só `onDragEnd` e descubra o que moveu por `initialIndex`/`index` e `initialGroup`/`group` do `source`, estreitado por `isSortable`.** Durante o drag `source` e `target` apontam para o mesmo elemento, então comparar os ids não funciona. [`#react/guides/sortable-state-management`](https://dndkit.com/react/guides/sortable-state-management.md)
+- **Reordenação feita em `onDragOver` é revertida em `onDragEnd` quando o drag foi cancelado.** O usuário pode abortar e a ordem tem de voltar ao estado anterior. [`#react/guides/multiple-sortable-lists`](https://dndkit.com/react/guides/multiple-sortable-lists.md)
+- **Com TanStack Query, a lista renderiza de um estado local e só sincroniza com os dados buscados quando não há drag em andamento.** Refetch durante a ordenação otimista duplica itens. [`#react/guides/sortable-state-management`](https://dndkit.com/react/guides/sortable-state-management.md)
+
 ---
 
 ## Overview

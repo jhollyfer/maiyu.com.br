@@ -1,0 +1,14 @@
+{
+  // What the apps import (`exports` points to `dist/`, `_standards/tooling.md` §1): the Node of
+  // the backend image refuses a TypeScript file inside `node_modules`, so the package ships
+  // compiled. Only the package code goes in, without tests, fixtures or config.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "declaration": true,
+    "sourceMap": true
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/**/*.test.ts", "src/**/*-fixtures.ts"]
+}

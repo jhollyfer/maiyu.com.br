@@ -1,0 +1,12 @@
+{
+  "POST /authentication/refresh": "anonymous",
+  "POST /authentication/sign-in": "anonymous",
+  "POST /authentication/sign-out": "authenticated",
+  "GET /storages": "authenticated",
+  "POST /storages": "authenticated",
+  "GET /storages/{id}": "authenticated",
+  "DELETE /storages/{id}": "authenticated",
+  "POST /storages/{id}/complete": "authenticated",
+  "GET /storages/{id}/download": "authenticated",
+  "GET /storages/{id}/parts": "authenticated"
+}

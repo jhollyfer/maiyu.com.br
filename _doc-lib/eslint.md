@@ -85,6 +85,72 @@ O bloco completo da casa está em `tooling.md` §4.1 e §4.2; este arquivo é o 
 (jsx-a11y), `playwright-skill` (plugin de e2e). Dispare junto com a leitura da entrada; a entrada é
 o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com ESLint + typescript-eslint: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Arquivo de configuração
+
+- **A config é um `eslint.config.*` na raiz do projeto que exporta um array de objetos de configuração.** Com `"type": "commonjs"` no `package.json`, o `eslint.config.js` tem de ser CommonJS. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files)
+- **Config em TypeScript (`eslint.config.ts`) no Node exige a dependência opcional `jiti` 2, ou a flag `unstable_native_nodejs_ts_config`.** O carregamento nativo ainda é experimental e só existe com a flag. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files)
+- **Monte a config com `defineConfig()` de `eslint/config`; o `tseslint.config(...)` está deprecado.** O typescript-eslint deprecou o utilitário próprio em favor do helper do núcleo. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files) [`#packages/typescript-eslint`](https://typescript-eslint.io/packages/typescript-eslint)
+- **Objeto que usa `extends` ou `ignores` declara `files`.** A doc recomenda sempre incluir `files` com `extends` e com `ignores`, para a config cair só nos arquivos certos. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files)
+- **Plugin usado em `rules` ou em comentário de configuração é declarado antes na chave `plugins`.** Sem isso a regra do plugin não carrega. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files) [`#docs/latest/use/configure/rules`](https://eslint.org/docs/latest/use/configure/rules)
+- **Registre o plugin do typescript-eslint com o namespace `@typescript-eslint`.** A doc recomenda fortemente esse nome, e os presets `recommended`/`stylistic` já configuram parser e plugin. [`#packages/typescript-eslint`](https://typescript-eslint.io/packages/typescript-eslint)
+- **`ecmaVersion` e `sourceType` vão direto em `languageOptions`, não em `languageOptions.parserOptions`; deixe `ecmaVersion` em `"latest"`.** A doc não recomenda passá-los pelo `parserOptions` do parser padrão. [`#docs/latest/use/configure/language-options`](https://eslint.org/docs/latest/use/configure/language-options)
+- **Projeto React usa `eslint-plugin-react` ou `@eslint-react/eslint-plugin` para o JSX.** É a recomendação da página de opções de linguagem. [`#docs/latest/use/configure/language-options`](https://eslint.org/docs/latest/use/configure/language-options)
+
+### Ignorar arquivos
+
+- **Ignore global se escreve com `globalIgnores()`.** O helper deixa claro que o ignore é global e evita confusão com `ignores` local. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files) [`#docs/latest/use/configure/ignore`](https://eslint.org/docs/latest/use/configure/ignore)
+- **Para ignorar um diretório inteiro use `dir/**`; para reabrir arquivos dentro dele, `dir/**/*` com a negação depois.** Com `dir/**` a negação de arquivo interno não funciona. [`#docs/latest/use/configure/configuration-files`](https://eslint.org/docs/latest/use/configure/configuration-files) [`#docs/latest/use/configure/ignore`](https://eslint.org/docs/latest/use/configure/ignore)
+- **Ao importar o `.gitignore` com `includeIgnoreFile()`, passe sempre `{ gitignoreResolution: true }`.** Os padrões do `.gitignore` são relativos ao próprio arquivo, e a opção reproduz esse comportamento. [`#docs/latest/use/configure/ignore`](https://eslint.org/docs/latest/use/configure/ignore)
+
+### Regras e desativação
+
+- **Desativar regra inline é exceção com motivo escrito após `--` no comentário, não a solução padrão para erro de lint.** A doc pede que o uso seja restrito e que a descrição explique por que a regra foi desligada ali. [`#docs/latest/use/configure/rules`](https://eslint.org/docs/latest/use/configure/rules)
+- **Caso pontual usa comentário de desativação, não desliga a regra no projeto.** As páginas de `no-explicit-any`, `no-non-null-assertion`, `consistent-type-definitions`, `no-floating-promises` e `no-misused-promises` dizem o mesmo. [`#rules/no-explicit-any`](https://typescript-eslint.io/rules/no-explicit-any) [`#rules/no-non-null-assertion`](https://typescript-eslint.io/rules/no-non-null-assertion) [`#rules/consistent-type-definitions`](https://typescript-eslint.io/rules/consistent-type-definitions) [`#rules/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises) [`#rules/no-misused-promises`](https://typescript-eslint.io/rules/no-misused-promises)
+- **`warn` não afeta o código de saída: para reprovar aviso, rode com `--max-warnings 0`.** Acima do limite o ESLint sai com status de erro. [`#docs/latest/use/configure/rules`](https://eslint.org/docs/latest/use/configure/rules) [`#docs/latest/use/command-line-interface`](https://eslint.org/docs/latest/use/command-line-interface)
+- **Em `no-restricted-imports`, cada item de `patterns` tem `group` ou `regex`, `importNames` exige `name`, e padrão negado vem por último.** A ordem dos padrões importa e `group` ou `regex` é obrigatório em `patterns`. [`#docs/latest/rules/no-restricted-imports`](https://eslint.org/docs/latest/rules/no-restricted-imports)
+- **`no-console` vale para código de navegador; em Node a doc diz que a regra provavelmente não deve estar ligada.** No navegador, chamada a `console` é retirada antes de ir para produção. [`#docs/latest/rules/no-console`](https://eslint.org/docs/latest/rules/no-console)
+- **Arquivo não deve chegar aos milhares de linhas; o `max` padrão de `max-lines` é 300 e a faixa usual vai de 100 a 500.** A regra existe para manutenção e complexidade. [`#docs/latest/rules/max-lines`](https://eslint.org/docs/latest/rules/max-lines)
+
+### Linha de comando
+
+- **Padrão de arquivo passado ao `eslint` vai entre aspas.** Evita que o shell expanda o glob. [`#docs/latest/use/command-line-interface`](https://eslint.org/docs/latest/use/command-line-interface)
+- **Use `--cache-location`, não `--cache-file`.** `--cache-file` está deprecado. [`#docs/latest/use/command-line-interface`](https://eslint.org/docs/latest/use/command-line-interface)
+- **Com `--cache`, mudança num módulo não reavalia o arquivo inalterado que o importa.** O problema só aparece quando o importador ou a config muda, então regra com informação de tipo pode ficar desatualizada no cache. [`#docs/latest/use/command-line-interface`](https://eslint.org/docs/latest/use/command-line-interface)
+
+### ESLint 10
+
+- **ESLint 10 exige Node.js 20.19.0 ou mais novo, inclusive no Node usado pelo editor.** Sem dar para subir o Node, a doc manda ficar no ESLint 9. [`#docs/latest/use/migrate-to-10.0.0`](https://eslint.org/docs/latest/use/migrate-to-10.0.0)
+- **Use a classe `ESLint`; `FlatESLint` e `LegacyESLint` foram removidas.** O codemod `@eslint/v9-to-v10-linter-api` faz a troca. [`#docs/latest/use/migrate-to-10.0.0`](https://eslint.org/docs/latest/use/migrate-to-10.0.0)
+- **`radix` sem opção: remova `"always"`/`"as-needed"` e passe sempre a base ao `parseInt()`.** As duas opções estão deprecadas e a regra agora sempre exige a base. [`#docs/latest/use/migrate-to-10.0.0`](https://eslint.org/docs/latest/use/migrate-to-10.0.0)
+
+### typescript-eslint: presets e lint com tipo
+
+- **A base é `js.configs.recommended` mais um preset do typescript-eslint (`recommended`, ou `strict` se a equipe domina TypeScript).** O `recommended` também desliga regras do núcleo que conflitam com TypeScript. [`#getting-started`](https://typescript-eslint.io/getting-started) [`#users/configs`](https://typescript-eslint.io/users/configs)
+- **Ligue o lint com informação de tipo: presets `*-type-checked` (`recommendedTypeChecked`, `strictTypeChecked`).** A doc recomenda fortemente; as regras que usam tipo pegam erro que as outras não veem. [`#getting-started/typed-linting`](https://typescript-eslint.io/getting-started/typed-linting) [`#users/configs`](https://typescript-eslint.io/users/configs)
+- **Não estenda o preset `all`.** A doc não recomenda para projeto TypeScript. [`#users/configs`](https://typescript-eslint.io/users/configs)
+- **Informação de tipo vem de `parserOptions.projectService: true`, não de `parserOptions.project`.** É a opção recomendada, mais simples e mais rápida; com `project`, todo arquivo linted tem de estar no programa do tsconfig. [`#getting-started/typed-linting`](https://typescript-eslint.io/getting-started/typed-linting) [`#packages/parser`](https://typescript-eslint.io/packages/parser)
+- **Arquivo JavaScript sem tipo recebe `tseslint.configs.disableTypeChecked`.** Regras com tipo não se aplicam a ele e dariam erro de parse. [`#packages/typescript-eslint`](https://typescript-eslint.io/packages/typescript-eslint) [`#getting-started/typed-linting`](https://typescript-eslint.io/getting-started/typed-linting)
+
+### typescript-eslint: regras
+
+- **`unknown` no lugar de `any`, inclusive em restrição de parâmetro genérico (`never`/`unknown`).** `any` é escape perigoso e a doc manda evitá-lo sempre que possível. [`#rules/no-explicit-any`](https://typescript-eslint.io/rules/no-explicit-any)
+- **`consistent-type-assertions` com `assertionStyle: 'never'` proíbe toda asserção; `as const` continua permitido.** A doc descreve o `never` como o nível extra de segurança de tipo. [`#rules/consistent-type-assertions`](https://typescript-eslint.io/rules/consistent-type-assertions)
+- **Escolha um único estilo de definição de tipo (`type` ou `interface`); o padrão recomendado é `interface`.** A consistência pesa mais que o estilo escolhido. [`#rules/consistent-type-definitions`](https://typescript-eslint.io/rules/consistent-type-definitions)
+- **Com lint tipado, `consistent-type-imports` lê a config do tsconfig e não precisa de opção; se o diagnóstico do `tsc` já cobre, a regra pode sair.** Os dois avisam o mesmo import em duplicidade. [`#rules/consistent-type-imports`](https://typescript-eslint.io/rules/consistent-type-imports)
+- **Toda Promise (e array de Promises) é tratada; `void` não conta como tratamento.** `no-floating-promises` vem do `recommended-type-checked`, e a doc avisa que `void` não trata nem muda o comportamento em runtime. [`#rules/no-floating-promises`](https://typescript-eslint.io/rules/no-floating-promises)
+- **Promise em condicional leva `await`, e função async não vai onde se espera retorno `void`.** É o que `no-misused-promises` (do `recommended-type-checked`) cobra. [`#rules/no-misused-promises`](https://typescript-eslint.io/rules/no-misused-promises)
+
+### Plugins
+
+- **`jsxA11y.flatConfigs.recommended` não configura `files` nem `languageOptions.globals`: declare os dois.** O lint de acessibilidade é só um passo; teste também com tecnologia assistiva. [`#jsx-eslint/eslint-plugin-jsx-a11y`](https://github.com/jsx-eslint/eslint-plugin-jsx-a11y)
+- **`eslint-plugin-playwright` entra só nos arquivos de teste do Playwright, por `files`.** É o setup recomendado pelo README. [`#mskelton/eslint-plugin-playwright`](https://github.com/mskelton/eslint-plugin-playwright)
+
 ---
 
 ## ESLint: configuração
@@ -201,9 +267,11 @@ depuração esquecido (`tooling.md` §10.3).
 #### docs/latest/rules/no-restricted-syntax
 [doc](https://eslint.org/docs/latest/rules/no-restricted-syntax)
 **O que é:** proíbe sintaxe descrita por seletor de AST, com `message` opcional por seletor.
-**Para que serve:** a proibição de `new XService()` fora do container (`backend.md` §2.1).
-**Quando usar:** só para a regra de `new`, como `tooling.md` §4.1 manda: assim o
-`*.unit.spec.ts` desliga a regra sem soltar outra proibição junto.
+**Para que serve:** a proibição de `new XService()` fora do container (`backend.md` §2.1) e, no
+frontend, a de elemento interativo cru fora de `components/ui/` (`frontend.md` §6.5).
+**Quando usar:** no bloco comum, só para a regra de `new`, como `tooling.md` §4.1 manda: assim o
+`*.unit.spec.ts` desliga a regra sem soltar outra proibição junto. O bloco do frontend que soma o
+seletor de JSX repete o de `new`, porque o objeto de baixo substitui as opções da regra.
 
 #### docs/latest/rules/no-restricted-properties
 [doc](https://eslint.org/docs/latest/rules/no-restricted-properties)

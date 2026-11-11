@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-09 | Migração para a régua | 2 de 47 itens | Em desenvolvimento |
+| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -24,21 +24,30 @@ R0.2 (JSON-LD com `<` escapado) e o R0.4 (`.gitignore` da raiz pela régua, `.gi
 modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) está pronto na branch
 `fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
 
+Frente do backend (R1.2 e RB.1 a RB.4) feita na branch `feat/backend-inicial`, com a leva 8 do kit
+(`maiyu-pattern` em 1a9a636): `shared/` e `backend/` verdes em format, lint, tsc, `pattern:check`,
+`validators:check`, `openapi:check` e `authz:check`; `shared/` com 62 testes, backend com unitário 233
+de 233 e funcional 143 de 143. Os pontos de extensão nunca editados foram apagados e recriados pelo
+sync, e a migration de `users` segue a do kit (papéis `ADMINISTRATOR` e `MEMBER`). A funcional de
+storage rodou contra o MinIO local, ambiente declarado que não vale como prova de PR até a régua
+escolher o substituto. O RB.3 ficou no que o kit traz; rota de conta é proposta ao dono (R2.10).
+
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
 
 ## Próximos passos
 
-1. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
+1. Regente verifica a `feat/backend-inicial` e abre a PR do backend inicial.
+2. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
    anunciar envio que não acontece.
-2. Fase 1 da migração (R1.1 em diante, `TASKS.md`).
-3. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
+3. Fase 1 da migração (R1.1 em diante, `TASKS.md`); R1.2 e RB.1 a RB.4 esperam a leva do kit.
+4. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
    sem passar pelo crivo de quem é da Maiyu.
-4. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
-5. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
+5. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
+6. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
    `maiyu.com.br`.
-6. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
-7. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
+7. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
+8. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
    de quem o pinta (`DESIGN.md` §2).
 
 ## Contexto importante

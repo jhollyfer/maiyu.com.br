@@ -1,0 +1,12 @@
+{
+  "internal": "Erro interno do servidor",
+  "origin_not_allowed": "Origem não permitida",
+  "access_denied": "Acesso negado",
+  "not_found": "Não encontrado",
+  "unauthorized": "Não autorizado",
+  "validation": "Dados inválidos",
+  "too_many_requests": "Tentativas em excesso. Tente novamente mais tarde",
+  "bad_request": "Requisição inválida",
+  "payload_too_large": "Conteúdo excede o tamanho permitido",
+  "unsupported_media_type": "Formato de conteúdo não suportado"
+}

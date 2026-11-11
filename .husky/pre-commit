@@ -1,0 +1,32 @@
+# The commit gate, per app and filtered by folder (`_standards/tooling.md` §6): `check` and the
+# unit suite only for the app the commit touches. Touching `shared/` tests both consumers, because
+# it is their contract. Functional and E2E bring up database and browser and run in the session,
+# before the PR (DECISIONS.md #298): in the hook they would make the commit slow enough for
+# `--no-verify`.
+staged=$(git diff --cached --name-only)
+
+# git exports GIT_DIR to the hook; with it, a `git` run inside an app (the `git ls-files` of
+# `pattern:check`) takes the current folder as the root and lists the whole repository as if it
+# were the app's. Holds in a worktree too (DECISIONS.md #311).
+unset GIT_DIR GIT_WORK_TREE
+
+touches() {
+  printf '%s\n' "$staged" | grep -q "^$1/"
+}
+
+# A frontend-only project has no backend/: an app that is not in the workspace is skipped, not run.
+has() {
+  [ -f "$1/package.json" ]
+}
+
+if has shared && touches shared; then
+  pnpm --filter ./shared check && pnpm --filter ./shared test:unit || exit 1
+fi
+if has backend && { touches backend || touches shared; }; then
+  pnpm --filter ./backend check && pnpm --filter ./backend test:unit || exit 1
+fi
+# backend too: the frontend tsconfig includes the backend for the Tuyau registry, so a backend type
+# change can break the frontend typecheck.
+if has frontend && { touches frontend || touches shared || touches backend; }; then
+  pnpm --filter ./frontend check && pnpm --filter ./frontend test:unit || exit 1
+fi

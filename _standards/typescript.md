@@ -175,7 +175,7 @@ Toda função tem casa, e a casa decide quem pode chamá-la:
 | pura, sobre dado já em mãos, usada por 2+ use-cases | `app/features/<módulo>/_shared.<tema>.ts` (entre módulos, `app/features/_shared.<tema>.ts`) |
 | invariante e transição de uma entidade | método da entidade em `app/domain/<entidade>/` (`domain.md`) |
 | regra de validação de um recurso | `shared/src/validators/<módulo>/<recurso>.validator.ts` |
-| regra de validação usada por 2+ recursos | função em `shared/src/validator.ts` (`architecture.md` §9) |
+| regra de validação usada por 2+ recursos | método `static` de `Rule` em `shared/src/validator.ts`; no Adonis, o par VineJS em `Rule` de `app/core/validator.ts`, com o mesmo nome (`architecture.md` §9, `backend.md` §4.4) |
 | entidade → resposta da API | método do presenter `<recurso>.presenter.ts` (`architecture.md` §10) |
 | precisa de dependência (banco, drive, outro service) ou configuração | service injetável (`backend.md` §4.9) |
 | regra de UI de uma rota | `routes/<rota>/-components/`, `-<nome>.ts` ao lado da rota (`-search.ts`) ou hook da rota |
@@ -201,6 +201,10 @@ reescreve antes do commit:
   errada compila e quebra em silêncio);
 - quem lê pergunta "o que isto está fazendo?".
 
+**`_shared` é classe com métodos estáticos, nunca `export function`** (`DECISIONS.md` #341): a casa
+da função fica no nome da classe, e o arquivo não mistura as duas formas. O refusal compartilhado é
+classe da mesma forma (`architecture.md` §3).
+
 Arquivo `utils.ts`/`helpers.ts` genérico não existe: é onde função perde dono. A única exceção é
 `lib/cn.ts`, da tabela acima. Antes de escrever
 uma, procure a existente (`grep`, code-review-graph) e o stdlib (`structuredClone`,
@@ -218,7 +222,9 @@ Props de componente, payload de use-case, constantes de configuração: `readonl
 casa**: o Handbook usa `&`/`interface extends` como forma idiomática de combinar tipos
 (typescriptlang.org/docs/handbook/2/everyday-types.html, "Intersection Types") e não documenta
 nem proíbe um utilitário como este; `Merge` existe para resolver o caso de chaves conflitantes
-que a interseção não resolve, sem regra automatizada que cobre (ver `tooling.md` §4). Tipo
+que a interseção não resolve. O `merge.ts` do kit vem com teste de que `Merge` substitui a chave
+(`DECISIONS.md` #343); o `A & B` fora das exceções abaixo ainda não tem regra de lint e é cobrado na
+revisão (`tooling.md` §4). Tipo
 condicional de cinco níveis que só o autor entende é custo, não poder: se precisa de comentário
 para ler, quebre em tipos nomeados.
 
@@ -242,7 +248,8 @@ type CalendarProps = (SingleProps | RangeProps) & { readonly className?: string 
 
 ## 9. `import type` para o que é só tipo
 
-Com `verbatimModuleSyntax`, import de tipo sem `type` vira import de runtime. Regra de
+Com `verbatimModuleSyntax` (backend e `shared/`), import de tipo sem `type` vira import de runtime; no
+frontend a flag fica desligada (`tooling.md` §3) e quem cobra o `import type` é o `consistent-type-imports`. Regra de
 nomenclatura em `backend.md` §3.
 
 ## 10. tsconfig

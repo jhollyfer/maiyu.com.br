@@ -74,6 +74,53 @@ essa página cedo evita muita confusão.
 
 **Skills:** `maiyu-backend`, `maiyu-frontend`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com VineJS: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Schema e compilação
+
+- **Schema pré-compilado com `vine.create(...)` e reutilizado.** O ganho de desempenho só existe quando o schema vira função otimizada reaproveitada. [`#getting_started`](https://vinejs.dev/docs/getting_started)
+- **O resultado de `validate` não ganha tipo à mão.** A saída já sai tipada. [`#getting_started`](https://vinejs.dev/docs/getting_started)
+- **Dado de runtime entra por metadata (`meta` mais `vine.withMetaData`), não por opção do schema.** O schema é pré-compilado e não recebe opção em runtime; com o tipo da metadata declarado, o compilador cobra que ela seja passada. [`#schema_101`](https://vinejs.dev/docs/schema_101)
+- **Valor dinâmico ou calculado em regra vai em callback.** Sem callback o valor inicial fica em cache para sempre no schema compilado. [`#types/date`](https://vinejs.dev/docs/types/date), [`#schema_101`](https://vinejs.dev/docs/schema_101)
+- **`parse` trata todo caso de borda do valor.** Ele roda antes da validação, com o valor ainda `unknown`, e pode lançar em runtime. [`#schema_101`](https://vinejs.dev/docs/schema_101)
+- **Campo é obrigatório por padrão; opcional só com `.optional()`.** O modificador também tira o campo do `required` do JSON Schema gerado. [`#schema_101`](https://vinejs.dev/docs/schema_101), [`#json-schema-generation`](https://vinejs.dev/docs/json-schema-generation)
+
+### Formulário e normalização
+
+- **String vazia vira `null` com `convertEmptyStringsToNull`.** `vine.string()` aceita string vazia, e sem a conversão o banco guarda dado não normalizado. [`#types/string`](https://vinejs.dev/docs/types/string), [`#html_forms_and_surprises`](https://vinejs.dev/docs/html_forms_and_surprises)
+- **Checkbox de aceite usa `vine.accepted()`.** Desmarcado some do payload; marcado chega como `"on"`, e o tipo exige o campo presente com um dos valores aceitos. [`#html_forms_and_surprises`](https://vinejs.dev/docs/html_forms_and_surprises), [`#types/accepted`](https://vinejs.dev/docs/types/accepted)
+- **`strict` em `boolean` e `number` só quando a string não deve ser aceita.** Sem `strict` a string é convertida; com ele o valor precisa ser do tipo nativo. [`#types/boolean`](https://vinejs.dev/docs/types/boolean), [`#types/number`](https://vinejs.dev/docs/types/number)
+- **`vine.date({ formats })` declara os formatos quando o cliente não manda `YYYY-MM-DD` nem `YYYY-MM-DD HH:mm:ss`.** São os únicos aceitos por padrão. [`#types/date`](https://vinejs.dev/docs/types/date)
+- **`vine.helpers.asBoolean` devolve `null` para o que não reconhece, e o chamador trata esse caso.** Só `true`, `1`, `"1"`, `"true"`, `"on"` e seus opostos são convertidos. [`#helpers`](https://vinejs.dev/docs/helpers)
+
+### Objeto, array e condicionais
+
+- **Propriedade desconhecida é descartada da saída; só `allowUnknownProperties()` a mantém.** No JSON Schema gerado, `additionalProperties` sai `false`. [`#types/object`](https://vinejs.dev/docs/types/object), [`#json-schema-generation`](https://vinejs.dev/docs/json-schema-generation)
+- **`vine.array(...)` sempre declara o schema dos itens.** A doc exige o tipo dos elementos. [`#types/array`](https://vinejs.dev/docs/types/array)
+- **`compact()` vem antes das regras do array.** A doc recomenda remover string vazia, `null` e `undefined` antes de validar. [`#types/array`](https://vinejs.dev/docs/types/array)
+- **`vine.group.else` vem por último; sem `else`, `otherwise` reporta o erro.** Nenhuma condição fica sem resposta. [`#types/object`](https://vinejs.dev/docs/types/object)
+- **União de tipos distintos usa `vine.unionOfTypes`; `vine.union` exige escrever as condicionais à mão e a doc não o recomenda.** `unionOfTypes` dispensa condicional, mas lança erro se dois tipos forem do mesmo gênero. [`#types/union`](https://vinejs.dev/docs/types/union)
+- **O callback de `requiredWhen` retorna `true` (obrigatório) ou `false` (opcional).** É o contrato do callback. [`#conditional_validation`](https://vinejs.dev/docs/conditional_validation)
+
+### Mensagens de erro
+
+- **App multilíngue usa messages provider ligado à tradução.** É o caminho que a doc indica para o idioma, e o provider implementa `MessagesProviderContact`. [`#custom_error_messages`](https://vinejs.dev/docs/custom_error_messages)
+- **Mensagem por caminho completo vence a de curinga e a da regra.** `auth.profile.link` tem prioridade sobre `contacts.*` e sobre a chave só da regra. [`#custom_error_messages`](https://vinejs.dev/docs/custom_error_messages)
+
+### Regras, tipos e reporter próprios
+
+- **Regra própria confere o tipo de `value` antes de usar.** Ele chega `unknown`. [`#extend/custom_rules`](https://vinejs.dev/docs/extend/custom_rules)
+- **Consulta cara (SQL) não roda quando `field.isValid` já é `false`.** A doc manda checar a flag antes. [`#extend/custom_rules`](https://vinejs.dev/docs/extend/custom_rules)
+- **Regra que precisa ver `null`/`undefined` é `implicit`; função assíncrona sem `async` passa `isAsync` a `createRule`.** Por padrão a regra pula nulo, e só função `async` é aguardada. [`#extend/custom_rules`](https://vinejs.dev/docs/extend/custom_rules)
+- **Método adicionado em runtime ganha declaration merging.** Sem isso o TypeScript não o conhece. [`#extend/custom_rules`](https://vinejs.dev/docs/extend/custom_rules)
+- **Tipo de schema próprio estende `BaseLiteralType`, implementa `clone()` e sua regra de tipo devolve booleano.** A regra de tipo decide o estado da validação, e `clone` copia opções e validações aplicadas. [`#extend/custom_schema_types`](https://vinejs.dev/docs/extend/custom_schema_types)
+- **`field.data` nunca é mutado; `field.mutate` só dentro de regra.** O objeto raiz é compartilhado, e `mutate` não serve para condicional de union nem para `transform`. [`#field_context`](https://vinejs.dev/docs/field_context)
+- **Reporter próprio implementa `ErrorReporterContract`, seta `hasError = true` em `report`, devolve `ValidationError` em `createError` e se registra por factory.** O VineJS cria um reporter novo a cada validação. [`#error_reporter`](https://vinejs.dev/docs/error_reporter)
+
 ---
 
 ## Fundamentos

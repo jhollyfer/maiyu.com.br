@@ -1,0 +1,10 @@
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# The package build (`tsc -p tsconfig.build.json`): the root .gitignore does not reach the package
+# where Prettier runs.
+dist
+
+# Written by `eslint --suppress-all` / `--prune-suppressions` (the lint ratchet, tooling.md §4.1).
+eslint-suppressions.json

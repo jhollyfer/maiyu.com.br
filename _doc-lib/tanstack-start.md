@@ -37,11 +37,114 @@ um back-end separado, o **Router sozinho** basta e o Start só adiciona complexi
 misturá-los é a origem de quase todo erro estranho. As páginas de *execution model*, *import
 protection* e *hydration errors* são as que ensinam a manter essa fronteira nítida.
 
-**Links:** 45.
+**Links:** 46.
 
 **Skills:** `maiyu-frontend`, `server-side-rendering`, `streaming-ssr`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
 > Conferido contra `@tanstack/react-start@1.168.61` (`@tanstack/start-client-core@1.170.35`, latest).
+
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com TanStack Start: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Projeto e build
+
+- **TypeScript é o recomendado para o TanStack Start.** A página diz que recomenda fortemente usar TypeScript com o Start. [`#build-from-scratch`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/build-from-scratch.md)
+- **`verbatimModuleSyntax` fica desligado no `tsconfig` do app Start.** Ligar a flag pode vazar bundle de servidor para o bundle do cliente. [`#build-from-scratch`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/build-from-scratch.md)
+- **O plugin Vite do React vem depois do plugin do Start no `vite.config`.** A página marca a ordem como obrigatória ("must come after"). [`#build-from-scratch`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/build-from-scratch.md)
+- **`src/router.tsx` exporta uma função `getRouter`.** O Start exige essa exportação para criar o roteador. [`#guide/routing`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/routing.md)
+- **`HeadContent` vai no `<head>` e `Scripts` no `<body>` do layout da rota raiz, sempre.** `Scripts` carrega todo o JavaScript do cliente e deve ser sempre incluído para a aplicação funcionar. [`#guide/routing`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/routing.md)
+- **`react` e `react-dom` ficam em 19.0.0 ou superior.** A página de hospedagem exige React 19 para o build de produção. [`#guide/hosting`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/hosting.md)
+- **Arquivo gerado não se edita para consertar configuração.** A correção vai na configuração de origem, não no artefato gerado. [`#guide/hosting`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/hosting.md)
+- **Com Nitro, a saída de produção é `./.output`.** A página indica `.output` como diretório de saída quando o Nitro está em uso. [`#guide/hosting`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/hosting.md)
+
+### Modelo de execução: servidor e cliente
+
+- **Todo código do Start é isomórfico por padrão, inclusive o `loader` da rota.** O `loader` roda no servidor e no cliente; tratá-lo como só de servidor expõe segredo no bundle. [`#guide/execution-model`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/execution-model.md) [`#guide/code-execution-patterns`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/code-execution-patterns.md)
+- **Operação só de servidor dentro de `loader` passa por `createServerFn`.** O `loader` chama a server function, que é a chamada isomórfica segura. [`#guide/code-execution-patterns`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/code-execution-patterns.md) [`#tutorial/fetching-external-api`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/tutorial/fetching-external-api.md)
+- **Utilitário que só pode rodar no servidor fica em `createServerOnlyFn(() => ...)`, com o import de servidor só dentro do callback.** Fora do callback o import vaza para o cliente; chamado no cliente, o wrapper lança erro. [`#guide/import-protection`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/import-protection.md) [`#guide/execution-model`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/execution-model.md)
+- **`createClientOnlyFn` não adia a chamada para o navegador: chamada no servidor, lança o erro do guard.** A página avisa que o wrapper não espera o cliente. [`#guide/environment-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-functions.md)
+- **Arquivo `*.server.*` é negado no ambiente do cliente e `*.client.*` no do servidor.** É o padrão da proteção de import, sem configuração. [`#guide/import-protection`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/import-protection.md)
+- **Evite barrel misto que reexporta código de servidor junto com código usado no cliente.** Mesmo que o tree-shaking esconda o aviso em produção, a aresta insegura para o cliente continua exposta. [`#guide/import-protection`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/import-protection.md)
+- **Confira que código de servidor não entra no bundle do cliente.** A seção de segurança manda verificar sempre; URL de banco, chave de API e segredo nunca se expõem. [`#guide/execution-model`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/execution-model.md) [`#guide/code-execution-patterns`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/code-execution-patterns.md)
+
+### Variáveis de ambiente
+
+- **`process.env` se lê dentro de `.handler()`, `.server()` de middleware, handler de server route ou outro callback por requisição, nunca no escopo do módulo.** No escopo do módulo o valor pode ser `undefined` em runtime de borda e o segredo pode ser embutido no bundle do cliente. [`#guide/environment-variables`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-variables.md)
+- **Só variável `VITE_*` chega ao cliente, e por isso nunca guarda segredo.** Toda `VITE_*` entra no bundle JavaScript; segredo fica em `process.env` no servidor. [`#guide/environment-variables`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-variables.md) [`#guide/code-execution-patterns`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/code-execution-patterns.md)
+- **Variável obrigatória é validada na subida (servidor) e no build (cliente), com Zod.** A página manda validar as variáveis exigidas e usa Zod para isso. [`#guide/environment-variables`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-variables.md) [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+- **`.env` com segredo entra no `.gitignore` e segredo não fica escrito no código-fonte.** A página marca isso como importante para manter as chaves seguras. [`#tutorial/fetching-external-api`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/tutorial/fetching-external-api.md) [`#guide/environment-variables`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-variables.md)
+- **Com `staticNodeEnv` desligado, `NODE_ENV=production` é obrigatório em runtime de produção.** A página marca como "must" ao desabilitar a opção. [`#guide/environment-variables`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/environment-variables.md)
+- **Prove que segredo não sai no cliente: build com um segredo falso e único e busque o valor nos arquivos emitidos.** O checklist de produção pede a busca em arquivos de cliente, source maps publicados e respostas, nunca com segredo real. [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+
+### Server functions e server routes
+
+- **Server function é RPC da própria aplicação; endpoint chamado de fora do app é server route.** A página manda usar server route para API pública. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md) [`#guide/server-routes`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-routes.md)
+- **Server function não se importa por `import()` dinâmico.** O import dinâmico pode quebrar o bundler; import estático é seguro. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Wrapper `createServerFn` fica em `*.functions.ts` e helper só de servidor em `*.server.ts`, importado só dentro do handler.** É a organização de arquivo que a página prescreve. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Entrada e retorno de server function são serializáveis.** O TypeScript cobra isso em modo `strict` (o padrão); `FormData` é aceito em `POST` e `Response` no retorno. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Server function que muda estado usa `method: 'POST'`; GET que muta, nunca.** GET é o padrão e a página de autenticação proíbe GET com efeito. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md) [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md)
+- **Resposta que depende de sessão, cookie ou cabeçalho de auth nunca leva `Cache-Control: public`.** `public` faz CDN servir a resposta de um usuário ao próximo; use `private` ou `no-store`. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md) [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+- **Para rejeitar a chamada com uma resposta HTTP, lance um `Response`.** Lançado, ele rejeita a chamada; retornado, resolve a chamada com ele. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Static server functions são experimentais.** A página avisa que a API é experimental. [`#guide/static-server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/static-server-functions.md)
+
+### Middleware e CSRF
+
+- **Middleware chama `next()` no `.server` (e no `.client` de middleware de server function).** Sem `next` a cadeia não segue. [`#guide/middleware`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/middleware.md)
+- **Com `src/start.ts` próprio, `createCsrfMiddleware()` entra explicitamente em `requestMiddleware`.** Sem `start.ts` o Start instala o CSRF sozinho; com ele, a proteção só existe se for declarada. [`#guide/middleware`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/middleware.md) [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Server function só aceita requisição de mesma origem, conferida por `Sec-Fetch-Site`, `Origin` ou `Referer`.** É o contrato de segurança do RPC; requisição sem nenhum dos três é recusada por padrão. [`#guide/server-functions`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-functions.md)
+- **Dado vindo de `sendContext` do cliente é validado no middleware de servidor antes do uso, e o acesso do principal é conferido quando ele escolhe linha.** Tudo que o cliente envia, o cliente pode falsificar. [`#guide/middleware`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/middleware.md)
+- **A sessão sai sempre de fonte confiável do servidor (cookie mais consulta), nunca de `sendContext`.** A página diz "never from `sendContext`". [`#guide/middleware`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/middleware.md)
+
+### Autenticação e autorização
+
+- **Guard de rota (`beforeLoad`) é UX, não fronteira de dado: todo endpoint que lê ou escreve dado privado autoriza a própria requisição.** Server function e server route são alcançáveis sem passar pela rota que as chama. [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md) [`#guide/authentication`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication.md) [`#guide/authentication-overview`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-overview.md)
+- **Sessão vive em cookie `HttpOnly`, `Secure`, `SameSite`, nunca em `localStorage` ou `sessionStorage`.** A página recomenda cookie HTTP-only e proíbe token de sessão em storage do navegador. [`#guide/authentication-overview`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-overview.md)
+- **Rota protegida se agrupa sob layout route.** É o padrão marcado como recomendado para proteger a subárvore. [`#guide/authentication-overview`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-overview.md)
+- **Sessão é ID opaco consultado no servidor.** A página recomenda por ser fácil de revogar. [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md)
+- **Cookie se escreve com `setCookie` (ou `appendResponseHeader`), nunca `setResponseHeader('Set-Cookie', ...)`.** O último substitui todos os cookies da resposta. [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md)
+- **Troca de privilégio (login, logout, troca de senha, papel) destrói a sessão antiga e emite outra.** Neutraliza fixação de sessão. [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md)
+- **Login e recuperação de senha não revelam se o e-mail existe.** Resposta ou texto diferente vaza a existência do usuário. [`#guide/authentication-server-primitives`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-server-primitives.md) [`#guide/authentication`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication.md)
+- **HTTPS em produção e segredo de sessão forte.** Está na lista de práticas da visão geral de autenticação. [`#guide/authentication-overview`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-overview.md)
+- **Teste chamada direta, sem sessão e com outra conta, a cada endpoint protegido: tem de recusar antes de devolver dado ou mudar estado.** A página e o checklist de produção pedem esse teste. [`#guide/authentication-overview`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/authentication-overview.md) [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+
+### TanStack Query no Start
+
+- **O `QueryClient` nasce dentro de `getRouter`, nunca no escopo do módulo.** O Start cria um router por requisição SSR; cliente de processo inteiro mistura dado de leitores no HTML. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **Um `QueryClient` só, integrado por `setupRouterSsrQueryIntegration`; nada de segundo cliente nem desidratação manual do mesmo cache.** A integração já cuida de provider, desidratação, hidratação e streaming. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **A rota aguarda no `loader` a query do conteúdo que precisa estar no HTML inicial; o secundário faz stream sob Suspense.** É o padrão de dado crítico contra secundário. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **Promessa de query disparada sem `await` trata a rejeição.** Promessa esquecida não pode virar rejeição sem tratamento no servidor. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **Invalide o dono do dado: `invalidateQueries` para dado do Query, `router.invalidate()` para dado de `loader` e contexto; os dois só quando a mutação muda os dois.** A página separa os dois mecanismos. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **Chave de query não é controle de acesso.** Ela pode carregar conta ou tenant, mas não autoriza leitura. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+- **HTML personalizado não vai para cache público, nem com `QueryClient` isolado por requisição.** Cada resposta tem de conter só o valor do próprio leitor. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md) [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+- **Leitura duplicada depois da hidratação se corrige no `staleTime` e nas chaves, não com hidratação manual nem desligando refetch.** A página proíbe esconder o sintoma. [`#guide/tanstack-query`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tanstack-query.md)
+
+### SSR, hidratação e renderização
+
+- **Fonte de mismatch (`Intl`, `Date.now()`, ID aleatório, lógica só responsiva) se resolve com locale e fuso deterministas no servidor, iguais no cliente.** A página pede locale e fuso fixos no servidor. [`#guide/hydration-errors`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/hydration-errors.md)
+- **UI instável vai em `<ClientOnly>` ou em SSR seletivo; `suppressHydrationWarning` só com parcimônia, nunca supressão cega.** São as saídas indicadas para mismatch. [`#guide/hydration-errors`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/hydration-errors.md)
+- **`shellComponent` da raiz é sempre renderizado no servidor, mesmo com `ssr: false`.** Ele envolve `component`, `errorComponent` e `notFound` da raiz. [`#guide/selective-ssr`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/selective-ssr.md)
+- **SSR só se desliga em página que não precisa de SEO.** É a condição que a página de SEO põe. [`#guide/seo`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/seo.md)
+- **Server Components, deferred hydration e Early Hints são experimentais.** As três páginas abrem com aviso de API experimental e sujeita a mudança. [`#guide/server-components`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-components.md) [`#guide/deferred-hydration`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/deferred-hydration.md) [`#guide/early-hints`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/early-hints.md)
+- **Server Component guardado no React Query exige `structuralSharing: false`.** Valor RSC não pode ser mesclado. [`#guide/server-components`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-components.md)
+- **Erro que deve herdar o estado dos helpers de resposta chama `handleStartError` no `catch` do server entry.** Resposta montada à mão não herda esse estado. [`#guide/server-entry-point`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/server-entry-point.md)
+
+### CSS
+
+- **Tailwind CSS v4 é a configuração recomendada, por arquivo CSS e não por arquivo de configuração.** A página diz que é mais fácil e recomendado. [`#guide/tailwind-integration`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tailwind-integration.md)
+- **Folha importada com `?url` leva a diretiva triple-slash no topo do arquivo.** A página pede a diretiva junto do `?url`. [`#guide/tailwind-integration`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/tailwind-integration.md)
+- **CSS inline de rota em produção exige CSP que aceite estilo inline.** CSP estrita precisa permitir o `<style>` gerado. [`#guide/css-styling`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/css-styling.md)
+
+### Produção, observabilidade e URL
+
+- **Log nunca leva senha, token ou dado pessoal; erro capturado é conferido sem credencial nem cookie.** A seção de segurança de observabilidade e o checklist proíbem. [`#guide/observability`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/observability.md) [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+- **Recurso ausente responde 404, URL movida responde o redirect pretendido, falha não se disfarça de página de sucesso.** É item do checklist de produção. [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
+- **URL desconhecida não redireciona para a home.** A página de migração manda evitar esse redirect. [`#migrate-from-next-js`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/migrate-from-next-js.md)
+- **Página com dado privado de conta não é pré-renderizada nem vai para cache público.** A página de migração proíbe as duas coisas. [`#migrate-from-next-js`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/migrate-from-next-js.md)
+- **Search param (página, ordenação, filtro) se valida em runtime; o tipo do TypeScript não valida URL que chega.** A página manda validar em runtime. [`#migrate-from-next-js`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/migrate-from-next-js.md)
+- **Sitemap só lista URL pública canônica, e `robots.txt` e sitemap se conferem no host publicado.** É item do checklist de produção. [`#guide/production-checklist`](https://raw.githubusercontent.com/tanstack/router/main/docs/start/framework/react/guide/production-checklist.md)
 
 ---
 
@@ -182,6 +285,17 @@ export const Route = createFileRoute('/users/$id')({
   component: () => <p>{Route.useLoaderData().id}</p>,
 })
 ```
+
+#### migrate-from-release-candidate
+[doc](https://tanstack.com/start/latest/docs/framework/react/migrate-from-release-candidate) | [markdown](https://tanstack.com/start/latest/docs/framework/react/migrate-from-release-candidate.md)
+
+**O que é:** o que muda do RC para a primeira estável (`@tanstack/react-start` 1.169): Vite 8
+obrigatório; saem `@tanstack/nitro-v2-vite-plugin` (vira `nitro()` de `nitro/vite`), `useSession` (vira
+biblioteca de sessão, com cookie de nome novo) e `.inputValidator()` (vira `.validator()`); erro não
+capturado vira JSON genérico com status de 400 a 599; `setResponseHeader('set-cookie', ...)` troca
+todos os cookies (para somar um, `setCookie` ou `appendResponseHeader`).
+**Para que serve:** subir projeto que ainda está no RC sem quebra silenciosa de cookie e de erro.
+**Quando usar:** ao atualizar o Start e ao revisar código que ainda usa `inputValidator`.
 
 ## Tutoriais
 
@@ -420,8 +534,7 @@ export const criarUser = createServerFn({ method: 'POST' })
   // até passar por aqui, e o tipo do handler sai deste parse.
   //
   // O nome do método é `validator`. `inputValidator`, que aparece em material
-  // escrito entre 2025 e 2026, continua funcionando mas está marcado como
-  // @deprecated no código-fonte.
+  // escrito entre 2025 e 2026, saiu na estável 1.169 (migrate-from-release-candidate).
   //
   // Aceita função à mão (como aqui) ou qualquer schema no padrão Standard
   // Schema. Validador cujo `validate` devolve promessa não serve.

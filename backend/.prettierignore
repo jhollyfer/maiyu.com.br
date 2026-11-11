@@ -1,0 +1,19 @@
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Written by the Adonis assembler on every `node ace` run (`.adonisjs/`, DECISIONS.md #388):
+# generated code, never edited by hand.
+.adonisjs
+
+# Rewritten by `migration:run` and compared byte for byte by `openapi:check` (DECISIONS.md #308).
+database/schema.ts
+openapi.json
+
+# Build and test output: the root .gitignore does not reach the package where Prettier runs.
+build
+tmp
+coverage
+
+# Written by `eslint --suppress-all` / `--prune-suppressions` (the lint ratchet, tooling.md §4.1).
+eslint-suppressions.json

@@ -1,0 +1,12 @@
+{
+  "not_found": "Arquivo não encontrado",
+  "in_use": "Arquivo em uso",
+  "in_use_field": "Arquivo em uso em: {places}. Desvincule-o antes de apagá-lo.",
+  "incomplete": "Arquivo incompleto",
+  "size_mismatch_field": "O arquivo enviado tem {received} bytes, e {declared} foram declarados.",
+  "content_mismatch_field": "O conteúdo do arquivo não é do tipo declarado ({mimetype}).",
+  "invalid": "Arquivo inválido",
+  "size_invalid_field": "O tamanho declarado ({size}) precisa ser um número inteiro de bytes maior que zero.",
+  "type_unsupported_field": "O tipo {mimetype} não é aceito.",
+  "already_uploaded": "O envio já foi confirmado e não pode mais ser cancelado."
+}

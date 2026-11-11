@@ -73,6 +73,35 @@ pnpm exec commitlint --edit "$1"
 `tooling.md` §6). Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa
 (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com commitlint + Husky: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e configuração
+
+- **`@commitlint/cli` e o config (`@commitlint/config-conventional`) entram como devDependency, e o config o estende.** É a instalação da doc. [`#guides/getting-started`](https://commitlint.js.org/guides/getting-started.md)
+- **Pacote citado em `extends` está instalado; caminho relativo de config começa com `.`.** O commitlint resolve o nome do pacote e não acha o que não está instalado; sem o prefixo `commitlint-config-`, vai o nome completo. [`#reference/configuration`](https://commitlint.js.org/reference/configuration.md), [`#concepts/shareable-config`](https://commitlint.js.org/concepts/shareable-config.md)
+- **Arquivo de config com regras sempre vence `--default-config`.** O padrão só entra quando não há config. [`#reference/cli`](https://commitlint.js.org/reference/cli.md)
+- **`defaultIgnores` fica no padrão (`true`) salvo motivo; com `false` as regras rodam também em merge e revert.** A lista ignorada por padrão inclui o commit de merge. [`#reference/configuration`](https://commitlint.js.org/reference/configuration.md)
+- **Pacotes `@commitlint/*` na mesma versão.** Versão misturada gera "Found invalid rule names" porque o config pede regra que o `@commitlint/rules` instalado não tem. [`#support/troubleshooting`](https://commitlint.js.org/support/troubleshooting.md)
+
+### Regras
+
+- **Nível `0` desliga, `1` é aviso, `2` é erro; `never` inverte a regra.** É a sintaxe de cada regra. [`#reference/rules-configuration`](https://commitlint.js.org/reference/rules-configuration.md)
+- **Com vários escopos, `scope-enum` e `scope-case` usam os mesmos `delimiters` de `scope-delimiter-style`.** Delimitador diferente quebra a separação dos escopos. [`#reference/rules`](https://commitlint.js.org/reference/rules.md), [`#concepts/commit-conventions`](https://commitlint.js.org/concepts/commit-conventions.md)
+- **`config-conventional` estreita a especificação; quem quer a especificação pura sobrescreve as regras no próprio config.** As regras dele não conflitam com o Conventional Commits. [`#conventional-changelog/commitlint/@commitlint/config-conventional`](https://github.com/conventional-changelog/commitlint/tree/master/@commitlint/config-conventional)
+
+### Hook e agentes
+
+- **O hook se chama `commit-msg` e roda `commitlint --edit $1`.** A doc exige esse nome para o arquivo do hook. [`#guides/local-setup`](https://commitlint.js.org/guides/local-setup.md)
+- **Agente nunca usa `git commit --no-verify`; mensagem recusada se corrige pela regra entre colchetes.** O config é o contrato da mensagem, e a mensagem pode ser validada antes por stdin. [`#guides/ai-agents`](https://commitlint.js.org/guides/ai-agents.md)
+- **Husky se instala pelo script `prepare` (`husky init` o cria).** Assim o hook se configura após cada install. [`#husky/get-started.html`](https://typicode.github.io/husky/get-started.html), [`#husky/how-to.html`](https://typicode.github.io/husky/how-to.html)
+- **Em Docker e servidor de build, `HUSKY=0` ou `prepare` que não falha.** Instalando só dependência de produção, o `prepare: husky` falha porque o Husky não está instalado. [`#husky/how-to.html`](https://typicode.github.io/husky/how-to.html)
+- **Husky não instala em diretório pai; projeto fora da raiz do git ajusta o `prepare` com `cd`.** A restrição é de segurança. [`#husky/how-to.html`](https://typicode.github.io/husky/how-to.html)
+- **Depois de desinstalar o Husky, `git config --unset core.hooksPath`.** Senão `.git/hooks/` não volta a funcionar. [`#husky/troubleshoot.html`](https://typicode.github.io/husky/troubleshoot.html)
+
 ---
 
 ## commitlint: guias

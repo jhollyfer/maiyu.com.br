@@ -1,0 +1,12 @@
+{
+  "internal": "Internal server error",
+  "origin_not_allowed": "Origin not allowed",
+  "access_denied": "Access denied",
+  "not_found": "Not found",
+  "unauthorized": "Unauthorized",
+  "validation": "Invalid data",
+  "too_many_requests": "Too many attempts. Try again later",
+  "bad_request": "Invalid request",
+  "payload_too_large": "Content exceeds the allowed size",
+  "unsupported_media_type": "Unsupported content format"
+}

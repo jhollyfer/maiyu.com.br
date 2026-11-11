@@ -101,6 +101,80 @@ preset (`@adonisjs/tsconfig`, `nitro/tsconfig`, nenhum no Fastify) e o perfil de
 camada), `migrate-to-shoehorn` (só `fromPartial` em teste, `typescript.md` §1). Dispare junto com a
 leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com TypeScript: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Configuração e strictness
+
+- **Código novo liga `strict` (com `noImplicitAny` e `strictNullChecks`).** O Handbook diz que base nova deve sempre ligar as checagens estritas, e `strictNullChecks` é a que mais evita bug. [`#docs/handbook/2/basic-types`](https://www.typescriptlang.org/docs/handbook/2/basic-types.html) [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) [`#asp-net-core`](https://www.typescriptlang.org/docs/handbook/asp-net-core.html) [`#docs/handbook/migrating-from-javascript`](https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html)
+- **Biblioteca (pacote compartilhado) compila com `strict`.** É muito difícil escrever código que só quebra com `strict` desligado, e a doc recomenda fortemente para bibliotecas. [`#docs/handbook/modules/guides/choosing-compiler-options`](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
+- **App Node usa `module: "nodenext"`; app com bundler usa `module: "esnext"`, `moduleResolution: "bundler"` e `esModuleInterop`.** São as configurações obrigatórias de cada caso no guia de escolha de opções. [`#docs/handbook/modules/guides/choosing-compiler-options`](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html) [`#docs/handbook/modules/theory`](https://www.typescriptlang.org/docs/handbook/modules/theory.html)
+- **Em projeto com bundler, não ponha `"type": "module"` nem arquivos `.mts`, por enquanto.** O guia recomenda isso junto com as opções de bundler. [`#docs/handbook/modules/guides/choosing-compiler-options`](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html)
+- **Ambientes diferentes (servidor, DOM, worker, teste, compartilhado) têm cada um o seu `tsconfig.json`, ligados por project references.** O guia pede um tsconfig por ambiente. [`#docs/handbook/modules/guides/choosing-compiler-options`](https://www.typescriptlang.org/docs/handbook/modules/guides/choosing-compiler-options.html) [`#docs/handbook/project-references`](https://www.typescriptlang.org/docs/handbook/project-references.html)
+- **Projeto referenciado tem `composite` e `declaration` ligados e todo arquivo de implementação coberto por `include`/`files`.** São requisitos do project references. [`#docs/handbook/project-references`](https://www.typescriptlang.org/docs/handbook/project-references.html)
+- **`module`/`moduleResolution` refletem o runtime ou bundler real; `amd`, `umd`, `system` e `outFile` não servem para projeto novo.** O compilador precisa saber as regras do ambiente de destino, e esses formatos estão a caminho da remoção. [`#docs/handbook/modules/theory`](https://www.typescriptlang.org/docs/handbook/modules/theory.html) [`#tsconfig`](https://www.typescriptlang.org/tsconfig/)
+- **Ligue `noImplicitOverride`, e o método sobrescrito leva `override`.** A flag impede que subclasse saia de sincronia com a base. [`#tsconfig`](https://www.typescriptlang.org/tsconfig/)
+- **Com `useUnknownInCatchVariables` (parte do `strict`), a variável do `catch` já é `unknown`; não precisa anotar nem de regra de lint.** A referência do tsconfig descreve esse efeito. [`#tsconfig`](https://www.typescriptlang.org/tsconfig/)
+- **Instale o TypeScript por projeto (`devDependencies`), não global.** A doc diz que a instalação por projeto dá build reproduzível entre máquinas. [`#download`](https://www.typescriptlang.org/download/)
+- **Transpilação por outra ferramenta (Babel, esbuild) exige `tsc` só para checagem (`noEmit` ou `emitDeclarationOnly`) e `isolatedModules`.** O transpilador não checa tipo, e `isolatedModules` garante que cada arquivo transpila sozinho. [`#docs/handbook/babel-with-typescript`](https://www.typescriptlang.org/docs/handbook/babel-with-typescript.html)
+
+### Resolução de módulo
+
+- **`paths` não aponta para pacote do monorepo nem para `node_modules`: use workspaces (npm, yarn, pnpm).** Com alias de `paths`, o campo `exports` do pacote deixa de valer. [`#docs/handbook/modules/reference`](https://www.typescriptlang.org/docs/handbook/modules/reference.html)
+- **Não use `baseUrl` só para resolver `paths`.** Desde o TS 4.1 `paths` não precisa dele, e no 7.0 `baseUrl` foi removido. [`#docs/handbook/modules/reference`](https://www.typescriptlang.org/docs/handbook/modules/reference.html) [`#typescript/announcing-typescript-7-0`](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
+- **Biblioteca publicada não usa `paths`.** O JavaScript emitido não funciona para quem consome. [`#docs/handbook/modules/reference`](https://www.typescriptlang.org/docs/handbook/modules/reference.html)
+- **Pacote tipado publicado declara o campo `"types"`, mesmo com `exports`.** Ferramentas mais antigas ainda dependem dele. [`#docs/handbook/modules/reference`](https://www.typescriptlang.org/docs/handbook/modules/reference.html)
+- **Extensão `.mjs`/`.mts`/`.cjs`/`.cts` nunca é omitida no import.** O TypeScript não suporta omitir essas extensões. [`#docs/handbook/modules/reference`](https://www.typescriptlang.org/docs/handbook/modules/reference.html)
+- **App com código CommonJS liga `esModuleInterop`; `allowSyntheticDefaultImports` sozinho deve ser evitado.** Sem a interoperabilidade, import default de módulo CJS diverge do runtime. [`#docs/handbook/modules/appendices/esm-cjs-interop`](https://www.typescriptlang.org/docs/handbook/modules/appendices/esm-cjs-interop.html)
+- **Organize código em módulos ES, não em `namespace`.** A doc recomenda módulos para Node e para projeto novo; `module` como palavra de namespace deve ser `namespace`. [`#docs/handbook/2/modules`](https://www.typescriptlang.org/docs/handbook/2/modules.html) [`#docs/handbook/namespaces-and-modules`](https://www.typescriptlang.org/docs/handbook/namespaces-and-modules.html) [`#docs/handbook/namespaces`](https://www.typescriptlang.org/docs/handbook/namespaces.html)
+- **Dependência de `@types` em `.ts` vai em `types` do tsconfig, não em `/// <reference types>`; dependência de módulo é `import`.** A doc reserva a diretiva para arquivo de declaração, e `/// <amd-dependency>` está deprecada. [`#docs/handbook/triple-slash-directives`](https://www.typescriptlang.org/docs/handbook/triple-slash-directives.html) [`#docs/handbook/declaration-files/publishing`](https://www.typescriptlang.org/docs/handbook/declaration-files/publishing.html)
+- **Não use `/// <reference>` para depender de biblioteca UMD.** A doc proíbe explicitamente. [`#docs/handbook/declaration-files/library-structures`](https://www.typescriptlang.org/docs/handbook/declaration-files/library-structures.html)
+
+### TypeScript 7
+
+- **No TypeScript 7 (e nos defaults do 6.0): `strict` é `true`, `module` é `esnext`, `types` é `[]`, `rootDir` é `./` e `noUncheckedSideEffectImports` é `true`.** Projeto que depende de global de `@types` lista os pacotes em `types`, e tsconfig fora de `src` declara `rootDir`. [`#typescript/announcing-typescript-7-0`](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
+- **No 7.0 viram erro: `target: es5`, `downlevelIteration`, `moduleResolution: node/node10/classic`, `module: amd/umd/systemjs/none`, `baseUrl`, `esModuleInterop`/`allowSyntheticDefaultImports` em `false` e `alwaysStrict: false`.** Os substitutos recomendados são `nodenext`/`bundler` e `esnext`/`preserve`. [`#typescript/announcing-typescript-7-0`](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
+- **Atributo de import usa `with`, não `asserts`.** O 7.0 recusa `asserts` para alinhar com o ECMAScript. [`#typescript/announcing-typescript-7-0`](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
+- **Para manter o 6.x ao lado do 7, use alias de npm (`"typescript": "npm:@typescript/typescript6@^6"`).** Ferramentas como o typescript-eslint importam `typescript` por peer dependency. [`#typescript/announcing-typescript-7-0`](https://devblogs.microsoft.com/typescript/announcing-typescript-7-0/)
+
+### Tipos do dia a dia
+
+- **Evite `any`; quando não souber o tipo, use `unknown`.** `any` desliga a checagem. [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html) [`#docs/handbook/declaration-files/do-s-and-don-ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
+- **Nunca use os tipos boxed `Number`, `String`, `Boolean`, `Symbol`, `Object`; use `number`, `string`, `boolean`, `symbol` e `object`.** Quase nunca são usados corretamente. [`#docs/handbook/declaration-files/do-s-and-don-ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html) [`#docs/handbook/migrating-from-javascript`](https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html)
+- **Não use `Function` nem `Object` como tipo; entre `Object` e `{}`, prefira `{}`.** A doc diz que `Object` quase nunca é o que se quer. [`#docs/handbook/2/functions`](https://www.typescriptlang.org/docs/handbook/2/functions.html) [`#docs/handbook/migrating-from-javascript`](https://www.typescriptlang.org/docs/handbook/migrating-from-javascript.html)
+- **Função que devolve promise anota o retorno como `Promise<T>`.** É a forma indicada no Handbook. [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
+- **Use `!` (non-null) só quando sabe que o valor não é `null`/`undefined`.** A asserção não muda o runtime. [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
+- **Conjunto fixo de valores é união de literais, não `string`.** A união evita erro de digitação e permite narrowing. [`#docs/handbook/2/narrowing`](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+- **Checagem exaustiva de `switch` atribui o caso restante a `never` no `default`.** Caso novo não tratado vira erro de compilação. [`#docs/handbook/2/narrowing`](https://www.typescriptlang.org/docs/handbook/2/narrowing.html)
+- **Declare com `const` tudo que não vai ser reatribuído e evite sombrear variável.** O Handbook aplica o princípio do menor privilégio e chama sombreamento de fonte de código confuso. [`#docs/handbook/variable-declarations`](https://www.typescriptlang.org/docs/handbook/variable-declarations.html)
+- **Com `using`/`await using`, faça `return await` de valor que pode ser Promise.** Sem o `await` o recurso é descartado antes de a promise terminar. [`#docs/handbook/variable-declarations`](https://www.typescriptlang.org/docs/handbook/variable-declarations.html)
+- **Prefira `interface` a `type` enquanto não precisar de recurso exclusivo de `type`.** É a heurística do Handbook; `interface` com `extends` costuma ser mais eficiente para o compilador que interseção. [`#docs/handbook/typescript-in-5-minutes`](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html) [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
+- **Membro não função repetido em declaration merging de `interface` tem o mesmo tipo.** O merge recusa tipos diferentes para a mesma propriedade. [`#docs/handbook/declaration-merging`](https://www.typescriptlang.org/docs/handbook/declaration-merging.html)
+
+### Funções e genéricos
+
+- **Prefira parâmetro com união a overload quando possível.** É a regra de overload do Handbook e do guia de declarações. [`#docs/handbook/2/functions`](https://www.typescriptlang.org/docs/handbook/2/functions.html) [`#docs/handbook/declaration-files/do-s-and-don-ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
+- **Overload tem duas ou mais assinaturas acima da implementação, compatível com todas; a mais específica vem primeiro.** A assinatura de implementação não é visível de fora. [`#docs/handbook/2/functions`](https://www.typescriptlang.org/docs/handbook/2/functions.html) [`#docs/handbook/declaration-files/do-s-and-don-ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
+- **Em tipo de callback, não escreva parâmetro opcional a menos que a função seja chamada sem ele, e o retorno ignorado é `void`.** A doc trata isso como regra. [`#docs/handbook/2/functions`](https://www.typescriptlang.org/docs/handbook/2/functions.html) [`#docs/handbook/declaration-files/do-s-and-don-ts`](https://www.typescriptlang.org/docs/handbook/declaration-files/do-s-and-don-ts.html)
+- **Parâmetro de tipo aparece pelo menos duas vezes; use o menor número possível e deixe a inferência agir sobre o tipo mais baixo.** Parâmetro que aparece uma vez só não relaciona nada. [`#docs/handbook/2/functions`](https://www.typescriptlang.org/docs/handbook/2/functions.html)
+- **Nunca escreva anotação de variância (`in`/`out`) que não corresponda à variância estrutural, e só a escreva com necessidade identificada.** A anotação não muda o comportamento e pode esconder erro. [`#docs/handbook/2/generics`](https://www.typescriptlang.org/docs/handbook/2/generics.html)
+- **União grande de strings é gerada antes (geração ahead-of-time), não por template literal type.** A doc recomenda template literal só para casos pequenos. [`#docs/handbook/2/template-literal-types`](https://www.typescriptlang.org/docs/handbook/2/template-literal-types.html)
+
+### Classes e enums
+
+- **Para privacidade real em runtime use `#campo`, não o `private` do TypeScript.** O `private` some na compilação e não protege de código malicioso. [`#docs/handbook/2/classes`](https://www.typescriptlang.org/docs/handbook/2/classes.html)
+- **Método que perde o `this` vira propriedade arrow function ou declara o parâmetro `this`.** Evita chamar o método com contexto errado. [`#docs/handbook/2/classes`](https://www.typescriptlang.org/docs/handbook/2/classes.html)
+- **No lugar de `enum`, um objeto `as const` costuma bastar; não use `const enum`.** A doc aponta as armadilhas do `const enum` e sugere o objeto no TypeScript moderno. [`#docs/handbook/enums`](https://www.typescriptlang.org/docs/handbook/enums.html) [`#docs/handbook/2/everyday-types`](https://www.typescriptlang.org/docs/handbook/2/everyday-types.html)
+- **Decorator legado exige `experimentalDecorators`, e metadado de tipo exige `emitDecoratorMetadata`.** Os dois são opções explícitas do compilador. [`#docs/handbook/decorators`](https://www.typescriptlang.org/docs/handbook/decorators.html)
+
+### JSX e documentação
+
+- **Em `.tsx`, asserção de tipo é só `as`; o JSX novo usa `jsx: "react-jsx"`.** A sintaxe `<T>valor` conflita com JSX. [`#docs/handbook/jsx`](https://www.typescriptlang.org/docs/handbook/jsx.html)
+- **API deprecada recebe a tag JSDoc `/** @deprecated */`.** O editor marca o uso riscado. [`#docs/handbook/jsdoc-supported-types`](https://www.typescriptlang.org/docs/handbook/jsdoc-supported-types.html)
+
 ---
 
 ## Get Started

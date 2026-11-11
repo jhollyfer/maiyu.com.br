@@ -102,6 +102,8 @@ SHAPE_HINTS = (
 CHANGES_RE = re.compile(r"changes underneath", re.IGNORECASE)
 CONFIRMED_RE = re.compile(r"^\W*y(es)?\b", re.IGNORECASE)
 AD_ID_RE = re.compile(r"\bAD-\d{3,}\b")
+# A project that records decisions in `docs/DECISIONS.md` (the Maiyu standard) cites `DECISIONS.md #N`.
+DOC_DECISION_RE = re.compile(r"DECISIONS\.md #(\d+)")
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp", ".gif")
 
 PLACEHOLDER_RE = re.compile(r"^\s*[\[<].+[\]>]\s*$")
@@ -506,6 +508,21 @@ def active_decisions(plan_path):
     return ids
 
 
+def doc_decisions(plan_path):
+    """The numbers recorded in the project's `docs/DECISIONS.md` (table row `| N |` or heading `#N`)."""
+    root = _path_bases(plan_path)[0]
+    path = os.path.join(root, "docs", "DECISIONS.md")
+    if not os.path.isfile(path):
+        return set()
+    nums = set()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            m = re.match(r"\s*\|\s*#?(\d+)\s*\|", line) or re.match(r"\s*#+\s*#?(\d+)\b", line)
+            if m:
+                nums.add(m.group(1))
+    return nums
+
+
 def check_differences(lines, plan_path):
     """With a binding source, every departure from it is listed, and the user approved each one in
     a decision `.specs/STATE.md` holds, so what was asked outlives the conversation."""
@@ -535,6 +552,15 @@ def check_differences(lines, plan_path):
             )
             continue
         cited = AD_ID_RE.findall(confirmed)
+        doc_cited = DOC_DECISION_RE.findall(confirmed)
+        if doc_cited and not cited:
+            recorded = doc_decisions(plan_path)
+            for n in doc_cited:
+                if n not in recorded:
+                    errors.append(
+                        f"Differences '{cells[0][:40]}': cites DECISIONS.md #{n}, which `docs/DECISIONS.md` does not hold"
+                    )
+            continue
         if not cited:
             errors.append(
                 f"Differences '{cells[0][:40]}': Confirmed cites no decision - record the question and the "

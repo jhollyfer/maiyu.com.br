@@ -1,0 +1,12 @@
+{
+  "not_found": "File not found",
+  "in_use": "File in use",
+  "in_use_field": "File in use at: {places}. Unlink it before deleting it.",
+  "incomplete": "Incomplete file",
+  "size_mismatch_field": "The uploaded file has {received} bytes, and {declared} were declared.",
+  "content_mismatch_field": "The file content is not of the declared type ({mimetype}).",
+  "invalid": "Invalid file",
+  "size_invalid_field": "The declared size ({size}) must be a whole number of bytes greater than zero.",
+  "type_unsupported_field": "The type {mimetype} is not accepted.",
+  "already_uploaded": "The upload was already confirmed and can no longer be cancelled."
+}

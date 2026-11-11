@@ -107,6 +107,41 @@ referência do que está instalado, e o conteúdo deles muda sem a URL avisar.
 
 **Skills:** `maiyu-backend`, `solid`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com fastify-decorators: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Configuração do TypeScript
+
+- **`experimentalDecorators` e `emitDecoratorMetadata` ligados no `tsconfig.json`.** A biblioteca exige decorators experimentais, e a injeção por construtor depende dos metadados de tipo gerados pelo compilador. [`#README`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/README.md), [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md), [`#plugins/simple-di`](https://github.com/L2jLiga/fastify-decorators/tree/v4/plugins/simple-di)
+- **`reflect-metadata` importado antes do `bootstrap`, também nos testes.** A injeção de dependência só funciona com o pacote carregado, o que torna obrigatório importá-lo no setup de teste. [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md), [`#Testing`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Testing.md)
+- **Metadado de tipo gerado falha com referência circular ou adiantada entre tipos.** A doc avisa que a injeção pode não resolver nesses casos; dependência circular entre classes injetáveis é desvio. [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md), [`#plugins/simple-di`](https://github.com/L2jLiga/fastify-decorators/tree/v4/plugins/simple-di)
+
+### Bootstrap
+
+- **Controllers carregam por `bootstrap` com `directory` e `mask`, ou por lista explícita em `controllers`.** São as duas formas documentadas; a inicialização acontece antes de o Fastify começar a escutar. [`#Bootstrapping`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Bootstrapping.md)
+- **`getInstanceByToken(FastifyInstanceToken)` nunca em campo estático nem em opção de decorator.** O `FastifyInstance` só existe depois do `bootstrap`, e o import do controller o pediria antes (erro ao carregar por lista). [`#Bootstrapping`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Bootstrapping.md), [`#plugins/simple-di`](https://github.com/L2jLiga/fastify-decorators/tree/v4/plugins/simple-di)
+
+### Controllers e handlers
+
+- **Controller é `ControllerType.SINGLETON` (uma instância para todas as requisições) ou `ControllerType.REQUEST` (uma por requisição).** A página exige um dos dois tipos; no singleton o estado da instância é compartilhado entre requisições. [`#Controllers`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Controllers.md)
+- **Um decorator de método HTTP por método ou classe; não se misturam.** Limitação declarada em Request Handlers. [`#Request Handlers`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Request%20Handlers.md)
+- **Handler por classe estende `RequestHandler`.** A página diz que todo handler declarado como classe deve estender a base. [`#Request Handlers`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Request%20Handlers.md)
+
+### Injeção de dependência
+
+- **Classe injetável leva `@Service()`; o token default é a própria classe.** Sem o decorator a classe não entra no container; token string só quando declarado em `@Service('Token')`. [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md), [`#Controllers`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Controllers.md)
+- **Inversão de dependência: `abstract class` como token e `injectables.injectService(Contrato, Implementação)` antes do `bootstrap`.** É o mecanismo documentado para escolher a implementação de cima para baixo. [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md)
+- **Inicialização assíncrona vai em método `@Initializer()`, com as dependências assíncronas listadas; liberação de recurso vai em `@Destructor()`.** O `@Initializer([Dep])` garante que a dependência terminou a própria inicialização antes. [`#Services and dependency injection`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Services%20and%20dependency%20injection.md), [`#plugins/simple-di`](https://github.com/L2jLiga/fastify-decorators/tree/v4/plugins/simple-di)
+
+### Testes
+
+- **Teste de controller usa `configureControllerTest` e o de service `configureServiceTest`, com `mocks: [{ provide, useValue }]`.** É a API de teste do pacote (`fastify-decorators/testing`); dependência sem mock usa a implementação original. [`#Testing`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Testing.md)
+- **Service com `@Initializer` é aguardado (`await configureServiceTest(...)`) antes do uso.** O retorno é a instância somada a uma Promise que só resolve depois da inicialização. [`#Testing`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Testing.md)
+- **`instance.controller` é `undefined` em controller do tipo por requisição.** A propriedade só existe para singleton. [`#Testing`](https://raw.githubusercontent.com/L2jLiga/fastify-decorators/v3.16.1/docs/Testing.md)
+
 ---
 
 ## Fundamentos
