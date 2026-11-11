@@ -1,11 +1,7 @@
-import type * as React from 'react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { PageHero } from './-components/page-hero'
-import { PillButton } from './-components/pill-button'
-import { REVEAL, STAGGER } from './-components/reveal'
-import { ProjectStatusBadge } from './-components/project-status'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
@@ -13,6 +9,11 @@ import { featuredProject, projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PageHero } from './-components/page-hero'
+import { PillButton } from './-components/pill-button'
+import { ProjectStatusBadge } from './-components/project-status'
+import { REVEAL, STAGGER } from './-components/reveal'
 
 export const Route = createLazyFileRoute('/_public/portfolio')({
   component: RouteComponent,

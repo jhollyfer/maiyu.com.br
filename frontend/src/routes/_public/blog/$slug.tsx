@@ -2,9 +2,10 @@ import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { getArticleBySlug } from '#/lib/articles'
 import { pageHead } from '#/lib/head'
-import { localized, localizedUrl } from '#/lib/i18n'
+import { localized } from '#/lib/i18n'
 import { PHOTOS } from '#/lib/photos'
 import { SITE_TITLE, absoluteUrl } from '#/lib/site'
+import { localizedUrl } from '#/lib/site-i18n'
 import {
   blogPostingJsonLd,
   breadcrumbListJsonLd,

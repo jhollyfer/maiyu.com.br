@@ -1,5 +1,6 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "brand_name": "Maiyu",
   "nav_home": "Início",
   "nav_portfolio": "Portfólio",
   "nav_blog": "Diário",
@@ -179,5 +180,173 @@
   "portfolio_yearLabel": "Ano",
   "portfolio_stackLabel": "Tecnologias",
   "project_status_production": "No ar",
-  "project_status_validation": "Em validação"
+  "project_status_validation": "Em validação",
+  "kit_access_denied": "Acesso negado",
+  "kit_access_denied_do_not_have_permission_access": "Você não tem permissão para acessar esta página.",
+  "kit_actions": "Ações",
+  "kit_archive": "Arquivar",
+  "kit_back": "Voltar",
+  "kit_back_home": "Voltar ao início",
+  "kit_bulk_archive_done": [
+    {
+      "declarations": [
+        "input done",
+        "local doneExact = done",
+        "local donePlural = done: plural"
+      ],
+      "selectors": ["doneExact", "donePlural"],
+      "match": {
+        "doneExact=0, donePlural=*": "{done} arquivados.",
+        "doneExact=*, donePlural=one": "{done} arquivado.",
+        "doneExact=*, donePlural=*": "{done} arquivados."
+      }
+    }
+  ],
+  "kit_bulk_archive_none": [
+    {
+      "declarations": [
+        "input total",
+        "local totalExact = total",
+        "local totalPlural = total: plural"
+      ],
+      "selectors": ["totalExact", "totalPlural"],
+      "match": {
+        "totalExact=0, totalPlural=*": "Nenhum arquivado: {total} falharam.",
+        "totalExact=*, totalPlural=one": "Nenhum arquivado: {total} falhou.",
+        "totalExact=*, totalPlural=*": "Nenhum arquivado: {total} falharam."
+      }
+    }
+  ],
+  "kit_bulk_archive_partial": [
+    {
+      "declarations": [
+        "input failed",
+        "local failedExact = failed",
+        "local failedPlural = failed: plural"
+      ],
+      "selectors": ["failedExact", "failedPlural"],
+      "match": {
+        "failedExact=0, failedPlural=*": "{done} de {total} arquivados; {failed} falharam.",
+        "failedExact=*, failedPlural=one": "{done} de {total} arquivados; {failed} falhou.",
+        "failedExact=*, failedPlural=*": "{done} de {total} arquivados; {failed} falharam."
+      }
+    }
+  ],
+  "kit_cancel": "Cancelar",
+  "kit_combobox_empty": "Nenhuma opção encontrada.",
+  "kit_combobox_placeholder": "Selecione",
+  "kit_date_picker_placeholder": "Escolha uma data",
+  "kit_delete": "Excluir",
+  "kit_discard": "Descartar",
+  "kit_editor_bold": "Negrito",
+  "kit_editor_italic": "Itálico",
+  "kit_editor_list": "Lista",
+  "kit_editor_ordered_list": "Lista numerada",
+  "kit_editor_rich_text_no_content": "Sem conteúdo",
+  "kit_editor_subtitle": "Subtítulo",
+  "kit_error_network": "Não foi possível conectar ao servidor. Tente novamente.",
+  "kit_error_query_description": "Esta parte da tela não conseguiu carregar. Tentar de novo costuma bastar.",
+  "kit_error_server": "O servidor não conseguiu concluir. Tente de novo.",
+  "kit_error_title": "Algo quebrou aqui",
+  "kit_error_unknown": "Erro inesperado. Tente novamente.",
+  "kit_field_required": "(obrigatório)",
+  "kit_file_type_not_accepted": "{name} não é um tipo de arquivo aceito neste campo.",
+  "kit_filters": "Filtros",
+  "kit_filters_show_more": "Ver mais {count}",
+  "kit_form_shell_leave_guard_changes_form_have_not_been": "As alterações deste formulário ainda não foram salvas e serão perdidas.",
+  "kit_form_shell_leave_guard_keep_editing": "Continuar editando",
+  "kit_form_shell_leave_guard_leave_without_saving": "Sair sem salvar",
+  "kit_form_shell_leave_guard_leave_without_saving_2": "Sair sem salvar?",
+  "kit_form_unsaved_changes_confirm": "Há alterações não salvas. Sair desta tela descarta tudo o que foi digitado.",
+  "kit_help": "Ajuda",
+  "kit_hide_password": "Ocultar a senha",
+  "kit_image_formats": "JPG, PNG, WEBP ou GIF.",
+  "kit_layout_load_error_there_problem": "Houve um problema",
+  "kit_layout_route_error_something_went_wrong": "Algo deu errado",
+  "kit_layout_route_error_try_again": "Tentar Novamente",
+  "kit_list_shell_active_filters": "Filtros ativos: {count}",
+  "kit_list_shell_filters_description": "Refine a lista pelos critérios abaixo.",
+  "kit_load_error_there_problem_loading_data": "Houve um problema ao carregar dados",
+  "kit_loading": "Carregando…",
+  "kit_locale_switcher_label": "Idioma",
+  "kit_maiyu_credit": "Desenvolvido por {#link}Maiyu{/link}",
+  "kit_not_found_description": "Confira o endereço, ou volte ao início e siga daqui.",
+  "kit_not_found_title": "Página não encontrada",
+  "kit_open_actions": "Abrir ações",
+  "kit_panel_toggle_theme": "Alternar tema",
+  "kit_remove": "Remover",
+  "kit_restore": "Restaurar",
+  "kit_retry": "Tentar de novo",
+  "kit_route_error_description": "Esta tela não conseguiu carregar. Tentar de novo costuma bastar.",
+  "kit_save": "Salvar",
+  "kit_server_error_description": "Esta tela não conseguiu carregar. Tentar de novo costuma bastar; se insistir, volte ao início.",
+  "kit_server_error_subtitle": "A falha é nossa, não sua",
+  "kit_server_error_title": "Algo quebrou aqui",
+  "kit_show_password": "Mostrar a senha",
+  "kit_table_clear_filter": "Limpar filtro",
+  "kit_table_column_fallback": "coluna",
+  "kit_table_column_options": "Opções de {column}",
+  "kit_table_columns": "Colunas",
+  "kit_table_columns_visible": "Colunas visíveis",
+  "kit_table_empty_filtered_description": "Nada bateu com o termo buscado. Limpe o filtro para ver a lista inteira.",
+  "kit_table_empty_filtered_title": "Nada para esse filtro",
+  "kit_table_empty_trash_title": "A lixeira está vazia",
+  "kit_table_error_description": "A consulta falhou. Verifique a conexão e tente de novo.",
+  "kit_table_error_title": "Não foi possível carregar a lista",
+  "kit_table_first_page": "Primeira página",
+  "kit_table_items_per_page": "Itens por página",
+  "kit_table_last_page": "Última página",
+  "kit_table_move_column": "Mover coluna {column}",
+  "kit_table_next_page": "Próxima página",
+  "kit_table_page": "Página",
+  "kit_table_pin_end": "Fixar no fim",
+  "kit_table_pin_start": "Fixar no início",
+  "kit_table_previous_page": "Página anterior",
+  "kit_table_search_clear": "Limpar busca",
+  "kit_table_search_help": "Digite e tecle Enter, ou clique na lupa",
+  "kit_table_search_placeholder": "Pesquise aqui…",
+  "kit_table_search_submit": "Buscar",
+  "kit_table_select_all": "Selecionar todas as linhas da página",
+  "kit_table_select_row": "Selecionar linha",
+  "kit_table_selection": "Seleção: {count} {noun}",
+  "kit_table_selection_clear": "Limpar seleção",
+  "kit_table_sort_asc": "Crescente",
+  "kit_table_sort_desc": "Decrescente",
+  "kit_table_total_records": [
+    {
+      "declarations": [
+        "input total",
+        "local totalExact = total",
+        "local totalPlural = total: plural"
+      ],
+      "selectors": ["totalExact", "totalPlural"],
+      "match": {
+        "totalExact=0, totalPlural=*": "Nenhum registro",
+        "totalExact=*, totalPlural=one": "{total} registro",
+        "totalExact=*, totalPlural=*": "{total} registros"
+      }
+    }
+  ],
+  "kit_table_trashed": "Arquivados",
+  "kit_table_unpin": "Desafixar",
+  "kit_theme_dark": "Escuro",
+  "kit_theme_light": "Claro",
+  "kit_theme_system": "Sistema",
+  "kit_toggle_password": "Mostrar/ocultar senha",
+  "kit_try_again": "Tentar de novo",
+  "kit_upload_attachments": "Anexos",
+  "kit_upload_choose_files": "Escolher arquivos",
+  "kit_upload_error_cancelled": "Upload cancelado",
+  "kit_upload_error_missing_etag": "O storage não expôs o ETag da parte. Confira o CORS do bucket.",
+  "kit_upload_error_missing_urls": "O storage não devolveu URLs para as partes restantes.",
+  "kit_upload_error_network": "Falha de rede ao enviar a parte",
+  "kit_upload_error_part_size": "O pedaço do arquivo saiu com tamanho diferente do planejado. Tente enviar de novo.",
+  "kit_upload_error_refused": "Envio recusado ({status})",
+  "kit_upload_error_stalled": "A conexão parou de responder",
+  "kit_upload_error_type": "Tipo de arquivo não aceito: {type}",
+  "kit_upload_failed": "Falha no envio",
+  "kit_upload_remove_item": "Remover {name}",
+  "kit_upload_retry_item": "Tentar de novo: {name}",
+  "kit_upload_summary": "{completed} de {total} enviados · {size} · arraste, cole ou escolha",
+  "kit_upload_unknown_type": "desconhecido"
 }

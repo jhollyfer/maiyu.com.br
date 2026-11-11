@@ -1,5 +1,6 @@
+import type { LocalizedText } from '@maiyu/shared'
+
 import type { ArticleCategory } from './entity'
-import type { LocalizedText } from './i18n'
 import type { PhotoKey } from './photos'
 
 /**

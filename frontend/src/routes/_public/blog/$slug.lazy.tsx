@@ -1,10 +1,7 @@
-import type * as React from 'react'
-import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
 import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { Photo } from '../-components/photo'
-import { PillButton } from '../-components/pill-button'
-import { REVEAL } from '../-components/reveal'
 import {
   NotFoundPage,
   NotFoundPageActions,
@@ -23,10 +20,15 @@ import {
 } from '#/components/ui/breadcrumb'
 import { articles } from '#/lib/articles'
 import type { ArticleBlock } from '#/lib/articles'
-import { localized, localizedDate } from '#/lib/i18n'
+import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
+import { localizedDate } from '#/lib/site-i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { Photo } from '../-components/photo'
+import { PillButton } from '../-components/pill-button'
+import { REVEAL } from '../-components/reveal'
 
 const route = getRouteApi('/_public/blog/$slug')
 

@@ -1,20 +1,17 @@
+import ralewayLatin from '@fontsource-variable/raleway/files/raleway-latin-wght-normal.woff2?url'
+import type { QueryClient } from '@tanstack/react-query'
 import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
 } from '@tanstack/react-router'
-import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-import { TanStackDevtools } from '@tanstack/react-devtools'
-
 import { ThemeProvider } from 'next-themes'
-
-import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
-
+import { AppDevtools } from '#/integrations/tanstack-query/devtools'
 import { SITE_IMAGE, SITE_TITLE } from '#/lib/site'
-import { ogLocale } from '#/lib/i18n'
+import { ogLocale } from '#/lib/site-i18n'
 import { jsonLdScript, organizationJsonLd } from '#/lib/structured-data'
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
@@ -28,9 +25,6 @@ import appCss from '../styles.css?url'
  * que mudasse o hash, e quebraria em silêncio - um `preload` que aponta para
  * 404 não estraga a página, só deixa de adiantar o download.
  */
-import ralewayLatin from '@fontsource-variable/raleway/files/raleway-latin-wght-normal.woff2?url'
-
-import type { QueryClient } from '@tanstack/react-query'
 
 /**
  * O que toda rota enxerga em `context`.
@@ -144,23 +138,7 @@ function RootDocument({
           <TooltipProvider delay={300}>{children}</TooltipProvider>
           <Toaster position="bottom-right" />
         </ThemeProvider>
-        {/*
-          Só em desenvolvimento: a casca `TanStackDevtools` não tem guarda
-          própria, e sem esta linha o botão flutuante apareceria por cima do
-          site em produção.
-        */}
-        {import.meta.env.DEV && (
-          <TanStackDevtools
-            config={{ position: 'bottom-right' }}
-            plugins={[
-              {
-                name: 'Tanstack Router',
-                render: <TanStackRouterDevtoolsPanel />,
-              },
-              TanStackQueryDevtools,
-            ]}
-          />
-        )}
+        <AppDevtools />
         <Scripts />
       </body>
     </html>

@@ -1,8 +1,6 @@
 import { createRouter as createTanStackRouter } from '@tanstack/react-router'
 import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
 
-import { routeTree } from './routeTree.gen'
-import { getContext } from './integrations/tanstack-query/query-context'
 import {
   NotFoundPage,
   NotFoundPageActions,
@@ -14,6 +12,9 @@ import {
 import { Button } from '#/components/ui/button'
 import { m } from '#/paraglide/messages'
 import { deLocalizeUrl, localizeUrl } from '#/paraglide/runtime'
+
+import { getContext } from './integrations/tanstack-query/query-context'
+import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
   const context = getContext()
@@ -68,7 +69,7 @@ export function getRouter() {
 }
 
 declare module '@tanstack/react-router' {
-  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- module augmentation only merges an `interface`, a `type` alias would not extend `Register`
   interface Register {
     router: ReturnType<typeof getRouter>
   }

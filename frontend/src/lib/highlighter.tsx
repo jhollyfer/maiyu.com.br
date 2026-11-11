@@ -1,4 +1,3 @@
-import * as React from 'react'
 import {
   createHighlighterCore,
   type GrammarState,
@@ -50,6 +49,18 @@ function getHighlighter() {
   return highlighter
 }
 
+/** Type guard e não `as`: o nome só vira chave de `languages` depois de checado. */
+function isListedLanguage(name: string): name is keyof typeof languages {
+  return name in languages
+}
+
+/** O ANSI não tem estado de gramática: cada linha é uma unidade própria. */
+function tokenizeUnits(lang: string, code: string): string[] {
+  if (lang === 'ansi') return code.split('\n')
+
+  return [code]
+}
+
 function getLanguage(language: string) {
   const name = language.toLowerCase()
 
@@ -57,8 +68,8 @@ function getLanguage(language: string) {
     return name
   }
 
-  if (name in languages) {
-    return name as keyof typeof languages
+  if (isListedLanguage(name)) {
+    return name
   }
 
   return aliases[name] ?? null
@@ -93,17 +104,15 @@ export async function loadHighlighter(language: string) {
 
       // ANSI has no grammar state, so each line is tokenized on its own and
       // gets the same colors whether it arrives in one piece or streams.
-      const tokens =
-        lang === 'ansi'
-          ? code.split('\n').flatMap((line) => tokenize(line))
-          : tokenize(code)
+      const pieces = tokenizeUnits(lang, code)
+      const tokens = pieces.flatMap((piece) => tokenize(piece))
 
       return {
         lines: tokens.map((line) =>
           line.map((token, index) => (
             <span
               key={index}
-              style={token.htmlStyle as React.CSSProperties}
+              style={token.htmlStyle}
               className="text-(--shiki-light) dark:text-(--shiki-dark)"
             >
               {token.content}
@@ -120,5 +129,5 @@ export async function loadHighlighter(language: string) {
 export async function highlightCode(code: string, language: string) {
   const highlighter = await loadHighlighter(language)
 
-  return highlighter ? highlighter.highlight(code).lines : null
+  return highlighter?.highlight(code).lines ?? null
 }

@@ -1,7 +1,7 @@
 import { baseLocale } from '#/paraglide/runtime'
 
-import { localizedUrl } from './i18n'
 import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
+import { localizedUrl } from './site-i18n'
 
 /**
  * O JSON-LD que o site publica, montado num lugar só.

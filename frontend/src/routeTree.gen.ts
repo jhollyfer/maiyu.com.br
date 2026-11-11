@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicLayoutRouteImport } from './routes/_public/layout'
 import { Route as HealthCheckRouteImport } from './routes/health-check'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as DotwellKnownSecurityDottxtRouteImport } from './routes/[.]well-known/security[.]txt'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
 import { Route as PublicCareerRouteImport } from './routes/_public/career'
@@ -34,6 +35,12 @@ const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownSecurityDottxtRoute =
+  DotwellKnownSecurityDottxtRouteImport.update({
+    id: '/.well-known/security.txt',
+    path: '/.well-known/security.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -84,6 +91,7 @@ export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
   '/contact': typeof PublicContactRoute
@@ -94,6 +102,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
   '/contact': typeof PublicContactRoute
@@ -107,6 +116,7 @@ export interface FileRoutesById {
   '/_public': typeof PublicLayoutRouteWithChildren
   '/health-check': typeof HealthCheckRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/_public/$': typeof PublicSplatRoute
   '/_public/career': typeof PublicCareerRoute
   '/_public/contact': typeof PublicContactRoute
@@ -121,6 +131,7 @@ export interface FileRouteTypes {
     | '/'
     | '/health-check'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/$'
     | '/career'
     | '/contact'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
   to:
     | '/health-check'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/$'
     | '/career'
     | '/contact'
@@ -143,6 +155,7 @@ export interface FileRouteTypes {
     | '/_public'
     | '/health-check'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/_public/$'
     | '/_public/career'
     | '/_public/contact'
@@ -156,6 +169,7 @@ export interface RootRouteChildren {
   PublicLayoutRoute: typeof PublicLayoutRouteWithChildren
   HealthCheckRoute: typeof HealthCheckRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DotwellKnownSecurityDottxtRoute: typeof DotwellKnownSecurityDottxtRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -179,6 +193,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/security.txt': {
+      id: '/.well-known/security.txt'
+      path: '/.well-known/security.txt'
+      fullPath: '/.well-known/security.txt'
+      preLoaderRoute: typeof DotwellKnownSecurityDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_public/': {
@@ -261,6 +282,7 @@ const rootRouteChildren: RootRouteChildren = {
   PublicLayoutRoute: PublicLayoutRouteWithChildren,
   HealthCheckRoute: HealthCheckRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DotwellKnownSecurityDottxtRoute: DotwellKnownSecurityDottxtRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

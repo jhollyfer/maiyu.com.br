@@ -1,13 +1,14 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { Photo } from './photo'
-import { REVEAL } from './reveal'
-import { PillButton } from './pill-button'
 import { CALL_URL } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { Photo } from './photo'
+import { PillButton } from './pill-button'
+import { REVEAL } from './reveal'
 
 /**
  * O convite final: a frase grande sobre o papel, as ações e a foto de Letícia,

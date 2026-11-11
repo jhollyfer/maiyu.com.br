@@ -1,6 +1,5 @@
 import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
 import {
   Item,
   ItemContent,
@@ -10,6 +9,8 @@ import {
 } from '#/components/ui/item'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { REVEAL, STAGGER } from './reveal'
 
 /** Os públicos, na ordem do posicionamento: os povos originários primeiro. */
 const AUDIENCES = [

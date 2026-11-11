@@ -1,127 +1,120 @@
 import { DateTime } from 'luxon'
+import type { Locale as DayPickerLocale } from 'react-day-picker'
+import { enUS, es, ptBR } from 'react-day-picker/locale'
 
-import {
-  baseLocale,
-  getLocale,
-  locales,
-  localizeHref,
-} from '#/paraglide/runtime'
-import type { Locale } from '#/paraglide/runtime'
-
-import { absoluteUrl } from './site'
+import { getLocale } from '#/paraglide/runtime'
+import type { Locale, MessagePart } from '#/paraglide/runtime'
+import type { LocalizedText } from '@maiyu/shared'
 
 /**
- * Texto de conteúdo nas três línguas do site.
- *
- * As mensagens de interface moram em `messages/{locale}.json` e saem do
- * paraglide como função (`m.nav_home()`). O conteúdo que vem em registro, como
- * o resumo de um projeto ou o título de um artigo, fica junto do próprio
- * registro em `lib/`: separar a tradução do dado a que ela pertence faz as duas
- * metades envelhecerem em ritmos diferentes.
+ * The calendar locale per language, for `date-picker`. The `satisfies` demands at
+ * typecheck a calendar locale here for any new language in
+ * `project.inlang/settings.json`. It comes from `react-day-picker/locale`, the path
+ * the `DayPicker` documents for the `locale` prop (base: adacaibs `lib/i18n.ts`).
  */
-export type LocalizedText = Record<Locale, string>
+const DAY_PICKER_LOCALES = {
+  'pt-BR': ptBR,
+  es,
+  en: enUS,
+} satisfies Record<Locale, DayPickerLocale>
 
-/** O texto no idioma da requisição. */
+/** The calendar locale in the request's language. */
+export function dayPickerLocale(): DayPickerLocale {
+  return DAY_PICKER_LOCALES[getLocale()]
+}
+
+/**
+ * What depends on the current language and is not a message (`i18n.md` §2): record
+ * content in the three languages, number and currency. Interface text is `m.*()`;
+ * the enum label is `lib/labels.ts`.
+ */
+
+/**
+ * The product's time zone. Every dashboard and site date is shown in it, and not in the
+ * browser's time zone or UTC: the page renders on SSR, and the same time in
+ * two zones diverges at hydration - besides showing 1pm for a 9am match.
+ */
+export const TIME_ZONE = 'America/Manaus'
+
+/** The product's currency: the `formatCurrency` of a Brazilian product. */
+const CURRENCY = 'BRL'
+
+/** The text in the current language of content that exists in all three. */
 export function localized(text: LocalizedText): string {
   return text[getLocale()]
 }
 
 /**
- * O fuso em que o site escreve data, fixo e explícito (`_standards/frontend.md`
- * §3.5). `UTC` porque a data de registro não tem hora: lida no fuso do
- * servidor ou do navegador, `2026-09-08` viraria 7 de setembro a oeste de
- * Greenwich, e o SSR e a hidratação desenhariam dias diferentes
- * (_doc-lib/luxon.md#zones, https://moment.github.io/luxon/docs/zones.md).
+ * A number in the current language. Built on each use because the language changes with the URL;
+ * `Intl` keeps the data cache internally. Never a hand-built format.
  */
-const DISPLAY_ZONE = 'UTC'
-
-/**
- * Uma data de registro (`AAAA-MM-DD`) escrita por extenso no idioma da
- * requisição, como "8 de setembro de 2026".
- *
- * `fromISO` com `zone` lê a data já no fuso de exibição, e `DATE_FULL` é o
- * formato predefinido de data por extenso: a doc pede os predefinidos sempre
- * que a data é para gente ler, porque eles seguem a ordem de cada idioma
- * (_doc-lib/luxon.md#formatting, https://moment.github.io/luxon/docs/formatting.md;
- * https://moment.github.io/luxon/api-docs/index.html#datetimefromiso).
- */
-export function localizedDate(
-  iso: string,
-  locale: Locale = getLocale(),
+export function formatNumber(
+  value: number,
+  options?: Intl.NumberFormatOptions,
 ): string {
-  return DateTime.fromISO(iso, { zone: DISPLAY_ZONE })
-    .setLocale(locale)
-    .toLocaleString(DateTime.DATE_FULL)
+  return new Intl.NumberFormat(getLocale(), options).format(value)
 }
 
 /**
- * O ano corrente no fuso de exibição, para a assinatura do rodapé.
- *
- * `DateTime.now()` nasce na zona do sistema que roda o código
- * (https://moment.github.io/luxon/api-docs/index.html#datetimenow), e o
- * `setZone` fixa a mesma leitura no servidor e no navegador.
+ * A file size in the current language (B, KB, MB), with one fixed decimal so the
+ * upload list aligns. Base: adacaibs `lib/labels.ts`; here because it is a number
+ * format by language, not an enum label.
  */
-export function currentYear(): number {
-  return DateTime.now().setZone(DISPLAY_ZONE).year
+export function formatBytes(bytes: number): string {
+  const oneDecimal = { minimumFractionDigits: 1, maximumFractionDigits: 1 }
+
+  if (bytes < 1024) return `${formatNumber(bytes)} B`
+
+  const kb = bytes / 1024
+  if (kb < 1024) return `${formatNumber(kb, oneDecimal)} KB`
+
+  return `${formatNumber(kb / 1024, oneDecimal)} MB`
+}
+
+/** A value in reais in the current language. */
+export function formatCurrency(value: number): string {
+  return formatNumber(value, { style: 'currency', currency: CURRENCY })
 }
 
 /**
- * O idioma em formato de `og:locale`, que usa sublinhado e não hífen.
- *
- * Lookup e não `replace('-', '_')`: `en` e `es` não têm região, e o cartão de
- * link quer uma região explícita para não adivinhar.
+ * The API instant on the local clock and in the current language (`frontend.md` §3.5):
+ * explicit `setZone` and `setLocale` of the URL's language. The browser's time zone would make
+ * SSR and hydration render different strings.
  */
-const OG_LOCALES: Record<Locale, string> = {
-  'pt-BR': 'pt_BR',
-  en: 'en_US',
-  es: 'es_ES',
-}
-
-export function ogLocale(): string {
-  return OG_LOCALES[getLocale()]
+export function localDateTime(value: string): DateTime {
+  return DateTime.fromISO(value).setZone(TIME_ZONE).setLocale(getLocale())
 }
 
 /**
- * O endereço absoluto de um caminho interno, no idioma pedido (ou no da
- * requisição).
- *
- * `localizeHref` e não concatenação de prefixo: todo idioma leva prefixo
- * minúsculo (`/pt-br/portfolio`, `/en/portfolio`, `/es/portfolio`), e a regra
- * mora nos `urlPatterns` de `project.inlang/paraglide.config.ts`, que é o que o
- * roteamento também aplica (`DECISIONS.md` #384,
- * _doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
- * Nenhuma URL absoluta sai sem prefixo: a raiz responde 307 para `/pt-br`, e
- * um canônico que redireciona é um canônico que o buscador descarta.
+ * The current year on the local clock. Read in the route's `loader`, and not in the
+ * render: `new Date()` in render diverges between SSR and hydration at the turn of the
+ * year (`frontend.md` §3.2).
  */
-export function localizedUrl(path: string, locale?: Locale): string {
-  return absoluteUrl(localizeHref(path, { locale }))
+export function currentLocalYear(): number {
+  return DateTime.now().setZone(TIME_ZONE).year
+}
+
+/** The API date formatted on the local clock and in the current language. */
+export function formatLocalDate(
+  value: string,
+  options: Intl.DateTimeFormatOptions,
+): string {
+  return localDateTime(value).toLocaleString(options)
+}
+
+/** `2026-12-14T08:30` on the local clock to ISO in UTC. */
+export function localInputToIso(value: string): string {
+  return DateTime.fromISO(value, { zone: TIME_ZONE }).toUTC().toISO() ?? ''
 }
 
 /**
- * Os `<link rel="alternate" hreflang>` de uma página, um por idioma e mais o
- * `x-default`.
- *
- * Sem eles o buscador trata `/pt-br/portfolio` e `/en/portfolio` como conteúdo
- * duplicado e escolhe um sozinho, e quem busca em espanhol cai na versão em
- * português. O `x-default` aponta para o idioma base já prefixado
- * (`/pt-br/...`), que é o destino do 307 de quem chega sem prefixo: apontá-lo
- * para a raiz seria declarar como padrão uma URL que redireciona.
+ * The plain text of a stretch of `m.x.parts()` (`_doc-lib/paraglide.md#/markup`): the markup
+ * parts carry no text of their own, so only the `text` parts count.
  */
-export function alternateLinks(
-  path: string,
-): Array<{ rel: string; hrefLang: string; href: string }> {
-  const links = locales.map((locale) => ({
-    rel: 'alternate',
-    hrefLang: locale,
-    href: localizedUrl(path, locale),
-  }))
-
-  return [
-    ...links,
-    {
-      rel: 'alternate',
-      hrefLang: 'x-default',
-      href: localizedUrl(path, baseLocale),
-    },
-  ]
+export function partsText(parts: MessagePart[]): string {
+  let result = ''
+  for (const part of parts) {
+    if (part.type === 'text') result += part.value
+  }
+  return result
 }

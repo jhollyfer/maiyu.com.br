@@ -1,9 +1,10 @@
-import type * as React from 'react'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
+
+import { m } from '#/paraglide/messages'
 
 import { Footer } from './-components/footer'
 import { Header } from './-components/header'
-import { m } from '#/paraglide/messages'
 
 /**
  * O site.

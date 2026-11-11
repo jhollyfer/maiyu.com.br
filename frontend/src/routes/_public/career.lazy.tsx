@@ -1,14 +1,15 @@
-import type * as React from 'react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import { ArrowDownIcon } from '@phosphor-icons/react'
+import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
+
+import { TALENT_AREAS } from '#/lib/jobs'
+import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 
 import { CareerForm } from './-components/career-form'
 import { PageHero } from './-components/page-hero'
 import { Photo } from './-components/photo'
 import { REVEAL, STAGGER } from './-components/reveal'
-import { TALENT_AREAS } from '#/lib/jobs'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
 
 export const Route = createLazyFileRoute('/_public/career')({
   component: RouteComponent,

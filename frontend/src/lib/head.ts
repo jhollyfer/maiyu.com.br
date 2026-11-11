@@ -1,5 +1,5 @@
-import { alternateLinks, localizedUrl } from './i18n'
 import { SITE_IMAGE, SITE_TITLE } from './site'
+import { alternateLinks, localizedUrl } from './site-i18n'
 
 /**
  * O `head` de uma página pública.

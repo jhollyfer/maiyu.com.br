@@ -1,15 +1,16 @@
-import type * as React from 'react'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
-import { PillButton } from './pill-button'
-import { ProjectStatusBadge } from './project-status'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PillButton } from './pill-button'
+import { ProjectStatusBadge } from './project-status'
+import { REVEAL, STAGGER } from './reveal'
 
 type ProjectProps = {
   project: Project

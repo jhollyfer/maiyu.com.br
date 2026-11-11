@@ -1,5 +1,5 @@
-import type * as React from 'react'
 import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
 
 import { Home } from './-components/home'
 

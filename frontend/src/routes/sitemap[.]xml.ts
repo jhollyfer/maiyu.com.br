@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 
 import { articles } from '#/lib/articles'
+import { SITE_URL } from '#/lib/site'
 import { STATIC_ENTRIES, buildSitemap, localizeEntries } from '#/lib/sitemap'
 import type { SitemapEntry } from '#/lib/sitemap'
-import { SITE_URL } from '#/lib/site'
 
 /**
  * O sitemap, servido em `/sitemap.xml`.

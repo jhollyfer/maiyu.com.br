@@ -3,7 +3,9 @@
   // runtime não resolvem - passo documentado em `examples/vite-nitro-plugin`.
   "extends": "nitro/tsconfig",
 
-  "include": ["**/*.ts", "**/*.tsx", "eslint.config.js", "prettier.config.js"],
+  // Os dois `*.config.js` ficam de fora: o `eslint.config.js` do kit os ignora, e o
+  // `eslint-plugin-jsx-a11y` não traz tipos, então incluí-lo aqui reprovaria o `typecheck`.
+  "include": ["**/*.ts", "**/*.tsx", "scripts/**/*.mjs"],
 
   "compilerOptions": {
     "target": "ES2022",

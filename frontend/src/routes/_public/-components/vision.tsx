@@ -1,11 +1,12 @@
 import * as React from 'react'
 
+import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
+
 import { REVEAL } from './reveal'
 import { useScrollStep } from './use-scroll-step'
 import { VisionScene } from './vision-scenes'
 import type { VisionStep } from './vision-scenes'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
 
 /**
  * Os três passos da visão. Funções e não chaves montadas por texto

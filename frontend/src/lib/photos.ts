@@ -1,4 +1,4 @@
-import type { LocalizedText } from './i18n'
+import type { LocalizedText } from '@maiyu/shared'
 
 /**
  * As fotos de terceiros que o site publica, com o crédito que a licença exige.

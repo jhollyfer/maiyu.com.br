@@ -1,9 +1,8 @@
 import vine from '@vinejs/vine'
 import type { Infer } from '@vinejs/vine/types'
 
-import { messages } from './validator-messages'
-
 import { JOB_POSITIONS } from './entity'
+import { messages } from './validator-messages'
 
 export * from './entity'
 

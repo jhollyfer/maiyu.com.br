@@ -1,5 +1,3 @@
-import type * as React from 'react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import {
   EnvelopeSimpleIcon,
   MapPinIcon,
@@ -7,14 +5,17 @@ import {
   WhatsappLogoIcon,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
+import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
+
+import { CALL_URL, CONTACT } from '#/lib/site'
+import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 
 import { ContactForm } from './-components/contact-form'
 import { PageHero } from './-components/page-hero'
 import { Photo } from './-components/photo'
 import { REVEAL, STAGGER } from './-components/reveal'
-import { CALL_URL, CONTACT } from '#/lib/site'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
 
 export const Route = createLazyFileRoute('/_public/contact')({
   component: RouteComponent,

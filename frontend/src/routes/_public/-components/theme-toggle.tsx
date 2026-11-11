@@ -1,15 +1,15 @@
-import * as React from 'react'
 import { MoonIcon, SunIcon } from '@phosphor-icons/react'
 import { useTheme } from 'next-themes'
+import * as React from 'react'
 
 import { Button } from '#/components/ui/button'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from '#/components/ui/tooltip'
+import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
 
 /**
  * Alterna entre claro e escuro.

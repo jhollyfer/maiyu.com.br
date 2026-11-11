@@ -1,13 +1,7 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { LanguageSwitcher } from './language-switcher'
-import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
-import { navLinkVariants } from './nav-link'
-import { useScrolled } from './use-scrolled'
-import { PillButton } from './pill-button'
-import { ThemeToggle } from './theme-toggle'
 import { Button } from '#/components/ui/button'
 import {
   NavigationMenu,
@@ -27,6 +21,13 @@ import {
 } from '#/components/ui/sheet'
 import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
+
+import { LanguageSwitcher } from './language-switcher'
+import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
+import { navLinkVariants } from './nav-link'
+import { PillButton } from './pill-button'
+import { ThemeToggle } from './theme-toggle'
+import { useScrolled } from './use-scrolled'
 
 /**
  * O cabeçalho flutuante.

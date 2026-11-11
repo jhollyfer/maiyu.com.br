@@ -1,7 +1,5 @@
 import type * as React from 'react'
 
-import { Photo } from './photo'
-import { REVEAL, STAGGER } from './reveal'
 import {
   Item,
   ItemContent,
@@ -11,6 +9,9 @@ import {
 } from '#/components/ui/item'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { Photo } from './photo'
+import { REVEAL, STAGGER } from './reveal'
 
 type Service = {
   title: () => string

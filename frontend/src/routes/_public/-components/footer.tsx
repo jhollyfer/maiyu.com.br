@@ -1,13 +1,14 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
+
+import { Button } from '#/components/ui/button'
+import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
+import { currentYear } from '#/lib/site-i18n'
+import { m } from '#/paraglide/messages'
 
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
-import { Button } from '#/components/ui/button'
-import { currentYear } from '#/lib/i18n'
-import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
-import { m } from '#/paraglide/messages'
 
 /**
  * O rodapé: o trançado como topo, quatro colunas separadas por fios, o botão

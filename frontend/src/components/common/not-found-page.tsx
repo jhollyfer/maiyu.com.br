@@ -1,11 +1,11 @@
-import * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowLeftIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import * as React from 'react'
 
 import { Button } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
-import { cn } from '#/lib/utils'
 import type { Merge } from '#/lib/interfaces'
+import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 type NotFoundPageProps = Merge<
@@ -70,6 +70,7 @@ export function NotFoundPage({
 
 export function NotFoundPageTitle({
   className,
+  children,
   ...props
 }: React.ComponentProps<'h1'>): React.JSX.Element {
   return (
@@ -77,7 +78,9 @@ export function NotFoundPageTitle({
       data-slot="not-found-page-title"
       className={cn('text-display tracking-[-0.02em]', className)}
       {...props}
-    />
+    >
+      {children}
+    </h1>
   )
 }
 

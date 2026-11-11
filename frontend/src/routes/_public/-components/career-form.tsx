@@ -1,10 +1,8 @@
+import { vineResolver } from '@hookform/resolvers/vine'
 import type * as React from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { vineResolver } from '@hookform/resolvers/vine'
 import { toast } from 'sonner'
 
-import { FIELD, LABEL } from './form-style'
-import { PillButton } from './pill-button'
 import {
   Field,
   FieldError,
@@ -19,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '#/components/ui/select'
+import { fireAndForget } from '#/lib/fire-and-forget'
 import { errorId, invalidProps } from '#/lib/form-a11y'
 import type { Merge } from '#/lib/interfaces'
 import { JOB_POSITION_LABELS } from '#/lib/labels'
@@ -32,6 +31,9 @@ import type {
   JobPosition,
 } from '#/lib/validator'
 import { m } from '#/paraglide/messages'
+
+import { FIELD, LABEL } from './form-style'
+import { PillButton } from './pill-button'
 
 /**
  * O que o formulário guarda enquanto a pessoa preenche, e que difere do que o
@@ -73,7 +75,7 @@ export function CareerForm(): React.JSX.Element {
       data-slot="career-form"
       method="post"
       noValidate
-      onSubmit={form.handleSubmit(submit)}
+      onSubmit={fireAndForget(form.handleSubmit(submit))}
     >
       <FieldGroup className="gap-5">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

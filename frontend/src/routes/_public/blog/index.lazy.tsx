@@ -1,18 +1,20 @@
-import type * as React from 'react'
-import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
 import { ArrowRightIcon } from '@phosphor-icons/react'
+import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { PageHero } from '../-components/page-hero'
-import { Photo } from '../-components/photo'
-import { REVEAL, STAGGER } from '../-components/reveal'
 import { Badge } from '#/components/ui/badge'
 import { articles, featuredArticle } from '#/lib/articles'
 import { ARTICLE_CATEGORIES } from '#/lib/entity'
 import type { ArticleCategory } from '#/lib/entity'
-import { localized, localizedDate } from '#/lib/i18n'
+import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
+import { localizedDate } from '#/lib/site-i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PageHero } from '../-components/page-hero'
+import { Photo } from '../-components/photo'
+import { REVEAL, STAGGER } from '../-components/reveal'
 
 const route = getRouteApi('/_public/blog/')
 

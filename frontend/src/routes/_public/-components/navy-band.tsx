@@ -1,9 +1,7 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
-import { PillButton } from './pill-button'
 import { Badge } from '#/components/ui/badge'
 import {
   Item,
@@ -16,6 +14,9 @@ import { articles } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PillButton } from './pill-button'
+import { REVEAL, STAGGER } from './reveal'
 
 type Role = {
   title: () => string

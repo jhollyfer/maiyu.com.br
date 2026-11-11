@@ -1,8 +1,9 @@
 import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { REVEAL, STAGGER } from './reveal'
 
 /**
  * Os três fatos que sustentam a frase. Funções e não chaves montadas por

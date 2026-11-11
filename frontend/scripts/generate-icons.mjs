@@ -12,8 +12,9 @@
  */
 
 import { readFile, writeFile } from 'node:fs/promises'
-import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import sharp from 'sharp'
 
 const PUBLIC = join(dirname(fileURLToPath(import.meta.url)), '..', 'public')
@@ -70,10 +71,10 @@ const targets = [
 
 for (const { name, size, wrap } of targets) {
   const png = await render(size).toBuffer()
-  const output = wrap ? wrap(png, size) : png
+  const output = wrap?.(png, size) ?? png
 
   await writeFile(join(PUBLIC, name), output)
-  console.log(`${name} (${size}x${size}, ${output.length} bytes)`)
+  process.stdout.write(`${name} (${size}x${size}, ${output.length} bytes)\n`)
 }
 
 // Uma conferência barata: o `.ico` precisa começar pelo diretório de ícone, e

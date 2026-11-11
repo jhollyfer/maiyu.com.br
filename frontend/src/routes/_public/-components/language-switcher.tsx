@@ -63,7 +63,10 @@ export function LanguageSwitcher(): React.JSX.Element {
           <DropdownMenuItem
             key={code}
             data-current={code === locale}
-            onClick={() => setLocale(code)}
+            onClick={() => {
+              // O idioma troca a página inteira; a promessa não tem o que esperar.
+              void setLocale(code)
+            }}
             className="flex cursor-pointer items-center justify-between rounded-xl px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground data-[current=true]:bg-foreground/5 data-[current=true]:text-foreground"
           >
             <span>{OPTIONS[code].native}</span>

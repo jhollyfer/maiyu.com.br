@@ -19,6 +19,9 @@ export default defineConfig({
   // No public URL ends in a slash (`_standards/frontend.md`, "barra no fim"): `/about/` comes
   // out as `/en/about` (compiler-options.d.ts `trailingSlash`).
   trailingSlash: 'never',
+  // The URLPattern polyfill only loads where the runtime lacks URLPattern: modern browsers skip it
+  // in the initial JS (compiler-options.d.ts `lazyUrlPatternPolyfill`, needs Vite 7+ top-level await).
+  lazyUrlPatternPolyfill: true,
   urlPatterns: [
     {
       pattern: '/',

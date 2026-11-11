@@ -1,10 +1,8 @@
+import { vineResolver } from '@hookform/resolvers/vine'
 import type * as React from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { vineResolver } from '@hookform/resolvers/vine'
 import { toast } from 'sonner'
 
-import { FIELD, LABEL } from './form-style'
-import { PillButton } from './pill-button'
 import {
   Field,
   FieldError,
@@ -13,11 +11,15 @@ import {
 } from '#/components/ui/field'
 import { Input } from '#/components/ui/input'
 import { Textarea } from '#/components/ui/textarea'
+import { fireAndForget } from '#/lib/fire-and-forget'
 import { errorId, invalidProps } from '#/lib/form-a11y'
 import { cn } from '#/lib/utils'
 import { ContactCreateValidator } from '#/lib/validator'
 import type { ContactCreatePayload } from '#/lib/validator'
 import { m } from '#/paraglide/messages'
+
+import { FIELD, LABEL } from './form-style'
+import { PillButton } from './pill-button'
 
 /**
  * O formulário da página de contato.
@@ -52,7 +54,7 @@ export function ContactForm(): React.JSX.Element {
       data-slot="contact-form"
       method="post"
       noValidate
-      onSubmit={form.handleSubmit(submit)}
+      onSubmit={fireAndForget(form.handleSubmit(submit))}
     >
       <FieldGroup className="gap-5">
         <div className="grid grid-cols-1 gap-5 md:grid-cols-2">

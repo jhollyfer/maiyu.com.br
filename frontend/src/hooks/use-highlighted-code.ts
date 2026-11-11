@@ -4,12 +4,13 @@ import { loadHighlighter } from '#/lib/highlighter.tsx'
 
 export function useHighlightedCode(value: string, language: string) {
   // A trailing newline would render as an extra empty line.
-  const code = value.endsWith('\n') ? value.slice(0, -1) : value
+  const code = value.replace(/\n$/, '')
   const [loaded, setLoaded] = React.useState<{
     language: string
     highlighter: Awaited<ReturnType<typeof loadHighlighter>>
   } | null>(null)
-  const highlighter = loaded?.language === language ? loaded.highlighter : null
+  const highlighter =
+    [loaded].find((entry) => entry?.language === language)?.highlighter ?? null
 
   React.useEffect(() => {
     let cancelled = false
