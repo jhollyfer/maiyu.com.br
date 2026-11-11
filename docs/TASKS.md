@@ -117,6 +117,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Bloqueada | `i18n.md` |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
+| R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |
 
 ### Régua 4 · Testes e infra
 
