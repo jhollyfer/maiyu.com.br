@@ -47,6 +47,27 @@ export class ConsumedRefreshTokenSchema extends BaseModel {
   declare tokenableId: string
 }
 
+export class ContactSchema extends BaseModel {
+  static $columns = ['answeredAt', 'createdAt', 'email', 'id', 'locale', 'message', 'name', 'updatedAt'] as const
+  $columns = ContactSchema.$columns
+  @column.dateTime()
+  declare answeredAt: DateTime | null
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare email: string
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare locale: string
+  @column()
+  declare message: string
+  @column()
+  declare name: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class RateLimitSchema extends BaseModel {
   static $columns = ['expire', 'key', 'points'] as const
   $columns = RateLimitSchema.$columns

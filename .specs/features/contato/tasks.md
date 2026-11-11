@@ -95,12 +95,13 @@ T9 → T10
 
 **Done when**:
 
-- [ ] `node ace migration:run` gera `database/schema.ts` com `ContactSchema`
-- [ ] `app/models/contact.ts` e `database/factories/contact.factory.ts` compilam
-- [ ] Gate check passes: build
+- [x] `node ace migration:run` gera `database/schema.ts` com `ContactSchema`
+- [x] `app/models/contact.ts` e `database/factories/contact.factory.ts` compilam
+- [x] Gate check passes: build
 
 **Tests**: none
 **Gate**: build
+**Status**: Done
 
 ---
 
