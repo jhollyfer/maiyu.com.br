@@ -18,6 +18,8 @@
 
 ## Parou em
 
+R4.2: `frontend/Dockerfile-production` e `backend/Dockerfile-production` iguais ao kit (multi-stage, base por digest). `docker build` a partir da raiz: com a CA do proxy do ambiente e dois acréscimos fora do repositório, os dois constroem; o frontend sobe, `/health-check` 200, `/` 307 para `/pt-br` e o container fica `healthy`. Sem esses acréscimos reprovam por duas lacunas do kit, a levar à régua: o `prepare` da raiz roda `node .husky/install.mjs`, que o Dockerfile não copia; e o `frontend` depende de `@maiyu/backend`, cujo `build` roda no filtro `{./frontend}...` sem o código do `backend/` na imagem.
+
 O E2E do kit cobre as páginas públicas (`e2e/support/pages.md`): 90 de 90, depois de levar a 44px os
 alvos de toque do crédito das fotos, do rodapé e do breadcrumb do artigo.
 

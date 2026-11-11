@@ -1,32 +1,94 @@
-FROM node:24-alpine
+# Production image of the app, built from the workspace root (`_standards/tooling.md` §8.2):
+# `docker build -f frontend/Dockerfile-production .`. Coolify builds it straight from Git
+# (`tooling.md` §8.3), so nothing comes in already built: the stage installs, compiles and
+# packages from the code, and the root `.dockerignore` keeps any local `.output/` out.
+#
+# The base is pinned by digest and Dependabot updates it: a moving tag changes what was
+# audited without a single commit.
+
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS builder
 
 WORKDIR /app
 
-# curl para healthcheck
+# pnpm by npm, as in the academy (DECISIONS.md #395), and not by Corepack: pnpm 12 changed
+# the package layout and the Corepack bundled with Node 24 looks for the binary at the old
+# path and fails with MODULE_NOT_FOUND. On first use pnpm switches to the
+# `devEngines.packageManager` version of the root, so the version lives in one place
+# (_doc-lib/pnpm.md#installation, https://pnpm.io/installation).
+RUN npm install -g pnpm
+
+# Manifests before the code, so the install stays cached while only the code changes.
+# `pnpm-workspace.yaml` carries `allowBuilds` (_doc-lib/pnpm.md#docker, https://pnpm.io/docker).
+# The backend manifest comes in because the single lockfile describes every package and
+# `--frozen-lockfile` checks all of them. The bracket makes it a wildcard, which BuildKit
+# lets match nothing: the frontend-only profile has no `backend/` and the copy skips it.
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY backend/package.jso[n] backend/
+COPY frontend/package.json frontend/
+COPY shared/package.json shared/
+# The commit hook has no use inside the image (_doc-lib/husky.md#how-to.html,
+# https://typicode.github.io/husky/how-to.html).
+ENV HUSKY=0
+RUN pnpm --filter "{./frontend}..." install --frozen-lockfile
+
+COPY shared/ shared/
+COPY frontend/ frontend/
+
+# The `VITE_*` of production come from the versioned `frontend/.env.production`, which Vite
+# reads in `production` mode and embeds in the bundle (_doc-lib/vitejs.md#env-and-mode,
+# https://vite.dev/guide/env-and-mode). An image that talks to localhost or plain http must not
+# ship: both URLs are required, with `https://` and no trailing slash (`tooling.md` §8.2).
+RUN set -eu; \
+    for key in VITE_API_URL VITE_SITE_URL; do \
+      value=$(sed -n "s/^${key}=//p" frontend/.env.production 2>/dev/null | tail -n 1 | tr -d "\"'"); \
+      case "$value" in \
+        https://*/) echo "$key ends with a slash in frontend/.env.production" >&2; exit 1 ;; \
+        https://?*) ;; \
+        *) echo "$key must be an https:// URL in frontend/.env.production" >&2; exit 1 ;; \
+      esac; \
+    done
+
+# Paraglide compiles the messages before the build; `src/paraglide/` is not versioned, and the
+# compiler downloads the plugins pinned in `project.inlang/settings.json` from jsDelivr, so the
+# Coolify server must reach `cdn.jsdelivr.net` (`tooling.md` §7, _doc-lib/paraglide.md#/file-formats).
+# The `...` filter builds `shared/` before the app, in topological order
+# (_doc-lib/pnpm.md#filtering, https://pnpm.io/filtering).
+# The Vite build with SSR goes past Node's default heap, as in the academy (#395).
+ENV NODE_OPTIONS=--max-old-space-size=8192
+RUN pnpm --filter ./frontend run i18n:compile && \
+    pnpm --filter "{./frontend}..." run build
+
+
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+
+WORKDIR /app
+
+# `curl` for the healthcheck, as in the academy image (`DECISIONS.md` #395).
 RUN apk add --no-cache curl
 
-# Copia o .output pronto, que vem do artifact. O contexto do build é a raiz do
-# repositório (main-docker-frontend.yml), então o caminho começa em frontend/.
-COPY frontend/.output/ ./.output/
-
-# Usuario nao-root
+# Unprivileged user, the academy's: `nitro` (uid 1001) in group `nodejs`. Created before the
+# `COPY` so `--chown` sets the owner in the same layer (a later `chown -R` would copy it again).
 RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nitro && \
-    chown -R nitro:nodejs /app/.output
+    adduser --system --uid 1001 nitro
+
+# Only `.output/`: Nitro's node preset bundles the runtime dependencies inside it, so no
+# `pnpm deploy` and no `node_modules` with Vite, ESLint and TypeScript reach the image
+# (_doc-lib/nitro.md#deploy/runtimes/node, https://nitro.build/deploy/runtimes/node).
+COPY --from=builder --chown=nitro:nodejs /app/frontend/.output ./.output
 
 USER nitro
 
-# O `curl` instalado lá em cima existia sem consumidor. O orquestrador precisa
-# saber se o Nitro subiu, e não só se o processo está de pé: um SSR que morreu
-# no boot deixa o container vivo e a página em branco.
-#
-# `/health-check` e não `/`: a home renderiza o site inteiro (fontes, imagens e
-# as três línguas), e medir por ela seria medir a página, não o processo.
-# `/health-check` não sai do processo (`_standards/architecture.md` §7).
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-  CMD curl -fsS http://127.0.0.1:3000/health-check || exit 1
-
 EXPOSE 3000
-ENV PORT=3000
+
+ENV NODE_ENV=production \
+    PORT=3000
+
+# The orchestrator must know Nitro came up, not only that the process is alive: an SSR that died
+# on boot leaves the container up and the page blank. `/health-check` and not `/`: the home waits
+# on several API queries before rendering, so pointing there measured the **backend** and took the
+# frontend down with a slow API. `/health-check` never leaves the process. The image healthcheck
+# is the one Coolify uses (`DECISIONS.md` #328, #395).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD curl -fsS http://127.0.0.1:3000/health-check || exit 1
 
 CMD ["node", ".output/server/index.mjs"]
