@@ -1,4 +1,5 @@
 import {
+  ContactShowResponse,
   StoragesFileShowResponse,
   StoragesFileUploadResponse,
 } from '@maiyu/shared'
@@ -19,6 +20,7 @@ import type { FeatureResponse } from '#core/openapi/types'
  * not `satisfies`, because the generator looks the key up by a computed string.
  */
 export const RESPONSES: Record<string, FeatureResponse> = {
+  'administrator/contacts': ContactShowResponse,
   'storages/files': StoragesFileShowResponse,
   'storages/files/create': StoragesFileUploadResponse,
   'storages/files/parts': StoragesFileUploadResponse,

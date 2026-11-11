@@ -171,11 +171,12 @@ T9 → T10
 
 **Done when**:
 
-- [ ] e2e: página, filtros `pending` e `answered`, busca, detalhe, 404, 401 e 403 de papel `MEMBER`
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: página, filtros `pending` e `answered`, busca, detalhe, 404, 401 e 403 de papel `MEMBER`
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 

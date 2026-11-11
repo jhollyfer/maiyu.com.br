@@ -4,6 +4,16 @@
  */
 
 export const controllers = {
+  administrator: {
+    contacts: {
+      paginate: {
+        Paginate: () => import('#features/administrator/contacts/paginate/paginate.controller'),
+      },
+      show: {
+        Show: () => import('#features/administrator/contacts/show/show.controller'),
+      },
+    },
+  },
   authentication: {
     sessions: {
       refresh: {

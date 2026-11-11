@@ -34,4 +34,10 @@ export interface ApiDefinition {
       create: typeof routes['storefront.contacts.create']
     }
   }
+  administrator: {
+    contacts: {
+      paginate: typeof routes['administrator.contacts.paginate']
+      show: typeof routes['administrator.contacts.show']
+    }
+  }
 }

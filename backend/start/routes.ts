@@ -10,6 +10,8 @@
 
 import router from '@adonisjs/core/services/router'
 
+import { STAFF_USER_ROLES } from '@maiyu/shared'
+
 import { controllers } from '#generated/controllers'
 import { middleware } from '#start/kernel'
 import { contactThrottle } from '#start/limiter'
@@ -116,3 +118,23 @@ router
       .prefix('contacts')
   })
   .prefix('storefront')
+
+/**
+ * The panel: the group carries `auth` and `role`, so a route added here is born protected.
+ * Whoever has a session but no staff role answers 403 before reaching any controller.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .get('/', [controllers.administrator.contacts.paginate.Paginate])
+          .as('administrator.contacts.paginate')
+        router
+          .get(':id', [controllers.administrator.contacts.show.Show])
+          .as('administrator.contacts.show')
+      })
+      .prefix('contacts')
+  })
+  .prefix('administrator')
+  .use([middleware.auth(), middleware.role(STAFF_USER_ROLES)])

@@ -1,4 +1,6 @@
 {
+  "GET /administrator/contacts": "ADMINISTRATOR",
+  "GET /administrator/contacts/{id}": "ADMINISTRATOR",
   "POST /authentication/refresh": "anonymous",
   "POST /authentication/sign-in": "anonymous",
   "POST /authentication/sign-out": "authenticated",

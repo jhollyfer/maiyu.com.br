@@ -55,6 +55,15 @@ const tags: TagRule[] = [
     singular: 'contato',
     plural: 'contatos',
   },
+  {
+    prefix: '/administrator/contacts',
+    name: 'Contatos (painel)',
+    description:
+      'A caixa de entrada do dono: lista as mensagens do site, abre uma, marca como respondida ' +
+      'e apaga de vez. Exige sessão com papel de equipe.',
+    singular: 'contato',
+    plural: 'contatos',
+  },
 ]
 
 const openapi = {

@@ -92,6 +92,18 @@ const routes = {
     tokens: [[0,"storefront"],[0,"contacts"]],
     types: placeholder as Registry['storefront.contacts.create']['types'],
   },
+  'administrator.contacts.paginate': {
+    methods: ["GET","HEAD"],
+    pattern: '/administrator/contacts',
+    tokens: [[0,"administrator"],[0,"contacts"]],
+    types: placeholder as Registry['administrator.contacts.paginate']['types'],
+  },
+  'administrator.contacts.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/administrator/contacts/:id',
+    tokens: [[0,"administrator"],[0,"contacts"],[1,"id"]],
+    types: placeholder as Registry['administrator.contacts.show']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }
