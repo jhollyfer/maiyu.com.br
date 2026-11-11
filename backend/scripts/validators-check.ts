@@ -93,6 +93,9 @@ const BOUNDS = [
   'maxItems',
 ] as const
 
+/** What `vine.boolean()` accepts besides `true`/`false`, as its JSON Schema `enum` prints it. */
+const BOOLEAN_SPELLINGS = new Set(['0', '1', 'false', 'true', 'on', 'off'])
+
 export class ValidatorsCheck {
   async run(): Promise<void> {
     const pairs = await this.#readPairs()
@@ -320,6 +323,18 @@ export class ValidatorsCheck {
 
       const list = this.#array(this.#field(each, 'required'))
       if (list.length > 0) required = list.map(String)
+    }
+
+    // `vine.boolean()` exports only the HTML-form spellings it accepts (`enum: ["1", 1,
+    // "true", true, "on", "0", 0, "false", false]`, no `type`); `z.boolean()` exports
+    // `type: boolean`. Same rule.
+    if (
+      values.has('true') &&
+      values.has('false') &&
+      [...values].every((value) => BOOLEAN_SPELLINGS.has(value))
+    ) {
+      values.clear()
+      types.add('boolean')
     }
 
     // An enum declares the values; the `type: string` that Zod adds and VineJS
