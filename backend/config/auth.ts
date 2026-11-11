@@ -4,7 +4,6 @@ import type {
   InferAuthEvents,
   Authenticators,
 } from '@adonisjs/auth/types'
-import type { Actor } from '@maiyu/shared'
 
 import { cookieAccessTokensGuard } from '#guards/cookie-access-tokens.guard'
 
@@ -31,22 +30,12 @@ export default authConfig
  * guards.
  */
 declare module '@adonisjs/auth/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires `interface`, which adds no members here
   export interface Authenticators extends InferAuthenticators<
     typeof authConfig
   > {}
 }
 declare module '@adonisjs/core/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires `interface`, which adds no members here
   interface EventsList extends InferAuthEvents<Authenticators> {}
-}
-
-/**
- * Who acts in the request, set by `auth.middleware.ts` after validating the
- * account against the `ActorSchema` (_standards/backend.md §4.3). Declared here, in a
- * type-and-config-only file, for the same reason as `ctx.i18n`
- * (`config/i18n.ts`).
- */
-declare module '@adonisjs/core/http' {
-  export interface HttpContext {
-    actor: Actor
-  }
 }

@@ -12,12 +12,15 @@ import SystemClockService from '#services/clock/clock.service'
  */
 test.group('clock > contrato', () => {
   const implementations = {
-    system: async (): Promise<ClockContract> => app.container.make(ClockContract),
+    system: async (): Promise<ClockContract> =>
+      app.container.make(ClockContract),
     fake: (): Promise<ClockContract> => Promise.resolve(new ClockFake()),
   }
 
   for (const [name, make] of Object.entries(implementations)) {
-    test(`${name}: now() devolve um DateTime válido que não anda para trás`, async ({ assert }) => {
+    test(`${name}: now() devolve um DateTime válido que não anda para trás`, async ({
+      assert,
+    }) => {
       const clock = await make()
 
       const first = clock.now()
@@ -28,13 +31,20 @@ test.group('clock > contrato', () => {
     })
   }
 
-  test('o container liga o contrato ao relógio do sistema', async ({ assert }) => {
-    assert.instanceOf(await app.container.make(ClockContract), SystemClockService)
+  test('o container liga o contrato ao relógio do sistema', async ({
+    assert,
+  }) => {
+    assert.instanceOf(
+      await app.container.make(ClockContract),
+      SystemClockService,
+    )
   })
 })
 
 test.group('clock > dublê', () => {
-  test('fica parado no instante dado até o teste mandar andar', ({ assert }) => {
+  test('fica parado no instante dado até o teste mandar andar', ({
+    assert,
+  }) => {
     const start = DateTime.fromISO('2026-03-10T09:00:00.000Z', { zone: 'utc' })
     const clock = new ClockFake(start)
 

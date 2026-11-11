@@ -33,11 +33,14 @@ export class StorageFake extends StorageContract {
     return this
   }
 
-  async head(path: string): Promise<Uint8Array> {
+  head(path: string): Promise<Uint8Array> {
     const head = this.heads.get(path)
-    if (!head) throw new Error(`object missing from the bucket: ${path}`)
+    if (!head)
+      return Promise.reject(
+        new Error(`object missing from the bucket: ${path}`),
+      )
 
-    return head
+    return Promise.resolve(head)
   }
 
   key(): string {
@@ -46,24 +49,31 @@ export class StorageFake extends StorageContract {
     return `fake-${this.keys}.bin`
   }
 
-  async metadata(path: string): Promise<StorageMetadata> {
+  metadata(path: string): Promise<StorageMetadata> {
     const metadata = this.objects.get(path)
-    if (!metadata) throw new Error(`object missing from the bucket: ${path}`)
+    if (!metadata)
+      return Promise.reject(
+        new Error(`object missing from the bucket: ${path}`),
+      )
 
-    return metadata
+    return Promise.resolve(metadata)
   }
 
-  async discard(path: string): Promise<void> {
+  discard(path: string): Promise<void> {
     this.discarded.push(path)
     this.objects.delete(path)
+
+    return Promise.resolve()
   }
 
-  async signedUrl(path: string): Promise<string> {
-    return `https://bucket.test/${path}?signed`
+  signedUrl(path: string): Promise<string> {
+    return Promise.resolve(`https://bucket.test/${path}?signed`)
   }
 
-  async signedDownload(file: StorageDownload): Promise<string> {
-    return `https://bucket.test/${file.path}?download=${encodeURIComponent(file.originalName)}`
+  signedDownload(file: StorageDownload): Promise<string> {
+    return Promise.resolve(
+      `https://bucket.test/${file.path}?download=${encodeURIComponent(file.originalName)}`,
+    )
   }
 
   contentDisposition(originalName: string): string {

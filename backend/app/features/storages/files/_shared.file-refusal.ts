@@ -1,12 +1,32 @@
 import type { I18n } from '@adonisjs/i18n'
 
-import { RefusalBase, type RefusalTable } from '#features/_shared.refusal.base'
-import HTTPException from '#exceptions/http.exception'
 import type { StorageError } from '#domain/storage/storage.errors'
+import HTTPException from '#exceptions/http.exception'
+import { RefusalBase, type RefusalTable } from '#features/_shared.refusal.base'
 
 /** Each refusal of the file as an HTTP response (`_standards/domain.md` §2). */
 export class FileRefusal extends RefusalBase {
   private static readonly TABLE = {
+    STORAGE_SIZE_INVALID: (fact, i18n) =>
+      HTTPException.UnprocessableEntity(
+        i18n.t('files.invalid'),
+        'STORAGE_SIZE_INVALID',
+        {
+          size: i18n.t('files.size_invalid_field', {
+            size: String(fact.size),
+          }),
+        },
+      ),
+    STORAGE_TYPE_UNSUPPORTED: (fact, i18n) =>
+      HTTPException.UnprocessableEntity(
+        i18n.t('files.invalid'),
+        'STORAGE_TYPE_UNSUPPORTED',
+        {
+          mimetype: i18n.t('files.type_unsupported_field', {
+            mimetype: fact.mimetype,
+          }),
+        },
+      ),
     STORAGE_SIZE_MISMATCH: (fact, i18n) =>
       HTTPException.UnprocessableEntity(
         i18n.t('files.incomplete'),
@@ -36,20 +56,5 @@ export class FileRefusal extends RefusalBase {
 
   static http(error: StorageError, i18n: I18n): HTTPException {
     return FileRefusal.translate(FileRefusal.TABLE, error.code, error, i18n)
-  }
-
-  /**
-   * Attaching a file that does not exist, was removed or is still `PENDING` is
-   * `422` pointing at the field, never `404` nor `500`, because whoever sent the wrong
-   * id was the payload. It holds for every resource that attaches a file.
-   */
-  static attachmentNotFound(field: string, i18n: I18n): HTTPException {
-    return HTTPException.UnprocessableEntity(
-      i18n.t('files.not_found'),
-      'STORAGE_NOT_FOUND',
-      {
-        [field]: i18n.t('files.not_found'),
-      },
-    )
   }
 }

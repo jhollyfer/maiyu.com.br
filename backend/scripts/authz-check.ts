@@ -53,6 +53,11 @@ const BASELINE = join(ROOT, BASELINE_FILE)
 const SECTION = '4.6'
 
 export class AuthzCheck {
+  /** Protection of a route without a session; `public-routes.unit.spec.ts` reads the same label. */
+  static readonly ANONYMOUS = 'anonymous'
+  /** Protection of a route that asks for a session and no role. */
+  static readonly AUTHENTICATED = 'authenticated'
+
   async run(flags: ReadonlySet<string>): Promise<void> {
     const current = await this.#readCurrent()
 
@@ -73,15 +78,15 @@ export class AuthzCheck {
     if (findings.length > 0) process.exitCode = 1
   }
 
-  /** `anonima`, `autenticada`, or the roles in order. */
+  /** `anonymous`, `authenticated`, or the roles in order. */
   #protectionOf(operation: Operation): string {
     const roles = operation['x-roles'] ?? []
     if (roles.length > 0) return [...roles].sort().join(', ')
 
     if (operation.security && operation.security.length > 0)
-      return 'autenticada'
+      return AuthzCheck.AUTHENTICATED
 
-    return 'anonima'
+    return AuthzCheck.ANONYMOUS
   }
 
   async #readCurrent(): Promise<Protection> {

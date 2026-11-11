@@ -1,12 +1,13 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import { left, right, type Either } from '@maiyu/shared'
 
+import type { IdentifierPayload } from '#core/validator'
 import HTTPException from '#exceptions/http.exception'
 import { StorageRepository } from '#repositories/storage/storage.repository'
 import { StorageContract } from '#services/storage/storage.contract'
-import type { IdentifierPayload } from '#core/validator'
 
 type Payload = IdentifierPayload
 type Response = Either<HTTPException, string>
@@ -57,7 +58,10 @@ export default class StoragesFileDownloadUseCase {
         await this.bucket.signedDownload({ path, mimetype, originalName }),
       )
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > download][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > download][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(

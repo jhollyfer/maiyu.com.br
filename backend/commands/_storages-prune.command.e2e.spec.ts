@@ -1,22 +1,27 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
 import drive from '@adonisjs/drive/services/main'
-import type { ApiClient } from '@japa/api-client'
-import type { StorageMimetype } from '@maiyu/shared'
+import { test } from '@japa/runner'
 
+import StoragesPrune from '#commands/storages-prune.command'
+import { UserFactory } from '#database/factories/user.factory'
 import {
   MultipartContract,
   PART_SIZE,
 } from '#services/multipart/multipart.contract'
-import StoragesPrune from '#commands/storages-prune.command'
 import {
   authenticateAsAdministrator,
-  body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
-import type { Session } from '#tests/http-fixtures'
-import { ageStorage, pngBytes, storageExists } from '#tests/storages-fixtures'
+import {
+  openUpload,
+  partUrl,
+  putPart,
+  uploadFile,
+  pngBytes,
+  storageExists,
+  ageStorage,
+} from '#tests/storages-fixtures'
+import { Stored } from '#tests/stored-fixtures'
 
 /**
  * The file as a neutral, shared record: it does not belong to the form that sent it,
@@ -32,59 +37,15 @@ const FULL_PART = pngBytes(PART_SIZE, 65)
 
 const SMALL = pngBytes(1024)
 
-/** Opens an upload through the real endpoint and returns the envelope. */
-async function open(
-  client: ApiClient,
-  session: Session,
-  payload: { fileName: string; mimetype: StorageMimetype; size: number },
-): Promise<ResponseBody> {
-  const response = await client.post('/storages').cookies(session).json(payload)
+/** Points a user's avatar at the file: the reference the sweep must respect. */
+async function attachAsAvatar(storageId: string): Promise<void> {
+  const user = await UserFactory.create()
 
-  response.assertStatus(201)
-
-  return body(response)
+  await Stored.attachAvatar(user.id, storageId)
 }
-
-/** Sends a part to the signed URL and returns the `ETag`. */
-async function put(url: string, content: Uint8Array): Promise<string> {
-  const response = await fetch(url, {
-    method: 'PUT',
-    body: content,
-    headers: { 'Content-Type': 'image/png' },
-  })
-
-  if (!response.ok) throw new Error(`PUT answered ${response.status}`)
-
-  return response.headers.get('etag') ?? ''
-}
-
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
-async function upload(
-  client: ApiClient,
-  session: Session,
-): Promise<ResponseBody> {
-  const opened = await open(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: SMALL.byteLength,
-  })
-
-  await put(opened.parts[0].url, SMALL)
-
-  const completed = await client
-    .post(`/storages/${opened.storage.id}/complete`)
-    .cookies(session)
-    .json({})
-
-  completed.assertStatus(200)
-
-  return body(completed)
-}
-
-/** A `storages` row with no binary at all: only the metadata matters here. */
 
 /**
- * The sweep of abandoned `PENDING` (`node ace storages:prune`).
+ * The sweep of abandoned `PENDING` and orphan `UPLOADED` (`node ace storages:prune`).
  *
  * `PENDING` is the only state one never leaves on one's own: whoever closes the tab
  * mid-upload never calls `complete` or `DELETE`, and the row stays up with the
@@ -113,7 +74,7 @@ test.group('storages > prune', (group) => {
     const session = await authenticateAsAdministrator(client)
     const multipart = await app.container.make(MultipartContract)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'galeria.png',
       mimetype: 'image/png',
       size: PART_SIZE + SMALL.byteLength,
@@ -121,7 +82,7 @@ test.group('storages > prune', (group) => {
 
     // One part goes up and the other does not: it is the abandonment midway, and these
     // orphan parts are what only the abort reaches.
-    await put(opened.parts[0].url, FULL_PART)
+    await putPart(partUrl(opened), FULL_PART)
     await age(opened.storage.id, 48)
 
     const command = await prune()
@@ -131,15 +92,17 @@ test.group('storages > prune', (group) => {
     assert.isFalse(await storageExists(opened.storage.id))
     // Listing the parts of an aborted upload is an error, not an empty list - it is the
     // difference between "aborted" and "open with no part at all".
+    const { uploadId } = opened
+    if (!uploadId) throw new Error('a multipart upload opened without uploadId')
     await assert.rejects(() =>
-      multipart.listParts(opened.storage.path, opened.uploadId),
+      multipart.listParts(opened.storage.path, uploadId),
     )
   })
 
   test('does not touch a recent PENDING', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'capa.png',
       mimetype: 'image/png',
       size: SMALL.byteLength,
@@ -152,13 +115,31 @@ test.group('storages > prune', (group) => {
     assert.isTrue(await storageExists(opened.storage.id))
   })
 
-  test('does not touch UPLOADED, however old it is', async ({
+  test('deletes the old orphan UPLOADED, binary and row', async ({
     client,
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const storage = await upload(client, session)
+    const storage = await uploadFile(client, session)
 
+    await age(storage.id, 48)
+
+    const command = await prune()
+
+    command.assertSucceeded()
+
+    assert.isFalse(await storageExists(storage.id))
+    assert.isFalse(await drive.use().exists(storage.path))
+  })
+
+  test('does not touch an UPLOADED in use, however old it is', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+    const storage = await uploadFile(client, session)
+
+    await attachAsAvatar(storage.id)
     await age(storage.id, 24 * 365)
 
     const command = await prune()
@@ -169,10 +150,24 @@ test.group('storages > prune', (group) => {
     assert.isTrue(await drive.use().exists(storage.path))
   })
 
+  test('does not touch a recent orphan UPLOADED', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+    const storage = await uploadFile(client, session)
+
+    const command = await prune()
+
+    command.assertSucceeded()
+
+    assert.isTrue(await storageExists(storage.id))
+  })
+
   test('--hours adjusts the cutoff', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'capa.png',
       mimetype: 'image/png',
       size: SMALL.byteLength,
@@ -191,7 +186,7 @@ test.group('storages > prune', (group) => {
   test('--dry-run lists without deleting', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const opened = await open(client, session, {
+    const opened = await openUpload(client, session, {
       fileName: 'capa.png',
       mimetype: 'image/png',
       size: SMALL.byteLength,

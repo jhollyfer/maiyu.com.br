@@ -5,12 +5,15 @@ import type { S3ClientConfig } from '@aws-sdk/client-s3'
 import env from '#start/env'
 
 /**
- * File storage: one S3-compatible bucket, the same in every environment.
- * MinIO in dev and tests, and in production whatever the environment points to.
+ * File storage: one S3-compatible bucket, MinIO in dev and in the e2e, and in
+ * production whatever `STORAGE_ENDPOINT` points to (`_standards/backend.md` §5.4,
+ * `DECISIONS.md` #349).
  *
- * Only one destination because the upload is presigned multipart, and multipart is S3 API
- * - the `fs` driver does not have it. A local disk in dev would exercise a code path
- * that production does not use, which is exactly what a single destination avoids.
+ * The upload is presigned multipart, and multipart is S3 API - the `fs` driver
+ * does not have it, nor signed URLs (_doc-lib/flydrive.md#services/fs). So the
+ * upload flow runs on `s3` in every environment that exercises it, and `fs` is
+ * there for what only writes and reads bytes (a command, a seed on a machine
+ * without MinIO) and for `drive.fake()` in the unit test.
  *
  * The credentials come from `STORAGE_*`, not from a per-vendor prefix: what
  * the code depends on is the protocol. R2, S3, Spaces, Linode and MinIO swap
@@ -74,20 +77,48 @@ export const URL_TTL = '15 mins'
  */
 export const UPLOAD_MAX_SIZE = env.get('UPLOAD_MAX_SIZE')
 
+/**
+ * `DRIVE_DISK` picks the disk, with no default in the code: which one an
+ * environment uses is the operator's choice, and the boot stops without it
+ * (_doc-lib/adonisjs.md#guides/digging-deeper/drive,
+ * https://docs.adonisjs.com/guides/digging-deeper/drive). Every service any
+ * environment uses is registered here, so switching is only the variable
+ * (_doc-lib/flydrive.md#drive_manager).
+ */
 const driveConfig = defineConfig({
-  default: 'r2',
+  default: env.get('DRIVE_DISK'),
 
   services: {
     // `private`, and therefore there is no `cdnUrl`: with the private disk FlyDrive's
     // `getUrl` no longer works, and every read is signed. Without this,
     // every object in the bucket is readable by whoever knows the address - including the
     // not yet confirmed upload and the file no row references.
-    r2: services.s3({ ...clientConfig, bucket, visibility: 'private' }),
+    //
+    // `supportsACL: false`: R2 does not implement the per-object ACL commands, and the
+    // bucket being private is what keeps objects closed, not an ACL on each one
+    // (_doc-lib/flydrive.md#services/s3, https://flydrive.dev/docs/services/s3).
+    s3: services.s3({
+      ...clientConfig,
+      bucket,
+      visibility: 'private',
+      supportsACL: false,
+    }),
+
+    // Under `tmp/`, which the project never commits. No `serveFiles`: the files
+    // are private, and the `fs` driver has no signed URL to read them by. A URL from this file
+    // and not `app.tmpPath()`: `validators:check` imports the config outside the boot, where
+    // `app` does not exist yet (_doc-lib/flydrive.md#services/fs, https://flydrive.dev/docs/services/fs).
+    fs: services.fs({
+      location: new URL('../tmp/uploads', import.meta.url),
+      visibility: 'private',
+      serveFiles: false,
+    }),
   },
 })
 
 export default driveConfig
 
 declare module '@adonisjs/drive/types' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions, @typescript-eslint/no-empty-object-type -- declaration merging requires `interface`, which adds no members here
   export interface DriveDisks extends InferDriveDisks<typeof driveConfig> {}
 }

@@ -15,17 +15,17 @@ import type { OpenAPIResponse, SchemaObject } from '#core/openapi/types'
  */
 
 /** Named because `forbiddenDescription` composes it without going through the index. */
-const FORBIDDEN_DESCRIPTION = 'Access denied'
+const FORBIDDEN_DESCRIPTION = 'Acesso negado'
 
 const DESCRIPTIONS: Record<number, string> = {
-  400: 'Invalid request',
-  401: 'Not authenticated',
+  400: 'Requisição inválida',
+  401: 'Não autenticado',
   403: FORBIDDEN_DESCRIPTION,
-  404: 'Resource not found',
-  409: 'Conflict with the current state',
-  422: 'Payload rejected by validation',
-  429: 'Too many attempts',
-  500: 'Internal server error',
+  404: 'Recurso não encontrado',
+  409: 'Conflito com o estado atual',
+  422: 'Payload recusado pela validação',
+  429: 'Tentativas em excesso',
+  500: 'Erro interno do servidor',
 }
 
 /**
@@ -63,7 +63,7 @@ export function errorComponentName(status: number, codes: string[]): string {
 export function errorSchema(status: number, codes: string[]): SchemaObject {
   const code: SchemaObject = {
     type: 'string',
-    description: 'Machine identifier of the failure.',
+    description: 'Identificador de máquina da falha.',
   }
 
   if (codes.length > 0) {
@@ -79,7 +79,8 @@ export function errorSchema(status: number, codes: string[]): SchemaObject {
     properties: {
       message: {
         type: 'string',
-        description: 'Message in Portuguese, displayable to the user.',
+        description:
+          'Mensagem no idioma do `Accept-Language`, exibível ao usuário.',
       },
       status: { type: 'integer', enum: [status] },
       code,
@@ -87,7 +88,7 @@ export function errorSchema(status: number, codes: string[]): SchemaObject {
         type: 'object',
         additionalProperties: { type: 'string' },
         description:
-          'Message per field, when the failure is attributable to payload fields.',
+          'Mensagem por campo, quando a falha é atribuível a campos do payload.',
       },
     },
     required,
@@ -100,7 +101,7 @@ export function errorResponse(
   description?: string,
 ): OpenAPIResponse {
   return {
-    description: description ?? DESCRIPTIONS[status] ?? 'Failure',
+    description: description ?? DESCRIPTIONS[status] ?? 'Falha',
     content: { 'application/json': { schema: { $ref: reference } } },
   }
 }
@@ -128,5 +129,5 @@ export const AUTOMATIC_CODES = {
 export function forbiddenDescription(roles: string[]): string {
   if (roles.length === 0) return FORBIDDEN_DESCRIPTION
 
-  return `${FORBIDDEN_DESCRIPTION}. Requires one of these roles: ${roles.join(', ')}.`
+  return `${FORBIDDEN_DESCRIPTION}. Exige um destes papéis: ${roles.join(', ')}.`
 }

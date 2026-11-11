@@ -3,13 +3,22 @@ import { test } from '@japa/runner'
 import StoragesFileCreateUseCase from './create.use-case.ts'
 
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import {
   MultipartContract,
   PART_SIZE,
 } from '#services/multipart/multipart.contract'
+import { StorageContract } from '#services/storage/storage.contract'
 import { makeWithMemory } from '#tests/container-fixtures'
-import { rightOf, storageDoubles } from '#tests/storages-unit-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
+import { storageDoubles } from '#tests/storages-unit-fixtures'
+
+const PAGE = {
+  page: 1,
+  perPage: 10,
+  sort: 'createdAt',
+  direction: 'asc',
+} as const
 
 async function setup() {
   const doubles = storageDoubles()
@@ -22,7 +31,9 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-test.group('storages/files > create (unit)', () => {
+test.group('storages/files > create (unit)', (group) => {
+  insideHttpContext(group)
+
   test('a single-part file is born PENDING with one URL and no uploadId', async ({
     assert,
   }) => {
@@ -58,6 +69,25 @@ test.group('storages/files > create (unit)', () => {
     assert.equal(plan.totalParts, 3)
     assert.isString(plan.uploadId)
     assert.lengthOf(multipart.initiated, 1)
+  })
+
+  test('a size the entity refuses aborts the multipart and responds 422, with no row', async ({
+    assert,
+  }) => {
+    const { storages, multipart, useCase } = await setup()
+
+    const result = await useCase.execute({
+      fileName: 'video.mp3',
+      mimetype: 'audio/mpeg',
+      size: PART_SIZE * 2 + 0.5,
+    })
+
+    assert.deepInclude(result.value, {
+      status: 422,
+      code: 'STORAGE_SIZE_INVALID',
+    })
+    assert.lengthOf(multipart.aborted, 1)
+    assert.equal((await storages.paginate(PAGE)).meta.total, 0)
   })
 
   test('failure to save aborts the multipart and responds 500 STORAGES_FILE_CREATE_ERROR', async ({

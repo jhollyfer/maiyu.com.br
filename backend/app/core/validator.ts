@@ -1,10 +1,3 @@
-import {
-  ACTIVE_STATUSES,
-  Rule,
-  RichText,
-  SORT_DIRECTIONS,
-  TRASHED_MODES,
-} from '@maiyu/shared'
 import { HttpContext } from '@adonisjs/core/http'
 import type { I18nManager } from '@adonisjs/i18n'
 import vine, { SimpleMessagesProvider, VineDate, errors } from '@vinejs/vine'
@@ -12,8 +5,18 @@ import type {
   FieldContext,
   Infer,
   MessagesProviderContact,
+  SchemaTypes,
 } from '@vinejs/vine/types'
 import { DateTime } from 'luxon'
+
+import {
+  ACTIVE_STATUSES,
+  Rule as SharedRule,
+  SORT_DIRECTIONS,
+  TRASHED_MODES,
+} from '@maiyu/shared'
+
+import { COLUMN_LIMITS } from '#core/column-limits'
 
 /**
  * The application's configured VineJS, and what every validator shares.
@@ -21,8 +24,10 @@ import { DateTime } from 'luxon'
  * Each resource has its `<resource>.validator.ts` in the resource folder
  * (`_standards/architecture.md` §3); only what belongs to all lives here: the `vine` with the
  * date transform and the translated messages, the rules used by more than one
- * resource (functions, not constants), `LIST_LIMITS` and the global validators for
- * identifier and pagination. Nobody imports `@vinejs/vine` directly: it is through this
+ * resource (`Rule`, methods, not constants) and the global validators for identifier and
+ * pagination. A list's item ceiling is a domain number: it comes from the project's
+ * `LIST_LIMITS` in `@maiyu/shared` (`records/list-limits.ts`, KIT.md §3.4), one copy
+ * read by both sides. Nobody imports `@vinejs/vine` directly: it is through this
  * module that the house messages and rules hold in every schema.
  *
  * The OpenAPI generator resolves validators through the controllers' AST, reading
@@ -121,168 +126,216 @@ vine.messagesProvider = requestMessagesProvider
 // ---------------------------------------------------------------------------
 
 /**
- * Rules reused by more than one resource.
+ * The rule behind `Rule.notNull()`; a module value, created once like a validator. Implicit,
+ * because VineJS skips every other rule when the value is `null` or `undefined`
+ * (_doc-lib/vinejs.md#extend/custom_rules, https://vinejs.dev/docs/extend/custom_rules,
+ * "Creating an implicit rule"): only an implicit rule sees the `null` it must refuse.
+ */
+const notNullRule = vine.createRule(
+  (value: unknown, _options: undefined, field: FieldContext) => {
+    if (value === null)
+      field.report('The {{ field }} field must be defined', 'required', field)
+  },
+  { implicit: true },
+)
+
+/** A field that `Rule.partial()` can mark with `Rule.notNull()`: the types that carry `use()`. */
+type MarkableField = SchemaTypes & {
+  use(validation: ReturnType<typeof notNullRule>): unknown
+}
+
+/**
+ * Rules reused by more than one resource: the pair of `Rule` in `@maiyu/shared`, with the
+ * same method names, so a VineJS validator and its Zod pair read the same
+ * (`_standards/typescript.md` §6: every function has a home).
  *
- * They are functions, not constants: reusing the same schema node in two
+ * They are methods, not constants: reusing the same schema node in two
  * validators would share options between them - the `optional()` of one
  * would show up in the other.
  */
-
-/**
- * How many items each list accepts.
- *
- * Without a ceiling, `vine.array()` accepts whatever array fits in the request body, and
- * what arrives goes whole into the database. The numbers are the domain's: an album
- * or news gallery is the largest list that exists here, and a podcast's name
- * lists are short by nature.
- */
-export const LIST_LIMITS = {
-  /** Images of a news or album gallery. */
-  GALLERY: 60,
-  /** Tags of a news item. */
-  TAGS: 20,
-  /** Presenters and guests of a podcast. */
-  PEOPLE: 20,
-} as const
-
-export function email() {
-  return vine.string().trim().email().maxLength(254)
-}
-
-/**
- * The label of an uploaded file: no control characters (the pair of `Rule.fileName()`
- * in `@maiyu/shared`, which holds the pattern). The name is client input that later
- * reaches terminals and logs (CWE-150).
- */
-export function fileName() {
-  return vine
-    .string()
-    .trim()
-    .minLength(1)
-    .maxLength(255)
-    .regex(Rule.NO_CONTROL_CHARACTERS)
-}
-
-/**
- * The Brazilian phone, the pair of the `phone` codec in `@maiyu/shared`: it arrives with the
- * field mask (`(97) 99123-4567`) and goes out with only the digits, which are 10 (landline) or
- * 11 (mobile) with the area code. `parse` runs before the rules and receives `unknown`
- * (_doc-lib/vinejs.md#schema_101, https://vinejs.dev/docs/schema_101), so anything that is
- * not text goes through untouched and the `string` rule refuses it.
- */
-export function phone() {
-  return vine
-    .string()
-    .parse((value: unknown) => {
-      if (typeof value !== 'string') return value
-      return value.replace(/\D/g, '')
-    })
-    .minLength(10)
-    .maxLength(11)
-}
-
-/**
- * Password strength: one `regex` per character class, so the message points at
- * exactly what is missing instead of a "weak password" that does not say what to do.
- *
- * `confirmed` requires `passwordConfirmation` with the same value, read from the raw
- * input. No schema here declares it, and that alone is why it does not show up in the
- * validated payload - there is nothing to discard before `merge()`/`create()` in the
- * use-case. What VineJS delivers is what the schema declares.
- */
-export function password() {
-  return vine
-    .string()
-    .minLength(8)
-    .maxLength(32)
-    .regex(/[a-z]/)
-    .regex(/[A-Z]/)
-    .regex(/[0-9]/)
-    .regex(/[^a-zA-Z0-9]/)
-    .confirmed({ as: 'passwordConfirmation' })
-}
-
-/**
- * The rich text document the editor writes, as the API receives it (the pair of
- * `Rule.richText()` in `@maiyu/shared`).
- *
- * The object declares only what every document has (`type: 'doc'`, `content`), and the rule
- * hands the whole value to `RichText.violation`, which holds the extension list: a node or
- * mark that no extension declares, a link that is not `http(s)`/`mailto`, a document with no
- * text or above the ceiling is a field error here, never a stored row.
- */
-export function richText() {
-  return vine
-    .object({
-      type: vine.literal('doc'),
-      content: vine.array(vine.any()).optional(),
-    })
-    .allowUnknownProperties()
-    .use(richTextRule())
-}
-
-const richTextRule = vine.createRule((value, _options, field) => {
-  const violation = RichText.violation(value)
-
-  if (violation) field.report(`The {{ field }} is invalid`, violation, field)
-})
-
-/**
- * Account status. Canonical in English: the value is an identifier, and the Portuguese
- * label belongs to the frontend.
- */
-export function activeStatus() {
-  return vine.enum(ACTIVE_STATUSES)
-}
-
-/**
- * The three fields every listing accepts. Spread
- * (`...paginationFields()`) by validators that still add a filter
- * of their own, so the `perPage` ceiling lives in one place - repeated by hand in
- * each resource, it is a divergence waiting to happen.
- */
-export function paginationFields() {
-  return {
-    page: vine.number().min(1).optional(),
-    perPage: vine.number().min(1).max(100).optional(),
-    search: vine.string().maxLength(100).optional(),
+export class Rule {
+  static email() {
+    return vine.string().trim().email().maxLength(254)
   }
-}
 
-/**
- * The trash cut, for listings that have something to restore.
- *
- * Outside `paginationFields()` on purpose: if it were there, it would also show up
- * in the storefront listings, which never see an archived record. The parameter
- * would be accepted, silently ignored, and the OpenAPI document would start promising
- * a filter that does not exist.
- */
-export function trashedField() {
-  return { trashed: vine.enum(TRASHED_MODES).optional() }
-}
+  /**
+   * The label of an uploaded file: no control characters (the pair of `Rule.fileName()`
+   * in `@maiyu/shared`, which holds the pattern). The name is client input that later
+   * reaches terminals and logs (CWE-150).
+   */
+  static fileName() {
+    return vine
+      .string()
+      .trim()
+      .minLength(1)
+      .maxLength(255)
+      .regex(SharedRule.NO_CONTROL_CHARACTERS)
+  }
 
-/**
- * The order of a listing, in two fields: `sort` (the column) and `direction`.
- *
- * **A pair, and not an `order-<column>` per column.** Two order parameters at the
- * same time do not express precedence - `?order-title=asc&order-date=desc`
- * does not say which wins -, and the query orders by a single column.
- *
- * **The column comes from a closed list, declared per resource.** The value goes
- * straight into `orderBy`, which composes it into SQL: accepting free text from the URL would be
- * handing the clause to the client. A column outside the list is a 422 pointing at the field,
- * not a database 500 complaining about a nonexistent column.
- *
- * Outside `paginationFields()` for the same reason as `trashedField()`: each
- * resource orders by what it has, and a global set would promise in OpenAPI
- * columns that half the listings do not know.
- */
-export function sortFields<
-  const TColumns extends readonly [string, ...string[]],
->(columns: TColumns) {
-  return {
-    sort: vine.enum(columns).optional(),
-    direction: vine.enum(SORT_DIRECTIONS).optional(),
+  /**
+   * The Brazilian phone: it arrives with the field mask (`(97) 99123-4567`, the `phone-br` mask of
+   * `frontend/src/lib/mask.ts`) and goes out with only the digits, which are 10 (landline) or
+   * 11 (mobile) with the area code. The shared package has no pair: the form keeps the masked
+   * text, and the digits are the API's. `parse` runs before the rules and receives `unknown`
+   * (_doc-lib/vinejs.md#schema_101, https://vinejs.dev/docs/schema_101), so anything that is
+   * not text goes through untouched and the `string` rule refuses it.
+   */
+  static phone() {
+    return vine
+      .string()
+      .parse((value: unknown) => {
+        if (typeof value !== 'string') return value
+        return value.replace(/\D/g, '')
+      })
+      .minLength(10)
+      .maxLength(11)
+  }
+
+  /**
+   * Password strength: one `regex` per character class, so the message points at
+   * exactly what is missing instead of a "weak password" that does not say what to do.
+   *
+   * `confirmed` requires `passwordConfirmation` with the same value, read from the raw
+   * input. No schema here declares it, and that alone is why it does not show up in the
+   * validated payload - there is nothing to discard before `merge()`/`create()` in the
+   * use-case. What VineJS delivers is what the schema declares.
+   */
+  static password() {
+    return vine
+      .string()
+      .minLength(8)
+      .maxLength(32)
+      .regex(/[a-z]/)
+      .regex(/[A-Z]/)
+      .regex(/[0-9]/)
+      .regex(/[^a-zA-Z0-9]/)
+      .confirmed({ as: 'passwordConfirmation' })
+  }
+
+  /**
+   * Account status. Canonical in English: the value is an identifier, and the Portuguese
+   * label belongs to the frontend.
+   */
+  static activeStatus() {
+    return vine.enum(ACTIVE_STATUSES)
+  }
+
+  /**
+   * The three fields every listing accepts. Spread
+   * (`...Rule.paginationFields()`) by validators that still add a filter
+   * of their own, so the `perPage` ceiling lives in one place - repeated by hand in
+   * each resource, it is a divergence waiting to happen.
+   */
+  static paginationFields() {
+    return {
+      ...Rule.pageFields(),
+      search: vine.string().maxLength(100).optional(),
+    }
+  }
+
+  /**
+   * The page of a listing that has no text search: `paginationFields()` without `search`. A
+   * listing that does not filter by `search` does not accept it, or the parameter would be
+   * accepted, silently ignored and promised in the OpenAPI document (`_standards/backend.md` §4.4).
+   */
+  static pageFields() {
+    return {
+      page: vine.number().min(1).optional(),
+      perPage: vine.number().min(1).max(100).optional(),
+    }
+  }
+
+  /**
+   * The field of an update that may be missing (do not touch) but never `null`. VineJS's
+   * `.optional()` takes `null` as missing, and the bodyparser's `convertEmptyStringsToNull`
+   * turns `''` into `null` before it: without this rule `{ title: null }` or a title left blank
+   * passes the validator and reaches the database as an erased required column. Goes on the
+   * field: `vine.string().optional().use(Rule.notNull())` (`_standards/backend.md` §4.4).
+   */
+  static notNull() {
+    return notNullRule()
+  }
+
+  /**
+   * The update of a resource from the same fields as its create (`postFields()`): every field
+   * becomes optional through VineJS's own `.partial()` (which keeps the types), and every field
+   * that does not accept `null` on purpose (`.nullable()`) gets `Rule.notNull()`. The pair of
+   * `Rule.partial()` in `@maiyu/shared`.
+   *
+   * It marks the fields it receives, so it takes them from the resource function, fresh on each
+   * call, never a shared constant (a VineJS node reused between validators leaks its rules).
+   */
+  static partial<TFields extends Record<string, SchemaTypes>>(fields: TFields) {
+    for (const [key, field] of Object.entries(fields)) {
+      if (field.allowNull) continue
+      // Every VineJS type but the `.nullable()` modifier carries `use()`; one that does not
+      // would accept `null` in silence, so it fails when the validator is built.
+      if (!Rule.#isMarkable(field)) {
+        throw new TypeError(
+          `Rule.partial(): ${key} does not take Rule.notNull()`,
+        )
+      }
+      field.use(notNullRule())
+    }
+
+    return vine.object(fields).partial()
+  }
+
+  static #isMarkable(field: SchemaTypes): field is MarkableField {
+    return 'use' in field && typeof field.use === 'function'
+  }
+
+  /**
+   * The trash cut, for listings that have something to restore.
+   *
+   * Outside `Rule.paginationFields()` on purpose: if it were there, it would also show up
+   * in the storefront listings, which never see an archived record. The parameter
+   * would be accepted, silently ignored, and the OpenAPI document would start promising
+   * a filter that does not exist.
+   */
+  static trashedField() {
+    return { trashed: vine.enum(TRASHED_MODES).optional() }
+  }
+
+  /**
+   * The order of a listing, in two fields: `sort` (the column) and `direction`.
+   *
+   * **A pair, and not an `order-<column>` per column.** Two order parameters at the
+   * same time do not express precedence - `?order-title=asc&order-date=desc`
+   * does not say which wins -, and the query orders by a single column.
+   *
+   * **The column comes from a closed list, declared per resource.** The value goes
+   * straight into `orderBy`, which composes it into SQL: accepting free text from the URL would be
+   * handing the clause to the client. A column outside the list is a 422 pointing at the field,
+   * not a database 500 complaining about a nonexistent column.
+   *
+   * Outside `Rule.paginationFields()` for the same reason as `Rule.trashedField()`: each
+   * resource orders by what it has, and a global set would promise in OpenAPI
+   * columns that half the listings do not know.
+   */
+  static sortFields<const TColumns extends readonly [string, ...string[]]>(
+    columns: TColumns,
+  ) {
+    return {
+      sort: vine.enum(columns).optional(),
+      direction: vine.enum(SORT_DIRECTIONS).optional(),
+    }
+  }
+
+  /**
+   * The `:id` of the URL, as the `params` block of a schema. Holds for every resource: the
+   * PK is a uuid in every table.
+   *
+   * It exists so a malformed `:id` is a 422 pointing at `params.id`, not a Postgres 500
+   * refusing the literal in the `where` clause. It is a method so a body validator of an
+   * action with `:id` spreads it (`...Rule.identifierParams()`) and the action reads both in a
+   * single `validateUsing`: `validateUsing` fills `params` from the route by itself
+   * (_doc-lib/adonisjs.md#guides/basics/validation, "Validating query strings, params,
+   * headers, and cookies"), and the Tuyau generator only reads the route parameter from
+   * that key (`DECISIONS.md` #375).
+   */
+  static identifierParams() {
+    return { params: vine.object({ id: vine.string().uuid() }) }
   }
 }
 
@@ -290,17 +343,15 @@ export function sortFields<
 // Global validators
 // ---------------------------------------------------------------------------
 
-/**
- * The identifier in the URL. Holds for every resource: the PK is a uuid in every table.
- *
- * It exists so a malformed `:id` is a 422 pointing at the field, not a Postgres 500
- * refusing the literal in the `where` clause.
- */
-export const IdentifierValidator = vine.create({
-  id: vine.string().uuid(),
-})
+/** The action whose only input is the `:id`. */
+export const IdentifierValidator = vine.create(Rule.identifierParams())
 
-export const PaginationValidator = vine.create(vine.object(paginationFields()))
+/** The listing without text search (`Rule.pageFields()`). */
+export const PageValidator = vine.create(vine.object(Rule.pageFields()))
+
+export const PaginationValidator = vine.create(
+  vine.object(Rule.paginationFields()),
+)
 
 /**
  * Pagination for resources that have a trash. It is the `PaginationValidator` plus
@@ -308,11 +359,14 @@ export const PaginationValidator = vine.create(vine.object(paginationFields()))
  * remain without it.
  */
 export const TrashablePaginationValidator = vine.create({
-  ...paginationFields(),
-  ...trashedField(),
+  ...Rule.paginationFields(),
+  ...Rule.trashedField(),
 })
 
-export type IdentifierPayload = Infer<typeof IdentifierValidator>
+/** What the use case receives: the `id` already out of the `params` block. */
+export type IdentifierPayload = Infer<typeof IdentifierValidator>['params']
+
+export type PagePayload = Infer<typeof PageValidator>
 
 export type PaginationPayload = Infer<typeof PaginationValidator>
 
@@ -321,14 +375,15 @@ export type TrashablePaginationPayload = Infer<
 >
 
 /**
- * The public identifier of news and events.
- *
- * They are the only two resources with a `slug` column; the other four are
- * reached by `id`, with the global `IdentifierValidator`. The 255 ceiling is the
- * column's - without it, an absurdly long URL would become a database query.
+ * The public identifier of a resource reached by `slug` instead of `id`. It lives in the
+ * kit because the route parameter has the same shape in every project that has one. The
+ * ceiling is the project's column (`COLUMN_LIMITS.SLUG`): without it, an absurdly long URL
+ * would become a database query.
  */
 export const SlugValidator = vine.create({
-  slug: vine.string().trim().minLength(1).maxLength(255),
+  params: vine.object({
+    slug: vine.string().trim().minLength(1).maxLength(COLUMN_LIMITS.SLUG),
+  }),
 })
 
-export type SlugPayload = Infer<typeof SlugValidator>
+export type SlugPayload = Infer<typeof SlugValidator>['params']

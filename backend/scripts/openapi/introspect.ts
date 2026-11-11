@@ -1,13 +1,13 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
-import { pathToFileURL } from 'node:url'
 import { basename, dirname, relative, resolve } from 'node:path'
+import { pathToFileURL } from 'node:url'
 
 import ts from 'typescript'
 
+import { RESPONSES } from '#core/openapi/response'
 import type { DocumentedValidator, FeatureResponse } from '#core/openapi/types'
 import HTTPException from '#exceptions/http.exception'
-import { RESPONSES } from '#core/openapi/response'
 
 /**
  * Reads the contract the code already declares.
@@ -19,7 +19,7 @@ import { RESPONSES } from '#core/openapi/response'
  *
  * ```ts
  * const payload = await context.request.validateUsing(AdministratorNoticeCreateValidator)
- * const payload = await IdentifierValidator.validate(context.params)
+ * const { params } = await context.request.validateUsing(IdentifierValidator)
  * const payload = await AdministratorNoticePaginationValidator.validate(context.request.qs())
  * return context.response.created(result.value)
  * ```
@@ -73,13 +73,13 @@ function factoryStatuses(): Record<string, number> {
   const statuses: Record<string, number> = {}
 
   for (const name of Object.getOwnPropertyNames(HTTPException)) {
-    const factory = Reflect.get(HTTPException, name)
+    const factory: unknown = Reflect.get(HTTPException, name)
 
     if (typeof factory !== 'function') continue
     if (name === 'prototype' || name === 'length' || name === 'name') continue
 
     try {
-      const instance = factory.call(HTTPException)
+      const instance: unknown = factory.call(HTTPException)
 
       if (instance instanceof HTTPException) statuses[name] = instance.status
     } catch {
@@ -226,8 +226,10 @@ async function loadValidator(
   }
 
   try {
-    const module = await import(target)
-    const exported = Reflect.get(module, name)
+    const module: unknown = await import(target)
+    if (typeof module !== 'object' || module === null) return undefined
+
+    const exported: unknown = Reflect.get(module, name)
 
     if (isValidator(exported)) return exported
   } catch {
@@ -275,6 +277,14 @@ const PT_BR_MESSAGES: ReadonlyMap<string, string> = (() => {
 
   return messages
 })()
+
+/**
+ * The pt-BR text of a translation key, for what the generator writes itself (the automatic
+ * failures of the middleware and the handler) in the same language as the use-case messages.
+ */
+export function documentMessage(key: string): string | undefined {
+  return PT_BR_MESSAGES.get(key)
+}
 
 /**
  * The message text: a literal, or the key of `t('key')` / `this.i18n.t('key')`

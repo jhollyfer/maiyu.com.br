@@ -1,5 +1,5 @@
-import { S3Client } from '@aws-sdk/client-s3'
 import type { ApplicationService } from '@adonisjs/core/types'
+import { S3Client } from '@aws-sdk/client-s3'
 
 import { clientConfig } from '#config/drive'
 import { MultipartContract } from '#services/multipart/multipart.contract'

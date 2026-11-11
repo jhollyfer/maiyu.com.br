@@ -5,7 +5,9 @@ import { SessionRepository } from '#repositories/session/session.repository'
 import { StorageLucidRepository } from '#repositories/storage/storage.lucid.repository'
 import { StorageRepository } from '#repositories/storage/storage.repository'
 import { UnitOfWork } from '#repositories/unit-of-work/unit-of-work'
-import { UnitOfWorkLucid } from '#repositories/unit-of-work/unit-of-work.lucid'
+import { LucidUnitOfWork } from '#repositories/unit-of-work/unit-of-work.lucid'
+import { UserLucidRepository } from '#repositories/user/user.lucid.repository'
+import { UserRepository } from '#repositories/user/user.repository'
 
 /**
  * Extension point (KIT.md §3.4): the kit repositories are bound here, and the project adds
@@ -17,13 +19,16 @@ export default class RepositoryProvider {
 
   register() {
     this.app.container.bind(UnitOfWork, () =>
-      this.app.container.make(UnitOfWorkLucid),
+      this.app.container.make(LucidUnitOfWork),
     )
     this.app.container.bind(SessionRepository, () =>
       this.app.container.make(SessionLucidRepository),
     )
     this.app.container.bind(StorageRepository, () =>
       this.app.container.make(StorageLucidRepository),
+    )
+    this.app.container.bind(UserRepository, () =>
+      this.app.container.make(UserLucidRepository),
     )
   }
 }

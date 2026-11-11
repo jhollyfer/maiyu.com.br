@@ -30,6 +30,9 @@ server.use([
   // (_standards/backend.md §4.10, "Chain order").
   () => import('@adonisjs/shield/shield_middleware'),
   () => import('@adonisjs/cors/cors_middleware'),
+  // After CORS (_standards/backend.md §5.7 item 8, `DECISIONS.md` #339): a
+  // response tied to a session is never cacheable, its errors included.
+  () => import('#middleware/private-cache.middleware'),
 ])
 
 /**

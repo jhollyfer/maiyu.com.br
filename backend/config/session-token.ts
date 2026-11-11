@@ -16,13 +16,13 @@ if (app.inProduction && domain) prefix = '__Secure-'
 if (app.inProduction && !domain) prefix = '__Host-'
 
 /**
- * Session names and lifetimes, in one place.
+ * Session token names and lifetimes, in one place (DECISIONS.md #339).
  *
  * The token name is the cookie name, and it is not decoration: it is what the guard checks to
  * refuse a refresh token presented as an access token. Both come out of the same
  * `DbAccessTokensProvider` and are indistinguishable without it.
  */
-export const COOKIE_TOKEN = {
+export const SESSION_TOKEN = {
   DRIVER_NAME: 'cookie-access-tokens',
   ACCESS: `${prefix}access-token`,
   REFRESH: `${prefix}refresh-token`,
@@ -45,17 +45,25 @@ type CookieAttributes = {
  */
 const clientUrl = env.get('APP_CLIENT_URL')
 let sameSite: 'lax' | 'none' = 'lax'
-if (app.inProduction && clientUrl) sameSite = SameSite.between(clientUrl, env.get('APP_SERVER_URL')).value
+if (app.inProduction && clientUrl)
+  sameSite = SameSite.between(clientUrl, env.get('APP_SERVER_URL')).value
 
-const base: CookieAttributes = { httpOnly: true, secure: app.inProduction, sameSite, path: '/' }
+const base: CookieAttributes = {
+  httpOnly: true,
+  secure: app.inProduction,
+  sameSite,
+  path: '/',
+}
 
 // The `domain` key only exists with a value: an explicit `domain: undefined` reaches some proxies
 // as the string "undefined" in `Set-Cookie`, and the browser discards the cookie.
 let attributes: CookieAttributes = base
 if (domain) attributes = { ...base, domain }
 
-export const cookieOptions = {
-  access: { ...attributes, maxAge: COOKIE_TOKEN.ACCESS_EXPIRY },
-  refresh: { ...attributes, maxAge: COOKIE_TOKEN.REFRESH_EXPIRY },
-  clear: attributes,
-} as const
+/**
+ * The attributes of the session cookie, without the lifetime (DECISIONS.md #339). Issuing adds
+ * the `maxAge` of each token; clearing reads exactly these, because deleting a cookie means
+ * matching `name` + `domain` + `path`. Written only by
+ * `features/authentication/_shared.session-cookie.ts`.
+ */
+export const SESSION_COOKIE: CookieAttributes = attributes

@@ -1,3 +1,5 @@
+import { DateTime } from 'luxon'
+
 import {
   left,
   right,
@@ -7,7 +9,6 @@ import {
   type SortDirection,
   type StoragesFileShowResponse,
 } from '@maiyu/shared'
-import { DateTime } from 'luxon'
 
 import type { PageCriteria } from '#core/page-criteria'
 import RepositoryFailure from '#core/repository-failure'
@@ -17,20 +18,16 @@ import type Storage from '#models/storage'
 /** The file without the signed `url`, which only the presenter derives. */
 type StorageFileShowResponse = Omit<StoragesFileShowResponse, 'url'>
 /**
- * What `page` uses of the model query: ordering and paginating. Structural because
- * Lucid's `paginate` response is a conditional type over the row, which does not
- * resolve in a generic.
+ * What `page` uses of the model query: ordering (twice, the column and the `id`
+ * tie-break) and paginating. Structural because Lucid's `paginate` response is a
+ * conditional type over the row, which does not resolve in a generic.
  */
 type PageableQuery<Row> = {
-  orderBy(
-    column: string,
-    direction: SortDirection,
-  ): {
-    paginate(
-      page: number,
-      perPage: number,
-    ): Promise<{ getMeta(): PaginationMeta; all(): Row[] }>
-  }
+  orderBy(column: string, direction: SortDirection): PageableQuery<Row>
+  paginate(
+    page: number,
+    perPage: number,
+  ): Promise<{ getMeta(): PaginationMeta; all(): Row[] }>
 }
 
 /** What `count` uses of the model query: the aliased `count`. */
@@ -141,9 +138,14 @@ export default class LucidMapping {
   }
 
   /**
-   * The requested page, ordered by the criterion's column. Built by hand from the
-   * paginator (_doc-lib/lucid.md#pagination): `all()` keeps the row type, and
-   * the `{ meta, data }` comes out in the shared `Paginated`.
+   * The requested page, ordered by the criterion's column and then by `id`. Built by
+   * hand from the paginator (_doc-lib/lucid.md#pagination): `all()` keeps the row
+   * type, and the `{ meta, data }` comes out in the shared `Paginated`.
+   *
+   * The `id` tie-break is what makes the order total: the page asks for an `orderBy`
+   * so results stay stable across page boundaries, and rows sharing the requested
+   * column's value would otherwise swap pages between one request and the next
+   * (_standards/backend.md §4.5, DECISIONS #347).
    */
   static async page<Row, Item>(
     query: PageableQuery<Row>,
@@ -152,6 +154,7 @@ export default class LucidMapping {
   ): Promise<Paginated<Item>> {
     const page = await query
       .orderBy(criteria.sort, criteria.direction)
+      .orderBy('id', criteria.direction)
       .paginate(criteria.page, criteria.perPage)
 
     return {
@@ -168,6 +171,17 @@ export default class LucidMapping {
   static async count(query: CountableQuery): Promise<number> {
     const [row] = await query.count('* as total')
     return Number(row?.$extras.total ?? 0)
+  }
+
+  /**
+   * The `whereILike` pattern that finds `term` anywhere in the column, with the
+   * client's text taken as text: `%` and `_` are LIKE wildcards, and a search for
+   * `50%` would otherwise match every row that has a `50` (_standards/backend.md
+   * §4.5, DECISIONS #347). The backslash is escaped first because it is the
+   * Postgres default escape character, so a literal one in the term stays literal.
+   */
+  static contains(term: string): string {
+    return `%${term.replace(/[\\%_]/g, '\\$&')}%`
   }
 
   /** The same text that Luxon's `toJSON()` puts on the wire. */

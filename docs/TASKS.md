@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (7 feitos, 2 em andamento, 11 bloqueados, 27 a fazer); atualizado 2026-11-11
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (12 feitos, 1 em andamento, 8 bloqueados, 26 a fazer); atualizado 2026-11-11
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -71,7 +71,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | Feita | `sync --check`; espelhos no upstream de 2026-11-11 |
-| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Bloqueada | montado em `feat/backend-inicial`; o `check` do `shared/` reprova em três testes do kit: espera a leva do upstream |
+| R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Feita | `feat/backend-inicial`; workspace do modelo e `shared/` (`@maiyu/shared`) com o kit da leva 8: format, lint, tsc e 62 testes |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
@@ -86,10 +86,10 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Bloqueada | kit gravado pelo sync em `feat/backend-inicial`; não compila sem as peças que o kit importa e não traz (lacunas 1 a 16) |
-| RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | A fazer | depois de RB.1 |
-| RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Bloqueada | escopo do kit: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; a revogação em update de conta espera rota de conta, proposta ao dono na R2.10 |
-| RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Em andamento | `.env.example` com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017; `Dockerfile-production` é o do kit |
+| RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Feita | kit da leva 8 pelo sync; format, lint, tsc, `pattern:check`, `validators:check`, unitário 233 de 233 e funcional 143 de 143 |
+| RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | Feita | `/health-check`, OpenAPI (`openapi:check` e `authz:check` verdes), i18n pt-BR, en e es e as specs do kit |
+| RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta espera rota de conta (R2.10) |
+| RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
 | RB.5 | Tuyau dentro do `request()` no frontend | M | A fazer | #324; depois de RB.1 |
 
 ### Régua 2 · Árvore e camadas

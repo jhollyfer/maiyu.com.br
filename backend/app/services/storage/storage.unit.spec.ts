@@ -1,5 +1,6 @@
-import { test } from '@japa/runner'
 import app from '@adonisjs/core/services/app'
+import { test } from '@japa/runner'
+
 import { STORAGE_EXTENSIONS, STORAGE_MIMETYPES } from '@maiyu/shared'
 
 import { StorageContract } from '#services/storage/storage.contract'

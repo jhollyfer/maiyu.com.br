@@ -1,13 +1,14 @@
-import app from '@adonisjs/core/services/app'
-import { Secret } from '@adonisjs/core/helpers'
 import { errors, symbols } from '@adonisjs/auth'
-import type { HttpContext } from '@adonisjs/core/http'
 import type { AccessToken } from '@adonisjs/auth/access_tokens'
 import type { AuthClientResponse, GuardContract } from '@adonisjs/auth/types'
+import { Secret } from '@adonisjs/core/helpers'
+import type { HttpContext } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+
 import { ACTIVE_STATUS } from '@maiyu/shared'
 
+import { SESSION_TOKEN } from '#config/session-token'
 import User from '#models/user'
-import { COOKIE_TOKEN } from '#config/session-token'
 import { SessionRepository } from '#repositories/session/session.repository'
 
 /**
@@ -28,25 +29,31 @@ type GuardUser = User & { currentAccessToken: AccessToken }
  * the same token by header would reopen the path `httpOnly` closes.
  */
 export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
-  readonly driverName = COOKIE_TOKEN.DRIVER_NAME
+  readonly driverName = SESSION_TOKEN.DRIVER_NAME
   authenticationAttempted = false
   isAuthenticated = false
   user?: GuardUser;
 
-  declare [symbols.GUARD_KNOWN_EVENTS]: {}
+  // The guard emits no event: an empty map, not `{}` (any non-nullish value).
+  declare [symbols.GUARD_KNOWN_EVENTS]: Record<never, never>
 
   constructor(private context: HttpContext) {}
 
-  #authenticationFailed() {
+  /**
+   * Typed `Error`: the package declares the exception as an anonymous constructor, and the
+   * lint only accepts a `throw` it can tell is an error (`only-throw-error`).
+   */
+  #authenticationFailed(): Error {
     return new errors.E_UNAUTHORIZED_ACCESS('Unauthorized access', {
       guardDriverName: this.driverName,
     })
   }
 
   #getCookieToken(): string {
-    const token = this.context.request.cookie(COOKIE_TOKEN.ACCESS)
+    // `request.cookie()` is typed `any`: a value other than a non-empty string is no token.
+    const token: unknown = this.context.request.cookie(SESSION_TOKEN.ACCESS)
 
-    if (!token) throw this.#authenticationFailed()
+    if (typeof token !== 'string' || !token) throw this.#authenticationFailed()
 
     return token
   }
@@ -69,7 +76,7 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
     // The refresh token comes out of the same provider and is valid by the same
     // verification: without checking the `name`, presenting it as an access token
     // would give a session with the refresh's lifetime.
-    if (!accessToken || accessToken.name !== COOKIE_TOKEN.ACCESS)
+    if (!accessToken || accessToken.name !== SESSION_TOKEN.ACCESS)
       throw this.#authenticationFailed()
 
     // The filter was only on sign-in, and the token lives a day: archiving or
@@ -117,8 +124,8 @@ export class CookieAccessTokensGuard implements GuardContract<GuardUser> {
 
     return {
       cookies: {
-        [COOKIE_TOKEN.ACCESS]: tokens.accessToken,
-        [COOKIE_TOKEN.REFRESH]: tokens.refreshToken,
+        [SESSION_TOKEN.ACCESS]: tokens.accessToken,
+        [SESSION_TOKEN.REFRESH]: tokens.refreshToken,
       },
     }
   }

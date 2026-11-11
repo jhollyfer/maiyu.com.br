@@ -22,9 +22,7 @@ test.group('tests > database-guard (unit)', () => {
   test('refuses the development database', ({ assert }) => {
     assert.throws(
       () =>
-        DatabaseGuard.assertTestDatabase(
-          'postgres://u:p@localhost:5434/app',
-        ),
+        DatabaseGuard.assertTestDatabase('postgres://u:p@localhost:5434/app'),
       /refuses to start/,
     )
   })
@@ -36,6 +34,22 @@ test.group('tests > database-guard (unit)', () => {
           'postgres://u:p@localhost/app_test_prod',
         ),
       /refuses to start/,
+    )
+  })
+
+  test('refuses a _test database on a host that is not loopback', ({
+    assert,
+  }) => {
+    assert.throws(
+      () =>
+        DatabaseGuard.assertTestDatabase('postgres://u:p@10.0.0.5/app_test'),
+      /not loopback/,
+    )
+  })
+
+  test('accepts the IPv6 loopback', ({ assert }) => {
+    assert.doesNotThrow(() =>
+      DatabaseGuard.assertTestDatabase('postgres://u:p@[::1]:5432/app_test'),
     )
   })
 

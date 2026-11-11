@@ -1,8 +1,8 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
-import HTTPException from '#exceptions/http.exception'
 import { corsOrigins } from '#config/cors'
+import HTTPException from '#exceptions/http.exception'
 
 /**
  * The CSRF barrier of the API, which authenticates by cookie.
@@ -37,15 +37,16 @@ export default class OriginMiddleware {
   ])
 
   async handle(context: HttpContext, next: NextFn) {
-    if (OriginMiddleware.SAFE_METHODS.has(context.request.method()))
-      return next()
+    const safe = OriginMiddleware.SAFE_METHODS.has(context.request.method())
 
-    if (this.isAllowed(context.request)) return next()
+    if (!safe && !this.isAllowed(context.request)) {
+      throw HTTPException.Forbidden(
+        context.i18n.t('errors.origin_not_allowed'),
+        'ORIGIN_NOT_ALLOWED',
+      )
+    }
 
-    throw HTTPException.Forbidden(
-      context.i18n.t('errors.origin_not_allowed'),
-      'ORIGIN_NOT_ALLOWED',
-    )
+    await next()
   }
 
   private isAllowed(request: HttpContext['request']): boolean {

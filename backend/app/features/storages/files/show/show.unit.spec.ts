@@ -4,9 +4,10 @@ import StoragesFileShowUseCase from './show.use-case.ts'
 
 import { StorageRepository } from '#repositories/storage/storage.repository'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import {
   FILE_ID,
-  rightOf,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
@@ -20,7 +21,9 @@ async function setup() {
   return { storages, useCase }
 }
 
-test.group('storages/files > show (unit)', () => {
+test.group('storages/files > show (unit)', (group) => {
+  insideHttpContext(group)
+
   test('returns the record with the url', async ({ assert }) => {
     const { storages, useCase } = await setup()
     await storages.save(uploadedFile())

@@ -3,13 +3,14 @@ import { test } from '@japa/runner'
 import StoragesFilePartsUseCase from './parts.use-case.ts'
 
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import { MultipartContract } from '#services/multipart/multipart.contract'
+import { StorageContract } from '#services/storage/storage.contract'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { rightOf } from '#tests/either-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import {
   FILE_ID,
   pendingFile,
-  rightOf,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
@@ -25,7 +26,9 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-test.group('storages/files > parts (unit)', () => {
+test.group('storages/files > parts (unit)', (group) => {
+  insideHttpContext(group)
+
   test('a confirmed file responds with empty lists', async ({ assert }) => {
     const { storages, useCase } = await setup()
     await storages.save(uploadedFile())

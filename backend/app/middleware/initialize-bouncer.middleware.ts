@@ -1,10 +1,11 @@
 import { Bouncer } from '@adonisjs/bouncer'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
+
 import type { Actor } from '@maiyu/shared'
 
-import { policies } from '#generated/policies'
 import * as abilities from '#abilities/main'
+import { policies } from '#generated/policies'
 
 /**
  * Builds the `ctx.bouncer` the controllers use to check policies
@@ -24,11 +25,12 @@ export default class InitializeBouncerMiddleware {
       policies,
     ).setContainerResolver(ctx.containerResolver)
 
-    return next()
+    await next()
   }
 }
 
 declare module '@adonisjs/core/http' {
+  // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- module augmentation: TypeScript only merges an `interface`
   export interface HttpContext {
     bouncer: Bouncer<Actor, typeof abilities, typeof policies>
   }

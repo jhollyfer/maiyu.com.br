@@ -4,9 +4,15 @@ import AuthenticationSessionSignOutUseCase from './sign-out.use-case.ts'
 
 import { SessionRepository } from '#repositories/session/session.repository'
 import { makeWithMemory } from '#tests/container-fixtures'
+import { insideHttpContext } from '#tests/http-context-fixtures'
 import { identityDoubles, USER_ID } from '#tests/identity-unit-fixtures'
 
-const ACTOR = { id: USER_ID, role: 'ADMINISTRATOR', avatarId: null } as const
+const ACTOR = {
+  id: USER_ID,
+  email: 'ana@mail.com',
+  role: 'ADMINISTRATOR',
+  avatarId: null,
+} as const
 
 async function setup() {
   const doubles = identityDoubles()
@@ -25,8 +31,12 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-test.group('authentication/sessions > sign-out (unit)', () => {
-  test('deletes the account access and refresh tokens', async ({ assert }) => {
+test.group('authentication/sessions > sign-out (unit)', (group) => {
+  insideHttpContext(group)
+
+  test('when both tokens come, deletes the account access and refresh tokens', async ({
+    assert,
+  }) => {
     const { sessions, useCase } = await setup()
 
     const result = await useCase.execute({
@@ -41,7 +51,9 @@ test.group('authentication/sessions > sign-out (unit)', () => {
     assert.isFalse(await sessions.revoke(USER_ID, '8'))
   })
 
-  test('unreadable refresh does not prevent sign-out', async ({ assert }) => {
+  test('when the refresh is unreadable, still signs out', async ({
+    assert,
+  }) => {
     const { useCase } = await setup()
 
     const result = await useCase.execute({
@@ -53,7 +65,7 @@ test.group('authentication/sessions > sign-out (unit)', () => {
     assert.isTrue(result.isRight())
   })
 
-  test('without tokens sign-out also answers correctly', async ({ assert }) => {
+  test('when no token comes, still signs out', async ({ assert }) => {
     const { useCase } = await setup()
 
     const result = await useCase.execute({ actor: ACTOR })
@@ -61,7 +73,7 @@ test.group('authentication/sessions > sign-out (unit)', () => {
     assert.isTrue(result.isRight())
   })
 
-  test('session bucket failure is 500 AUTHENTICATION_SESSION_SIGN_OUT_ERROR', async ({
+  test('when the session store fails, is 500 AUTHENTICATION_SESSION_SIGN_OUT_ERROR', async ({
     assert,
   }) => {
     const { sessions, useCase } = await setup()

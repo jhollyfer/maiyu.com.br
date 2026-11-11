@@ -16,11 +16,19 @@ export default class extends BaseSchema {
       // Literal values (DECISIONS.md #354): a migration is history, and an imported enum
       // would rewrite it when the enum changes. They match `USER_ROLE` in the shared.
       // No `defaultTo`: a forgotten creation path would silently save a role nobody chose.
-      table.enum('role', ['ADMINISTRATOR']).notNullable()
+      table.enum('role', ['ADMINISTRATOR', 'MEMBER']).notNullable()
       table
         .enum('status', ['ACTIVE', 'INACTIVE'])
         .notNullable()
         .defaultTo('ACTIVE')
+      // Whoever attaches keeps the reference, so a single files table needs no owner column.
+      // `SET NULL`: deleting the avatar file must not delete the account.
+      table
+        .uuid('avatar_id')
+        .nullable()
+        .references('id')
+        .inTable('storages')
+        .onDelete('SET NULL')
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
       table.timestamp('deleted_at').nullable()

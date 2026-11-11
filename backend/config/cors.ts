@@ -36,20 +36,22 @@ if (app.inProduction && corsOrigins.length === 0) {
   )
 }
 
-/**
- * In development it allows any origin, so as not to require configuration from
- * whoever just wants to run front and back on their own machine.
- */
-let origin: boolean | string[] = [...corsOrigins]
-if (app.inDev) origin = true
-
 const corsConfig = defineConfig({
   /**
    * Enable or disable CORS handling globally.
    */
   enabled: true,
 
-  origin,
+  /**
+   * The same allowlist in every environment, development included
+   * (_standards/backend.md §6, `CORS_ORIGINS`: "sim, em todo ambiente"). There it
+   * lists the frontend on `localhost` (`.env.example`), and an origin off the list
+   * gets no CORS header, as in production. The default `origin: true` reflects
+   * every origin, and the page says to replace it before deploying
+   * (_doc-lib/adonisjs.md#guides/security/cors,
+   * https://docs.adonisjs.com/guides/security/cors).
+   */
+  origin: [...corsOrigins],
 
   /**
    * HTTP methods accepted for cross-origin requests.
@@ -74,8 +76,12 @@ const corsConfig = defineConfig({
    * without this line the page JavaScript reads `null` when looking for it - even with the
    * API sending the header, and even in development. It is how the
    * CSV export finds out the file name to save.
+   *
+   * `retry-after` is not a simple response header either. The exception handler
+   * keeps it on the 429 (`DECISIONS.md` #293), and without it here the client
+   * cannot tell the user when to try again.
    */
-  exposeHeaders: ['content-disposition'],
+  exposeHeaders: ['content-disposition', 'retry-after'],
 
   /**
    * Allow cookies/authorization headers on cross-origin requests.

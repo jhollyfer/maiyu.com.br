@@ -1,9 +1,10 @@
 import { test } from '@japa/runner'
 
-import { vine } from '#core/validator'
 import { z } from '@maiyu/shared'
 
 import { ValidatorsCheck } from './validators-check.ts'
+
+import { vine } from '#core/validator'
 
 test.group('validators:check > pair comparison', () => {
   const check = new ValidatorsCheck()
@@ -47,6 +48,38 @@ test.group('validators:check > pair comparison', () => {
     })
 
     assert.lengthOf(findings, 3)
+  })
+
+  test('when the backend validator has the route `params` block, the form pair without it is equal', ({
+    assert,
+  }) => {
+    const findings = check.compare({
+      file,
+      name: 'StoragesFileShowValidator',
+      vine: vine.create({
+        params: vine.object({ id: vine.string().uuid() }),
+        title: vine.string().maxLength(255),
+      }),
+      zod: z.object({ title: z.string().max(255) }),
+    })
+
+    assert.deepEqual(findings, [])
+  })
+
+  test('when a field named `params` is below the top level, it is still compared', ({
+    assert,
+  }) => {
+    const findings = check.compare({
+      file,
+      name: 'X',
+      vine: vine.create({
+        filter: vine.object({ params: vine.string().maxLength(10) }),
+      }),
+      zod: z.object({ filter: z.object({ params: z.string().max(20) }) }),
+    })
+
+    assert.lengthOf(findings, 1)
+    assert.include(findings[0]?.message ?? '', 'filter.params')
   })
 
   test('when a validator has no pair in shared, is a finding', ({ assert }) => {

@@ -12,7 +12,7 @@ import type {
  *
  * Node's `AsyncLocalStorage`, not the `HttpContext`'s: the unit of work
  * also exists outside a request (seed, command), and the scope is that of the call
- * to `UnitOfWorkLucid.run`, not that of the request.
+ * to `LucidUnitOfWork.run`, not that of the request.
  */
 export class TransactionContext {
   private static readonly storage =

@@ -8,17 +8,22 @@ const PNG = new Uint8Array([
   0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 0,
 ])
 
+const OPENING = {
+  id: 'id',
+  key: 'abc.png',
+  originalName: 'capa.png',
+  mimetype: 'image/png',
+  size: 1024,
+  uploadId: 'upload',
+  partSize: 10,
+  now: NOW,
+}
+
 function pending(): Storage {
-  return Storage.open({
-    id: 'id',
-    key: 'abc.png',
-    originalName: 'capa.png',
-    mimetype: 'image/png',
-    size: 1024,
-    uploadId: 'upload',
-    partSize: 10,
-    now: NOW,
-  })
+  const opened = Storage.open(OPENING)
+  if (opened.isLeft()) throw new Error(`open refused: ${opened.value.code}`)
+
+  return opened.value
 }
 
 test.group('Storage', () => {
@@ -32,6 +37,28 @@ test.group('Storage', () => {
       uploadId: 'upload',
     })
     assert.isTrue(file.isPending())
+  })
+
+  test('a size that is not a positive whole number is STORAGE_SIZE_INVALID', ({
+    assert,
+  }) => {
+    for (const size of [0, -1, 1.5, Number.NaN]) {
+      assert.deepEqual(Storage.open({ ...OPENING, size }).value, {
+        code: 'STORAGE_SIZE_INVALID',
+        size,
+      })
+    }
+  })
+
+  test('a type without a known signature is STORAGE_TYPE_UNSUPPORTED', ({
+    assert,
+  }) => {
+    const opened = Storage.open({ ...OPENING, mimetype: 'image/svg+xml' })
+
+    assert.deepEqual(opened.value, {
+      code: 'STORAGE_TYPE_UNSUPPORTED',
+      mimetype: 'image/svg+xml',
+    })
   })
 
   test('confirms when the size that went up is the declared one and drops the uploadId', ({

@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { BaseCommand } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 
+import ErrorMessage from '#core/error-message'
+
 /**
  * Builds every service and policy through the container, and fails what does not boot.
  *
@@ -56,14 +58,20 @@ export default class DiCheck extends BaseCommand {
       const specifier = `#${target.directory}/${target.file.replace(/\.ts$/, '')}`
 
       try {
-        const imported = await import(specifier)
-        if (typeof imported.default !== 'function') continue
+        const imported: unknown = await import(specifier)
+        if (
+          typeof imported !== 'object' ||
+          imported === null ||
+          !('default' in imported) ||
+          typeof imported.default !== 'function'
+        )
+          continue
 
         await this.app.container.make(imported.default)
       } catch (error) {
-        let reason = String(error)
-        if (error instanceof Error) reason = error.message
-        failures.push(`${target.directory}/${target.file}: ${reason}`)
+        failures.push(
+          `${target.directory}/${target.file}: ${ErrorMessage.of(error)}`,
+        )
       }
     }
 

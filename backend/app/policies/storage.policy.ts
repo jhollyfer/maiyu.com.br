@@ -1,10 +1,9 @@
-import { inject } from '@adonisjs/core'
-import { I18n } from '@adonisjs/i18n'
-import { BasePolicy, AuthorizationResponse } from '@adonisjs/bouncer'
-import type { AuthorizerResponse } from '@adonisjs/bouncer/types'
+import type { AuthorizationResponse } from '@adonisjs/bouncer'
+
 import { STAFF_USER_ROLES, type Actor } from '@maiyu/shared'
 
 import type { Storage } from '#domain/storage/storage.entity'
+import SessionScopedPolicy from '#policies/session-scoped-policy.base'
 
 /**
  * Who downloads which file through the download route.
@@ -20,21 +19,17 @@ import type { Storage } from '#domain/storage/storage.entity'
  *
  * It receives `(actor, file | null)`. The denial is `404` and not `403`, the same
  * response as a nonexistent file: a 403 would confirm to whoever probes that this
- * uuid exists (_standards/backend.md §4.6).
+ * uuid exists (_standards/backend.md §4.6). It passes the key and the code; the handler
+ * translates (DECISIONS.md #346).
  */
-
-@inject()
-export default class StoragePolicy extends BasePolicy {
-  constructor(private readonly i18n: I18n) {
-    super()
-  }
-
-  download(actor: Actor, storage: Storage | null): AuthorizerResponse {
+export default class StoragePolicy extends SessionScopedPolicy {
+  download(
+    actor: Actor,
+    storage: Storage | null,
+  ): true | AuthorizationResponse {
     if (storage && STAFF_USER_ROLES.includes(actor.role)) return true
     if (storage && actor.avatarId === storage.id) return true
 
-    return AuthorizationResponse.deny(this.i18n.t('files.not_found'), 404).t(
-      'STORAGE_NOT_FOUND',
-    )
+    return this.hidden('STORAGE_NOT_FOUND', 'files.not_found')
   }
 }

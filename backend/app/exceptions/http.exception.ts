@@ -1,5 +1,6 @@
 import { Exception } from '@adonisjs/core/exceptions'
 import type { HttpContext } from '@adonisjs/core/http'
+
 import { type ErrorEnvelope } from '@maiyu/shared'
 
 /**

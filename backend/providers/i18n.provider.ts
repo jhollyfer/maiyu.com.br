@@ -1,5 +1,5 @@
-import { I18n } from '@adonisjs/i18n'
 import type { ApplicationService } from '@adonisjs/core/types'
+import { I18n } from '@adonisjs/i18n'
 
 /**
  * The `I18n` every use case receives in the constructor to write the

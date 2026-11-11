@@ -1,14 +1,21 @@
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
-import { UPLOAD_STATUS } from '@maiyu/shared'
 
-import { storageRow } from '#tests/storages-fixtures'
+import {
+  ErrorEnvelope,
+  ResponseRule,
+  StoragesFileShowResponse,
+  UPLOAD_STATUS,
+} from '@maiyu/shared'
+
 import {
   authenticateAsAdministrator,
   body,
   resetDatabase,
-  type ResponseBody,
 } from '#tests/http-fixtures'
+import { storageRow } from '#tests/storages-fixtures'
+
+const StoragesPage = ResponseRule.paginated(StoragesFileShowResponse)
 
 /**
  * The file as a neutral, shared record: it does not belong to the
@@ -53,12 +60,12 @@ test.group('storages > listagem', (group) => {
 
     response.assertStatus(200)
     assert.deepEqual(
-      body(response).data.map((item: ResponseBody) => item.id),
+      body(response, StoragesPage).data.map((item) => item.id),
       [recent.id, older.id],
     )
     // Page 1 with 20 items is the default of every panel resource.
-    assert.equal(body(response).meta.currentPage, 1)
-    assert.equal(body(response).meta.perPage, 20)
+    assert.equal(body(response, StoragesPage).meta.currentPage, 1)
+    assert.equal(body(response, StoragesPage).meta.perPage, 20)
   })
 
   test('?status narrows to the open upload', async ({ client, assert }) => {
@@ -73,8 +80,8 @@ test.group('storages > listagem', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.lengthOf(body(response).data, 1)
-    assert.equal(body(response).data[0].id, pending.id)
+    assert.lengthOf(body(response, StoragesPage).data, 1)
+    assert.equal(body(response, StoragesPage).data.at(0)?.id, pending.id)
   })
 
   test('?mimetype narrows to one type only', async ({ client, assert }) => {
@@ -89,8 +96,8 @@ test.group('storages > listagem', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.lengthOf(body(response).data, 1)
-    assert.equal(body(response).data[0].id, pdf.id)
+    assert.lengthOf(body(response, StoragesPage).data, 1)
+    assert.equal(body(response, StoragesPage).data.at(0)?.id, pdf.id)
   })
 
   test('?search does not escape the status filter', async ({
@@ -117,8 +124,8 @@ test.group('storages > listagem', (group) => {
       .cookies(session)
 
     response.assertStatus(200)
-    assert.lengthOf(body(response).data, 1)
-    assert.equal(body(response).data[0].id, confirmed.id)
+    assert.lengthOf(body(response, StoragesPage).data, 1)
+    assert.equal(body(response, StoragesPage).data.at(0)?.id, confirmed.id)
   })
 
   test('?sort outside the closed tuple responds 422 pointing at the field', async ({
@@ -136,7 +143,7 @@ test.group('storages > listagem', (group) => {
     const response = await client.get('/storages?sort=path').cookies(session)
 
     response.assertStatus(422)
-    assert.property(body(response).errors, 'sort')
+    assert.property(body(response, ErrorEnvelope).errors, 'sort')
   })
 
   test('without a session responds 401', async ({ client }) => {

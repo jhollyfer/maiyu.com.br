@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
-import { AuthenticationSessionSignInValidator } from './sessions.validator.js'
 import { ValidationFixture } from '../../validation-fixtures.js'
+import { AuthenticationSessionSignInValidator } from './sessions.validator.js'
 
 describe('AuthenticationSessionSignInValidator', () => {
   it('when given email and password, it accepts them, without demanding the password policy', () => {

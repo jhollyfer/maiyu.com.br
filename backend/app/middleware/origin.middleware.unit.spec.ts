@@ -1,20 +1,26 @@
 import { IncomingMessage } from 'node:http'
 import { Socket } from 'node:net'
 
-import { test } from '@japa/runner'
-import app from '@adonisjs/core/services/app'
-import i18nManager from '@adonisjs/i18n/services/main'
 import {
   HttpContextFactory,
   RequestFactory,
 } from '@adonisjs/core/factories/http'
+import app from '@adonisjs/core/services/app'
+import i18nManager from '@adonisjs/i18n/services/main'
+import { test } from '@japa/runner'
+
 import { BASE_LOCALE } from '@maiyu/shared'
 
-import OriginMiddleware from '#middleware/origin.middleware'
+import { corsOrigins } from '#config/cors'
 import HTTPException from '#exceptions/http.exception'
+import OriginMiddleware from '#middleware/origin.middleware'
 
-/** The `.env.test` allowlist. */
-const ALLOWED = 'http://localhost:5173'
+/**
+ * The first origin of `CORS_ORIGINS` in `.env.test`, as `tests/bootstrap.ts` reads it: a project
+ * whose frontend is not on a fixed port does not fail this spec.
+ */
+const [ALLOWED] = corsOrigins
+if (!ALLOWED) throw new Error('CORS_ORIGINS of .env.test lists no origin')
 
 async function run(method: string, headers: Record<string, string>) {
   const middleware = await app.container.make(OriginMiddleware)

@@ -691,9 +691,9 @@ Dentro da implementação do repository:
   pela coluna e dá Index Scan com volume conta como índice dela. `trashed=with` (ativos e arquivados
   juntos) não pede índice cheio redundante: a medida com volume vai no PR e basta, e o número de queries por rota é fixo: um teste e2e trava a contagem, e a medida com
   volume (`generate_series` e `EXPLAIN ANALYZE`) entra no PR que mexe na listagem (`DECISIONS.md` #382).
-  A contagem usa `assertQueryCount` de `tests/query-count-fixtures.ts` (kit), que escuta o evento
+  A contagem usa `QueryCount.assert` de `tests/query-count-fixtures.ts` (kit), que escuta o evento
   `db:query`; ele só dispara com `debug` na conexão, e o `config/database.ts` do kit liga `debug` em
-  dev e teste (_doc-lib/lucid.md#debugging).
+  dev e teste (_doc-lib/lucid.md#debugging); sem nenhuma query registrada ele reprova, em vez de passar com 0.
   Lentidão em produção se separa antes de corrigir: `pg_stat_statements`, contagem da tabela e tempo
   da rota na API contra o do proxy.
   Armadilhas medidas nos projetos (interclasse, 51 mil linhas):

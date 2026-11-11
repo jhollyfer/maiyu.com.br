@@ -3,27 +3,25 @@ import type { HttpContext } from '@adonisjs/core/http'
 
 import StoragesFileShowUseCase from './show.use-case.ts'
 
-import { defineDocs } from '#core/openapi/types'
+import { OpenApiDocs } from '#core/openapi/types'
 import { IdentifierValidator } from '#core/validator'
 
 @inject()
 export default class StoragesFileShowController {
-  static docs = defineDocs({
-    summary: 'View a file',
+  static docs = OpenApiDocs.defineDocs({
+    summary: 'Detalhar arquivo',
     description:
-      'Returns the bare record, without envelope: the original label, the type, the size, the state of the ' +
-      'upload and the derived `url`.\n\n' +
-      'Also valid for a file still `PENDING` - the detail screen is where one discovers that ' +
-      'an upload was left half-done. Whoever attaches is the one who requires `UPLOADED`.',
+      'Devolve o registro cru, sem envelope: o rótulo original, o tipo, o tamanho, o estado do ' +
+      'envio e a `url` derivada.\n\n' +
+      'Vale também para arquivo ainda `PENDING`: a tela de detalhe é onde se descobre que ' +
+      'um envio ficou pela metade. Quem anexa é quem exige `UPLOADED`.',
   })
 
   constructor(private readonly useCase: StoragesFileShowUseCase) {}
 
   async handle(context: HttpContext) {
-    const payload = await context.request.validateUsing(IdentifierValidator, {
-      data: context.params,
-    })
-    const result = await this.useCase.execute(payload)
+    const { params } = await context.request.validateUsing(IdentifierValidator)
+    const result = await this.useCase.execute(params)
     if (result.isLeft()) throw result.value
     return context.response.ok(result.value)
   }

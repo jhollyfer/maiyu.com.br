@@ -12,6 +12,9 @@ dist/
 build/
 # O runtime do Adonis escreve em `backend/tmp/`: arquivo temporário, não fonte.
 backend/tmp/
+# O boot do Adonis fora de produção grava as rotas para o dev server ler e apagar: não é contrato
+# de nada e mudaria a cada rota nova (`_standards/DECISIONS.md` #388).
+backend/.adonisjs/server/routes.json
 
 # Arquivos de ambiente. Um `.env` com segredo, criado por engano em qualquer pasta, entraria no
 # commit sem ninguém notar. Escapam os modelos sem segredo (`.env.example` e `.env.e2e.example`,

@@ -7,8 +7,8 @@ test.group('authz:check > comparison with the baseline', () => {
 
   test('when the chain is equal, is not a finding', ({ assert }) => {
     const chain = {
-      'GET /account': 'autenticada',
-      'GET /storefront/notices': 'anonima',
+      'GET /account': 'authenticated',
+      'GET /storefront/notices': 'anonymous',
     }
 
     assert.deepEqual(check.compare(chain, { ...chain }), [])
@@ -33,8 +33,8 @@ test.group('authz:check > comparison with the baseline', () => {
 
   test('when a route is new or removed, both are findings', ({ assert }) => {
     const findings = check.compare(
-      { 'GET /a': 'anonima' },
-      { 'GET /b': 'autenticada' },
+      { 'GET /a': 'anonymous' },
+      { 'GET /b': 'authenticated' },
     )
 
     assert.lengthOf(findings, 2)

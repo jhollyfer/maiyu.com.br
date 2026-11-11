@@ -4,9 +4,9 @@ import {
   UPLOAD_STATUSES,
 } from '@maiyu/shared'
 
-import { vine, paginationFields, sortFields } from '#core/validator'
-import type { Infer } from '#core/validator'
 import { UPLOAD_MAX_SIZE } from '#config/drive'
+import { Rule, vine } from '#core/validator'
+import type { Infer } from '#core/validator'
 
 /**
  * What `POST /storages` receives: metadata, never bytes.
@@ -29,12 +29,14 @@ export type StoragesFileCreatePayload = Infer<
 >
 
 /**
- * What `POST /storages/:id/complete` receives: the `ETag` of each uploaded part.
+ * What `POST /storages/:id/complete` receives: the `:id` of the route and the `ETag` of
+ * each uploaded part, in one schema read by one `validateUsing` (`DECISIONS.md` #375).
  *
  * Empty - or absent - is a single-part upload, which has no part to
  * confirm. The ceiling of ten thousand is S3's own.
  */
 export const StoragesFileCompleteValidator = vine.create({
+  ...Rule.identifierParams(),
   parts: vine
     .array(
       vine.object({
@@ -57,18 +59,18 @@ export type StoragesFileCompletePayload = Infer<
  * survived the mapping -, and `?status` and `?mimetype` cut what has already gone up
  * and what is an image.
  *
- * Without `trashedField()`: `storages` has `deleted_at`, but deleting a file is
+ * Without `Rule.trashedField()`: `storages` has `deleted_at`, but deleting a file is
  * `DELETE /storages/:id`, which removes the row **and** the binary. There is no file
  * trash to restore, and the parameter would be accepted and silently ignored.
  */
 export const StoragesFilePaginateValidator = vine.create({
-  ...paginationFields(),
+  ...Rule.paginationFields(),
   status: vine.enum(UPLOAD_STATUSES).optional(),
   // The closed list, not free text: it is the same tuple `POST /storages`
   // accepts, so filtering by a type the API never saves is a 422 instead of an
   // empty page that looks like a bug.
   mimetype: vine.enum(STORAGE_MIMETYPES).optional(),
-  ...sortFields(STORAGE_SORT_COLUMNS),
+  ...Rule.sortFields(STORAGE_SORT_COLUMNS),
 })
 
 export type StoragesFilePaginatePayload = Infer<

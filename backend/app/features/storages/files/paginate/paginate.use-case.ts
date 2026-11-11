@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import {
   PAGINATION,
   left,
@@ -11,9 +12,9 @@ import {
 } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
-import { StorageContract } from '#services/storage/storage.contract'
+import { Sort } from '#features/_shared.sort'
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { recentFirst } from '#features/_shared.sort'
+import { StorageContract } from '#services/storage/storage.contract'
 import type { StoragesFilePaginatePayload } from '#validators/storages/files.validator'
 
 type Payload = StoragesFilePaginatePayload
@@ -36,9 +37,9 @@ export default class StoragesFilePaginateUseCase {
 
   async execute(payload: Payload): Promise<Response> {
     try {
-      // `recentFirst` and not `sortOrder`: in a file library what
+      // `Sort.recentFirst` and not `Sort.order`: in a file library what
       // matters is what has just been uploaded. It is the order `backend-old` gave.
-      const [sort, direction] = recentFirst(payload)
+      const [sort, direction] = Sort.recentFirst(payload)
 
       const page = await this.storages.paginate({
         page: payload.page ?? PAGINATION.PAGE,
@@ -57,7 +58,10 @@ export default class StoragesFilePaginateUseCase {
         ),
       })
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > paginate][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > paginate][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(

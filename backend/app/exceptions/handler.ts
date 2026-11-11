@@ -1,9 +1,10 @@
-import app from '@adonisjs/core/services/app'
-import i18nManager from '@adonisjs/i18n/services/main'
-import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
 import { errors as authErrors } from '@adonisjs/auth'
 import { errors as bouncerErrors } from '@adonisjs/bouncer'
+import { type HttpContext, ExceptionHandler } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
+import i18nManager from '@adonisjs/i18n/services/main'
 import { errors as limiterErrors } from '@adonisjs/limiter'
+
 import { BASE_LOCALE } from '@maiyu/shared'
 
 import { errors as vineErrors } from '#core/validator'
@@ -85,7 +86,10 @@ export default class HttpExceptionHandler extends ExceptionHandler {
   override async handle(error: unknown, ctx: HttpContext) {
     // HTTPException resolves itself in its own `handle()`, with the message the
     // use case already translated.
-    if (error instanceof HTTPException) return super.handle(error, ctx)
+    if (error instanceof HTTPException) {
+      await super.handle(error, ctx)
+      return
+    }
 
     if (error instanceof vineErrors.E_VALIDATION_ERROR) {
       return this.send(ctx, this.validationPayload(error.messages, ctx))
@@ -100,16 +104,22 @@ export default class HttpExceptionHandler extends ExceptionHandler {
     }
 
     /**
-     * Policy denial through `ctx.bouncer` (_standards/backend.md §4.6). The
-     * policy gives status and message through the `AuthorizationResponse`, and the
-     * translation identifier is the stable `code`.
+     * Policy denial through `ctx.bouncer` (_standards/backend.md §4.6). The policy
+     * passes the key in `.t()` and the stable `code` in the message
+     * (`policies/session-scoped-policy.base.ts`), and the translation happens here, in the
+     * request language (DECISIONS.md #346). A policy that only returns `false` has
+     * neither, and answers the generic 403.
      */
     if (error instanceof bouncerErrors.E_AUTHORIZATION_FAILURE) {
+      const { message, status, translation } = error.response
+
       return this.send(ctx, {
-        message:
-          error.response.message ?? this.translate(ctx, 'errors.access_denied'),
-        status: error.response.status ?? 403,
-        code: error.response.translation?.identifier ?? 'ACCESS_DENIED',
+        message: this.translate(
+          ctx,
+          translation?.identifier ?? 'errors.access_denied',
+        ),
+        status: status ?? 403,
+        code: message ?? 'ACCESS_DENIED',
       })
     }
 
@@ -129,7 +139,8 @@ export default class HttpExceptionHandler extends ExceptionHandler {
 
     if (status >= 400) return this.clientError(ctx, status)
 
-    return super.handle(error, ctx)
+    // The base class types its return as `Promise<any>`; awaiting keeps `any` out of this method.
+    await super.handle(error, ctx)
   }
 
   /**

@@ -24,7 +24,8 @@ export class ZodSchema {
     if (!ZodSchema.isObject(json))
       throw new Error('Zod JSON Schema is not an object')
 
-    const { $schema: _dialect, ...body } = json
+    const body = { ...json }
+    delete body.$schema
 
     return body
   }

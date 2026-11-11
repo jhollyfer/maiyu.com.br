@@ -1052,8 +1052,11 @@ restritiva (página oficial não conferida). Projeto que já hidrata o painel me
 - Componente que depende de API só de navegador (mapa, canvas, câmera, leitor de QR) vai em rota
   `ssr: false` ou atrás de `ClientOnly`; nunca `typeof window` no corpo do componente.
 - SPA mode não é padrão da casa: todo projeto tem área pública. _doc-lib/tanstack-start.md#guide/spa-mode.
-- Página institucional que só muda por deploy (sobre, termos) pode usar `prerender` com a lista de
-  caminhos explícita; nunca página que lê cookie. _doc-lib/tanstack-start.md#guide/static-prerendering.
+- Página institucional que só muda por deploy (sobre, termos) pode ser pré-renderizada com a lista de
+  caminhos explícita, nos três prefixos de idioma; nunca página que lê cookie. No build com Nitro a
+  lista vai em `nitro.prerender.routes` (_doc-lib/nitro.md#docs/prerendering): o `prerender` do Start
+  (_doc-lib/tanstack-start.md#guide/static-prerendering) grava os arquivos depois do manifesto do
+  Nitro, e o handler estático não os serve (medido no jhollyfer.com.br, #382).
 - RSC não entra. Biblioteca pesada só de servidor (markdown, PDF) roda em `createServerFn` chamada
   pelo `loader`, e o módulo de servidor só é importado dentro do handler.
   _doc-lib/tanstack-start.md#guide/server-components, #guide/import-protection.

@@ -1,8 +1,10 @@
+import { existsSync } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
+
+import app from '@adonisjs/core/services/app'
 
 import { FIELD_LABELS, RULE_MESSAGES } from '@maiyu/shared'
 import type { Locale } from '@maiyu/shared'
-import app from '@adonisjs/core/services/app'
 
 /**
  * Reading `resources/lang/<locale>/*.json` in the specs.
@@ -38,14 +40,43 @@ export function langDirectory(locale: string): string {
   return app.makePath('resources/lang', locale)
 }
 
-/** The `*.json` files of a language, without the extension. */
+/**
+ * The `*.json` files of a language, without the extension, nested ones included
+ * (`validator/shared/fields`): the i18n loader reads the folder recursively, so a
+ * nested file the spec skipped would be text nobody checks.
+ */
 export async function langFiles(locale: Locale): Promise<Array<string>> {
-  const listing = await readdir(langDirectory(locale))
+  const listing = await readdir(langDirectory(locale), { recursive: true })
 
   return listing
     .filter((file) => file.endsWith('.json'))
     .map((file) => file.replace(/\.json$/, ''))
     .sort()
+}
+
+/**
+ * The project's field labels: a nested file the loader keys as
+ * `validator.shared.fields.*`, merged with the kit's `validator.json`. It is not in
+ * `validator.json` because the sync overwrites that file (KIT.md §3.4).
+ */
+const PROJECT_FIELDS_FILE = 'validator/shared/fields'
+
+/**
+ * `validator.json` plus the project's labels, keyed as `validator.json` keys them
+ * (`shared.fields.title`). A project with no resource label has no file, and that is
+ * not an error.
+ */
+export async function readValidatorLang(locale: Locale): Promise<LangEntries> {
+  const entries = new Map(await readLang(locale, 'validator'))
+  const project = `${langDirectory(locale)}/${PROJECT_FIELDS_FILE}.json`
+
+  if (!existsSync(project)) return entries
+
+  for (const [key, message] of await readLang(locale, PROJECT_FIELDS_FILE)) {
+    entries.set(`shared.fields.${key}`, message)
+  }
+
+  return entries
 }
 
 export async function readLang(

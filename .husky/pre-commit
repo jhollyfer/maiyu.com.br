@@ -14,12 +14,19 @@ touches() {
   printf '%s\n' "$staged" | grep -q "^$1/"
 }
 
-if touches shared; then
+# A frontend-only project has no backend/: an app that is not in the workspace is skipped, not run.
+has() {
+  [ -f "$1/package.json" ]
+}
+
+if has shared && touches shared; then
   pnpm --filter ./shared check && pnpm --filter ./shared test:unit || exit 1
 fi
-if touches backend || touches shared; then
+if has backend && { touches backend || touches shared; }; then
   pnpm --filter ./backend check && pnpm --filter ./backend test:unit || exit 1
 fi
-if touches frontend || touches shared; then
+# backend too: the frontend tsconfig includes the backend for the Tuyau registry, so a backend type
+# change can break the frontend typecheck.
+if has frontend && { touches frontend || touches shared || touches backend; }; then
   pnpm --filter ./frontend check && pnpm --filter ./frontend test:unit || exit 1
 fi

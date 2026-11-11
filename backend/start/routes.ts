@@ -17,7 +17,7 @@ import {
   signInAccountThrottle,
   signInThrottle,
   uploadThrottle,
-} from '#start/limiter'
+} from '#start/limiter.base'
 
 /**
  * Routes are grouped by who may enter, and the group carries the middleware: a new route is
@@ -26,17 +26,17 @@ import {
  */
 
 /** Liveness probe: no session, no query (`architecture.md` §7). */
-router.get('/health-check', [controllers.HealthCheck]).as('health-check')
+router.get('/health-check', [controllers.HealthCheck])
 
 /** The document does not document itself: both routes stay outside every authenticated group. */
 router
   .get('/openapi.json', [controllers.documentation.openapi.show.Show])
-  .as('documentation.openapi')
+  .as('documentation.openapi.show')
   .use(middleware.documentation())
 
 router
   .get('/documentation', [controllers.documentation.reference.show.Show])
-  .as('documentation.reference')
+  .as('documentation.reference.show')
   .use(middleware.documentation())
 
 /**
@@ -47,19 +47,21 @@ router
   .group(() => {
     router
       .post('sign-in', [controllers.authentication.sessions.signIn.SignIn])
+      .as('authentication.sessions.sign-in')
       .use([signInThrottle, signInAccountThrottle])
     // Signing out deletes *this* session's tokens, so it is the only one that needs it.
     router
       .post('sign-out', [controllers.authentication.sessions.signOut.SignOut])
+      .as('authentication.sessions.sign-out')
       .use(middleware.auth())
     // Outside `auth()`: the expired access token is what brings the client here, and the
     // refresh cookie is what authorizes.
     router
       .post('refresh', [controllers.authentication.sessions.refresh.Refresh])
+      .as('authentication.sessions.refresh')
       .use(refreshThrottle)
   })
   .prefix('authentication')
-  .as('authentication')
 
 /**
  * Attachments, for every signed-in role. The binary never passes through the API: `POST`
@@ -67,26 +69,32 @@ router
  */
 router
   .group(() => {
-    router.get('/', [controllers.storages.files.paginate.Paginate])
+    router
+      .get('/', [controllers.storages.files.paginate.Paginate])
+      .as('storages.files.paginate')
     router
       .post('/', [controllers.storages.files.create.Create])
+      .as('storages.files.create')
       .use(uploadThrottle)
     router
       .post(':id/complete', [controllers.storages.files.complete.Complete])
-      .as('complete')
+      .as('storages.files.complete')
       .use(uploadThrottle)
     // Before `:id`: the two-segment path must not be swallowed by the generic one.
     router
       .get(':id/parts', [controllers.storages.files.parts.Parts])
-      .as('parts')
+      .as('storages.files.parts')
       .use(uploadThrottle)
-    router.get(':id', [controllers.storages.files.show.Show])
-    router.delete(':id', [controllers.storages.files.delete.Delete])
+    router
+      .get(':id', [controllers.storages.files.show.Show])
+      .as('storages.files.show')
+    router
+      .delete(':id', [controllers.storages.files.delete.Delete])
+      .as('storages.files.delete')
     // Behind the session: outside it, it would mint signed URLs for any uuid.
     router
       .get(':id/download', [controllers.storages.files.download.Download])
-      .as('download')
+      .as('storages.files.download')
   })
   .prefix('storages')
-  .as('storages')
   .use(middleware.auth())

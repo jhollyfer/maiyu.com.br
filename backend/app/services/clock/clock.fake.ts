@@ -14,7 +14,11 @@ import { ClockContract } from '#services/clock/clock.contract'
 export class ClockFake extends ClockContract {
   private current: DateTime
 
-  constructor(start: DateTime = DateTime.fromISO('2026-01-01T12:00:00.000Z', { zone: 'utc' })) {
+  constructor(
+    start: DateTime = DateTime.fromISO('2026-01-01T12:00:00.000Z', {
+      zone: 'utc',
+    }),
+  ) {
     super()
     this.current = start
   }

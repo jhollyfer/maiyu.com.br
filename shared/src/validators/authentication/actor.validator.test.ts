@@ -1,20 +1,23 @@
 import { describe, expect, it } from 'vitest'
 
+import { USER_ROLES } from '../../enums/user-role.js'
 import { ActorSchema } from './actor.validator.js'
-import { USER_ROLE } from '../../enums/user-role.js'
+
+// The roles belong to the project (extension point): the test reads whatever the project defines.
+const [ROLE] = USER_ROLES
 
 describe('ActorSchema', () => {
   it('when the account has an avatar or not, accepts it', () => {
     const withoutAvatar = ActorSchema.safeParse({
       id: 'a1',
       email: 'ana@exemplo.com',
-      role: USER_ROLE.EDITOR,
+      role: ROLE,
       avatarId: null,
     })
     const withAvatar = ActorSchema.safeParse({
       id: 'a1',
       email: 'ana@exemplo.com',
-      role: USER_ROLE.ADMINISTRATOR,
+      role: ROLE,
       avatarId: 'f1',
     })
 
@@ -26,7 +29,7 @@ describe('ActorSchema', () => {
     const result = ActorSchema.safeParse({
       id: 'a1',
       email: 'ana@exemplo.com',
-      role: 'OWNER',
+      role: '__not_a_role__',
       avatarId: null,
     })
 
@@ -37,7 +40,7 @@ describe('ActorSchema', () => {
     const result = ActorSchema.safeParse({
       id: 'a1',
       email: 'ana@exemplo.com',
-      role: USER_ROLE.EDITOR,
+      role: ROLE,
       avatarId: null,
       password: 'segredo',
     })
@@ -45,7 +48,7 @@ describe('ActorSchema', () => {
     expect(result.data).toEqual({
       id: 'a1',
       email: 'ana@exemplo.com',
-      role: USER_ROLE.EDITOR,
+      role: ROLE,
       avatarId: null,
     })
   })

@@ -42,6 +42,29 @@ export abstract class StorageRepository {
   abstract save(storage: Storage): Promise<void>
   /** Deletes the row for good: `storages` has no trash. */
   abstract delete(storage: Storage): Promise<void>
+  /**
+   * Writes the confirmed file only while its row is still `PENDING`, in a single
+   * conditional write (`UPDATE ... WHERE status = 'PENDING'`). Of two concurrent
+   * `complete` calls, one gets the file back and the other gets `null`, rereads
+   * the row and answers with the winner (`_standards/backend.md` §5.4).
+   */
+  abstract claimCompletion(storage: Storage): Promise<Storage | null>
+  /**
+   * Deletes the row only while it is still `PENDING`, in a single conditional
+   * write, the mirror of `claimCompletion`. `false` means it is gone or a
+   * concurrent `complete` marked it first, and then the row is that call's
+   * answer: cancelling must not take it away.
+   */
+  abstract deletePending(id: string): Promise<boolean>
+  /** The uploads opened before `before` that never reached `complete`, oldest first. */
+  abstract findAbandoned(before: Date): Promise<Storage[]>
+  /**
+   * The files confirmed before `before` that no column of `STORAGE_REFERENCES`
+   * points to, oldest first. The age is the confirmation's (`updatedAt`), not
+   * the opening's: a resumed upload opened long ago and confirmed now may be the
+   * file a form is about to attach.
+   */
+  abstract findOrphans(before: Date): Promise<Storage[]>
   abstract paginate(
     criteria: StorageListCriteria,
   ): Promise<Paginated<StorageFileRead>>

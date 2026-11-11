@@ -1,12 +1,11 @@
 import { test } from '@japa/runner'
 
-import { COOKIE_TOKEN } from '#config/session-token'
+import { SESSION_TOKEN } from '#config/session-token'
 import {
-  ADMINISTRATOR,
   authenticateAsAdministrator,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
-import { findUserByEmail } from '#tests/users-fixtures'
 
 /**
  * The guard checks the token `name`, not just the signature.
@@ -15,19 +14,22 @@ import { findUserByEmail } from '#tests/users-fixtures'
  * by verification: without this check, presenting the refresh one as an access token
  * would give a seven-day session where the contract promises one.
  */
+/** A route behind `auth()` that the kit itself brings: the listing of the signed-in role's files. */
+const PROTECTED = '/storages'
+
 test.group('guards > cookie-access-tokens', (group) => {
   group.each.setup(() => resetDatabase())
 
   test('a valid access token authenticates', async ({ client }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const response = await client.get('/account').cookies(session)
+    const response = await client.get(PROTECTED).cookies(session)
 
     response.assertStatus(200)
   })
 
   test('without a cookie answers 401', async ({ client }) => {
-    const response = await client.get('/account')
+    const response = await client.get(PROTECTED)
 
     response.assertStatus(401)
   })
@@ -37,16 +39,16 @@ test.group('guards > cookie-access-tokens', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
 
-    const response = await client.get('/account').cookies({
-      [COOKIE_TOKEN.ACCESS]: session[COOKIE_TOKEN.REFRESH],
+    const response = await client.get(PROTECTED).cookies({
+      [SESSION_TOKEN.ACCESS]: session[SESSION_TOKEN.REFRESH],
     })
 
     response.assertStatus(401)
   })
 
   test('a token that does not exist answers 401', async ({ client }) => {
-    const response = await client.get('/account').cookies({
-      [COOKIE_TOKEN.ACCESS]: 'oat_abc.def',
+    const response = await client.get(PROTECTED).cookies({
+      [SESSION_TOKEN.ACCESS]: 'oat_abc.def',
     })
 
     response.assertStatus(401)
@@ -55,12 +57,11 @@ test.group('guards > cookie-access-tokens', (group) => {
   test('a deactivated account loses access on the next request', async ({
     client,
   }) => {
-    const session = await authenticateAsAdministrator(client)
-    const user = await findUserByEmail(ADMINISTRATOR.email)
+    const { user, session } = await signInWithFactory(client, 'administrator')
     user.status = 'INACTIVE'
     await user.save()
 
-    const response = await client.get('/account').cookies(session)
+    const response = await client.get(PROTECTED).cookies(session)
 
     response.assertStatus(401)
   })

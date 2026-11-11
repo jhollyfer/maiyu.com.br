@@ -1,9 +1,8 @@
-import type { Either } from '@maiyu/shared'
-
 import { Storage } from '#domain/storage/storage.entity'
 import { StorageMemoryRepository } from '#repositories/storage/storage.memory.repository'
-import { StorageFake } from '#services/storage/storage.fake'
 import { MultipartFake } from '#services/multipart/multipart.fake'
+import { StorageFake } from '#services/storage/storage.fake'
+import { rightOf } from '#tests/either-fixtures'
 
 export const FILE_ID = '8a7b6c5d-4e3f-4a2b-9c1d-0e9f8a7b6c5d'
 
@@ -11,7 +10,7 @@ export const FILE_ID = '8a7b6c5d-4e3f-4a2b-9c1d-0e9f8a7b6c5d'
 export function pendingFile(
   overrides: { id?: string; uploadId?: string | null } = {},
 ): Storage {
-  return Storage.open({
+  const opened = Storage.open({
     id: overrides.id ?? FILE_ID,
     key: 'capa.png',
     originalName: 'capa.png',
@@ -21,6 +20,8 @@ export function pendingFile(
     partSize: 10 * 1024 * 1024,
     now: new Date('2026-10-29T12:00:00Z'),
   })
+
+  return rightOf(opened)
 }
 
 /** An already confirmed file. */
@@ -46,14 +47,4 @@ export function storageDoubles() {
     bucket: new StorageFake(),
     multipart: new MultipartFake(),
   }
-}
-
-/** The right side of the result; a `left` in the arrangement or the assertion fails the test. */
-export function rightOf<L, R>(result: Either<L, R>): R {
-  if (result.isLeft())
-    throw new Error(
-      `esperava right, veio left: ${JSON.stringify(result.value)}`,
-    )
-
-  return result.value
 }

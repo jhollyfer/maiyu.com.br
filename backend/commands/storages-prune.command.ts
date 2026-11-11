@@ -1,12 +1,30 @@
 import { BaseCommand, flags } from '@adonisjs/core/ace'
-import { DateTime } from 'luxon'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 
-/** How many hours a `PENDING` may stay up before it is considered abandoned. */
+import ErrorMessage from '#core/error-message'
+
+/** How many hours a `PENDING` or an orphan `UPLOADED` may stay before it goes. */
 const DEFAULT_HOURS = 24
 
+const HOUR_IN_MS = 60 * 60 * 1000
+
 /**
- * Deletes the uploads that started and never finished.
+ * The refusals of the delete use case that are a race with someone else, not
+ * a failure of the sweep: another replica or a `DELETE` took the row
+ * (`STORAGE_NOT_FOUND`), a `complete` confirmed it first
+ * (`STORAGE_ALREADY_UPLOADED`), a form attached it after the listing
+ * (`STORAGE_IN_USE`). They count as skipped and log at info; the exit code
+ * turns 1 only on what nobody expected (a 5xx or an exception).
+ */
+const BENIGN_RACES: ReadonlySet<string> = new Set([
+  'STORAGE_NOT_FOUND',
+  'STORAGE_ALREADY_UPLOADED',
+  'STORAGE_IN_USE',
+])
+
+/**
+ * Deletes the uploads that started and never finished, and the confirmed files
+ * nobody attached.
  *
  * The upload has three steps and the binary does not pass through here:
  * `POST /storages` writes the `PENDING` row and signs the URLs, the client uploads the
@@ -20,26 +38,31 @@ const DEFAULT_HOURS = 24
  * it is garbage only the multipart abort reaches. Without this sweep the state
  * machine never closes: `PENDING` is the only state one never leaves.
  *
- * Reuses `StoragesFileDeleteUseCase` instead of repeating the abort here: deleting a
- * `PENDING` is exactly what `DELETE` already does, and two implementations of the
- * same thing leaves one behind. The reference rule is no obstacle -
- * `assertExist` refuses to attach what is not `UPLOADED`, so a `PENDING`
- * cannot be in use.
+ * The orphan is the other half (`StorageRepository.findOrphans`): an avatar
+ * uploaded and then replaced, an attachment of a form never submitted. Its age
+ * is counted from the confirmation, with the same `--hours`: a file confirmed a
+ * minute ago may be the one a form is about to submit.
+ *
+ * Both go through `StoragesFileDeleteUseCase` instead of repeating the abort and
+ * the reference rule here: two implementations of the same thing leaves one
+ * behind. The use case checks the references again, so a file attached between
+ * the listing and the deletion answers `STORAGE_IN_USE` and stays.
  *
  * There is no scheduler inside the application: this is a command, and whoever
  * repeats it is the environment (host cron, Kubernetes `CronJob`). Running on two
- * replicas at the same time is harmless - the second finds the row already deleted
- * and counts it as absent.
+ * replicas at the same time is harmless: the second finds the row already gone
+ * and counts it as skipped (`BENIGN_RACES`). Only the unexpected error makes the
+ * command exit with code 1.
  */
 export default class StoragesPrune extends BaseCommand {
   static override commandName = 'storages:prune'
   static override description =
-    'Deletes the abandoned PENDING uploads and aborts the multipart of each one'
+    'Deletes the abandoned PENDING uploads (aborting the multipart) and the orphan UPLOADED files'
 
   static override options: CommandOptions = { startApp: true }
 
   @flags.number({
-    description: `Minimum age, in hours, to consider a PENDING abandoned (default: ${DEFAULT_HOURS})`,
+    description: `Minimum age, in hours, to consider a PENDING abandoned or an UPLOADED orphan (default: ${DEFAULT_HOURS})`,
   })
   declare hours: number
 
@@ -49,49 +72,63 @@ export default class StoragesPrune extends BaseCommand {
   declare dryRun: boolean
 
   override async run() {
-    const { default: Storage } = await import('#models/storage')
+    const { StorageRepository } =
+      await import('#repositories/storage/storage.repository')
     const { default: StoragesFileDeleteUseCase } =
       await import('#features/storages/files/delete/delete.use-case')
-    const { UPLOAD_STATUS } = await import('@maiyu/shared')
 
     const hours = this.hours ?? DEFAULT_HOURS
-    const cutoff = DateTime.now().minus({ hours })
+    const cutoff = new Date(Date.now() - hours * HOUR_IN_MS)
+    const storages = await this.app.container.make(StorageRepository)
 
-    // The column order is that of the index `storages_status_created_at_index`.
-    const abandoned = await Storage.query()
-      .where('status', UPLOAD_STATUS.PENDING)
-      .where('createdAt', '<', cutoff.toSQL() ?? '')
-      .orderBy('createdAt', 'asc')
+    const swept = [
+      ...(await storages.findAbandoned(cutoff)),
+      ...(await storages.findOrphans(cutoff)),
+    ]
 
-    if (abandoned.length === 0) {
-      this.logger.info(`No PENDING upload older than ${hours}h.`)
+    if (swept.length === 0) {
+      this.logger.info(
+        `No PENDING upload nor orphan file older than ${hours}h.`,
+      )
       return
     }
 
     if (this.dryRun) {
-      for (const storage of abandoned) {
+      for (const storage of swept) {
+        const { originalName, status, createdAt } = storage.snapshot()
+
         this.logger.info(
-          `${storage.id} ${storage.originalName} (${storage.createdAt?.toISO()})`,
+          `${storage.id} ${originalName} ${status} (${createdAt?.toISOString()})`,
         )
       }
 
       this.logger.info(
-        `${abandoned.length} upload(s) would be deleted. Nothing was touched.`,
+        `${swept.length} file(s) would be deleted. Nothing was touched.`,
       )
       return
     }
 
     const useCase = await this.app.container.make(StoragesFileDeleteUseCase)
+    const logger = (await this.app.container.make('logger')).child({
+      command: 'storages:prune',
+    })
 
     let removed = 0
+    let skipped = 0
     let failed = 0
 
-    for (const storage of abandoned) {
+    for (const storage of swept) {
       // An error on one row does not bring down the batch: the bucket may refuse to abort
       // an `uploadId` it no longer knows, and the next sweep would never get past the
       // first row if that interrupted it.
       try {
-        const result = await useCase.execute({ id: storage.id })
+        const result = await useCase.execute({ id: storage.id, logger })
+
+        if (result.isLeft() && BENIGN_RACES.has(result.value.code)) {
+          skipped += 1
+          this.logger.info(`${storage.id}: ${result.value.message}`)
+          continue
+        }
 
         if (result.isLeft()) {
           failed += 1
@@ -102,22 +139,14 @@ export default class StoragesPrune extends BaseCommand {
         removed += 1
       } catch (error) {
         failed += 1
-        this.logger.warning(`${storage.id}: ${this.messageOf(error)}`)
+        this.logger.warning(`${storage.id}: ${ErrorMessage.of(error)}`)
       }
     }
 
-    this.logger.success(`${removed} upload(s) deleted, ${failed} failed.`)
+    this.logger.success(
+      `${removed} file(s) deleted, ${skipped} skipped, ${failed} failed.`,
+    )
 
     if (failed > 0) this.exitCode = 1
-  }
-
-  /**
-   * The message of any error, for logging: `catch` hands over `unknown`, and
-   * interpolating a non-`Error` straight into the template would come out `[object Object]`.
-   */
-  private messageOf(error: unknown): string {
-    if (error instanceof Error) return error.message
-
-    return String(error)
   }
 }

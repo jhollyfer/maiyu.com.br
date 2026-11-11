@@ -1,6 +1,7 @@
 import { inject } from '@adonisjs/core'
+import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
-import logger from '@adonisjs/core/services/logger'
+
 import {
   left,
   right,
@@ -10,10 +11,11 @@ import {
 
 import { FilePresenter } from '../files.presenter.ts'
 
+import type { IdentifierPayload } from '#core/validator'
 import type { Storage } from '#domain/storage/storage.entity'
 import HTTPException from '#exceptions/http.exception'
+import { UploadParts } from '#features/storages/_shared.parts'
 import { StorageRepository } from '#repositories/storage/storage.repository'
-import { StorageContract } from '#services/storage/storage.contract'
 import {
   MultipartContract,
   PART_SIZE,
@@ -22,12 +24,7 @@ import {
   type PresignedPart,
   type UploadedPart,
 } from '#services/multipart/multipart.contract'
-import {
-  countParts,
-  pendingParts,
-  sizedParts,
-} from '#features/storages/_shared.parts'
-import type { IdentifierPayload } from '#core/validator'
+import { StorageContract } from '#services/storage/storage.contract'
 
 type Payload = IdentifierPayload
 type Response = Either<HTTPException, StoragesFileUploadResponse>
@@ -72,7 +69,7 @@ export default class StoragesFilePartsUseCase {
 
       const file = storage.snapshot()
       const partSize = file.partSize ?? PART_SIZE
-      const totalParts = countParts(file.size, partSize)
+      const totalParts = UploadParts.count(file.size, partSize)
       const url = await this.bucket.signedUrl(file.path)
 
       // Already confirmed: nothing to upload. Return the same shape with empty
@@ -93,14 +90,14 @@ export default class StoragesFilePartsUseCase {
       }
 
       const uploaded = await this.uploaded(storage)
-      const missing = pendingParts({
+      const missing = UploadParts.pending({
         totalParts,
         uploaded: uploaded.map((part) => part.partNumber),
         batch: PRESIGNED_BATCH,
       })
       const parts = await this.sign(
         storage,
-        sizedParts(missing, file.size, partSize),
+        UploadParts.sized(missing, file.size, partSize),
       )
 
       return right(
@@ -115,7 +112,10 @@ export default class StoragesFilePartsUseCase {
         }),
       )
     } catch (error) {
-      logger.error({ err: error }, '[storages/files > parts][error]')
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[storages/files > parts][error]',
+      )
 
       return left(
         HTTPException.InternalServerError(

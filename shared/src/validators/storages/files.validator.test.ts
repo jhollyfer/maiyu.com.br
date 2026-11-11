@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
+import { ValidationFixture } from '../../validation-fixtures.js'
+import { ValidationMessage } from '../../validator.js'
 import {
   StoragesFileCompleteValidator,
   StoragesFileCreateValidator,
   StoragesFilePaginateValidator,
 } from './files.validator.js'
-import { ValidationFixture } from '../../validation-fixtures.js'
-import { ValidationMessage } from '../../validator.js'
 
 describe('StoragesFileCreateValidator', () => {
   it('when given the metadata of an allowed type, it accepts it', () => {

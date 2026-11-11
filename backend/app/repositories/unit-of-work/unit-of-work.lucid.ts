@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import db from '@adonisjs/lucid/services/db'
+
 import type { Either } from '@maiyu/shared'
 
 import { UnitOfWork } from './unit-of-work.ts'
@@ -12,7 +13,7 @@ import { TransactionContext } from '#core/transaction-context'
  * `TransactionContext` the repositories read, and decides by the `Either`.
  */
 @inject()
-export class UnitOfWorkLucid extends UnitOfWork {
+export class LucidUnitOfWork extends UnitOfWork {
   constructor(private readonly transaction: TransactionContext) {
     super()
   }

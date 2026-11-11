@@ -1,5 +1,5 @@
-import app from '@adonisjs/core/services/app'
 import { defineConfig } from '@adonisjs/core/http'
+import app from '@adonisjs/core/services/app'
 
 import { TrustedProxies } from '#core/trusted-proxies'
 import env from '#start/env'
@@ -38,11 +38,22 @@ export const http = defineConfig({
   allowMethodSpoofing: false,
 
   /**
-   * Off: the request language reaches the use case by `I18n` injection
-   * (`providers/i18n.provider.ts`), the form the doc prefers over async local
-   * storage (_doc-lib/adonisjs.md#guides/basics/http-context).
+   * Above the idle time of the proxy in front: the proxy closes the idle
+   * connection, not the API in the middle of a request the proxy reused (the
+   * symptom is a sporadic 502). Node's default is 5 s; the deployment page gives
+   * 55000 against the 50 s of Nginx (_standards/backend.md §5.6 item 7;
+   * _doc-lib/adonisjs.md#deployment, https://docs.adonisjs.com/deployment).
    */
-  useAsyncLocalStorage: false,
+  keepAliveTimeout: 55_000,
+
+  /**
+   * On: the use case logs through `HttpContext.getOrFail().logger`, the request
+   * logger that carries the request id (`DECISIONS.md` #314), and `getOrFail`
+   * throws without async local storage
+   * (_doc-lib/adonisjs.md#guides/basics/http-context). The request language still
+   * reaches the use case by `I18n` injection (`providers/i18n.provider.ts`).
+   */
+  useAsyncLocalStorage: true,
 
   /**
    * Redirect configuration controls the behavior of

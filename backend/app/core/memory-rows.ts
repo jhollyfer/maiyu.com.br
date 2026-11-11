@@ -102,8 +102,13 @@ export default class MemoryRows {
     return values.some((value) => value.toLowerCase().includes(term))
   }
 
-  /** Orders by the criterion's column, cuts the page and builds Lucid's meta. */
-  static page<Row, Item>(
+  /**
+   * Orders by the criterion's column and then by `id` in the same direction,
+   * cuts the page and builds Lucid's meta. The `id` tie-break is the one
+   * `LucidMapping.page` applies: without it, rows sharing the column's value
+   * come out in insertion order here and in another order in Postgres (#347).
+   */
+  static page<Row extends { readonly id: string }, Item>(
     rows: ReadonlyArray<Row>,
     criteria: PageCriteria<string>,
     read: {
@@ -117,7 +122,8 @@ export default class MemoryRows {
     const sorted = rows.toSorted(
       (left, right) =>
         direction *
-        MemoryRows.compare(read.sortValue(left), read.sortValue(right)),
+        (MemoryRows.compare(read.sortValue(left), read.sortValue(right)) ||
+          MemoryRows.compare(left.id, right.id)),
     )
     const page = MemoryRows.slice(sorted, criteria.page, criteria.perPage)
 

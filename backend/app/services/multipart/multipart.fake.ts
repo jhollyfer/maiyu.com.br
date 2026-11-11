@@ -22,39 +22,42 @@ export class MultipartFake extends MultipartContract {
     return this
   }
 
-  async initiate(key: string): Promise<string> {
+  initiate(key: string): Promise<string> {
     this.initiated.push(key)
 
-    return `upload-${key}`
+    return Promise.resolve(`upload-${key}`)
   }
 
-  async signParts(
+  signParts(
     key: string,
     _uploadId: string,
     parts: ReadonlyArray<PartToSign>,
   ): Promise<Array<PresignedPart>> {
-    return parts.map(({ partNumber }) => ({
-      partNumber,
-      url: `https://bucket.test/${key}?part=${partNumber}`,
-    }))
+    return Promise.resolve(
+      parts.map(({ partNumber }) => ({
+        partNumber,
+        url: `https://bucket.test/${key}?part=${partNumber}`,
+      })),
+    )
   }
 
-  async signSingle(key: string): Promise<string> {
-    return `https://bucket.test/${key}?single`
+  signSingle(key: string): Promise<string> {
+    return Promise.resolve(`https://bucket.test/${key}?single`)
   }
 
-  async listParts(
-    _key: string,
-    uploadId: string,
-  ): Promise<Array<UploadedPart>> {
-    return this.uploaded.get(uploadId) ?? []
+  listParts(_key: string, uploadId: string): Promise<Array<UploadedPart>> {
+    return Promise.resolve(this.uploaded.get(uploadId) ?? [])
   }
 
-  async complete(key: string): Promise<void> {
+  complete(key: string): Promise<void> {
     this.completed.push(key)
+
+    return Promise.resolve()
   }
 
-  async abort(key: string): Promise<void> {
+  abort(key: string): Promise<void> {
     this.aborted.push(key)
+
+    return Promise.resolve()
   }
 }
