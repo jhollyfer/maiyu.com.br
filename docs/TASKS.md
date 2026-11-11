@@ -136,7 +136,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 |---|---|---|---|---|
 | RD.1 | `AGENTS.md` pelo modelo de `_templates/AGENTS.md`, `CLAUDE.md` com `@AGENTS.md` | P | Feita | branch `docs/regua-agents` |
 | RD.2 | `docs/` reescrito a partir dos modelos e do código; DECISIONS locais que eram desvio marcadas como substituídas | M | A fazer | #6, #8, #9, #10, #11, #14 |
-| RD.3 | `ARCHITECTURE.md` §9.1 com o que o painel do Coolify faz | P | A fazer | modelo do academy |
+| RD.3 | `ARCHITECTURE.md` §9.1 com o que o painel do Coolify faz | P | Feita | os dois recursos (site e API) pelo quadro de `tooling.md` §8.3; branch `docs/regua-docs` |
 | RD.4 | `frontend/README.md`, `frontend/AGENTS.md` e `components/common/CLAUDE.md` pela régua | P | A fazer | |
 
 ## Fase N · Ideias (fora do escopo atual)

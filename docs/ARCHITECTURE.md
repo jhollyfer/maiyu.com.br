@@ -39,7 +39,7 @@ para o dono (R2.10 de `TASKS.md`), e o frontend ainda não a chama (RB.5).
 | Fila | Não se aplica: sem e-mail nem tarefa fora da requisição | | |
 | Arquivos | bucket S3 privado (MinIO só em dev e teste), upload multipart assinado; imagens do site em `src/assets` | | `_standards/backend.md` §5.4 |
 | Contrato | `openapi.json` gerado e conferido por `openapi:check`, referência Scalar em `/documentation` | | `_standards/openapi.md` |
-| Deploy | imagem Docker Nitro no Coolify, publicada pelo GitHub Actions | | §9 |
+| Deploy | dois recursos no Coolify (site e API), construídos do Git por `Dockerfile-production` | | §9 |
 
 ## 3. Estrutura de pastas
 
@@ -143,28 +143,52 @@ conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Pap�
 |---|---|---|---|---|
 | Desenvolvimento | site http://localhost:3000, API http://localhost:3333 | máquina local (`pnpm dev`) | Postgres do `backend/docker-compose.yml` na porta 5440 | não se aplica |
 | Preview / Homologação | Não se aplica | | | |
-| Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | push na `main` dispara o workflow |
-| Produção (API) | `https://api.maiyu.com.br` (decisão do dono, 2026-11-11); recurso no Coolify a criar, com `CORS_ORIGINS=https://maiyu.com.br` | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
+| Produção (site) | https://maiyu.com.br | Coolify, `frontend/Dockerfile-production`, imagem Nitro na porta 3000 | não se aplica | *Auto Deploy* do recurso: o merge na `main` dispara o build (§9.1) |
+| Produção (API) | https://api.maiyu.com.br (decisão do dono, 2026-11-11) | Coolify, `backend/Dockerfile-production`, porta 3333 | Postgres do Coolify, só na rede interna | *Auto Deploy* do recurso (§9.1) |
 
-Health check: `GET /health-check` (resposta `{ "status": "ok" }`, `no-store`), o nome exato que a
-régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECISIONS.md` #15).
+Health check: `GET /health-check` nos dois apps (no site, `{ "status": "ok" }` com `no-store`), o nome
+exato que a régua exige, sem alias (`_standards/DECISIONS.md` #184, `DECISIONS.md` #15). O
+repositório não tem passo de deploy nem GitHub Actions de entrega: quem constrói e publica é o
+Coolify, puxando o commit da `main` (`_standards/tooling.md` §8.3, `_standards/DECISIONS.md` #298).
 
 ### 9.1 O que a plataforma faz e o repositório não
 
-| O quê | Onde se configura | Por quê |
+Dois recursos *Application* no Coolify, os dois com origem no repositório privado pelo **GitHub App**,
+*Branch* `main`, *Build Pack* `Dockerfile`, *Base Directory* `/` e *Auto Deploy* ligado
+(`_standards/tooling.md` §8.3; `_doc-lib/coolify.md`). Cada um com o quadro abaixo.
+
+| Campo | Recurso do site (`maiyu.com.br`) | Recurso da API (`api.maiyu.com.br`) |
 |---|---|---|
-| Recurso da API: *Base Directory* `/`, *Dockerfile Location* `/backend/Dockerfile-production`, *Watch Paths* `backend/**`, `shared/**`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` | painel do Coolify | a imagem constrói da raiz para ver o `shared/` e o lockfile único |
-| *Post-deployment command* da API: `node ace migration:run --force && node ace db:seed` (o Lucid recusa `--force` no seed, `_standards/DECISIONS.md` #372); *Pre-deployment* vazio | painel do Coolify | o *Pre-deployment* roda no container que sai; o seed do dono é `firstOrCreate` e pode rodar a cada deploy |
-| Healthcheck da API: campo vazio no painel, vale o `HEALTHCHECK` da imagem em `/health-check` | painel do Coolify | `_standards/tooling.md` §8.3 |
-| Variáveis de runtime da API (`APP_KEY`, `DATABASE_URL`, `CORS_ORIGINS`, `COOKIE_DOMAIN`, `TRUSTED_PROXIES`, `STORAGE_*`, `SEED_OWNER_*`) | recurso da API no Coolify | nunca no repositório (`ENV.md` §1.1) |
-| Postgres sem porta pública, URL interna no `DATABASE_URL` | recurso de banco do Coolify | `_standards/tooling.md` §8.3 |
-| CORS do bucket de produção aberto ao site, com `PUT` e `ETag` exposto | painel do provedor S3 ou R2 | sem o `ETag` exposto nenhum upload multipart se completa |
-| Healthcheck do painel em `/health-check` | painel do Coolify | o painel sobrepõe o `HEALTHCHECK` do `Dockerfile-production`; em `/` mediria a renderização da home inteira |
-| Aplicação na imagem Nitro, porta 3000 | painel do Coolify | o site anterior era nginx estático na porta 80 |
-| `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID`, `VITE_SITE_URL` | secrets do repositório no GitHub | os workflows do perfil sem backend publicam a imagem `maiyu-app` e chamam o deploy (`DECISIONS.md` #14) |
-| `UUID_APP` e `COOLIFY_URL` do deploy | `.github/workflows/main-deploy-coolify.yml` | o uuid é da aplicação e não da instância; uuid de outro team é aceito e não implanta nada |
-| Deploy por `POST` em `/api/v1/deploy` com `curl -fsS` | workflow | a rota responde 405 a `GET` desde o Coolify v4.2 |
-| Smoke test em `https://maiyu.com.br/revision.txt` com o sha do commit | workflow | prova que a imagem nova está de pé |
+| *Dockerfile Location* | `/frontend/Dockerfile-production` | `/backend/Dockerfile-production` |
+| *Watch Paths* (um padrão por linha, relativos à raiz do repositório) | `frontend/**`, `shared/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` | `backend/**`, `shared/**`, `package.json`, `pnpm-lock.yaml`, `pnpm-workspace.yaml` |
+| *Pre-deployment command* | vazio | vazio (roda no container que sai, antes do build) |
+| *Post-deployment command* | vazio | `node ace migration:run --force && node ace db:seed` (nunca `migration:refresh`, `reset` nem `fresh`; o Lucid recusa `--force` no seed, `_standards/DECISIONS.md` #372; o seed do dono é `firstOrCreate`) |
+| *Health Check* do painel | vazio: vale o `HEALTHCHECK` da imagem, que aponta para `/health-check` (porta 3000) | vazio: vale o `HEALTHCHECK` da imagem, que aponta para `/health-check` (porta 3333) |
+| Porta | 3000 (o site anterior era nginx estático na porta 80) | 3333 |
+| Variáveis de runtime | `SITE_ENV=production`, `TZ=America/Eirunepe` | `NODE_ENV=production`, `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `APP_KEY`, `DATABASE_URL`, `APP_SERVER_URL`, `APP_CLIENT_URL`, `COOKIE_DOMAIN`, `TRUSTED_PROXIES`, `STORAGE_*`, `SEED_OWNER_*` (lista e significado em `ENV.md` §1.1) |
+
+- *Watch Paths*: mudança em `shared/` ou no `package.json` da raiz redeploya os dois recursos; mudança
+  só no `frontend/` não redeploya a API (`_standards/DECISIONS.md` #355, #379).
+- `NODE_ENV` da API sem *Available at Buildtime*: marcada, entra no build como `production` e o
+  `pnpm install` pula as `devDependencies` que compilam o app. O site não precisa de variável de build
+  no painel: os `VITE_*` vêm de `frontend/.env.production` (`ENV.md` §3).
+- Valor secreto (`APP_KEY`, `DATABASE_URL`, `STORAGE_SECRET`, `SEED_OWNER_PASSWORD`) só no painel,
+  nunca no repositório nem neste arquivo.
+- Domínios: `maiyu.com.br` no recurso do site e `api.maiyu.com.br` no da API, o `COOKIE_DOMAIN`
+  `.maiyu.com.br` para a sessão do dono valer nos dois.
+- Postgres sem porta pública: o `DATABASE_URL` usa a URL **interna** que o Coolify mostra no recurso
+  de banco.
+- CORS do bucket de produção aberto ao site, com `PUT` e `ETag` exposto, no painel do provedor S3 ou
+  R2: sem o `ETag` exposto nenhum upload multipart se completa.
+- A prova do deploy é o healthcheck: o Coolify só troca o container quando o novo responde
+  `/health-check`. Depois do merge, conferir o deploy `finished` de cada recurso e
+  `curl -fsS https://maiyu.com.br/health-check` e `https://api.maiyu.com.br/health-check`
+  (`_standards/tooling.md` §8.3 e §10.1).
+- Rollback: aba *Rollback* do recurso no Coolify ou redeploy do commit anterior; toda migration
+  precisa ser compatível com a imagem anterior (expandir, migrar, contrair).
+- Secrets do repositório no GitHub (`DOCKERHUB_*`, `COOLIFY_*`, `VITE_SITE_URL`) deixam de existir
+  quando os workflows saem (`_standards/DECISIONS.md` #368, #369); o dono os apaga em Settings, Secrets
+  and variables, Actions.
 
 ## 10. Escala e limites conhecidos
 
