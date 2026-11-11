@@ -8,6 +8,7 @@ import {
   NotFoundPageHomeButton,
   NotFoundPageTitle,
 } from '#/components/common/not-found-page'
+import { RichText } from '#/components/common/rich-text/rich-text'
 import { Avatar, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import {
@@ -19,7 +20,6 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { articles } from '#/lib/articles'
-import type { ArticleBlock } from '#/lib/articles'
 import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { localizedDate } from '#/lib/site-i18n'
@@ -58,43 +58,28 @@ function ArticleNotFound(): React.JSX.Element {
 }
 
 /**
- * Como cada tipo de bloco se desenha, por lookup e não por `if`.
- *
- * Parágrafo com `leading-[1.75]` e corpo grande: a medida vem do `max-w`
- * do artigo, não de cada linha. O intertítulo leva o losango de urucum como
- * marcador de capítulo e mais espaço acima do que abaixo, para que ele
- * pertença ao parágrafo que abre, e não ao que fecha.
+ * A tipografia do corpo, por classe sobre o `prose` do `RichText`: a medida vem do `max-w` do
+ * artigo, e não de cada linha. O intertítulo leva o losango de urucum como marcador de capítulo
+ * e mais espaço acima do que abaixo, para que ele pertença ao parágrafo que abre, e não ao que
+ * fecha.
  */
-const BLOCKS: Record<
-  ArticleBlock['kind'],
-  (text: string, key: string) => React.JSX.Element
-> = {
-  heading: (text, key) => (
-    <div key={key} className="mt-16 mb-5">
-      <span
-        aria-hidden="true"
-        className="mb-5 block size-2 rotate-45 bg-urucum"
-      />
-      <h2 className="text-h2 text-balance">{text}</h2>
-    </div>
-  ),
-  paragraph: (text, key) => (
-    <p
-      key={key}
-      className="mb-7 text-body-lg leading-[1.75] text-foreground/85"
-    >
-      {text}
-    </p>
-  ),
-}
+const BODY_CLASS = cn(
+  'prose-lg',
+  'prose-p:mb-7 prose-p:text-body-lg prose-p:leading-[1.75]',
+  // A cor sai pela variável do prose: `text-body-lg` e `text-foreground/85` na mesma lista
+  // o `twMerge` do `RichText` trata como conflito e apaga o tamanho.
+  '[--tw-prose-body:color-mix(in_oklab,var(--foreground)_85%,transparent)]',
+  'prose-h2:mt-16 prose-h2:mb-5 prose-h2:text-h2 prose-h2:text-balance',
+  "prose-h2:before:mb-5 prose-h2:before:block prose-h2:before:size-2 prose-h2:before:rotate-45 prose-h2:before:bg-urucum prose-h2:before:content-['']",
+)
 
 /**
  * Um artigo do diário, inteiro: capa, foto de lugar com crédito e
  * o corpo numa coluna de leitura.
  *
- * O corpo vem de `articles.ts` já nas três línguas, bloco a bloco. Quando o
- * volume pedir markdown, ele passa a sair do `react-markdown`, como o
- * `RichText` do academy.
+ * O corpo vem de `articles.ts` como documento Tiptap nas três línguas e sai
+ * pelo `RichText` do kit, que o desenha no servidor: o texto do artigo está
+ * no HTML da resposta.
  */
 function RouteComponent(): React.JSX.Element {
   const article = route.useLoaderData()
@@ -181,9 +166,7 @@ function RouteComponent(): React.JSX.Element {
         data-slot="article-body"
         className="mx-auto max-w-[44rem] px-4 pt-16 pb-24 md:px-8 md:pt-24"
       >
-        {article.body.map((block, index) =>
-          BLOCKS[block.kind](localized(block.text), `${index}`),
-        )}
+        <RichText content={localized(article.body)} className={BODY_CLASS} />
       </article>
 
       <span

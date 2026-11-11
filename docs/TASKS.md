@@ -74,8 +74,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Feita | `feat/backend-inicial`; workspace do modelo e `shared/` (`@maiyu/shared`) com o kit da leva 8: format, lint, tsc e 62 testes |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | Feita | #241; MIGRATIONS.md; `@vinejs/vine` fora do frontend; os schemas dos formulários saíram do `shared/` com a decisão #17 (sem formulário no site) |
-| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | Em andamento | `tooling.md` §0.1 |
-| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Em andamento | `tooling.md` §0.1; Luxon feito; Tiptap estático bloqueado por lacuna do RichText do kit |
+| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | Feita | `tooling.md` §0.1; markdown e `motion` saíram com o diário em Tiptap |
+| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Feita | `tooling.md` §0.1; Luxon feito; o corpo dos artigos é documento Tiptap em JSON (um por língua) e o `RichText` do kit o desenha no SSR |
 | R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | Feita | `tooling.md` §0; MIGRATIONS.md; fica fora só o TypeScript 7 (exceção do §0); o `@tiptap/*` do `shared/` é da outra frente |
 | R1.8 | `tsconfig` com as flags do piso | P | Feita | `tooling.md` §3; `verbatimModuleSyntax: false` (#319) |
 | R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | Feita | `tooling.md` §4.1, §4.2; `eslint.config.js` do kit, que ignora `components/ui/` (#391) |
