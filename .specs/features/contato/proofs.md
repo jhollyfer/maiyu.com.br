@@ -1,8 +1,8 @@
 # contato proofs
 
-**HEAD**: 166f2b0
+**HEAD**: 14bf313
 **Tree**: clean
-**Result**: 33 pass, 1 fail; mutations 2 killed, 1 not
+**Result**: 33 pass, 0 fail; mutations 3 killed, 0 not
 
 | Check | Proof | Ran | Passed | Result |
 | --- | --- | --- | --- | --- |
@@ -36,8 +36,7 @@
 | Build | `cd backend && pnpm lint` | - | - | pass |
 | Build | `cd backend && pnpm format:check` | - | - | pass |
 | Build | `cd backend && pnpm openapi:check` | - | - | pass |
-| Build | `cd backend && pnpm -s pattern:check > /tmp/pattern-check.txt 2>&1` | - | - | **fail** -  |
-| Build | `! grep -e '^ *backend/' -e '^ *shared/' /tmp/pattern-check.txt` | - | - | pass |
+| Build | `node -e "const r=require('child_process').spawnSync('pnpm',['-s','pattern:check'],{cwd:'backend',encoding:'utf` | - | - | pass |
 | Build | `cd backend && pnpm authz:check` | - | - | pass |
 | Build | `cd backend && pnpm validators:check` | - | - | pass |
 
@@ -47,4 +46,4 @@
 | --- | --- | --- |
 | C17: guarda de 12 meses vira 13 | `backend/app/features/administrator/contacts/prune/prune.use-case.ts:13` | yes |
 | C24: o grupo administrator sem o role() deixa o MEMBER passar | `backend/start/routes.ts:148` | yes |
-| edge case: claimAnswer sem o answered_at IS NULL regrava answered_at | `backend/app/repositories/contact/contact.lucid.repository.ts:84` | no |
+| edge case: claimAnswer sem o answered_at IS NULL regrava answered_at | `backend/app/repositories/contact/contact.lucid.repository.ts:84` | yes |

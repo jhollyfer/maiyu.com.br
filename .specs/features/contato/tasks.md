@@ -9,7 +9,7 @@ Implement these tasks with the `tlc-spec-driven` skill: **activate it by name an
 ---
 
 **Design**: `.specs/features/contato/design.md`
-**Status**: Approved
+**Status**: Done
 **Approved**: 2026-11-11 - user: "o dono APROVOU o R2.10 como recomendado" (via regente; respostas 1 a 7 como recomendado, T8 entra, aviso por e-mail fora)
 **Mutations**: 3
 **Build note**: o `pattern:check` lê o repositório inteiro e acusa 6 achados de `frontend/`, de outra frente (R1.7 e R2/R3); o Build reprova só achado em `backend/` ou `shared/`.
@@ -342,7 +342,7 @@ Proof: `cd backend && node ace test functional --files="app/features/administrat
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** batch worker 1 (T1-T10) at HEAD c190d8e, returned at 529a5fb; Verifier at HEAD 2af11bb (proofs 32/32)
+**Dispatched:** batch worker 1 (T1-T10) at HEAD c190d8e, returned at 529a5fb; Verifier at HEAD 7d400b4, returned FAIL (3 achados) at 468bf6e; fix pass returned at bb42111; round 2 at 14bf313: 33/33, 3 mutations killed
 **Walked:** none
 
 ---

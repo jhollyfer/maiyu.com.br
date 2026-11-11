@@ -193,7 +193,7 @@ Proof: `cd backend && node ace test functional --files="app/features/account/pro
 The feature's live state, written as it happens - a compaction gives no warning.
 
 **Settled mid-build:** none
-**Dispatched:** none
+**Dispatched:** batch worker 2 (T1-T5) at HEAD after the contato gate
 **Walked:** none
 
 ---
