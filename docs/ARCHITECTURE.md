@@ -100,9 +100,10 @@ Banco da API (`backend/database/migrations/`, todas do kit):
 
 | Tabela | O que guarda |
 |---|---|
-| `users` | a conta do dono: nome, e-mail único, hash Argon2 da senha, papel `ADMINISTRATOR`, status e arquivamento |
+| `users` | a conta do dono: nome, e-mail único, hash Argon2 da senha, papel `ADMINISTRATOR`, status, foto (`avatar_id` em `storages`) e arquivamento |
 | `auth_access_tokens` | o par de tokens da sessão (acesso e refresh rotativo), apagado em logout e em mudança de senha, e-mail, papel ou status |
 | `rate_limits` | contadores dos limites nomeados de `start/limiter.ts` |
+| `consumed_refresh_tokens` | refresh já usado, para detectar reuso e revogar a família da sessão |
 | `storages` | metadados do arquivo no bucket: nome, tipo, tamanho, estado do upload multipart |
 
 O conteúdo do site continua em constantes tipadas em `frontend/src/lib/` (`projects`, artigos de

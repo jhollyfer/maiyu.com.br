@@ -21,6 +21,14 @@ export default class extends BaseSchema {
         .enum('status', ['ACTIVE', 'INACTIVE'])
         .notNullable()
         .defaultTo('ACTIVE')
+      // Whoever attaches keeps the reference, so a single files table needs no owner column.
+      // `SET NULL`: deleting the avatar file must not delete the account.
+      table
+        .uuid('avatar_id')
+        .nullable()
+        .references('id')
+        .inTable('storages')
+        .onDelete('SET NULL')
       table.timestamp('created_at').notNullable()
       table.timestamp('updated_at').nullable()
       table.timestamp('deleted_at').nullable()

@@ -24,14 +24,15 @@ R0.2 (JSON-LD com `<` escapado) e o R0.4 (`.gitignore` da raiz pela régua, `.gi
 modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança) está pronto na branch
 `fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
 
-Frente do backend (R1.2 e RB.1 a RB.4), na branch `feat/backend-inicial`, com a leva 6 do kit
-(`maiyu-pattern` em ae62029) e a `main` mergeada. O `shared/` está verde (lint, typecheck, build e 55
-testes) e o R1.2 está em revisão. O backend recebeu a leva 6, com os pontos de extensão alinhados ao
-esqueleto novo, mas ainda não compila: faltam no kit `database/factories/user.factory.ts`,
-`scripts/pattern-check.config.ts` e a migration de `storages`, e o Ace não sobe sem o
-`database/schema.ts`, que só a migration gera. Levado à regente; nenhuma lacuna se escreve no projeto.
-O RB.3 fica no que o kit traz (seeder do dono e as três rotas de sessão). O MinIO local é ambiente
-declarado: e2e de storage contra ele não conta como prova de PR.
+Frente do backend (R1.2 e RB.1 a RB.4), na branch `feat/backend-inicial`, com a leva 6.1 do kit
+(`maiyu-pattern` em 6a0d5bc). O `shared/` está verde; `index.ts` e `enums/user-role.ts` são provisórios
+do projeto até a leva 8. O backend compila (tsc 0), as migrations do kit rodam e geram o
+`database/schema.ts`, e `openapi.json`, `authz-baseline.json` e `.adonisjs/` (sem o `routes.json`, #388)
+estão versionados. Unitário 232 de 233 e funcional 124 de 143: todas as falhas, e as de lint, format,
+`pattern:check` e `validators:check`, estão em arquivos do kit (specs que supõem `/account`, a tabela
+`sports`, papel fora do staff, datas fixas e `localhost:5173`), levadas à regente. Nenhuma lacuna se
+escreve no projeto. O RB.3 fica no que o kit traz. O MinIO local é ambiente declarado: e2e de storage
+contra ele não conta como prova de PR.
 
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).

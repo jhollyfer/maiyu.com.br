@@ -1,0 +1,2307 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "API",
+    "version": "1.0.0",
+    "description": "Toda falha devolve o mesmo corpo: `{ message, status, code, errors? }`, em que `code` é o identificador de máquina e `errors` liga campo a mensagem."
+  },
+  "servers": [
+    {
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Autenticação",
+      "description": "Entrada, saída e renovação da sessão. O par de tokens viaja em cookies `httpOnly`, então estas rotas respondem `204` sem corpo."
+    },
+    {
+      "name": "Arquivos",
+      "description": "Upload em três passos: o `POST` abre e assina as URLs das partes, o navegador manda os bytes direto ao bucket e o `complete` confirma."
+    }
+  ],
+  "paths": {
+    "/authentication/refresh": {
+      "post": {
+        "operationId": "authenticationRefresh",
+        "summary": "Renovar a sessão",
+        "tags": [
+          "Autenticação"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Sessão não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AuthenticationSessionRefreshError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Renova a sessão a partir do cookie de refresh e responde `204` com o novo par de tokens em `Set-Cookie`.\n\nFica **fora** do grupo autenticado de propósito: é justamente o token de acesso vencido que traz alguém aqui, então exigir sessão válida tornaria a rota inalcançável. O que autoriza é o cookie de refresh, e nada mais.\n\n**Rotaciona**: o refresh usado é apagado quando o novo é emitido. Refresh usado que volta é **reuso** e encerra todas as sessões da conta, inclusive o par emitido a partir dele. Dois refresh simultâneos com o mesmo token não são reuso: um vence, o outro recebe `401` e as sessões ficam.\n\nCookie ausente, ilegível, que não é de refresh ou reusado responde `401` `AUTHENTICATION_REQUIRED`, sem distinguir qual foi.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
+    "/authentication/sign-in": {
+      "post": {
+        "operationId": "authenticationSignIn",
+        "summary": "Entrar",
+        "tags": [
+          "Autenticação"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Credenciais inválidas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401InvalidCredentials"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AuthenticationSessionSignInError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Abre a sessão. Responde `204` **sem corpo**: o que importa é o `Set-Cookie` com o par de tokens `httpOnly`. O cliente nunca manipula o token, e nenhum dado do usuário viaja dentro dele.\n\nA falha é **indistinguível pela causa**: senha errada, conta inativa e conta arquivada devolvem o mesmo `401`. É isso que impede descobrir, pela resposta, quais e-mails existem.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthenticationSignInBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/authentication/sign-out": {
+      "post": {
+        "operationId": "authenticationSignOut",
+        "summary": "Sair",
+        "tags": [
+          "Autenticação"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AuthenticationSessionSignOutError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Encerra a sessão **no servidor**, não só na tela: apaga o token de acesso atual e o de refresh, depois limpa os dois cookies. Responde `204` sem corpo.\n\nRefresh ilegível não impede a saída: os cookies são limpos mesmo assim, porque o resultado que a pessoa pediu é ficar sem sessão.\n\nApaga só os tokens desta sessão. Derrubar **todos** é consequência de trocar e-mail ou senha em `PUT /account`, não desta rota.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
+    "/storages": {
+      "get": {
+        "operationId": "storagesPaginate",
+        "summary": "Listar arquivos",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/StoragesPaginateItem"
+                      }
+                    }
+                  },
+                  "required": [
+                    "meta",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFilePaginateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "A biblioteca de arquivos do painel. `?search` filtra por nome original, nome gerado e tipo, `?status` separa o que já subiu do envio aberto, e `?mimetype` restringe a um tipo só.\n\n`?mimetype` aceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav.\n\n`?sort` aceita originalName, mimetype, size, createdAt e `?direction` aceita asc ou desc. Padrão: página 1, 20 por página, do mais recente ao mais antigo, porque numa biblioteca de arquivos o que importa é o que acabou de subir.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "PENDING",
+                "UPLOADED"
+              ]
+            }
+          },
+          {
+            "name": "mimetype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "image/jpeg",
+                "image/png",
+                "image/webp",
+                "image/gif",
+                "application/pdf",
+                "audio/mpeg",
+                "audio/mp4",
+                "audio/ogg",
+                "audio/wav"
+              ]
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "originalName",
+                "mimetype",
+                "size",
+                "createdAt"
+              ]
+            }
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ]
+            }
+          }
+        ]
+      },
+      "post": {
+        "operationId": "storagesCreate",
+        "summary": "Abrir o upload",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragesCreateResponse201"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Arquivo em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409StorageInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Arquivo inválido · Arquivo incompleto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Abre um envio e devolve para onde mandá-lo. **Não recebe bytes**: só os metadados do arquivo.\n\nO binário vai do navegador direto ao bucket, por URL assinada, e nunca atravessa esta aplicação: arquivo grande em corpo HTTP bate no limite do proxy, ocupa a aplicação durante o envio inteiro e não retoma quando a conexão cai.\n\nAceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav, até 1073741824 bytes, recusados **antes** de qualquer assinatura: arquivo proibido não ganha URL, então nunca chega ao bucket. Que o tamanho declarado é verdadeiro é o que `POST /storages/:id/complete` confere, contra o objeto real.\n\nO arquivo é fatiado em partes de 10485760 bytes. Quando cabe numa parte só, `uploadId` é nulo e a única URL aceita um `PUT` com o arquivo inteiro. Quando não cabe, cada URL aceita a sua parte, o cliente guarda o `ETag` que cada `PUT` devolve, e `parts` pode trazer só o primeiro lote: o resto vem de `GET /storages/:id/parts`, que é o mesmo endpoint da retomada.\n\nA linha nasce `PENDING` e não pode ser anexada a nada até ser confirmada. O arquivo nasce sem dono: quem anexa guarda a referência, informando o `id` no campo do recurso (hoje, o `avatarId` do usuário).",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragesCreateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storages/{id}": {
+      "get": {
+        "operationId": "storagesShow",
+        "summary": "Detalhar arquivo",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragesShowResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Arquivo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404StorageNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileShowError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Devolve o registro cru, sem envelope: o rótulo original, o tipo, o tamanho, o estado do envio e a `url` derivada.\n\nVale também para arquivo ainda `PENDING`: a tela de detalhe é onde se descobre que um envio ficou pela metade. Quem anexa é quem exige `UPLOADED`.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "storagesDelete",
+        "summary": "Remover arquivo",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Arquivo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404StorageNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "O envio já foi confirmado e não pode mais ser cancelado. · Arquivo em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409StorageAlreadyUploadedStorageInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Arquivo inválido · Arquivo incompleto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileDeleteError"
+                }
+              }
+            }
+          }
+        },
+        "description": "**Irreversível**: apaga o binário no bucket e a linha em `storages`.\n\nSó apaga arquivo **órfão**. O arquivo é um registro neutro e compartilhado (não pertence ao formulário que o enviou), então quem o referencia manda: arquivo em uso por outro registro (hoje, o avatar de um usuário) responde `409`, com a origem na mensagem. Desvincule primeiro, apague depois.\n\nArquivo ainda `PENDING` é cancelamento de envio: o multipart é abortado, e é isso que faz as partes já enviadas sumirem do bucket.\n\nÉ o par de `POST /storages`, que grava o arquivo antes de o formulário ser salvo: sem esta rota, todo anexo escolhido e depois tirado da tela ficaria no bucket para sempre.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/storages/{id}/complete": {
+      "post": {
+        "operationId": "storagesComplete",
+        "summary": "Confirmar o upload",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragesCompleteResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Arquivo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404StorageNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Arquivo em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409StorageInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Arquivo inválido · Arquivo incompleto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileCompleteError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Fecha o envio aberto por `POST /storages`: o bucket remonta as partes e a linha vira `UPLOADED`, o único estado que pode ser anexado a alguma coisa.\n\nO corpo leva o `ETag` que cada `PUT` de parte devolveu: é assim que o storage confere que nenhuma parte se perdeu ou chegou pela metade. Envio de parte única não tem parte a confirmar, e `parts` fica ausente.\n\nÉ aqui que o tamanho **declarado** em `POST /storages` é comparado com o do objeto que chegou de fato. Se diverge, o objeto é apagado, a linha morre com ele e a resposta é `422`. O `mimetype` não é conferido porque não pode divergir: ele entra na assinatura da URL, e o bucket recusa o `PUT` que não bate com ele.\n\nChamar duas vezes é seguro: a segunda devolve o mesmo registro.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragesCompleteBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storages/{id}/download": {
+      "get": {
+        "operationId": "storagesDownload",
+        "summary": "Baixar o arquivo com o nome original",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "302": {
+            "description": "Sucesso"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Arquivo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404StorageNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileDownloadError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Redireciona para uma URL temporária do bucket que entrega o arquivo com `Content-Disposition: attachment` e o nome original.\n\nExiste por limitação do navegador, não do storage: o atributo `download` de um `<a>` é ignorado entre origens, e a API responde numa origem diferente da do app. Sem esta rota, \"salvar arquivo\" abriria a imagem numa aba, e o arquivo chegaria com o nome do uuid em vez do nome que a pessoa enviou.\n\nRedireciona em vez de servir o binário: o cabeçalho viaja assinado dentro da URL, então a aplicação entrega um endereço e sai do caminho, em vez de ficar ocupada durante cada transferência.\n\n**Exige sessão**: o bucket é `visibility: private`, e enquanto esta rota foi aberta ela emitia URL assinada para qualquer uuid sem sessão, a porta dos fundos que o fechamento do bucket deixou aberta. Arquivo que a pessoa não alcança responde `404` e não `403`, para não confirmar a quem sonda que o uuid existe.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/storages/{id}/parts": {
+      "get": {
+        "operationId": "storagesParts",
+        "summary": "Retomar o upload",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragesPartsResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Arquivo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404StorageNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFilePartsError"
+                }
+              }
+            }
+          }
+        },
+        "description": "De onde continuar: em `uploaded`, o que o bucket já recebeu; em `parts`, uma URL nova para o que falta.\n\nAtende dois casos que são o mesmo problema. **Retomada**: a conexão caiu no meio, e sem isto a única saída seria recomeçar. **Próximo lote**: as URLs saem 100 por vez, porque assinar tudo de uma vez seriam centenas de kilobytes de JSON antes do primeiro byte subir. Cada parte tem 10485760 bytes.\n\nAssinar de novo é o objetivo, não efeito colateral: URL assinada expira, e um envio que durou mais que a validade acha aqui um endereço novo para a mesma parte.\n\nArquivo já confirmado responde `200` com as duas listas vazias: quem pergunta é um cliente retomando, e ler o `status` e parar é o desfecho certo.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "access-token"
+      }
+    },
+    "parameters": {
+      "AcceptLanguage": {
+        "name": "Accept-Language",
+        "in": "header",
+        "required": false,
+        "description": "Idioma das mensagens. Fora da lista, ou ausente, vale pt-BR.",
+        "schema": {
+          "type": "string",
+          "enum": [
+            "pt-BR",
+            "es",
+            "en"
+          ],
+          "default": "pt-BR"
+        }
+      }
+    },
+    "schemas": {
+      "AuthenticationSignInBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 32,
+            "description": "Requires at least one lowercase letter, one uppercase letter, one digit and one special character.",
+            "allOf": [
+              {
+                "pattern": "[a-z]"
+              },
+              {
+                "pattern": "[A-Z]"
+              },
+              {
+                "pattern": "[0-9]"
+              },
+              {
+                "pattern": "[^a-zA-Z0-9]"
+              }
+            ]
+          },
+          "passwordConfirmation": {
+            "type": "string",
+            "description": "Exact repetition of `password`."
+          }
+        },
+        "required": [
+          "email",
+          "password",
+          "passwordConfirmation"
+        ],
+        "additionalProperties": false
+      },
+      "Error401AuthenticationRequired": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              401
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_REQUIRED"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error401InvalidCredentials": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              401
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "INVALID_CREDENTIALS"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error404StorageNotFound": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              404
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGE_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error409StorageAlreadyUploadedStorageInUse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGE_ALREADY_UPLOADED",
+              "STORAGE_IN_USE"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error409StorageInUse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGE_IN_USE"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGE_CONTENT_MISMATCH",
+              "STORAGE_SIZE_INVALID",
+              "STORAGE_SIZE_MISMATCH",
+              "STORAGE_TYPE_UNSUPPORTED",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
+      "Error422ValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
+      "Error429TooManyRequests": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              429
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "TOO_MANY_REQUESTS"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AuthenticationSessionRefreshError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_SESSION_REFRESH_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AuthenticationSessionSignInError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_SESSION_SIGN_IN_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AuthenticationSessionSignOutError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_SESSION_SIGN_OUT_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFileCompleteError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_COMPLETE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFileCreateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_CREATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFileDeleteError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_DELETE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFileDownloadError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_DOWNLOAD_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFilePaginateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_PAGINATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFilePartsError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_PARTS_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StoragesFileShowError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STORAGES_FILE_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "description": "Page metadata, as the Lucid paginator returns it.",
+        "properties": {
+          "total": {
+            "type": "integer"
+          },
+          "perPage": {
+            "type": "integer"
+          },
+          "currentPage": {
+            "type": "integer"
+          },
+          "lastPage": {
+            "type": "integer"
+          },
+          "firstPage": {
+            "type": "integer"
+          },
+          "firstPageUrl": {
+            "type": "string"
+          },
+          "lastPageUrl": {
+            "type": "string"
+          },
+          "nextPageUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "previousPageUrl": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "total",
+          "perPage",
+          "currentPage",
+          "lastPage",
+          "firstPage",
+          "firstPageUrl",
+          "lastPageUrl",
+          "nextPageUrl",
+          "previousPageUrl"
+        ]
+      },
+      "StoragesCompleteBody": {
+        "type": "object",
+        "properties": {
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 10000
+                },
+                "etag": {
+                  "type": "string",
+                  "maxLength": 64,
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "partNumber",
+                "etag"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "StoragesCompleteResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimetype": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "UPLOADED"
+            ]
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "originalName",
+          "mimetype",
+          "size",
+          "path",
+          "status",
+          "uploadId",
+          "partSize",
+          "createdAt",
+          "updatedAt",
+          "deletedAt",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesCreateBody": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "mimetype": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "image/gif",
+              "application/pdf",
+              "audio/mpeg",
+              "audio/mp4",
+              "audio/ogg",
+              "audio/wav"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1073741824
+          }
+        },
+        "required": [
+          "fileName",
+          "mimetype",
+          "size"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesCreateResponse201": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "originalName": {
+                "type": "string"
+              },
+              "mimetype": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number"
+              },
+              "path": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "UPLOADED"
+                ]
+              },
+              "uploadId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "partSize": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "createdAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "updatedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deletedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "originalName",
+              "mimetype",
+              "size",
+              "path",
+              "status",
+              "uploadId",
+              "partSize",
+              "createdAt",
+              "updatedAt",
+              "deletedAt"
+            ],
+            "additionalProperties": false
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": "number"
+          },
+          "totalParts": {
+            "type": "number"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "uploaded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "etag": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "size",
+                "etag"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "storage",
+          "uploadId",
+          "partSize",
+          "totalParts",
+          "parts",
+          "uploaded"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesPaginateItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimetype": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "UPLOADED"
+            ]
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "originalName",
+          "mimetype",
+          "size",
+          "path",
+          "status",
+          "uploadId",
+          "partSize",
+          "createdAt",
+          "updatedAt",
+          "deletedAt",
+          "url"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesPartsResponse200": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "originalName": {
+                "type": "string"
+              },
+              "mimetype": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number"
+              },
+              "path": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "UPLOADED"
+                ]
+              },
+              "uploadId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "partSize": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "createdAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "updatedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deletedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "originalName",
+              "mimetype",
+              "size",
+              "path",
+              "status",
+              "uploadId",
+              "partSize",
+              "createdAt",
+              "updatedAt",
+              "deletedAt"
+            ],
+            "additionalProperties": false
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": "number"
+          },
+          "totalParts": {
+            "type": "number"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "uploaded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "etag": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "size",
+                "etag"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "storage",
+          "uploadId",
+          "partSize",
+          "totalParts",
+          "parts",
+          "uploaded"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesShowResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "originalName": {
+            "type": "string"
+          },
+          "mimetype": {
+            "type": "string"
+          },
+          "size": {
+            "type": "number"
+          },
+          "path": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "UPLOADED"
+            ]
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deletedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "filename",
+          "originalName",
+          "mimetype",
+          "size",
+          "path",
+          "status",
+          "uploadId",
+          "partSize",
+          "createdAt",
+          "updatedAt",
+          "deletedAt",
+          "url"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
+}

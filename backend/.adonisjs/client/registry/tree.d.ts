@@ -1,0 +1,24 @@
+/* eslint-disable prettier/prettier */
+import type { routes } from './index.ts'
+
+export interface ApiDefinition {
+  healthCheck: typeof routes['health-check']
+  documentation: {
+    openapi: typeof routes['documentation.openapi']
+    reference: typeof routes['documentation.reference']
+  }
+  authentication: {
+    signIn: typeof routes['authentication.sign_in']
+    signOut: typeof routes['authentication.sign_out']
+    refresh: typeof routes['authentication.refresh']
+  }
+  storages: {
+    paginate: typeof routes['storages.paginate']
+    create: typeof routes['storages.create']
+    complete: typeof routes['storages.complete']
+    parts: typeof routes['storages.parts']
+    show: typeof routes['storages.show']
+    delete: typeof routes['storages.delete']
+    download: typeof routes['storages.download']
+  }
+}
