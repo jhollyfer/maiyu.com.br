@@ -25,12 +25,22 @@ test('refuses an external destination', () => {
   ]
 
   for (const redirect of attacks) {
-    expect(validateRedirectSearch({ redirect })).toEqual({})
+    expect(validateRedirectSearch({ redirect })).toStrictEqual({
+      redirect: undefined,
+    })
   }
 })
 
 test('ignores what is not a string', () => {
-  expect(validateRedirectSearch({})).toEqual({})
-  expect(validateRedirectSearch({ redirect: 42 })).toEqual({})
-  expect(validateRedirectSearch({ redirect: ['/administrator'] })).toEqual({})
+  expect(validateRedirectSearch({})).toStrictEqual({
+    redirect: undefined,
+  })
+  expect(validateRedirectSearch({ redirect: 42 })).toStrictEqual({
+    redirect: undefined,
+  })
+  expect(
+    validateRedirectSearch({ redirect: ['/administrator'] }),
+  ).toStrictEqual({
+    redirect: undefined,
+  })
 })
