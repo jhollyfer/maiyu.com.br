@@ -89,6 +89,102 @@ vez de chutar.
 
 **Skills:** `tdd`, `test-driven-development`; e2e: `playwright-skill`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Vitest: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e execução
+
+- **Vitest exige Vite >= 6.4 e Node >= 22.12, instalado como devDependency no `package.json` do app.** A página recomenda a cópia local, e o Vite virou peer dependency obrigatória (o Vitest usa o Vite instalado no projeto). [`#guide`](https://vitest.dev/guide/), [`#migration`](https://vitest.dev/guide/migration)
+- **Arquivo de teste leva `.test.` ou `.spec.` no nome.** É o filtro padrão do `include`; fora dele o arquivo não é coletado. [`#guide`](https://vitest.dev/guide/)
+- **`.vitest/` entra no `.gitignore`.** É onde o Vitest e as integrações gravam relatórios e artefatos (json, junit, html). [`#guide`](https://vitest.dev/guide/), [`#reporters`](https://vitest.dev/guide/reporters)
+- **Fora do terminal interativo (lint-staged, CI, hook) o comando é `vitest run` ou `--run`.** O watch mode é o padrão, e sem `--run` o processo não termina. [`#cli`](https://vitest.dev/guide/cli)
+- **`--shard` não se combina com `--watch`.** A página proíbe a combinação; o watch é ligado por padrão em dev. [`#cli`](https://vitest.dev/guide/cli)
+- **Remova `.only` antes do commit; em CI o Vitest lança erro se algum teste tiver `only`.** O CI é detectado sozinho e reprova a rodada. [`#filtering`](https://vitest.dev/guide/filtering), [`#api/test`](https://vitest.dev/api/test)
+
+### Configuração
+
+- **`define` e `resolve.alias` ficam no topo do config, nunca dentro de `test`.** São opções do Vite, lidas no nível de cima. [`#config`](https://vitest.dev/config/)
+- **`workspace` está depreciado desde 3.2: use `test.projects`.** A página substituiu o recurso pela configuração de projetos. [`#projects`](https://vitest.dev/guide/projects)
+- **Todo projeto tem `name` único, e arquivo de projeto usa `defineProject`.** Nome repetido faz o Vitest lançar erro; `defineProject` dá a checagem de tipo das opções que projeto aceita. [`#projects`](https://vitest.dev/guide/projects)
+- **Projeto referenciado por arquivo ou pasta não herda nada do config raiz, e `name`/`projects` nunca são herdados.** O raiz só vira projeto se for listado explicitamente. [`#projects`](https://vitest.dev/guide/projects), [`#migration`](https://vitest.dev/guide/migration)
+- **Config de projeto referenciado não carrega um campo `projects` sem querer.** Desde a 5.0 esse campo vira projetos aninhados em vez de um projeto único. [`#migration`](https://vitest.dev/guide/migration)
+- **Sem alias relativo: alias aponta para caminho absoluto a partir da raiz.** O Vite resolve alias relativo a partir do arquivo que importa, não da raiz. [`#common-errors`](https://vitest.dev/guide/common-errors)
+- **`globals` é `false` por padrão: importe `test`, `expect` e `vi` de `vitest`.** A página mantém a API explícita; bibliotecas como `@testing-library/react` só fazem a limpeza automática com globals, então sem eles a limpeza é chamada à mão. [`#config/globals`](https://vitest.dev/config/globals), [`#migration/jest`](https://vitest.dev/guide/migration/jest)
+- **Ambiente de DOM (`jsdom` ou `happy-dom`) é dependência instalada à parte e ligada em `environment`.** Não vem com o Vitest; `happy-dom` implementa o DOM de outro jeito, então teste que depende de layout ou navegação é conferido antes da troca. [`#features`](https://vitest.dev/guide/features), [`#config/environment`](https://vitest.dev/config/environment), [`#cli`](https://vitest.dev/guide/cli)
+- **`setupFiles` roda no processo do teste, antes de cada arquivo; não ponha ali trabalho além do necessário.** Com isolamento desligado ele roda de novo a cada arquivo sobre o mesmo global. [`#config/setupfiles`](https://vitest.dev/config/setupfiles)
+- **`globalSetup` roda uma vez, em outro escopo global, antes dos workers: o teste não enxerga variável global definida ali.** Para código no processo do teste, a página manda usar `setupFiles`. [`#config/globalsetup`](https://vitest.dev/config/globalsetup)
+- **`retry.condition` em forma de função só no arquivo de teste, nunca no config.** O config é serializado para os workers e a função não sobrevive. [`#config/retry`](https://vitest.dev/config/retry)
+
+### Paralelismo, pool e isolamento
+
+- **Testes que dividem um recurso externo sem acesso concorrente (um banco, por exemplo) rodam com `fileParallelism: false`.** Por padrão cada arquivo roda em paralelo em workers separados. [`#parallelism`](https://vitest.dev/guide/parallelism), [`#config/fileparallelism`](https://vitest.dev/config/fileparallelism)
+- **`concurrent` só ganha tempo em teste que espera (rede, timer, I/O); dentro do arquivo o padrão é sequencial.** Teste concorrente roda no mesmo worker por `Promise.all`, e `beforeEach`/`afterEach` podem se sobrepor. [`#parallelism`](https://vitest.dev/guide/parallelism)
+- **Teste concorrente usa o `expect` do contexto local (`({ expect }) =>`) para snapshot e asserção.** Com o global, o Vitest não sabe qual teste é o dono da asserção; vale também para `sequence.concurrent` com `expect.requireAssertions`. [`#features`](https://vitest.dev/guide/features), [`#api/test`](https://vitest.dev/api/test), [`#snapshot`](https://vitest.dev/guide/snapshot), [`#config/sequence`](https://vitest.dev/config/sequence), [`#extending-matchers`](https://vitest.dev/guide/extending-matchers)
+- **`isolate: false` só quando o código não depende de efeito colateral.** A página promete ganho de desempenho apenas nesse caso; `vitest doctor` mede o candidato rodando a suíte embaralhada. [`#config/isolate`](https://vitest.dev/config/isolate), [`#cli`](https://vitest.dev/guide/cli), [`#improving-performance`](https://vitest.dev/guide/improving-performance)
+- **`forks` (o padrão) é o pool aconselhado quando `threads` quebra; teste que precisa de outro fuso usa `forks`/`vmForks` ou `timeZone` no `Intl.DateTimeFormat`, nunca troca de `TZ` em runtime.** `threads` é mais rápido onde funciona, e os pools `vm*` têm desvantagens de sandbox. [`#config/pool`](https://vitest.dev/config/pool), [`#common-errors`](https://vitest.dev/guide/common-errors), [`#improving-performance`](https://vitest.dev/guide/improving-performance)
+- **`sequential`, `test.sequential` e `describe.sequential` saíram na 5.0.** Foram removidos depois de depreciados. [`#migration`](https://vitest.dev/guide/migration)
+
+### Escrita de teste
+
+- **Fixture pelo builder pattern de `test.extend`, uma fixture por responsabilidade.** É a forma recomendada: o tipo é inferido do retorno, e separar dá isolamento e dependência explícita. [`#test-context`](https://vitest.dev/guide/test-context)
+- **O contexto é sempre desestruturado (`({ database }) =>`), na fixture e no teste.** A página exige o padrão para o Vitest saber quais fixtures montar. [`#test-context`](https://vitest.dev/guide/test-context)
+- **`beforeAll`/`afterAll`/`aroundAll` que usam fixture estendida são chamados no objeto devolvido por `test.extend()`.** Senão o hook não acessa as fixtures. [`#test-context`](https://vitest.dev/guide/test-context)
+- **`test.scoped` está depreciado: use `test.override`, que não cria fixture nova.** Fixture nova vem de `test.extend`. [`#api/test`](https://vitest.dev/api/test), [`#test-context`](https://vitest.dev/guide/test-context)
+- **Pular teste condicionalmente é `test.skipIf`/`test.runIf`, não `if` em volta do código.** A página oferece o modificador para o teste continuar aparecendo no relatório. [`#api/test`](https://vitest.dev/api/test), [`#filtering`](https://vitest.dev/guide/filtering)
+- **Timeout como último argumento exclui o objeto de opções.** As duas formas não se combinam. [`#api/test`](https://vitest.dev/api/test)
+- **Teste assíncrono devolve Promise; o callback `done` do Jest não existe.** A migração manda trocar `done` por `new Promise`. [`#migration/jest`](https://vitest.dev/guide/migration/jest)
+- **Teste complexo (componente, E2E) vai em arquivo separado; in-source só para função pequena.** A página recomenda arquivo próprio fora do caso de utilitário. [`#in-source`](https://vitest.dev/guide/in-source)
+
+### Asserções
+
+- **Asserção assíncrona (`resolves`, `rejects`, `expect.poll`, `toMatchFileSnapshot`) sempre com `await`.** Desde a 5.0 a asserção sem `await` reprova o teste. [`#migration`](https://vitest.dev/guide/migration), [`#api/expect`](https://vitest.dev/api/expect), [`#snapshot`](https://vitest.dev/guide/snapshot)
+- **`expect.poll` não serve para snapshot nem `toThrow`; condição instável se resolve antes com `vi.waitFor`.** Snapshot sempre passaria e `toThrow` recebe o valor já resolvido. [`#api/expect`](https://vitest.dev/api/expect)
+- **`expect.poll` reprova quando o callback não termina dentro do `timeout`; espera longa legítima aumenta o `timeout`.** O callback recebe um `AbortSignal` para cancelar o trabalho em curso. [`#migration`](https://vitest.dev/guide/migration)
+- **`toThrow` recebe uma função que embrulha a chamada.** Sem o embrulho o erro não é capturado e o teste falha. [`#api/expect`](https://vitest.dev/api/expect)
+- **`toThrow("")` casa qualquer mensagem; para exigir texto, passe o trecho ou uma RegExp.** Desde a 5.0 a string vazia aceita qualquer erro. [`#migration`](https://vitest.dev/guide/migration)
+- **`expect.soft` só dentro da função de teste.** Fora dela não há teste para marcar a falha. [`#api/expect`](https://vitest.dev/api/expect)
+- **`toBeTypeOf` herda as manias de `typeof` (`null` é `object`).** A página alerta para o caso. [`#api/expect`](https://vitest.dev/api/expect)
+- **Asserção de mock é feita por `expect` (`toHaveBeenCalled`), e o estado do mock guarda objeto por referência.** Mutar o objeto depois da chamada muda o que a asserção vê. [`#api/mock`](https://vitest.dev/api/mock)
+- **Matcher customizado declara o tipo em arquivo ambiente incluído no `tsconfig.json`; matcher assíncrono tipa `Promise<void>` e é aguardado.** Sem a inclusão o tipo não aparece. [`#extending-matchers`](https://vitest.dev/guide/extending-matchers)
+
+### Snapshot
+
+- **Snapshot é commitado com o código e revisado no code review.** A página trata o artefato como parte da mudança. [`#snapshot`](https://vitest.dev/guide/snapshot)
+- **`toMatchFileSnapshot` nunca aponta para caminho gerido pelo Vitest (`__snapshots__/*.snap`).** A página proíbe o conflito de caminhos. [`#snapshot`](https://vitest.dev/guide/snapshot)
+
+### Teste de tipo
+
+- **`expectTypeOf` não faz nada em runtime: o teste de tipo exige `--typecheck`, em arquivo `*.test-d.ts`/`*.spec-d.ts`.** É o `typecheck.include` padrão; sem a flag nada é checado. [`#testing-types`](https://vitest.dev/guide/testing-types), [`#api/expect-typeof`](https://vitest.dev/api/expect-typeof), [`#config/typecheck`](https://vitest.dev/config/typecheck)
+- **`toMatchTypeOf` está depreciado: use `toExtend`, ou `toMatchObjectType` para objeto simples.** `toMatchObjectType` é o recomendado para objeto por pegar `readonly`. [`#api/expect-typeof`](https://vitest.dev/api/expect-typeof)
+
+### Mock
+
+- **`vi.mock`, `vi.unmock` e `vi.hoisted` só no nível de cima do arquivo de teste.** São içados para antes dos imports; desde a 5.0 chamá-los dentro de função, bloco ou `describe` lança erro. [`#migration`](https://vitest.dev/guide/migration), [`#api/vi`](https://vitest.dev/api/vi), [`#mocking`](https://vitest.dev/guide/mocking)
+- **`vi.mock` só alcança módulo importado com `import`, e o caminho é relativo (`import('./path/module.js')`), não alias.** `require()` foge do module runner, e alias não casa com o registro do mock. [`#api/vi`](https://vitest.dev/api/vi), [`#common-errors`](https://vitest.dev/guide/common-errors)
+- **Factory de módulo com export default devolve a chave `default`.** Sem ela o default some do mock. [`#api/vi`](https://vitest.dev/api/vi)
+- **`importOriginal` e `vi.importActual` são assíncronos e aguardados.** Substituem o `jest.requireActual`. [`#mocking/modules`](https://vitest.dev/guide/mocking/modules), [`#migration/jest`](https://vitest.dev/guide/migration/jest)
+- **Limpe ou restaure os mocks entre testes.** `clearMocks` já é `true` por padrão desde a 5.0 (zera o histórico, mantém a implementação); com teste concorrente assíncrono essa limpeza pode atrapalhar. [`#mocking`](https://vitest.dev/guide/mocking), [`#config/clearmocks`](https://vitest.dev/config/clearmocks), [`#migration`](https://vitest.dev/guide/migration)
+- **`vi.stubGlobal`, variável de ambiente trocada e `vi.setSystemTime` não voltam sozinhos entre testes: ligue `unstubGlobals` (ou `vi.unstubAllGlobals`), restaure a variável no `beforeEach` e chame `vi.useRealTimers`.** A página avisa que o valor persiste para o teste seguinte. [`#mocking/globals`](https://vitest.dev/guide/mocking/globals), [`#mocking`](https://vitest.dev/guide/mocking)
+- **Requisição de rede se mocka com Mock Service Worker.** É a ferramenta que a página recomenda. [`#mocking/requests`](https://vitest.dev/guide/mocking/requests)
+- **Sistema de arquivos se mocka com `memfs`.** A página recomenda a biblioteca em vez de mock manual de `fs`. [`#mocking/file-system`](https://vitest.dev/guide/mocking/file-system)
+
+### Cobertura e relatório
+
+- **Provider de cobertura é `v8`.** É a opção marcada como recomendada (sem pré-transpilação). [`#coverage`](https://vitest.dev/guide/coverage)
+- **Opção de cobertura por linha de comando com ponto exige `--coverage.enabled`, nunca `--coverage` sozinho.** A página proíbe a combinação. [`#config/coverage`](https://vitest.dev/config/coverage)
+- **`coverage.reportsDirectory` é apagado antes de cada rodada com `coverage.clean` (padrão).** Não aponte para pasta com outro conteúdo. [`#config/coverage`](https://vitest.dev/config/coverage)
+- **`coverage.thresholds` define o mínimo que reprova; glob de threshold não herda `perFile`.** `perFile` precisa ser posto em cada glob. [`#config/coverage`](https://vitest.dev/config/coverage), [`#migration`](https://vitest.dev/guide/migration)
+- **Relatório json/junit com `stdout` pode sair intercalado com outra saída; para CI grave em arquivo.** A página avisa que o JSON ou XML fica ilegível. [`#reporters`](https://vitest.dev/guide/reporters)
+- **O reporter `hanging-process` é só para depurar processo que não termina.** A página o descreve como caro em recurso. [`#reporters`](https://vitest.dev/guide/reporters)
+
+### Entradas removidas e Browser Mode
+
+- **`vitest/coverage`, `vitest/reporters`, `vitest/environments`, `vitest/snapshot`, `vitest/runners` e `vitest/suite` saíram na 5.0.** Use `vitest/node`, `vitest/runtime` ou `TestRunner` de `vitest`. [`#migration`](https://vitest.dev/guide/migration)
+- **No Browser Mode o provider é `playwright` ou `webdriverio`; `preview` não roda em CI e eventos vêm de `userEvent` de `vitest/browser`.** O `preview` e o `@testing-library/user-event` simulam eventos em vez de dispará-los. [`#browser`](https://vitest.dev/guide/browser/)
+
 ---
 
 ## Fundamentos

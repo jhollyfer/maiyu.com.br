@@ -10,8 +10,9 @@ packages:
 # (_doc-lib/pnpm.md#filtering).
 failIfNoMatch: true
 
-# `allowBuilds` belongs to the project (one comment with the reason per entry, `tooling.md` §1):
-# the sync compares this file without that block and keeps it when rewriting.
+# `allowBuilds` and `minimumReleaseAgeExclude` belong to the project (one comment with the reason
+# per entry, `tooling.md` §1): the sync compares this file without those blocks and keeps them when
+# rewriting.
 
 # Dependency build scripts run only when listed here: pnpm does not run any by default and
 # interrupts the install until the decision is made explicitly.

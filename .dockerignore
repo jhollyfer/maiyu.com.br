@@ -1,0 +1,29 @@
+# One for both images, which build from the root (`_standards/tooling.md` §8.2), with the list
+# from the pnpm page (_doc-lib/pnpm.md#docker). Every pattern carries `**/`: without it Docker only
+# matches at the root of the context, and `backend/.env` and `backend/node_modules` go into the
+# image (finding in aporta, SEGURANCA.md).
+
+# The machine's dependency tree (wrong architecture) and previous build output: the image
+# installs and compiles everything from the code (DECISIONS.md #290).
+**/node_modules
+**/dist
+**/build
+**/.output
+**/coverage
+**/tmp
+
+# History and documentation do not go into the image.
+.git
+**/.gitignore
+.github
+**/*.md
+
+# A secret never enters the build context. The frontend's `.env.production` is the exception: it
+# only carries public `VITE_*` variables, which the build embeds in the bundle (`backend.md` §6).
+**/.env
+**/.env.*
+!frontend/.env.production
+
+**/.vscode
+**/.idea
+**/.DS_Store

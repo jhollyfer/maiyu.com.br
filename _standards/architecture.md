@@ -55,7 +55,7 @@ para feature — e por isso é marcada *(opinião da casa)* onde a doc não fala
 | `policies/` | "quem pode" sobre um registro | `core`, `domain` | consultar banco por conta própria |
 | `middleware/` | transversal de requisição (auth, papel, tenant, idioma) | `core`, contratos | regra de uma feature |
 | `guards/` *(Adonis)* | guard de autenticação do framework (§3.2) | `core`, contratos, e o model da conta: o `GuardContract<User>` do `@adonisjs/auth` devolve o model e o provider de tokens mora nele | regra de negócio; qualquer outro model |
-| `features/` | operações: controller + use-case + testes | `domain`, contratos de `repositories/` e `services/`, `policies`, `core`, `exceptions` (`HTTPException`), `shared` | importar outra feature; importar `models/` ou implementação concreta |
+| `features/` | operações: controller + use-case + testes | `domain`, contratos de `repositories/` e `services/`, `policies`, `core`, `exceptions` (`HTTPException`), `shared` | importar outra feature; importar `models/` ou implementação concreta, **exceto** `*.memory.repository.ts` e `*.fake.ts` importados por `*.unit.spec.ts` (DECISIONS #331) |
 | `exceptions/` | `HTTPException` e a tradução de erro → resposta HTTP | `core` | — |
 
 A seta é sempre para dentro:
@@ -75,21 +75,23 @@ controller → use-case → domain
 backend/
 ├── package.json  tsconfig.json  eslint.config.js  prettier.config.js  .prettierignore
 ├── tsconfig.depcruise.json          # §3.4: só quando o alias vem de `paths`; alias por `imports` dispensa
-├── Dockerfile-production  .dockerignore  docker-compose.yml   # compose = só infra local
+├── Dockerfile-production  docker-compose.yml   # compose = só infra local; o .dockerignore é da raiz (§9, tooling.md §8.2, DECISIONS #327)
 ├── .env.example  .env.test                                     # backend.md §6
 ├── openapi.json                                                # artefato commitado (openapi.md)
 ├── infra/<serviço>/                 # Dockerfile e script do serviço local (minio…); config de provedor em infra/<provedor>-<tema>.json (§3.4)
 ├── app/
 │   ├── core/
 │   │   ├── response.ts              # envelope { message, status, code, errors? }, Paginated<T>
-│   │   ├── translation.ts           # Adonis: Translation.t(chave, variáveis) com o idioma da requisição (i18n.md §3)
 │   │   ├── same-site.ts             # valor de sameSite do cookie de sessão, decidido no boot (backend.md §4.10)
 │   │   ├── trusted-proxies.ts       # TRUSTED_PROXIES em lista, validado no boot; igual em todo projeto (_templates/code/, DECISIONS #280)
 │   │   ├── transaction-context.ts   # AsyncLocalStorage da transação, lido por 2+ repositories (domain.md §6)
 │   │   ├── validator.ts             # Fastify: reexporta o z de shared/ + regras só do backend; Adonis: o vine do backend (arquivo)
 │   │   ├── validator.unit.spec.ts   # meta-spec dos validators (backend.md §4.4)
+│   │   ├── memory-rows.ts  page-criteria.ts  unique-conflict.ts  repository-failure.ts   # helpers nomeados (DECISIONS #340)
+│   │   ├── terminal-text.ts  error-message.ts   # TerminalText.plain; ErrorMessage.of(unknown)
+│   │   ├── <tema>.ts                # helper puro usado por 2+ camadas, em classe; o nome é o tema (DECISIONS #340)
 │   │   ├── <tema>.{unit,e2e}.spec.ts # spec de configuração ou de recurso sem arquivo-casa (trust proxy, arquivos de idioma)
-│   │   └── openapi/                 # defineDocs, registro de resposta, authz-baseline.json
+│   │   └── openapi/                 # OpenApiDocs.defineDocs, registro de resposta, authz-baseline.json; conversores {vine-schema,zod-schema,field-patches}.ts e scalar.ts, porque a meta-spec importa deles (openapi.md, DECISIONS #357)
 │   ├── domain/
 │   │   ├── <entidade>/
 │   │   │   ├── <entidade>.entity.ts       # classe rica: create/restore, transições, invariantes
@@ -99,11 +101,13 @@ backend/
 │   ├── repositories/
 │   │   ├── shared/<nome>.ts               # serve a 2+ repositories e importa model ou faz I/O de persistência (Adonis: lucid-mapping.ts; driver: conexão, coleção com escopo); helper puro vai para core/ (DECISIONS #278)
 │   │   ├── unit-of-work/{unit-of-work.ts, unit-of-work.lucid.ts, unit-of-work.memory.ts}   # domain.md §6
+│   │   ├── session/                       # contrato e implementações da sessão (DECISIONS #339)
 │   │   └── <entidade>/
 │   │       ├── <entidade>.repository.ts            # contrato: abstract class, métodos por intenção
 │   │       ├── <entidade>.lucid.repository.ts      # implementação (Adonis); .mongo. no Fastify
 │   │       ├── <entidade>.memory.repository.ts     # implementação em memória para unit
 │   │       └── <entidade>.repository.e2e.spec.ts   # o mesmo teste de contrato nas duas
+│   │   (storage/ tem ainda storage.references.ts: do projeto, toda coluna que aponta para storages)
 │   ├── models/<entidade>.ts         # schema; só repositories/ importa
 │   ├── services/
 │   │   └── <nome>/                  # um por integração externa: mail, storage, cep, cnpj, pix…
@@ -112,17 +116,23 @@ backend/
 │   │       ├── <nome>.fake.ts       # dublê em memória para unit
 │   │       └── <nome>.unit.spec.ts
 │   ├── policies/<entidade>.policy.ts (+ .unit.spec.ts)   # base comum: session-scoped-policy.base.ts
-│   ├── middleware/<nome>.middleware.ts (+ .e2e.spec.ts)
+│   ├── middleware/<nome>.middleware.ts (+ .e2e.spec.ts)   # inclui private-cache.middleware.ts (Cache-Control com sessão, DECISIONS #339)
 │   ├── exceptions/{http.exception.ts, handler.ts}   # HTTPException e fábricas por status (backend.md §4.2); handler → envelope
 │   └── features/
-│       ├── health-check.controller.ts (+ .e2e.spec.ts)    # infra pura, sem módulo (§7)
+│       ├── health-check.controller.ts  health-check.controller.e2e.spec.ts   # infra pura, sem módulo (§7)
 │       ├── documentation/openapi/show/                     # /openapi.json como ação
+│       ├── documentation/reference/show/                   # página do Scalar (openapi.md, DECISIONS #357)
 │       ├── _shared.<tema>.ts        # só função pura, usada por 2+ módulos (backend.md §4.9)
+│       ├── _shared.refusal.base.ts  # base dos tradutores de fato de domínio em HTTPException (DECISIONS #341)
+│       ├── _shared.<tema>-refusal.ts       # refusal usado por 2+ módulos
+│       ├── _shared.<entidade>.presenter.ts # presenter usado por 2+ módulos
+│       ├── authentication/{sessions,registrations,invitations,passwords}/<ação>/   # DECISIONS #339
+│       ├── authentication/_shared.session-cookie.ts
 │       └── <módulo>/                # público ou contexto: administrator, storefront, authentication, account
 │           ├── _shared.<tema>.ts    # só função pura, usada por 2+ recursos do módulo
 │           ├── _shared.<tema>.base.ts   # abstract class de template method de 2+ recursos (backend.md §3)
 │           └── <recurso>/           # substantivo no plural: posts, users, sessions, profile
-│               ├── _shared.<recurso>-refusal.ts   # tradutor fato de domínio → HTTPException (se houver)
+│               ├── _shared.<entidade>-refusal.ts  # tradutor fato de domínio → HTTPException (se houver), entidade no singular
 │               ├── <recurso>.presenter.ts         # entidade → response do shared/ (§10)
 │               └── <ação>/          # verbo kebab: create, paginate, show, update, archive, sign-up…
 │                   ├── <ação>.controller.ts
@@ -131,18 +141,22 @@ backend/
 │                   └── <ação>.e2e.spec.ts         # rota real, banco real
 ├── commands/<recurso>-<verbo>.command.ts
 ├── commands/_<recurso>-<verbo>.command.e2e.spec.ts   # o loader do Ace ignora o que começa com `_`
-├── config/<nome>.ts                 # só configuração
+├── config/<nome>.ts                 # só configuração; Adonis: session-token.ts guarda nome e atributos do cookie (DECISIONS #339)
 ├── database/
 │   ├── migrations/                  # nome do framework (backend.md §3)
-│   ├── seeders/{<nome>.seed.ts, dev/<nome>.ts}
+│   ├── seeders/{<nome>.seed.ts, dev/<nome>.ts}   # só seeder: o Lucid carrega todo .ts daqui como seeder
 │   ├── factories/<entidade>.factory.ts   # só para teste
-│   └── data/<nome>.ts               # dado de seed/conteúdo, fora de seeders/
-├── scripts/{pattern-check.ts, pattern-check.config.ts, authz-check.ts, <nome>-check.ts} (+ .unit.spec.ts)
+│   └── data/{<nome>.ts, <nome>/}    # dado de seed/conteúdo, fora de seeders/; a pasta guarda asset (DECISIONS #354)
+├── scripts/{pattern-check.ts, pattern-check.config.ts, pattern-check.rules.ts, authz-check.ts, check-report.ts, <nome>-check.ts} (+ .unit.spec.ts)
+├── (operação é comando em `commands/`, nunca script em `scripts/`; shell de operação não existe, DECISIONS #348)
 ├── scripts/depcruise.config.ts      # regras de camada (domain.md §8), passado por `depcruise --config`
-├── scripts/openapi/{generate,introspect,emit,errors,verify}.ts   # openapi.md
-├── start/{env.ts, kernel.ts, limiter.ts}
+├── scripts/openapi/{introspect,emit,errors}.ts   # Adonis; Fastify: {generate,introspect,emit,errors}.ts (openapi.md, DECISIONS #357)
+├── start/{env.ts, kernel.ts, limiter.base.ts, limiter.ts}   # limiter.base.ts: os do kit, limiter.ts: os do projeto; [opc] mail.ts scheduler.ts transmit.ts events.ts, com a dependência (DECISIONS #351)
 └── tests/
     ├── bootstrap.ts | setup.<suíte>.ts
+    ├── database-guard.ts (+ .unit.spec.ts)   # recusa banco sem `_test` no nome ou fora de host local (backend.md §7, DECISIONS #350)
+    ├── seeders/{<nome>.seed.e2e.spec.ts, dev/<nome>.seed.e2e.spec.ts}   # spec do seeder, espelha database/seeders/ (DECISIONS #380)
+    ├── migrations/<nome>.e2e.spec.ts   # spec de migration de dado, mesmo nome do arquivo sem o timestamp (DECISIONS #380)
     └── <tema>-fixtures.ts           # helper usado por 2+ specs; sem helpers.ts genérico
 ```
 
@@ -159,6 +173,8 @@ Regras da árvore:
   direto nos validators: o `z` configurado (locale e mensagens da casa) sai de `shared/src/validator.ts`.
   **No backend Adonis** o validator de request é VineJS, em `app/validators/<módulo>/<recurso>.validator.ts`
   (§3), e ninguém importa `@vinejs/vine` direto: o `vine` configurado sai de `core/validator.ts`.
+  Regra de domínio de 2+ recursos tem o par no mesmo caminho do `shared/`:
+  `app/validators/<módulo>/_shared.<tema>.ts`, ou `app/validators/_shared.<tema>.ts` entre módulos.
   Validator é forma e formato; unicidade e existência são do use-case via repository (409/404).
 - **`_shared` é só função pura** (sem model, `db`, `drive` nem estado; o `pattern:check` recusa).
   Base de template method compartilhada é `abstract class` em `_shared.<tema>.base.ts`, nunca em
@@ -187,7 +203,7 @@ Não nascem vazias "para depois" (YAGNI). Entram quando a necessidade aparece, c
 |---|---|---|
 | `app/extensions/<grupo>/<tipo>/<id>/` | `manifest.json`, `boot.ts`, e dentro a mesma fatia vertical (`<recurso>/<ação>/…`, validators em `shared/`; no Adonis, o VineJS em `app/validators/`) | produto com funcionalidade instalável (plugin). Descoberta por varredura de pasta no boot; o `pattern:check` aplica as mesmas regras com raiz na extensão |
 | `frontend/src/extensions/<grupo>/<tipo>/<id>/index.tsx` | tela da extensão do backend, mesmo caminho lógico; componente em `export default`, achado por `import.meta.glob` em `lib/extensions-registry.ts` e carregado sob demanda (_doc-lib/vitejs.md#features); dado pela mesma camada de API do app (`integrations/tanstack-query/`), nunca uma própria | extensão do backend que tem tela; nada fora de `extensions/` e do registry importa de lá |
-| `app/hooks/<nome>/` | `<nome>.contract.ts` + `<nome>.service.ts` | ciclo de vida do framework que não é requisição (`onReady`, carga de extensões) |
+| `app/hooks/<nome>/` | `<nome>.contract.ts` + `<nome>.service.ts` | ciclo de vida do framework que não é requisição (`onReady`, carga de extensões). Hook global de requisição (`onRequest`, `preParsing`, `onSend`) não mora aqui: é `app/middleware/<n>.middleware.ts` com `static hook()` registrado no kernel (DECISIONS #360) |
 | `app/core/tenant-scope.ts` | escopo por `AsyncLocalStorage` (`node:async_hooks`), lido por todo repository | app multi-tenant. Falta de escopo **lança** (erro fechado), nunca vira "sem filtro" |
 | `app/core/request-context.ts` | `AsyncLocalStorage` com o `request.log` da requisição, preenchido no `onRequest` | só Fastify, quando código fora do handler loga (`backend.md` §5.6, item 4). No Adonis o `HttpContext` já cumpre esse papel |
 | `app/services/<nome>/internal/<sub>/` | sub-service não injetável de fora | integração grande que se divide por dentro |
@@ -203,13 +219,19 @@ backend/
 ├── app/
 │   ├── abilities/main.ts            # criado por `node ace add @adonisjs/bouncer` (backend.md §1.1)
 │   ├── core/column.ts               # prepare/consume compartilhados das colunas
+│   ├── core/rich-text.ts            # [opc] RichTextRule.richText(), com @tiptap/core no shared (bloco opcional do sync)
+│   ├── core/column-limits.ts        # ponto de extensão: teto das colunas que o kit valida (`COLUMN_LIMITS.SLUG`, KIT.md §3.4)
 │   ├── guards/<nome>.guard.ts
 │   ├── validators/<módulo>/<recurso>.validator.ts   # VineJS, par de caminho e nome do Zod em shared/ (§9)
-│   └── jobs/<nome>.job.ts
+│   ├── validators/<módulo>/_shared.<tema>.ts   # par VineJS do `_shared` de mesmo caminho em shared/src/validators/: regra de 2+ recursos do módulo, classe static (typescript.md §6)
+│   ├── validators/_shared.<tema>.ts   # a mesma regra entre módulos, par de shared/src/validators/_shared.<tema>.ts; nunca importa `_shared` de outro módulo
+│   ├── jobs/<nome>.job.ts
+│   └── listeners/<nome>.listener.ts # [opc] com o primeiro evento, registrado em start/events.ts (DECISIONS #351)
 ├── .adonisjs/{client,server}/       # gerado pelo framework e VERSIONADO: o código importa `#generated/*` (§3.4)
-├── providers/<nome>.provider.ts     # composition root: liga contrato → implementação
+├── providers/{repository.provider.ts, <contrato>.provider.ts, i18n.provider.ts}   # composition root, um por contrato; i18n.provider: bind(I18n) para fora de requisição (ace, job, seeder) (DECISIONS #334, #340)
 ├── database/{schema.ts (gerado), schema_rules.ts}
-├── resources/lang/{pt-BR,es,en}/*.json   # i18n.md
+├── resources/lang/{pt-BR,es,en}/{*.json, validator/shared/fields.json}   # i18n.md §3; fields.json: rótulo de campo do projeto
+├── resources/views/emails/<template>.edge   # [opc] com o primeiro e-mail (DECISIONS #351)
 └── start/{routes.ts, validator.ts}
 ```
 
@@ -217,8 +239,7 @@ backend/
 framework a cria quando precisa (_doc-lib/adonisjs.md#folder-structure,
 https://docs.adonisjs.com/folder-structure).
 
-Suítes Japa: `unit` (`app/**/*.unit.spec.ts`, `scripts/**/*.unit.spec.ts`) e `functional`
-(`app/**/*.e2e.spec.ts`). _doc-lib/adonisjs.md#guides/testing/introduction.
+Suítes Japa: os globs estão em §8 (fonte única, DECISIONS #330). _doc-lib/adonisjs.md#guides/testing/introduction.
 
 ### 3.3 Só no Fastify
 
@@ -247,19 +268,21 @@ Arquivo que não é código de camada também tem casa. O que não está aqui ne
 |---|---|---|
 | `.editorconfig` | raiz do repositório, um só | vale para os três pacotes; nenhum pacote tem o seu |
 | `.gitleaks.toml` | raiz, só se o projeto usa `gitleaks` (`tooling.md` §7) | allowlist com o motivo de cada entrada |
-| `.prettierignore` | um por pacote (`backend/`, `frontend/`, `shared/`) | só gerados e saída de build: o `.gitignore` da raiz não alcança o pacote onde o Prettier roda. No frontend entra `project.inlang/.lix`: o `inlang check` recria o README dele no CI e o `format:check` reprova. Página do Prettier sobre `.prettierignore` não conferida |
+| `.prettierignore` | um por pacote (`backend/`, `frontend/`, `shared/`) | só gerados e saída de build: o `.gitignore` da raiz não alcança o pacote onde o Prettier roda. No frontend entram `project.inlang/.lix`, `project.inlang/.meta.json` e `project.inlang/README.md`, que o compilador do Paraglide e o `inlang check` regravam a cada rodada, e o `format:check` reprova. No backend entram `database/schema.ts` (reescrito pelo `migration:run`) e `openapi.json` (o `openapi:check` compara byte a byte), e todo markdown de conteúdo que o projeto importa (aula, post): o Prettier reescreve texto e código inline dentro dele, e quem cobra a forma é o check do conteúdo (`DECISIONS.md` #308; https://prettier.io/docs/ignore, aberta, sem entrada em `_doc-lib`) |
 | `tsconfig.depcruise.json` | raiz do backend, só quando o alias do app não resolve pelo `tsConfig` | estende `tsconfig.json` e repete o alias em `paths`; o `tsConfig` do dependency-cruiser só lê `compilerOptions` (_doc-lib/dependency-cruiser.md#doc/options-reference.md). Com o alias no campo `imports` do `package.json` (Fastify), o `tsConfig` apontando para o `tsconfig.json` e as `conditionNames` do `enhancedResolveOptions` já resolvem: o arquivo não existe, para o alias não ficar em dois lugares (`DECISIONS.md` #263) |
 | `scripts/depcruise.config.ts` | `backend/scripts/` | `depcruise app --config scripts/depcruise.config.ts` (_doc-lib/dependency-cruiser.md#doc/cli.md) |
 | `backend/infra/<serviço>/` | Dockerfile e script do serviço de teste local; CORS e política de provedor em `infra/<provedor>-<tema>.json` | nunca produção (`tooling.md` §8.3) |
-| `backend/.adonisjs/` | versionado | a doc manda commitar (_doc-lib/adonisjs.md#folder-structure) |
+| `backend/.adonisjs/` | versionado, menos `server/routes.json` | a doc manda commitar (_doc-lib/adonisjs.md#folder-structure). O `routes.json` fica no `.gitignore`: o `AppProvider` de `@adonisjs/core` 7.6.0 o grava a cada boot fora de produção só para entregar as rotas ao dev server do assembler, que o lê e apaga; o boot de `node ace test` ou de um comando o deixa para trás. A doc não o cita, e o comentário do código diz que ele não é contrato (`DECISIONS.md` #388) |
 | `backend/tmp/` | ignorada, sem `.gitkeep` | a doc manda ignorar (§3.2) |
 | `app/core/<tema>.<unit\|e2e>.spec.ts` | `app/core/` | spec de configuração ou de recurso sem arquivo-casa; nome pelo tema |
+| spec ao lado do código | junto do coberto | em pasta de papel (`domain/<e>/`, `services/<n>/`, `repositories/<e>/`) o spec leva o nome da pasta (`storage.unit.spec.ts`, nunca `storage.service.unit.spec.ts`); em pasta plana, o nome do arquivo coberto; assunto vira `group` dentro do spec, não arquivo novo (`DECISIONS.md` #342) |
 | `scripts/openapi/errors.ts` | `backend/scripts/openapi/` | componentes de erro compartilhados do gerador estático (`openapi.md` #erros-do-use-case). Quando o kernel registra os componentes em runtime (`addSchema` do Fastify), eles moram em `app/core/openapi/`: `app/` não importa de `scripts/` (`DECISIONS.md` #264) |
 | `shared/src/merge.ts` | `shared/src/` | o utilitário `Merge` (`typescript.md` §8), exportado pelo `index.ts` |
 | `shared/src/validators/client/<nome>.validator.ts` | `shared/src/validators/client/` | schema de dado que nasce e fica no navegador (`localStorage`, retomada de upload), sem recurso par no backend; vale o resto de §9 |
 | `shared/src/<tema>-fixtures.ts` | `shared/src/`, fora do `tsconfig.build.json` | helper de teste usado por 2+ specs; mesmo molde de `tests/<tema>-fixtures.ts` do backend |
 | `frontend/project.inlang/paraglide.config.ts` | `project.inlang/` | opções do compilador, lidas pelo plugin do Vite e pela CLI: uma config só para as duas não divergirem (_doc-lib/paraglide.md#/vite, https://paraglidejs.com/vite, aberta em 2026-10-31) |
 | `frontend/e2e/support/<tema>.md` | `e2e/support/` | dado que a suíte do e2e lê (roteiro de fluxos com ids, inventário de cobertura que uma trava confere): fica ao lado da suíte; `docs/TEST-PLAN.md` aponta para ele e não copia, porque `docs/` é conjunto fechado (`documentation.md` §1) (`DECISIONS.md` #261) |
+| `frontend/e2e/baseline/` | `e2e/baseline/` | linha de base de migração (config próprio, contrato gravado, specs `<fluxo>.spec.ts` e as variáveis dela em `e2e/baseline/.env.baseline.example`, fora do catálogo do `.env.e2e.example`) que compara o site novo com o antigo; só enquanto a migração durar, sai no último PR dela, quando o kit e o `pages.spec` passam; os projetos do `playwright.config.ts` do kit a ignoram |
 | `frontend/src/vite-env.d.ts` | `src/` | tipa as `VITE_*` de `import.meta.env`; sem ele `env.ts` lê `any` |
 | `frontend/src/integrations/theme/` | `integrations/theme/get-theme.ts` | cookie de tema lido no servidor (`frontend.md` §6) |
 | `frontend/src/integrations/tanstack-query/devtools.tsx` | ao lado do cliente HTTP | as devtools, carregadas só em desenvolvimento |
@@ -268,55 +291,93 @@ Arquivo que não é código de camada também tem casa. O que não está aqui ne
 
 ```
 frontend/
-├── package.json  tsconfig.json  eslint.config.js  prettier.config.js
+├── package.json  tsconfig.json  eslint.config.js  prettier.config.js  .prettierignore
 ├── vite.config.ts  vitest.config.ts  components.json  Dockerfile-production
-├── .env.example                     # só VITE_* público
+├── .env.example  .env.production  .env.e2e.example   # .env.production versionado, só VITE_* de produção (tooling.md §8.2)
 ├── public/                          # só nome estável: favicon, manifest (frontend.md §9.6)
-├── project.inlang/{settings.json, paraglide.config.ts}  messages/{pt-BR,es,en}.json   # i18n.md, §3.4
-├── .prettierignore
-├── scripts/check-chunk-cycles.mjs (+ .test.ts)
-├── e2e/{playwright.config.ts, <fluxo>.spec.ts, support/{test.ts, <tema>.ts, <tema>.md}}
+├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4
+├── messages/{pt-BR,es,en}.json      # chaves kit_* fundidas pelo sync (DECISIONS #343)
+├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
+├── e2e/                             # árvore abaixo
 └── src/
-    ├── router.tsx  start.ts  env.ts  vite-env.d.ts  styles.css
-    ├── server.ts                    # paraglideMiddleware(req, () => handler.fetch(req)), i18n.md §2
-    ├── routeTree.gen.ts             # gerado, commitado
-    ├── assets/                      # imagem e fonte importadas (frontend.md §9.6)
-    ├── extensions/                  # opcional: tela de extensão (§3.1)
-    ├── paraglide/                   # gerado, não versionado
-    ├── test/<nome>.setup.ts         # setupFiles do Vitest: stub que precisa existir antes de todo teste
+    ├── router.tsx            # getRouter(); getContext() por chamada; declare module Register { router }
+    ├── start.ts              # createStart: requestMiddleware [csrf, requestScope] (frontend.md §3.1, DECISIONS #336)
+    ├── server.ts             # paraglideMiddleware + cabeçalhos de segurança + X-Robots-Tag fora de produção (i18n.md §2)
+    ├── env.ts                # VITE_* uma vez, Zod, throw sem VITE_API_URL, sem default de rede (DECISIONS #335)
+    ├── vite-env.d.ts  styles.css
+    ├── routeTree.gen.ts      # gerado, commitado
+    ├── paraglide/            # gerado, não versionado
+    ├── assets/brand/{mark,horizontal}.svg   # imagem e fonte importadas (frontend.md §9.6)
+    ├── test/<nome>.setup.ts  # setupFiles do Vitest: stub que precisa existir antes de todo teste
+    ├── extensions/           # opcional: tela de extensão (§3.1)
     ├── routes/
     │   ├── __root.tsx  health-check.ts  sitemap[.]xml.ts  robots[.]txt.ts   # frontend.md §9.7
-    │   ├── _authentication/{layout.tsx, <tela>/{index,index.lazy}.tsx, -components/}
-    │   ├── _public/{layout.tsx, <área>/…, -components/}
+    │   ├── _public/{layout.tsx, $.tsx, index.tsx, index.lazy.tsx, -components/, <área>/…}
+    │   ├── _authentication/{layout.tsx, -components/, sign-in/, sign-up/, forgot-password/, reset-password/}{index,index.lazy}.tsx
+    │   ├── _setup/{layout.tsx, <etapa>/…}  # opcional: instalação (lowcodejs) (DECISIONS #356)
     │   └── _private/
-    │       ├── layout.tsx           # portão único: sessão
+    │       ├── layout.tsx  -use-session-expiry-redirect.ts  -components/{sidebar,header,menu}.tsx   # portão único: sessão
     │       └── <área>/
-    │           ├── layout.tsx       # guard de capacidade da área
+    │           ├── layout.tsx              # guard da área: requireAreaCapability
     │           └── <recurso>/
-    │               ├── index.tsx  index.lazy.tsx  new.tsx  new.lazy.tsx   # new.tsx: só `head` (frontend.md §1.2)
-    │               ├── $id/{index,edit}.tsx  $id/{index,edit}.lazy.tsx
-    │               ├── -search.ts   # validateSearch da rota (nunca inline)
-    │               ├── -use-<nome>.ts   # hook de uma rota só (frontend.md §1.1)
-    │               └── -components/{table,columns,filters,row-actions,bulk-actions,detail,
-    │                                form-fields,form-create,form-edit}.tsx  (+ <peça>/index.ts)
+    │               ├── layout.tsx          # opcional: só quando não há área e o papel muda por recurso (DECISIONS #356)
+    │               ├── index.tsx  index.lazy.tsx  -search.ts   # -search.ts: validateSearch e to<Recurso>Params (nunca inline)
+    │               ├── new.tsx  new.lazy.tsx                   # new.tsx só com loader (frontend.md §1.2)
+    │               ├── $id/{index.tsx, index.lazy.tsx, edit.tsx, edit.lazy.tsx}
+    │               ├── -use-<nome>.ts  -<tema>.ts (+ -<tema>.test.ts)   # de uma rota só (frontend.md §1.1)
+    │               └── -components/{table,columns,filters,row-actions,bulk-actions,detail,form-fields,form-create,form-edit}.tsx
     ├── components/
-    │   ├── ui/                      # shadcn (Base UI); só variante cva e rótulo, marcados // casa:
-    │   └── common/<peça>/{<peça>.tsx, <peça>-<parte>.tsx, <peça>-context.ts, index.ts, <peça>.test.tsx}
+    │   ├── ui/<shadcn>.tsx                 # registry inteiro, Base UI; só variante cva e rótulo, marcados // casa:
+    │   └── common/
+    │       ├── <peça-do-kit>/{<peça>.tsx, <peça>-<parte>.tsx, <peça>-context.ts, use-<peça>-<parte>.ts, <peça>.test.tsx}   # kit, sem index.ts
+    │       ├── <recurso>/{form-fields.tsx, combobox.tsx, …}     # peça de domínio que serve 2+ rotas
+    │       └── <peça-de-domínio>/…
     ├── hooks/
-    │   ├── use-<nome>.ts
+    │   ├── use-mutation-form.ts  use-resource-form.ts  use-read-paginated-infinite.ts  use-multipart-upload.ts   # kit
+    │   ├── use-<entidade>-read-paginated-infinite.ts  use-<recurso>-permission.ts  use-<nome>.ts (+ .test.ts)
+    │   ├── use-channel.ts                  # opcional: SSE (DECISIONS #351)
     │   └── tanstack-query/_query-keys.ts
     ├── integrations/
-    │   ├── tanstack-query/{http.ts, http.server.ts, query-context.ts, invalidate.ts, devtools.tsx,
-    │   │                   queries/<módulo>.ts, mutations/<módulo>.ts}
-    │   ├── react-hook-form/app-field.tsx
+    │   ├── tanstack-query/{http.ts, http.server.ts, query-context.ts, query-key-factory.ts, invalidate.ts, devtools.tsx,
+    │   │                   queries/<módulo>.ts, mutations/<módulo>.ts} (+ .test.ts)
+    │   ├── react-hook-form/{app-field.tsx, app-field-context.ts, app-field.test.tsx}   # kit
     │   └── theme/get-theme.ts
-    └── lib/{cn,labels,i18n,form-errors,form-a11y,list-search,redirect-search,page-head,sitemap,
-             load-or-not-found,local-store,bulk,chunking,upload-transport,upload-resume,dialog-handle}.ts
-             + <tema>.ts, cada um com .test.ts ao lado
+    └── lib/
+        ├── cn.ts labels.ts i18n.ts form-errors.ts form-a11y.ts list-search.ts redirect-search.ts page-head.ts
+        ├── sitemap.ts load-or-not-found.ts local-store.ts bulk.ts chunking.ts upload-transport.ts upload-resume.ts
+        ├── area-capability.ts server-env.ts security-headers.ts mask.ts
+        ├── messages.test.ts                # meta-teste das mensagens
+        └── <tema>.ts (+ <tema>.test.ts)    # cada um com teste ao lado
 ```
+
+```
+frontend/e2e/
+├── playwright.config.ts            # projeto setup (+ teardown cleanup); mobile, tablet, desktop; sem globalSetup
+├── auth.setup.ts  cleanup.teardown.ts
+├── pages.spec.ts  responsive.spec.ts  touch-targets.spec.ts  a11y.spec.ts  locale.spec.ts
+├── <fluxo>.spec.ts
+└── support/{test.ts, env.ts, client-address.ts, session.ts, <tema>.ts, <tema>.md}
+```
+
+O `.env.e2e.example` lista as variáveis da suíte sem valor (DECISIONS #350). E2E do backend é a suíte
+`functional` (§8), não uma pasta.
+
+Fora da árvore e portanto desvio: `lib/{utils,entity,interfaces,model,constant,validator,validator-messages,
+query-retry,query-client,api,handle-api-error,async-handler}.ts`, `stores/`, `locales/`, `src/validators/`,
+`register.d.ts`, `router-register.d.ts`, `query-register.d.ts`, `integrations/tanstack-router.d.ts`,
+`integrations/response.ts`, `hooks/tanstack-query/_mutation-props.ts`, `routes/**/-components/use-*.ts`,
+`components/common/*/index.ts`, `components/common/<arquivo>.tsx` solto (inclusive `uploading-context`, que é
+`components/common/uploading-context/`, DECISIONS #344), `components/common/CLAUDE.md` e `lib/dialog-handle.ts`
+(vira `confirm-dialog/confirm-dialog-handle.ts`).
+
+Hook de uma peça do kit mora na pasta da peça (`use-<peça>-<parte>.ts`), não em `hooks/` (DECISIONS #343).
+O campo com máscara é `components/common/field/field-mask.tsx`, sob `AppField`; `lib/mask.ts` guarda os
+aliases (DECISIONS #325).
 
 Validators (Zod), enums, value objects e tipos de resposta **não** existem no frontend: vêm de
 `@<projeto>/shared` (§9), também em projeto Adonis. A regra completa de cada pasta está em `frontend.md`.
+Projeto só frontend também tem `shared/` mínimo: o que o kit importa e os schemas da API consumida
+(`DECISIONS.md` #361).
 
 ## 5. Adaptadores por tecnologia
 
@@ -364,9 +425,11 @@ um frontend vivo quando a API está lenta.
 Quem aponta para a rota, sempre o mesmo path:
 
 - `HEALTHCHECK` do `Dockerfile-production` e `healthcheck:` do compose de produção (`tooling.md` §8);
-- healthcheck configurado no painel da plataforma (Coolify), que **sobrepõe** o do Dockerfile:
-  anotado em `docs/ARCHITECTURE.md` (seção de produção) do projeto;
-- smoke test do deploy (`tooling.md` §8).
+- healthcheck do painel da plataforma (Coolify): o `HEALTHCHECK` da imagem é o que vale, e o do
+  painel só entra quando a imagem não tem um (_doc-lib/coolify.md#applications/configuration/health-checks,
+  `DECISIONS.md` #328). O campo do painel fica vazio, e isso se anota em `docs/ARCHITECTURE.md`
+  (seção de produção) do projeto;
+- conferência do agente depois do deploy, `curl -fsS <endereço>/health-check` (`tooling.md` §8.3).
 
 Cobrança: o `pattern:check` reprova backend sem `router.get('/health-check', …)` (Adonis) ou
 `@GET('/health-check')` (Fastify), frontend sem `src/routes/health-check.ts`, e qualquer rota,
@@ -417,6 +480,18 @@ executa um plano, o unitário acompanha cada fase e o E2E roda só na fase final
 
 O sufixo separa o runner: a suíte E2E nunca pega `*.unit.spec.ts`, e a unitária nunca sobe banco.
 
+**No Adonis, o glob de cada suíte é o sufixo, e a suíte se escolhe pela posição** (`DECISIONS.md`
+#303, #330; esta é a fonte única dos globs). Em `adonisrc.ts`, a `unit` lista
+`{app,database,scripts,tests,commands}/**/*.unit.spec.ts`; a `functional`, `{app,scripts,tests,commands}/**/*.e2e.spec.ts`
+(`database/` fica fora: o Lucid carrega todo script de `database/seeders/` como seeder, #380). Nunca `*.spec.ts` solto, nunca `tests/functional/`. Glob largo como
+`app/**/*.spec.ts` também casa `*.unit.spec.ts`, e o unitário roda duas vezes, a segunda dentro da
+suíte que sobe o servidor. O `test:unit` do backend é `node ace test unit`, com o nome da suíte
+como argumento (_doc-lib/adonisjs.md#guides/testing/introduction,
+https://docs.adonisjs.com/guides/testing/introduction, "Running tests", aberta; o mesmo filtro em
+_doc-lib/japa.md#docs/filtering-tests, https://japa.dev/docs/filtering-tests, "Using suites",
+aberta). `node ace test --suites unit` não é a forma da doc e não filtra nada: roda a suíte
+inteira e sai verde (no academy, 765 testes contra o Postgres no lugar dos 31 unitários).
+
 **O `<x>.e2e.spec.ts` do backend é teste de integração de API**: banco real, rota chamada por
 `supertest`/`inject`/`@japa/api-client`, sem navegador. É a rede principal de "nada quebrou" e cobre
 toda rota. E2E de navegador é só o Playwright do frontend, e só nas jornadas críticas. Como a suíte
@@ -427,7 +502,7 @@ aplicação de pé uma vez só; suíte em paralelo (`concurrently`) junta a `uni
 uma `functional` (_doc-lib/japa.md#docs/test-suites). No Vitest, o banco e a migration sobem no
 `globalSetup`, uma vez (_doc-lib/vitest.md#config/globalsetup), e cada worker recebe um banco próprio
 clonado da base semeada; nunca banco criado nem kernel subido por arquivo. `--shard` divide a suíte
-em jobs de CI, cada um com o próprio banco em `services:` (_doc-lib/japa.md#docs/filtering-tests,
+em processos, cada um com o próprio banco (_doc-lib/japa.md#docs/filtering-tests,
 _doc-lib/vitest.md#improving-performance).
 
 **O que cada camada leva:**
@@ -463,10 +538,7 @@ Um repositório por produto, monorepo com **pnpm workspace** (`DECISIONS.md` #11
 ├── pnpm-lock.yaml                   # um lockfile, na raiz
 ├── .commitlintrc.json  .gitignore  .editorconfig  .gitleaks.toml   # §3.4
 ├── .husky/{pre-commit,commit-msg}   # um hook para o repositório inteiro (tooling.md)
-├── .github/
-│   ├── dependabot.yml               # tooling.md §9
-│   └── workflows/{ci,commitlint,main,main-check-backend,main-check-frontend,main-build-frontend,
-│                  main-docker-backend,main-docker-frontend,main-deploy-coolify}.yml   # tooling.md §8.1
+├── .github/dependabot.yml          # tooling.md §9; sem workflows/: nada roda no Actions (tooling.md §8.1)
 ├── docs/{PRD,ARCHITECTURE,RULES,DESIGN,USER-FLOWS,TASKS,MEMORY,ENV,CHANGELOG,DECISIONS,SECURITY,TEST-PLAN}.md
 ├── .specs/features/<feature>/       # tlc-spec-driven, durante a feature
 ├── _standards/  _doc-lib/  _doc-lib.md  SKILLS-MAP.md  .claude/skills/   # cópia da régua, não se edita
@@ -487,16 +559,19 @@ shared/
     ├── validator.ts                 # z configurado (z.config + locale) + regras compartilhadas + mensagens das regras (pt-BR/es/en)
     ├── validators/client/<nome>.validator.ts   # dado só do navegador, sem par no backend (§3.4)
     ├── validators/<módulo>/<recurso>.validator.ts   # um arquivo por recurso, schema Zod usado pelos dois lados (Adonis: só pelo frontend; o backend tem o par em app/validators/)
+    ├── validators/<módulo>/_shared.<tema>.ts   # regra de domínio de 2+ recursos do mesmo módulo; só função pura em classe static (typescript.md §6)
+    ├── validators/_shared.<tema>.ts   # a mesma regra entre módulos diferentes: sobe para a raiz de validators/, nunca importa `_shared` de outro módulo
     ├── enums/<nome>.ts              # POST_STATUS / PostStatus / POST_STATUSES
     ├── value-objects/<nome>.ts      # Cpf, Cnpj, Email, Phone: create() devolve Either; formatação pura
     ├── records/<contexto>.ts        # tipo de registro e constante que os dois lados leem (Table, Row, User); sem schema
-    ├── rich-text-schema.ts          # lista única de extensões do Tiptap + conversão HTML/Markdown → JSON (editor e migration)
+    ├── rich-text-schema.ts          # [opc] com @tiptap/core (bloco opcional do sync): lista única de extensões do Tiptap + conversão HTML/Markdown → JSON (editor e migration)
     └── responses/<módulo>/<recurso>.response.ts     # schemas Zod de resposta + tipos (§10)
 ```
 
 - **Onde mora cada mensagem** (`i18n.md` §3): mensagens de regra Zod ficam em
   `shared/src/validator.ts`, nos três idiomas, e valem igual nos dois lados (no Adonis, as do VineJS
-  ficam no backend, em `start/validator.ts`); mensagens de erro de
+  ficam no backend, em `resources/lang/{pt-BR,es,en}/validator.json`, e a regra própria do projeto em
+  `resources/lang/{pt-BR,es,en}/validator/shared/messages.json`); mensagens de erro de
   negócio do backend (`HTTPException.message`) ficam em `resources/lang/{pt-BR,es,en}/` e saem pelo
   i18n do backend.
 - **Entra em `shared/` só o que é puro e roda igual nos dois lados.** Entidade com comportamento,

@@ -92,6 +92,106 @@ Fastify funciona", lá é "que plugin resolve isto".
 
 **Skills:** `maiyu-backend`, `solid`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Fastify: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Princípios e organização
+
+- **O framework é a primeira linha de defesa contra dado não confiável.** A página de princípios diz que o framework é o primeiro ponto de contato com dado não confiável e precisa agir como primeira defesa do sistema. [`#Reference/Principles`](https://fastify.dev/docs/latest/Reference/Principles.md)
+- **Não faça monkeypatch do core nem instale global que altere o runtime.** Isso dificulta a aplicação modular e limita os casos de uso do Fastify. [`#Reference/Principles`](https://fastify.dev/docs/latest/Reference/Principles.md)
+- **Carregue na ordem: plugins do ecossistema, plugins próprios, decorators, hooks, serviços (rotas).** A doc recomenda essa ordem para o comportamento ser consistente e cada nível enxergar o que o escopo já declarou; num subconjunto de rotas, replique a mesma estrutura. [`#Guides/Getting-Started`](https://fastify.dev/docs/latest/Guides/Getting-Started.md)
+
+### Plugins e encapsulamento
+
+- **`register` sempre cria um escopo novo; para expor decorator e hook ao pai, use `fastify-plugin`.** A página recomenda o `fastify-plugin` como a forma de não criar contexto novo (a alternativa `skip-override` não é recomendada). [`#Reference/Plugins`](https://fastify.dev/docs/latest/Reference/Plugins.md)
+- **Opção de plugin próprio tem namespace.** Para evitar colisão com as opções que o Fastify reconhece (`prefix`, `logLevel`...), o plugin deve agrupar as próprias opções numa chave. [`#Reference/Plugins`](https://fastify.dev/docs/latest/Reference/Plugins.md)
+- **Plugin sinaliza que terminou: devolve Promise (`async`) ou chama `done`, nunca os dois.** Plugin, hook e contexto encapsulado precisam sinalizar a conclusão; misturar estilos executa a cadeia duas vezes. [`#Reference/Encapsulation`](https://fastify.dev/docs/latest/Reference/Encapsulation.md), [`#Guides/Plugins-Guide`](https://fastify.dev/docs/latest/Guides/Plugins-Guide.md)
+- **Decorator, hook e plugin registrados num contexto filho não existem no pai nem nos irmãos.** O encapsulamento isola o filho; o que precisa ser compartilhado sobe para o contexto comum ou passa por `fastify-plugin`. [`#Reference/Encapsulation`](https://fastify.dev/docs/latest/Reference/Encapsulation.md)
+- **Prefira hook e plugin nativo a middleware de Express.** Middleware só roda com `@fastify/express` ou `@fastify/middie`; a doc recomenda fortemente migrar para hooks e cita o adaptador como causa de perda de desempenho em caminho quente. [`#Reference/Middleware`](https://fastify.dev/docs/latest/Reference/Middleware.md), [`#Guides/Migration-Guide-V4`](https://fastify.dev/docs/latest/Guides/Migration-Guide-V4.md), [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md)
+
+### Decorators
+
+- **Propriedade nova em `request`/`reply` nasce por `decorateRequest`/`decorateReply`, nunca por atribuição solta num hook.** Mudar o formato do objeto depois de instanciado desotimiza o acesso no motor JavaScript. [`#Reference/Decorators`](https://fastify.dev/docs/latest/Reference/Decorators.md)
+- **Decorator de request começa com `''` (string) ou `null` (objeto, função), e o valor de referência é atribuído por requisição num hook.** Tipo de referência como valor inicial é recusado no boot, porque seria compartilhado por todas as requisições e qualquer mutação vazaria entre elas (risco de segurança). [`#Reference/Decorators`](https://fastify.dev/docs/latest/Reference/Decorators.md)
+- **Confira decorator obrigatório no registro com `getDecorator`.** Faltando, a aplicação falha no boot e não no meio de uma requisição. [`#Reference/Decorators`](https://fastify.dev/docs/latest/Reference/Decorators.md)
+
+### Hooks
+
+- **Hook é `async` ou de callback, nunca os dois.** Misturar `done` com `async`/Promise executa a cadeia de hooks duas vezes; hook `async` não usa o argumento `done`. [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md), [`#Reference/Errors`](https://fastify.dev/docs/latest/Reference/Errors.md), [`#Reference/Warnings`](https://fastify.dev/docs/latest/Reference/Warnings.md)
+- **Hook `async` que responde com `reply.send()` fora da cadeia da Promise faz `return reply`.** Sem isso a requisição segue adiante e é executada duas vezes (`FST_ERR_REP_ALREADY_SENT`). [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md)
+- **Hook que responde com stream não é `async`.** A página manda evitar `async` nesse caso, ou seguir o padrão de teste indicado se não houver como. [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md)
+- **`onError` serve para log, não para alterar o erro.** A doc diz que esse hook não deve ser usado para atualizar o erro; quem formata a resposta é o `setErrorHandler`. [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md)
+- **Rota criada dentro de `onRoute` é marcada.** Sem a marcação o hook entra em laço infinito. [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md)
+- **Em `onRequest` e `preParsing`, `request.body` é sempre `undefined`.** O corpo só existe depois do parsing; regra que depende do corpo vai para `preValidation` ou `preHandler`. [`#Reference/Hooks`](https://fastify.dev/docs/latest/Reference/Hooks.md)
+
+### Rotas, request e reply
+
+- **Handler `async` que chama `reply.send` faz `return reply` (ou `await reply`).** Evita condição de corrida entre o valor devolvido e o envio; use um estilo só (devolver o valor ou `reply.send`) para o tratamento de erro ser consistente. [`#Reference/Routes`](https://fastify.dev/docs/latest/Reference/Routes.md)
+- **Parâmetro de rota não vira caminho de arquivo, nome de template nem destino de redirect sem validação.** Os parâmetros chegam decodificados (`..%2f` vira `../`); para servir arquivo de uma raiz, use `@fastify/static`/`reply.sendFile`. [`#Reference/Request`](https://fastify.dev/docs/latest/Reference/Request.md), [`#Reference/Routes`](https://fastify.dev/docs/latest/Reference/Routes.md)
+- **`request.ip`, `ips`, `host` e `protocol` são entrada não confiável.** Vêm do socket e de cabeçalhos de encaminhamento; decisão de segurança com eles exige validação explícita (proxy confiável, allowlist, parsing estrito). [`#Reference/Request`](https://fastify.dev/docs/latest/Reference/Request.md), [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **Use `request.routeOptions.config`, `reply.hijack()` e `reply.elapsedTime`; nunca `request.context`, `reply.sent = ...` nem `getResponseTime()`.** Os primeiros são a API corrente; os outros são depreciados ou removidos na v5. [`#Reference/Request`](https://fastify.dev/docs/latest/Reference/Request.md), [`#Reference/Reply`](https://fastify.dev/docs/latest/Reference/Reply.md), [`#Guides/Migration-Guide-V5`](https://fastify.dev/docs/latest/Guides/Migration-Guide-V5.md)
+- **Schema passado a `reply.serialize`/`getSerializationFunction` é imutável: para mudar, crie objeto novo.** A função compilada fica em cache pela referência do schema, e a mutação passa despercebida. [`#Reference/Reply`](https://fastify.dev/docs/latest/Reference/Reply.md)
+- **Valor de cabeçalho e URL de redirect vão codificados.** A página exige o valor do header codificado e a URL de `reply.redirect` codificada pelo chamador. [`#Reference/Reply`](https://fastify.dev/docs/latest/Reference/Reply.md)
+- **Em caminho quente, prefira rota estática ou paramétrica simples, e constraint assíncrona é último recurso.** RegExp e muitos parâmetros custam no roteador; constraint de versão também. [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md), [`#Reference/Routes`](https://fastify.dev/docs/latest/Reference/Routes.md)
+- **Detecte o cliente que abortou por `request.raw.aborted` no evento `close`, não por `destroyed`.** `destroyed` também é verdadeiro quando o servidor fecha a conexão, e `aborted` continua o sinal confiável. [`#Guides/Detecting-When-Clients-Abort`](https://fastify.dev/docs/latest/Guides/Detecting-When-Clients-Abort.md)
+
+### Validação e serialização
+
+- **Schema é código da aplicação, nunca entrada do usuário.** Validação e serialização usam `new Function()`, inseguro com schema fornecido pelo usuário. [`#Reference/Validation-and-Serialization`](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization.md)
+- **Toda rota valida a entrada por schema.** A maior parte dos erros vem de dado inesperado, e a doc recomenda validar contra schema; na v5 `querystring`, `params`, `body` e resposta exigem schema completo (sem `jsonShorthand`). [`#Reference/Errors`](https://fastify.dev/docs/latest/Reference/Errors.md), [`#Guides/Migration-Guide-V5`](https://fastify.dev/docs/latest/Guides/Migration-Guide-V5.md)
+- **Validação não acessa banco: tarefa assíncrona vai para `preHandler`.** Consultar banco durante a validação abre negação de serviço; validator customizado em `preValidation` devolve `{ error }` e não lança. [`#Reference/Validation-and-Serialization`](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization.md)
+- **Declare schema de resposta.** Acelera a serialização e evita vazar dado sensível que não está no schema. [`#Reference/Validation-and-Serialization`](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization.md), [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md)
+- **Detalhe do erro de validação vai na resposta por padrão; para sanitizar, use `setErrorHandler`.** A página marca isso como consideração de segurança. [`#Reference/Validation-and-Serialization`](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization.md)
+- **`allErrors` do Ajv fica desligado.** Ligado, faz mais trabalho por requisição e facilita negação de serviço com entrada não confiável (CVE-2020-8192). [`#Reference/Validation-and-Serialization`](https://fastify.dev/docs/latest/Reference/Validation-and-Serialization.md), [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md)
+- **Body schema com `content` por tipo valida só os tipos listados.** Parser customizado cujo content type não está no `content` do schema entrega o corpo parseado e sem validação. [`#Reference/ContentTypeParser`](https://fastify.dev/docs/latest/Reference/ContentTypeParser.md)
+
+### Type provider e TypeScript
+
+- **Type provider não se propaga globalmente: cada contexto encapsulado declara o seu com `withTypeProvider`.** A página diz que os tipos do provider não atravessam o escopo do plugin. [`#Reference/Type-Providers`](https://fastify.dev/docs/latest/Reference/Type-Providers.md)
+- **`target` do `tsconfig.json` é `es2017` ou maior e `@types/node` está instalado.** Abaixo disso o Fastify emite aviso de depreciação. [`#Reference/TypeScript`](https://fastify.dev/docs/latest/Reference/TypeScript.md)
+
+### Parser de conteúdo
+
+- **RegExp de `Content-Type` casa só a essência do MIME, ancorada.** Exemplo da doc: `/^application\/([\w-]+);?/`, para não aceitar tipo que só contém o padrão. [`#Reference/ContentTypeParser`](https://fastify.dev/docs/latest/Reference/ContentTypeParser.md)
+- **Com `addContentTypeParser` dentro de `register`, não use `await` ao registrar as rotas.** O `await` pode registrar a rota antes de o parser existir. [`#Reference/ContentTypeParser`](https://fastify.dev/docs/latest/Reference/ContentTypeParser.md)
+
+### Servidor e borda
+
+- **`trustProxy` recebe IP/CIDR, lista ou função que valida o endereço; nunca número de saltos nem `true`.** Confiança só por contagem de saltos foi desativada porque não valida o par imediato e deixa o cliente forjar `X-Forwarded-*`. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **`requestTimeout` diferente de zero quando não há proxy reverso na frente.** O default `0` não protege contra negação de serviço. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **Exponha a aplicação atrás de proxy reverso, não direto na internet.** A equipe do Fastify considera servir vários domínios, HTTP e HTTPS direto do processo um antipadrão. [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md)
+- **Em container, escute em `0.0.0.0`.** O default é `localhost`, e container e sonda de prontidão não alcançam o processo; escutar em todas as interfaces fora disso tem risco próprio. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md), [`#Guides/Recommendations`](https://fastify.dev/docs/latest/Guides/Recommendations.md)
+- **`onProtoPoisoning` e `onConstructorPoisoning` ficam em `'error'` (o default).** É a defesa contra envenenamento de protótipo no parse de JSON. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md), [`#Guides/Prototype-Poisoning`](https://fastify.dev/docs/latest/Guides/Prototype-Poisoning.md)
+- **`fastify.server` serve só para anexar listener.** Uso indevido do servidor Node cru quebra recursos do Fastify. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+
+### Erros
+
+- **Erro inesperado não chega ao cliente: trate no `setErrorHandler`.** O Fastify não distingue desenvolvimento de produção ao devolver a mensagem; quem não quer vazar precisa substituí-la explicitamente. [`#Reference/Errors`](https://fastify.dev/docs/latest/Reference/Errors.md)
+- **`setErrorHandler` uma vez por escopo.** Chamar de novo sobrescreve o anterior (aviso dedicado), e o primeiro nunca executa. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md), [`#Reference/Warnings`](https://fastify.dev/docs/latest/Reference/Warnings.md)
+- **404 vai para `setNotFoundHandler`; o error handler não pega 404, erro em `onResponse` nem erro de stream já enviado.** A página lista esses três casos fora do alcance do handler. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **Error handler que responde a rota de stream define o `Content-Type` explicitamente.** Sem isso a serialização falha com 500. [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **Erro não capturado derruba o processo; Promise tem `.catch()` anexado de forma síncrona.** A doc diz que o melhor jeito de lidar com erro não capturado é deixar o processo cair. [`#Reference/Errors`](https://fastify.dev/docs/latest/Reference/Errors.md)
+- **Aviso `FSTWRN`/`FSTDEP` se investiga, não se desliga.** Desligar avisos não é recomendado e pode causar comportamento inesperado; use `--trace-warnings`/`--trace-deprecation` para achar a origem. [`#Reference/Warnings`](https://fastify.dev/docs/latest/Reference/Warnings.md)
+- **Schema de header com `$ref` externo não aplica `required`, `dependencies` nem `propertyNames`: escreva-o inline.** Os nomes no schema referenciado mantêm a caixa original e não casam com os headers em minúsculas (código de segurança dedicado). [`#Reference/Warnings`](https://fastify.dev/docs/latest/Reference/Warnings.md)
+
+### Logging
+
+- **Logger customizado entra por `loggerInstance`; `logger` recebe só configuração.** Na v5 `logger` não aceita mais instância. [`#Guides/Migration-Guide-V5`](https://fastify.dev/docs/latest/Guides/Migration-Guide-V5.md), [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md)
+- **Log de requisição se controla por `logController`, não pelas opções `disableRequestLogging`/`requestIdLogLabel` no topo.** As de topo estão depreciadas (`FSTDEP023`, `FSTDEP024`). [`#Reference/Server`](https://fastify.dev/docs/latest/Reference/Server.md), [`#Reference/Warnings`](https://fastify.dev/docs/latest/Reference/Warnings.md)
+- **Redija dado sensível no log (no mínimo `req.headers.authorization`).** Logar cabeçalhos expõe autenticação e pode violar privacidade. [`#Reference/Logging`](https://fastify.dev/docs/latest/Reference/Logging.md)
+- **Serializer de log nunca lança.** Exceção no serializer pode derrubar o processo. [`#Reference/Logging`](https://fastify.dev/docs/latest/Reference/Logging.md)
+
+### Testes
+
+- **Teste HTTP usa `fastify.inject()` e fecha a instância (`close()`) ao fim.** O `inject` garante que todos os plugins subiram; o `close` encerra conexões com serviços externos. [`#Guides/Testing`](https://fastify.dev/docs/latest/Guides/Testing.md)
+
+### Versão
+
+- **Não fixe o Fastify por til (`~`) para fugir de correção de segurança.** Correção de segurança pode sair como minor com quebra, e travar a versão deixa a aplicação vulnerável. [`#Reference/LTS`](https://fastify.dev/docs/latest/Reference/LTS.md)
+
 ---
 
 ## Fundamentos

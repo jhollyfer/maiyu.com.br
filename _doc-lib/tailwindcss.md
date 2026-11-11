@@ -160,6 +160,86 @@ const colorVariants = {
 
 **Skills:** `frontend-design`, `impeccable`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Tailwind CSS: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Instalação e versão
+
+- **Projeto com Vite usa o plugin `@tailwindcss/vite`, não o plugin do PostCSS.** A doc o recomenda pelo desempenho e pela experiência de desenvolvimento. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#installation/using-vite`](https://tailwindcss.com/docs/installation/using-vite)
+- **No v4 saem `postcss-import` e `autoprefixer`.** Import e prefixo de fornecedor já são feitos pelo Tailwind. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#compatibility`](https://tailwindcss.com/docs/compatibility)
+- **O v4 exige Safari 16.4+, Chrome 111+ e Firefox 128+; para navegador mais antigo, fique no v3.4.** A doc condiciona o v4 a esse suporte. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#compatibility`](https://tailwindcss.com/docs/compatibility)
+- **Upgrade de v3 pela ferramenta oficial, numa branch nova, revisando o diff e testando no navegador.** A doc recomenda os três passos. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **Sem pré-processador (Sass, Less, Stylus) junto do Tailwind.** O v4 não é feito para ser usado com eles, e aninhamento e variáveis já são nativos. [`#compatibility`](https://tailwindcss.com/docs/compatibility)
+- **O CSS compilado entra no `<head>`.** É o passo de uso que a instalação exige. [`#installation/using-vite`](https://tailwindcss.com/docs/installation/using-vite) [`#installation/using-postcss`](https://tailwindcss.com/docs/installation/using-postcss)
+- **Classes ordenadas pelo plugin oficial do Prettier.** A doc mantém o plugin que segue a ordem recomendada. [`#editor-setup`](https://tailwindcss.com/docs/editor-setup)
+
+### Configuração e tema
+
+- **Tema em `@theme` no CSS; `tailwind.config.js` só por `@config` explícito, e `corePlugins`, `safelist` e `separator` não existem mais.** No v4 o arquivo JS não é mais detectado sozinho. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **Variável que gera utilitário vai em `@theme`, não em `:root`; `@theme` fica no topo, nunca aninhado em seletor ou media query.** Variável de tema faz mais que variável CSS comum e a sintaxe garante isso. [`#theme`](https://tailwindcss.com/docs/theme)
+- **Variável de tema que referencia outra variável usa `@theme inline`.** Sem `inline`, o utilitário pode resolver para um valor inesperado. [`#theme`](https://tailwindcss.com/docs/theme)
+- **Para trocar um namespace inteiro, zere-o com `--<namespace>-*: initial` (ou `--*: initial` para o tema todo).** É o mecanismo da doc para tirar os defaults e suas variáveis do CSS. [`#theme`](https://tailwindcss.com/docs/theme) [`#colors`](https://tailwindcss.com/docs/colors)
+- **`@keyframes` de `--animate-*` ficam dentro de `@theme`; fora só se precisarem sair sempre.** Dentro, entram no CSS gerado junto da variável. [`#theme`](https://tailwindcss.com/docs/theme)
+- **Use variável CSS (`var(--color-red-500)`) em vez de `theme()`; onde `theme()` ainda for preciso (media query), use o nome da variável, não a notação de ponto.** A função está obsoleta. [`#functions-and-directives`](https://tailwindcss.com/docs/functions-and-directives) [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **Breakpoint personalizado na mesma unidade dos demais (`rem`).** Unidades misturadas desordenam os utilitários e um breakpoint sobrescreve o outro. [`#responsive-design`](https://tailwindcss.com/docs/responsive-design)
+- **`@import` de fonte externa (Google Fonts) fica no topo do CSS.** A doc exige essa posição. [`#font-family`](https://tailwindcss.com/docs/font-family)
+- **Importando os arquivos do Tailwind separados, `source()` e `important` vão no import de `utilities.css`, `theme(static|inline)` no de `theme.css`, `prefix()` nos dois.** Cada opção afeta só a sua parte. [`#preflight`](https://tailwindcss.com/docs/preflight)
+
+### Detecção de classes
+
+- **Classe sempre completa no código; nunca montada por concatenação ou interpolação.** O Tailwind só gera o que encontra como texto inteiro no arquivo. [`#detecting-classes-in-source-files`](https://tailwindcss.com/docs/detecting-classes-in-source-files)
+- **Prop que escolhe estilo mapeia para classes estáticas completas (lookup), não monta nome de classe.** É a forma detectável em build. [`#detecting-classes-in-source-files`](https://tailwindcss.com/docs/detecting-classes-in-source-files)
+- **Classe que não aparece no código é forçada por `@source inline()`; pasta grande sem Tailwind sai com `@source not`; base fora da raiz por `source()`.** São os mecanismos da doc para a varredura. [`#detecting-classes-in-source-files`](https://tailwindcss.com/docs/detecting-classes-in-source-files)
+
+### Utilitários e CSS próprio
+
+- **Nunca duas classes conflitantes no mesmo elemento; aplique só a que vale.** A ordem no CSS, não no atributo, decide qual vence. [`#styling-with-utility-classes`](https://tailwindcss.com/docs/styling-with-utility-classes)
+- **Em componente React, customização de estilo sai por prop específica em vez de classe extra vinda de fora.** Classe externa costuma conflitar com a do componente. [`#styling-with-utility-classes`](https://tailwindcss.com/docs/styling-with-utility-classes)
+- **Peça com mais de um elemento vira componente (partial), não classe CSS.** A doc recomenda encapsular estrutura e estilo num lugar. [`#styling-with-utility-classes`](https://tailwindcss.com/docs/styling-with-utility-classes)
+- **Utilitário próprio por `@utility`, não por `@layer utilities`/`@layer components`.** No v4 `@layer` é a camada nativa e não habilita variantes. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#adding-custom-styles`](https://tailwindcss.com/docs/adding-custom-styles)
+- **Variante própria por `@custom-variant`.** É a diretiva do v4 para isso. [`#adding-custom-styles`](https://tailwindcss.com/docs/adding-custom-styles) [`#dark-mode`](https://tailwindcss.com/docs/dark-mode)
+- **Espaço em valor arbitrário é `_`; variável CSS em valor arbitrário vai em parênteses (`bg-(--brand)`).** No v4 a vírgula não vira espaço e a forma com colchete sem `var()` mudou. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#adding-custom-styles`](https://tailwindcss.com/docs/adding-custom-styles)
+- **`!` de important vai no fim da classe (`bg-red-500!`).** A forma no início está obsoleta. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#styling-with-utility-classes`](https://tailwindcss.com/docs/styling-with-utility-classes)
+- **Prefixo é variante e vem no início (`tw:flex`); variáveis de tema seguem sem prefixo.** As variáveis geradas recebem o prefixo sozinhas. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **`@apply` em CSS Module ou bloco `<style>` exige `@reference` do CSS principal; prefira usar variável CSS nesses arquivos.** Sem a referência os tokens não existem ali, e variável evita o processamento. [`#functions-and-directives`](https://tailwindcss.com/docs/functions-and-directives) [`#compatibility`](https://tailwindcss.com/docs/compatibility)
+- **Evite CSS Modules junto do Tailwind.** O escopo que eles resolvem não existe com utilitários. [`#compatibility`](https://tailwindcss.com/docs/compatibility)
+- **Prefira elemento HTML real a `::before`/`::after`; pseudo-elemento só quando o conteúdo não pode estar no DOM.** É mais simples e menos código. [`#hover-focus-and-other-states`](https://tailwindcss.com/docs/hover-focus-and-other-states)
+- **`peer` só marca irmão anterior.** O combinador de irmão seguinte do CSS só olha para trás. [`#hover-focus-and-other-states`](https://tailwindcss.com/docs/hover-focus-and-other-states)
+- **Espaçamento entre filhos por `flex`/`grid` com `gap`; `space-*` e margem nos filhos são o plano B.** O seletor de `space-*` mudou no v4 e a doc recomenda `gap` se ele causar problema. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide) [`#margin`](https://tailwindcss.com/docs/margin)
+
+### Mudanças de comportamento do v4
+
+- **Foco sem contorno visível usa `outline-hidden`; `outline-none` agora zera o `outline-style` de verdade.** `outline-hidden` mantém o contorno invisível que aparece em modo de cores forçadas, por acessibilidade. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **`ring` é 1px em `currentColor`: use `ring-3` e cor explícita onde contava com o default antigo.** O default mudou de 3px azul. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **`border-*` e `divide-*` com cor explícita.** O default passou a ser `currentColor`. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **Escalas de sombra, raio e blur renomeadas (`shadow-sm` vira `shadow-xs`, `shadow` vira `shadow-sm`...); utilitários obsoletos do v3 saíram.** Todo utilitário passou a ter valor nomeado. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **`hover:` só vale em dispositivo cujo ponteiro principal suporta hover.** O v4 envolve a variante em `@media (hover: hover)`. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+- **Botão tem `cursor: default`; `cursor-pointer` é explícito quando desejado.** O v4 segue o padrão do navegador. [`#upgrade-guide`](https://tailwindcss.com/docs/upgrade-guide)
+
+### Responsivo e modo escuro
+
+- **`<meta name="viewport" content="width=device-width, initial-scale=1">` no `<head>`.** É o primeiro requisito do design responsivo. [`#responsive-design`](https://tailwindcss.com/docs/responsive-design)
+- **Mobile-first: estilo de celular sem prefixo; `sm:` é "a partir do breakpoint small", não "celular".** Prefixo só vale do breakpoint para cima, e a doc diz para não usar `sm:` para mirar celular. [`#responsive-design`](https://tailwindcss.com/docs/responsive-design)
+- **Estilo pelo tamanho do pai usa container query (`@container`, `@md:`).** É o recurso para depender do pai e não da viewport. [`#responsive-design`](https://tailwindcss.com/docs/responsive-design) [`#hover-focus-and-other-states`](https://tailwindcss.com/docs/hover-focus-and-other-states)
+- **Modo escuro por classe ou atributo troca a variante com `@custom-variant dark (&:where(.dark, .dark *))`; o script que aplica o tema roda inline no `<head>`.** Fora do `<head>` há flash de tema errado. [`#dark-mode`](https://tailwindcss.com/docs/dark-mode)
+- **Classe sozinha nunca carrega claro e escuro: o escuro é outra classe `dark:`.** Cada utilitário faz uma coisa só. [`#styling-with-utility-classes`](https://tailwindcss.com/docs/styling-with-utility-classes)
+
+### Acessibilidade
+
+- **Animação e transição respeitam `prefers-reduced-motion` com `motion-safe:`/`motion-reduce:`.** A doc mostra o par como forma de suporte a movimento reduzido. [`#transition-property`](https://tailwindcss.com/docs/transition-property) [`#animation`](https://tailwindcss.com/docs/animation) [`#hover-focus-and-other-states`](https://tailwindcss.com/docs/hover-focus-and-other-states)
+- **Esconder só visualmente, mantendo para leitor de tela, é `sr-only` (desfaz com `not-sr-only`); para esconder mantendo o espaço no documento, `invisible`, não `hidden`.** `hidden` é `display: none` e tira o elemento do documento. [`#display`](https://tailwindcss.com/docs/display)
+- **Lista sem estilo que é lista de verdade recebe `role="list"`.** O VoiceOver não anuncia lista sem marcador como lista. [`#preflight`](https://tailwindcss.com/docs/preflight)
+- **Títulos e listas não têm estilo padrão; estilo base próprio vai em `@layer base`.** O Preflight zera os do navegador para não fugir da escala tipográfica. [`#preflight`](https://tailwindcss.com/docs/preflight) [`#adding-custom-styles`](https://tailwindcss.com/docs/adding-custom-styles)
+- **Elemento que precisa ser inline recebe `inline`.** O Preflight põe `img`, `svg`, `video` e afins em `display: block`. [`#preflight`](https://tailwindcss.com/docs/preflight)
+
+### Typography
+
+- **Plugin de tipografia entra por `@plugin "@tailwindcss/typography"`, e todo modificador (`prose-lg`, `prose-slate`...) vem junto da classe `prose`.** Os modificadores não funcionam sozinhos. [`#typography-plugin`](https://github.com/tailwindlabs/tailwindcss-typography)
+- **Trecho dentro de `prose` que não deve herdar o estilo leva `not-prose`, sem prefixo mesmo com prefixo configurado.** Não dá para abrir novo `prose` dentro de `not-prose`. [`#typography-plugin`](https://github.com/tailwindlabs/tailwindcss-typography)
+
 ---
 
 ## A reescrita da v4

@@ -87,6 +87,47 @@ test.group('administrator/teams/create', () => {
 `superpowers:test-driven-development`, `playwright-skill` (só se a suíte `browser` for adotada).
 Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Japa: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Código assíncrono e exceções
+
+- **Todo callback de teste aguarda (`await`) ou retorna a Promise.** O Japa encerra o teste quando o callback termina. [`#docs/testing-async-code`](https://japa.dev/docs/testing-async-code)
+- **`async/await` em vez de `done`; quem usa `done` passa o erro a ele.** `done(err)` é o que marca a falha, e a doc recomenda fortemente `async/await` sobre callback ou evento. [`#docs/testing-async-code`](https://japa.dev/docs/testing-async-code)
+- **Espera por tempo usa `setTimeout` de `node:timers/promises`, não o global.** Assim a espera vira Promise aguardada pelo teste. [`#docs/testing-async-code`](https://japa.dev/docs/testing-async-code)
+- **Exceção se testa com `assert.throws`/`assert.rejects`, nunca com `try/catch`.** Com `try/catch` o teste passa quando nada lança; `throws` recebe callback síncrono e `rejects`, callback que devolve Promise. [`#docs/exceptions`](https://japa.dev/docs/exceptions)
+
+### Hooks e estado
+
+- **O estado criado no setup se desfaz pela cleanup function que o próprio hook retorna.** Se um setup falha, os seguintes e as cleanups deles não rodam. [`#docs/lifecycle-hooks`](https://japa.dev/docs/lifecycle-hooks)
+- **Conexão de banco e servidor HTTP fecham ao fim da suíte.** O processo não sai com conexão longa aberta; `forceExit` existe, mas a doc recomenda fechar com elegância. [`#docs/reference/runner-config`](https://japa.dev/docs/reference/runner-config)
+
+### Organização e suítes
+
+- **Teste se organiza por pastas e arquivos, sem vários grupos num arquivo e sem aninhamento.** A doc manda pastas no lugar de vários grupos por arquivo e recomenda evitar grupos aninhados. [`#docs/filtering-tests`](https://japa.dev/docs/filtering-tests), [`#docs/grouping-tests`](https://japa.dev/docs/grouping-tests)
+- **Suítes separadas por natureza (unit, functional, browser), cada uma com os próprios recursos.** O que uma suíte não usa não sobe quando ela roda; o browser-client exige suíte própria porque cria um contexto de navegador por teste. [`#docs/filtering-tests`](https://japa.dev/docs/filtering-tests), [`#docs/plugins/browser-client`](https://japa.dev/docs/plugins/browser-client)
+- **Com `suites`, a raiz não tem `files`; cada suíte tem nome único e o próprio `files`.** É o contrato do config. [`#docs/test-suites`](https://japa.dev/docs/test-suites)
+- **`run()` fecha o bootstrap; testes ficam em `tests/` com sufixo `.spec.ts` no config padrão.** `run` executa os testes pela configuração aplicada. [`#docs/installation`](https://japa.dev/docs/installation)
+- **Shard na mesma máquina tem banco, cache e porta próprios, ou roda em job separado.** Sem isso os shards disputam os mesmos recursos. [`#docs/filtering-tests`](https://japa.dev/docs/filtering-tests)
+- **Filtro que precisa de todas as tags passa `--match-all`.** Sem a flag basta qualquer tag casar. [`#docs/filtering-tests`](https://japa.dev/docs/filtering-tests)
+- **A rodada completa não executa só os testes fixados com `.pin()`; `disallowPinnedTests` impede.** Rodar só o fixado deixa cobertura incompleta, e a doc recomenda a suíte inteira. [`#docs/filtering-tests`](https://japa.dev/docs/filtering-tests)
+- **Teste desligado temporariamente usa `test.skip`, não código comentado.** É o mecanismo que a doc indica para pular. [`#docs/skipping-tests`](https://japa.dev/docs/skipping-tests)
+- **Dataset é array, ou função (pode ser async) que devolve array.** O teste roda uma vez por item. [`#docs/datasets`](https://japa.dev/docs/datasets), [`#docs/reference/test`](https://japa.dev/docs/reference/test)
+
+### Plugins e reporters
+
+- **Quem define `reporters` no config registra e ativa cada um.** Os padrões somem quando a propriedade é definida. [`#docs/test-reporters`](https://japa.dev/docs/test-reporters)
+- **Reporter próprio estende `BaseReporter`.** É o contrato de reporter da doc. [`#docs/test-reporters`](https://japa.dev/docs/test-reporters)
+- **`expect` vem do contexto do teste, não de global.** É a recomendação da doc. [`#docs/plugins/expect`](https://japa.dev/docs/plugins/expect)
+- **Assert segue a API documentada do Japa, não a do Chai.** O plugin não é cópia exata do Chai. [`#docs/plugins/assert`](https://japa.dev/docs/plugins/assert)
+- **Multipart no api-client usa `field`/`fields`, não `form`/`json`; cookie não persiste entre requisições.** O client não guarda estado. [`#docs/plugins/api-client`](https://japa.dev/docs/plugins/api-client)
+- **openapi-assertions recebe o caminho dos arquivos de schema.** Vindo do `@japa/assert` 3, o plugin novo precisa ser instalado e configurado. [`#docs/plugins/openapi-assertions`](https://japa.dev/docs/plugins/openapi-assertions)
+- **Page do browser-client estende `BasePage` e define a URL.** É o contrato das page classes. [`#docs/plugins/browser-client`](https://japa.dev/docs/plugins/browser-client)
+- **Macro ou getter adicionado em `Test`, `TestContext`, api-client ou browser-client ganha declaration merging.** São propriedades adicionadas em runtime. [`#docs/reference/test-context`](https://japa.dev/docs/reference/test-context), [`#docs/reference/test`](https://japa.dev/docs/reference/test), [`#docs/plugins/api-client`](https://japa.dev/docs/plugins/api-client), [`#docs/plugins/browser-client`](https://japa.dev/docs/plugins/browser-client)
+
 ---
 
 ## Guides

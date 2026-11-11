@@ -45,6 +45,77 @@ relacionamentos. Boa parte das dúvidas de quem começa vem de misturar os dois.
 
 **Skills:** `maiyu-backend`, `api-and-interface-design`, `security-best-practices`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Lucid ORM: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Migrations e schema
+
+- **Migration é escrita à mão e o banco é a fonte da verdade; os tipos saem dele por `schema:generate`.** O Lucid escolhe migration manual com classe de schema gerada para o banco mandar no tipo, e não o contrário. [`#introduction`](https://lucid.adonisjs.com/docs/introduction)
+- **Toda migration implementa `up` e `down`.** A classe estende `BaseSchema` e o `down` é o que reverte o `up`. [`#migrations`](https://lucid.adonisjs.com/docs/migrations)
+- **Em produção o schema só anda para frente.** Desfazer é migration nova que reverte, não rollback, para o histórico ser o mesmo em todo ambiente. [`#migrations`](https://lucid.adonisjs.com/docs/migrations)
+- **`disableRollbacksInProduction` ligado, e migration em produção só com `--force`.** Com ele `migration:rollback`, `migration:reset` e `migration:refresh` recusam rodar em produção, porque rollback costuma destruir dado; sem `--force` os comandos de migration também recusam. [`#configuration`](https://lucid.adonisjs.com/docs/configuration), [`#commands`](https://lucid.adonisjs.com/docs/commands)
+- **Migração de dado grande roda em lote e em arquivo separado da mudança de schema.** A transação fica curta e a tabela não fica travada. [`#migrations`](https://lucid.adonisjs.com/docs/migrations)
+- **Migration que precisa rodar em ambientes com histórico diferente envolve a operação em checagem com `await` (`hasTable`, `hasColumn`).** A operação incondicional falha onde o estado já é outro. [`#schema-builder`](https://lucid.adonisjs.com/docs/schema-builder)
+- **SQL parametrizado em migration usa `this.raw(sql, bindings)` do `BaseSchema`, não o `raw` do schema builder.** O `raw` do schema builder só aceita a string, sem binding. [`#schema-builder`](https://lucid.adonisjs.com/docs/schema-builder)
+- **`.alter()` repete toda restrição que a coluna deve manter.** A alteração não é incremental: o que não for repetido some. [`#table-builder`](https://lucid.adonisjs.com/docs/table-builder)
+- **Apagar tabela com enum nativo apaga também o tipo.** Senão o tipo fica órfão no banco. [`#table-builder`](https://lucid.adonisjs.com/docs/table-builder)
+- **Valor de enumeração se guarda como inteiro ou string curta, com o significado no código, em vez de enum nativo do banco.** Mudar valor de enum nativo em produção exige reescrever a tabela ou SQL à mão, e alguns dialetos nem permitem. [`#schema-classes`](https://lucid.adonisjs.com/docs/schema-classes)
+- **`bigint` volta como string nas consultas.** É assim para não perder precisão no número do JavaScript. [`#table-builder`](https://lucid.adonisjs.com/docs/table-builder)
+- **`database/schema.ts` é versionado e nunca editado à mão.** Ele é reescrito a cada geração; customização vai por schema rules ou override no model, e sem o commit cada dev precisa gerar antes de escrever model. [`#schema-classes`](https://lucid.adonisjs.com/docs/schema-classes), [`#schema-generation`](https://lucid.adonisjs.com/docs/schema-generation)
+- **Código próprio (relação, hook, scope, getter, método, serialização) fica no arquivo do model, nunca na classe de schema.** A classe de schema é regerada a cada migration e o que se acrescenta nela se perde. [`#models`](https://lucid.adonisjs.com/docs/models), [`#schema-classes`](https://lucid.adonisjs.com/docs/schema-classes)
+- **Dump, manifest e remoção das migrations entram no mesmo commit, longe de release, com a ferramenta de dump do banco instalada.** Os três descrevem uma linha de base só, e o dump não substitui migration. [`#schema-dumps`](https://lucid.adonisjs.com/docs/schema-dumps)
+
+### Consultas e SQL cru
+
+- **Entrada do usuário nunca é concatenada em SQL cru: vai como binding.** Concatenar abre SQL injection, e o driver escapa o binding. [`#raw-query-builder`](https://lucid.adonisjs.com/docs/raw-query-builder), [`#database-service`](https://lucid.adonisjs.com/docs/database-service), [`#select-query-builder`](https://lucid.adonisjs.com/docs/select-query-builder)
+- **Fragmento cru dentro do query builder vai entre parênteses quando o SQL ao redor precisa.** O builder não envolve o fragmento sozinho. [`#raw-query-builder`](https://lucid.adonisjs.com/docs/raw-query-builder)
+- **Todo update e delete do query builder tem `where`.** Sem ele a operação pega a tabela inteira, e o Lucid não impede. [`#update-and-delete-queries`](https://lucid.adonisjs.com/docs/update-and-delete-queries)
+- **Toda paginação tem `orderBy`.** Sem ordem explícita a mesma linha pode aparecer em duas páginas. [`#pagination`](https://lucid.adonisjs.com/docs/pagination)
+- **Total de paginação em tabela grande não precisa ser `COUNT` exato: contagem aproximada, total em cache ou paginação por cursor.** O `COUNT` varre o resultado inteiro a cada página. [`#pagination`](https://lucid.adonisjs.com/docs/pagination)
+- **Lock (`forUpdate`) só dentro de transação e pelo `trx`.** Fora de transação o lock é solto na hora; pelo `db` ele cai em outra conexão. [`#select-query-builder`](https://lucid.adonisjs.com/docs/select-query-builder)
+- **Filtro sobre agregado usa `having`, não `where`.** O `where` filtra antes da agregação. [`#select-query-builder`](https://lucid.adonisjs.com/docs/select-query-builder)
+- **`findMany` não garante ordem.** As linhas voltam por chave primária decrescente; ordem se pede com `whereIn` mais `orderBy`. [`#crud-operations`](https://lucid.adonisjs.com/docs/crud-operations)
+- **SQL para log sai por `toSQL()` com os bindings separados; log e perfil de consulta passam pelo evento `db:query`.** Evita erro de aspas, e o evento traz bindings, duração e conexão em qualquer ambiente, em formato estruturado para produção. [`#select-query-builder`](https://lucid.adonisjs.com/docs/select-query-builder), [`#insert-query-builder`](https://lucid.adonisjs.com/docs/insert-query-builder), [`#configuration`](https://lucid.adonisjs.com/docs/configuration), [`#debugging`](https://lucid.adonisjs.com/docs/debugging)
+- **Consulta passa pelo model; o query builder do banco só quando o resultado não pode ser instância do model.** Os casos aceitos são relatório, script e join que projeta coluna de fora do model. [`#models`](https://lucid.adonisjs.com/docs/models), [`#database-service`](https://lucid.adonisjs.com/docs/database-service)
+- **Agregado no model query builder chama exatamente uma função de agregação e define alias.** O callback de agregado aceita uma função só, e o valor volta pelo alias. [`#model-query-builder`](https://lucid.adonisjs.com/docs/model-query-builder)
+- **Transformação que vale para toda carga é hook; a que depende do formato de uma consulta é `rowTransformer`.** Cada um cobre um alcance. [`#model-query-builder`](https://lucid.adonisjs.com/docs/model-query-builder)
+
+### Transações e conexões
+
+- **Escritas que precisam acontecer juntas vão numa transação, e toda transação manual fecha com `commit` ou `rollback`.** Transação abandonada segura a conexão e pode esgotar o pool. [`#transactions`](https://lucid.adonisjs.com/docs/transactions), [`#database-service`](https://lucid.adonisjs.com/docs/database-service)
+- **Em `repeatable read` ou `serializable` no PostgreSQL, a falha de serialização se trata repetindo a transação.** O banco aborta a transação em conflito e quem chamou tem de repetir. [`#transactions`](https://lucid.adonisjs.com/docs/transactions)
+- **Efeito externo disparado dentro de transação vai para `trx.after('commit')`, e esse callback trata o próprio erro.** O after hook do model dispara antes do commit, e erro no callback pós-commit é engolido. [`#model-hooks`](https://lucid.adonisjs.com/docs/model-hooks), [`#transactions`](https://lucid.adonisjs.com/docs/transactions)
+- **Mutação e leitura logo depois de escrever usam o modo `write`; só leitura tolerante vai para réplica.** A réplica pode ainda não ter a escrita. [`#database-service`](https://lucid.adonisjs.com/docs/database-service)
+- **Model que vive sempre numa conexão que não é a default declara `static connection`.** Assim toda consulta e relação dele usa o banco certo. [`#configuration`](https://lucid.adonisjs.com/docs/configuration), [`#models`](https://lucid.adonisjs.com/docs/models)
+- **Handler HTTP nunca fecha conexão; código da aplicação usa `db.connection(nome)`, não o connection manager.** O código seguinte do mesmo processo reusa o pool e falha; fechar é de script, worker, teste e shutdown. [`#connection-manager`](https://lucid.adonisjs.com/docs/connection-manager), [`#database-service`](https://lucid.adonisjs.com/docs/database-service)
+- **`clientName` no lugar de `dialectName`.** `dialectName` está depreciado e só existe por compatibilidade. [`#connection-manager`](https://lucid.adonisjs.com/docs/connection-manager)
+- **`rejectUnauthorized: false` nunca em produção.** A doc só aceita pular a verificação TLS em desenvolvimento, com certificado autoassinado. [`#configuration`](https://lucid.adonisjs.com/docs/configuration)
+
+### Models, hooks e relações
+
+- **Model com chave gerada pela aplicação (UUID, ULID) declara `selfAssignPrimaryKey = true`.** Sem ele o Lucid tenta ler a chave gerada pelo banco. [`#models`](https://lucid.adonisjs.com/docs/models)
+- **Hook não roda em `pojo()`, em update ou delete em massa, nem nas variantes `Quietly`.** Hook só existe sobre instância do model; regra que depende dele não pode passar por esses caminhos. [`#model-query-builder`](https://lucid.adonisjs.com/docs/model-query-builder), [`#crud-operations`](https://lucid.adonisjs.com/docs/crud-operations), [`#model-hooks`](https://lucid.adonisjs.com/docs/model-hooks)
+- **Importação grande sem hook usa `multiInsert` do query builder.** O `createMany` faz uma consulta por linha. [`#crud-operations`](https://lucid.adonisjs.com/docs/crud-operations)
+- **hasOne tem índice único na FK da tabela relacionada.** Só o banco garante uma linha por pai; `save` não impede a segunda. [`#has-one`](https://lucid.adonisjs.com/docs/has-one)
+- **`.limit()` não entra no callback de preload de hasMany.** O limite vale para o total somando todos os pais, não por pai. [`#has-many`](https://lucid.adonisjs.com/docs/has-many)
+- **`dissociate` de belongsTo exige FK anulável.** Ele só anula a FK e nunca apaga a linha relacionada. [`#belongs-to`](https://lucid.adonisjs.com/docs/belongs-to)
+- **Com `pivotTimestamps` as colunas de data existem na migration do pivot.** O Lucid grava nelas e não as cria. [`#many-to-many`](https://lucid.adonisjs.com/docs/many-to-many)
+- **Tudo o que o transformer lê vem pré-carregado.** O transformer não consulta: relação sem preload chega `undefined`, agregado chega em `$extras`. [`#serializing-models`](https://lucid.adonisjs.com/docs/serializing-models)
+
+### Validação
+
+- **`unique` com `caseInsensitive` pede índice funcional em `LOWER(coluna)`; o update exclui a própria linha pelo `filter`.** O `LOWER` impede o índice comum e vira varredura sequencial. [`#validation`](https://lucid.adonisjs.com/docs/validation)
+- **Cada regra `unique`/`exists` faz uma consulta, e só roda quando as outras regras do campo passaram.** Muitos campos assim numa rota são muitas idas ao banco. [`#validation`](https://lucid.adonisjs.com/docs/validation)
+
+### Seeders, factories e testes
+
+- **Seeder de dado de referência é idempotente (`updateOrCreate`); fixture restringe onde roda com `static environment`.** O Lucid não registra quais seeders já rodaram, e a restrição de ambiente só vale no seeder chamado direto: o que um seeder índice chama precisa conferir `app.nodeEnvironment` por conta própria. [`#seeders`](https://lucid.adonisjs.com/docs/seeders)
+- **Factory devolve todo campo obrigatório do model; campo que precisa ser igual no pai e nos filhos usa `mergeRecursive`.** Sem o campo o insert falha com NOT NULL. [`#model-factories`](https://lucid.adonisjs.com/docs/model-factories)
+- **`wrapInGlobalTransaction` só em teste que não precisa ver dado gravado por outro processo; senão `truncate()`; nunca o nome depreciado `withGlobalTransaction`.** Subprocesso e worker não enxergam a transação global. [`#testing`](https://lucid.adonisjs.com/docs/testing)
+
 ---
 
 ## Fundamentos
@@ -748,7 +819,9 @@ await db.rawQuery('select * from posts where name ilike ?', [`%${busca}%`])
 os comandos de rodar e reverter.
 **Para que serve:** versionar mudanças de schema junto com o código, e conseguir voltar atrás.
 **Quando usar:** em toda alteração de estrutura de banco. **Escreva o `down` de verdade**, porque
-`migration:rollback` sem `down` correto é uma armadilha que só aparece no pior momento.
+`migration:rollback` sem `down` correto é uma armadilha que só aparece no pior momento. Em produção,
+`migrations.disableRollbacksInProduction: true` no `config/database.ts` faz `rollback`, `reset` e
+`refresh` recusarem rodar com `NODE_ENV=production`; desfazer ali é migration nova que reverte.
 
 ```ts
 import { BaseSchema } from '@adonisjs/lucid/schema'
@@ -2009,13 +2082,19 @@ desenvolvimento. Use a flag de ambiente para impedir que seed de demonstração 
 // database/seeders/owner_seeder.ts
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 import User from '#models/user'
+import env from '#start/env'
 
 export default class extends BaseSeeder {
   async run() {
-    // idempotente: rodar duas vezes não duplica
-    await User.updateOrCreate(
+    const password = env.get('SEED_OWNER_PASSWORD')
+    if (!password) return
+
+    // idempotente e sem pisar na senha trocada no painel: achando o e-mail,
+    // firstOrCreate devolve o registro e ignora o segundo payload.
+    // updateOrCreate aqui reescreveria a senha a cada deploy que roda db:seed.
+    await User.firstOrCreate(
       { email: 'owner@app.com' },
-      { name: 'Dono', password: 'trocar-depois', role: 'owner', status: 'active' }
+      { name: 'Dono', password, role: 'owner', status: 'active' }
     )
   }
 }
@@ -2027,7 +2106,7 @@ import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 export default class extends BaseSeeder {
   // impede que dados de demonstração vazem para produção
-  static environment = ['development', 'testing']
+  static environment = ['development', 'test']
 
   async run() {
     await PostFactory.createMany(50)

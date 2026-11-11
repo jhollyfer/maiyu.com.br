@@ -27,7 +27,8 @@ código e de texto: `typescript.md` §12. Texto que o usuário vê sai sempre de
 | `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel); `noindex` |
 | `routes/_private/layout.tsx` | portão único de sessão (§1.3); declara `ssr` (§9.2) e `noindex` |
 | `routes/_private/<área>/layout.tsx` | guard de capacidade da área (§3.4) |
-| `routes/_private/<área>/<recurso>/` | molde de recurso (§1.2) |
+| `routes/_private/<área>/<recurso>/` | molde de recurso (§1.2); `<recurso>/layout.tsx` só quando não há área e o papel muda por recurso (lowcodejs, `DECISIONS.md` #356) |
+| `routes/_setup/` | grupo de instalação (lowcodejs), opcional |
 | `routes/**/-components/` | a tela e as peças dela; ignorada pelo gerador (prefixo `-`) |
 | `routes/**/-<nome>.ts` | módulo privado da rota, testável sem a árvore gerada: `-search.ts`, `-redirect.ts`, `-use-<nome>.ts` (hook de uma rota só) |
 | `components/ui/` | shadcn (Base UI), editável só como diz §6 |
@@ -48,8 +49,8 @@ validator (`architecture.md` §6; `tooling.md` §0.1).
 `-components/` é ignorado pelo gerador de rotas pelo prefixo `-`; arquivo posto direto em
 `routes/<área>/` sem esse prefixo vira rota fantasma. _doc-lib/tanstack-router.md#routing/routing-concepts.
 
-Peça de rota que passa de ~5 arquivos ganha pasta `-components/<peça>/` com `index.ts`, e de fora
-só se importa o `index.ts`. Import lateral entre rotas (`-components/` de uma rota importado por
+Peça de rota que passa de ~5 arquivos ganha pasta `-components/<peça>/`, sem `index.ts`: quem usa
+importa o arquivo da parte direto (§6.1). Import lateral entre rotas (`-components/` de uma rota importado por
 outra) é desvio: a peça sobe para `common/` *(opinião da casa)*.
 
 **O que sobe para `components/common/` é decidido por rota alcançada, não por arquivo que
@@ -62,7 +63,7 @@ parecidos com propósito diferente ficam separados.
 ```
 <recurso>/
 ├── index.tsx  index.lazy.tsx         # lista
-├── new.tsx  new.lazy.tsx             # new.tsx leva o `head` (e o loader, se houver); ver abaixo
+├── new.tsx  new.lazy.tsx             # new.tsx só quando há loader; ver abaixo
 ├── $id/index.tsx  $id/index.lazy.tsx # detalhe
 ├── $id/edit.tsx   $id/edit.lazy.tsx  # edição
 ├── -search.ts
@@ -70,13 +71,14 @@ parecidos com propósito diferente ficam separados.
                  form-fields,form-create,form-edit}.tsx
 ```
 
-**`new.tsx` existe em toda tela que tem `head`** *(opinião da casa, `DECISIONS.md` #257)*: o
+**Título do painel vem do breadcrumb** do `_private/layout.tsx`, não de `head` por rota; `head` por
+rota fica em `_public/` e `_authentication/`, que precisam do título no HTML do servidor (§9.7). Por
+isso `new.tsx` só existe quando a tela tem loader (`DECISIONS.md` #356, revisa a #257): o
 `createLazyFileRoute` só aceita `component`, `errorComponent`, `pendingComponent` e
 `notFoundComponent` (_doc-lib/tanstack-router.md#guide/code-splitting,
 https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/code-splitting.md, aberta em
-2026-10-31), e o título da tela (§9.7) tem de estar no arquivo crítico para sair no HTML do
-servidor. Sem loader, `new.tsx` é só `createFileRoute` com `head`; a regra do §1.3 (configuração
-no `index.tsx`, UI no `.lazy.tsx`) vale igual.
+2026-10-31), e o que não é componente fica no arquivo crítico; a regra do §1.3 (configuração no
+`index.tsx`, UI no `.lazy.tsx`) vale igual.
 
 Detalhe e edição são URLs separadas (`$id` e `$id/edit`), nunca a mesma rota com `?mode=edit`:
 cada uma tem `head`, guard e `pendingComponent` próprios (`DECISIONS.md` #113, C8).
@@ -102,7 +104,8 @@ entre chunks, e ciclo de chunk derruba o SSR em runtime com o build verde (§9.1
 `context.queryClient.query()` (`ensureQueryData` está deprecated desde o TanStack Query 5.102,
 _doc-lib/tanstack-query.md#guides/query-options). Toda rota nascida ali herda a proteção por
 estar no lugar, não por lembrar de repetir o guard. Redireciona para o login só em 401/403, com
-`?redirect=` validado (§3.5); 5xx sobe ao `defaultErrorComponent`, nunca vira "deslogado".
+`?redirect=` validado (§3.5); o guard de área redireciona o papel errado ao painel do papel, e a tela
+de permissão (`AccessDenied`) fica só para o 403 da API dentro de uma tela (§5, `DECISIONS.md` #333); 5xx sobe ao `defaultErrorComponent`, nunca vira "deslogado".
 _doc-lib/tanstack-router.md#guide/authenticated-routes.
 
 ### 1.4 Router e navegação
@@ -110,7 +113,7 @@ _doc-lib/tanstack-router.md#guide/authenticated-routes.
 ```ts
 // src/router.tsx
 export function getRouter() {
-  const queryClient = createQueryClient()
+  const { queryClient } = getContext()   // integrations/tanstack-query/query-context.ts, um por chamada
   return createRouter({
     routeTree,
     context: { queryClient },
@@ -121,7 +124,11 @@ export function getRouter() {
 }
 ```
 
-- `QueryClient` nasce **dentro** de `getRouter()`, um por requisição (§3.1).
+- `QueryClient` nasce **dentro** de `getRouter()`, pelo `getContext()` de `query-context.ts`, um por
+  requisição (§3.1). O `declare module` do `Register` do router fica em `router.tsx`, o do Query em
+  `http.ts` (`DECISIONS.md` #356).
+- Gerador de rotas com `routeToken: 'layout'` e `routeFileIgnorePattern` no plugin
+  (_doc-lib/tanstack-router.md#routing/file-naming-conventions).
 - `defaultPreload: 'intent'` e `defaultPreloadStaleTime: 0`: o router antecipa, o Query decide o
   que está fresco. Prefetch manual em `onMouseEnter` não existe em `<Link>`.
   _doc-lib/tanstack-router.md#guide/preloading, #guide/scroll-restoration.
@@ -207,16 +214,23 @@ nunca `queryKey`/`queryFn` soltos no componente: é o que faz `loader`, `beforeL
 _doc-lib/tanstack-query.md#guides/query-options, #eslint/prefer-query-options.
 
 **Todo loader e todo guard** leem por
-`context.queryClient.query({ ...postQueryOptions(id), staleTime: 'static' })`.
+`context.queryClient.query({ ...postQueryOptions(id), staleTime: 'static' })`. O `loaderDeps` leva
+só o que o loader usa (`DECISIONS.md` #347).
+
+**Lista paginada lê com `useQuery` e `placeholderData: keepPreviousData`**, exceção ao
+`useSuspenseQuery` de §2.2: o `useSuspenseQuery` ignora o placeholder e suspende a cada troca de
+página, e a tabela pisca (`DECISIONS.md` #347).
 
 **`validateSearch` nunca inline no `createFileRoute`** (C2). Uma rota lê: `-search.ts` ao lado.
 Duas ou mais rotas leem: `lib/<tema>-search.ts`. Lista do painel usa a fábrica de
-`lib/list-search.ts` (`listValidateSearch`, `withExtra([...] as const)`), que lê os tetos
+`lib/list-search.ts`: `listValidateSearch(schema)` e `LIST_SEARCH_DEFAULTS`, que lê os tetos
 (`page ≥ 1`, `perPage ≤ 100`) do validator de `@<projeto>/shared` em vez de redigitá-los, e
-`stripSearchParams` tira o default da URL. _doc-lib/tanstack-router.md#how-to/validate-search-params.
+`stripSearchParams` tira o default da URL; `withExtra` sai. O `-search.ts` exporta `validateSearch`
+e `to<Recurso>Params`, que converte a busca da URL nos parâmetros da API (`DECISIONS.md` #347). O tipo da busca do recurso mora nesse `-search.ts`, como `z.output` do validator de `@<projeto>/shared`, com o filtro no enum do domínio e nunca `string`; `lib/list-search.ts` guarda só os genéricos (`ListSearch`, `StorefrontSearch`) e o `compactQuery`, que tira o filtro em branco antes do `query` do cliente. _doc-lib/tanstack-router.md#how-to/validate-search-params, #guide/search-params.
 
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
-testada (`shouldRetryQuery`) que repete 5xx/rede e devolve `false` para todo 4xx.
+testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
+4xx e devolve `false` no servidor: retry no SSR segura a resposta da página (`DECISIONS.md` #352).
 _doc-lib/tanstack-query.md#guides/query-retries.
 
 **Combobox com busca no servidor**: um hook por entidade,
@@ -231,9 +245,19 @@ fino. Polling de status é o fallback (`socket ?? status`) quando o socket cai. 
 dos nomes do backend (`backend.md` §3) *(opinião da casa)*.
 _doc-lib/socket-io.md; _doc-lib/tanstack-query.md#guides/polling.
 
+**SSE** (Transmit no Adonis): `hooks/use-channel.ts` genérico e um hook fino por canal, com a
+mesma regra de limpar ao desmontar (`DECISIONS.md` #351).
+O estado inicial se relê **depois** que a assinatura (ou a reassinatura) completa, com o
+`subscription.create()` resolvido, nunca antes nem no evento `connected` do cliente, que dispara antes
+do `forceCreate()` da reconexão: mensagem publicada na janela entre a leitura e a assinatura se perde,
+porque o Transmit não reenvia a quem assina depois. Mensagem que chega antes da releitura fica em buffer
+e é aplicada depois dela. Assinatura recusada religa o polling. Toda espera por `onSubscription` ou
+`onSubscribeFailed` tem teto nomeado: o `transmit-client` 1.1.0 engole a queda de rede no POST de
+reassinatura (`catch {}`) sem chamar nenhum dos dois (achado do academy, live-session, 2026-11-09).
+
 ### 2.2 Leitura sem cascata
 
-O `loader` dispara em paralelo tudo que a tela precisa; o componente lê com `useSuspenseQuery`.
+O `loader` dispara em paralelo tudo que a tela precisa; o componente lê com `useSuspenseQuery` (a lista paginada é a exceção de §2.1).
 Nunca o pai busca, renderiza e só então o filho busca.
 _doc-lib/tanstack-router.md#guide/external-data-loading; _doc-lib/tanstack-query.md#guides/request-waterfalls.
 
@@ -285,6 +309,10 @@ requisição (dedup de refresh de sessão) abre num request middleware de `start
 `AsyncLocalStorage`. _doc-lib/tanstack-query.md#guides/ssr (regra 1);
 _doc-lib/tanstack-start.md#guide/middleware.
 
+`src/start.ts` é obrigatório e registra, nesta ordem,
+`requestMiddleware: [createCsrfMiddleware({ filter: ({ handlerType }) => handlerType === 'serverFn' }), requestScope]`
+(_doc-lib/tanstack-start.md, "Middleware e CSRF"; `DECISIONS.md` #336).
+
 ### 3.2 Sessão e ambiente sem store
 
 Sessão é dado do servidor: mora no cache do Query, lida pela **mesma** `queryOptions` que o
@@ -317,26 +345,38 @@ redireciona ao login em 401, com `?redirect=` da tela atual *(opinião da casa)*
   tela de login pode ser embutida em `iframe` por outro site (clickjacking).
 - **Endereço da API sem default de rede.** `src/env.ts` lê `VITE_API_URL` uma vez e o build falha
   sem ela; `http://localhost:3333` como fallback publica um site que manda senha para a máquina de
-  quem visita. O passo de build do CI recebe a variável (`tooling.md` §8).
+  quem visita. Em produção ela vem do `frontend/.env.production` versionado, que o build da imagem
+  lê e confere (`tooling.md` §8.2); na rodada antes do PR, do `.env.e2e`, com o endereço local.
 - **Dado pessoal não fica em `localStorage`**: sem validade, fica para o próximo usuário do
   computador. Guarde o id e busque o resto na API, ou expire.
 - **Nome das chaves**: `VITE_API_URL`, `VITE_SITE_URL`, `VITE_UPLOAD_MAX_SIZE`, `SERVER_API_URL`,
   `SITE_ENV`, `STORAGE_PUBLIC_URL` e as `E2E_*`, com regra de nome e significado, estão no catálogo de `backend.md` §6.2; chave nova ou
   sinônimo (`VITE_API_BASE_URL`) não nasce aqui.
-- `src/env.ts` lê só `VITE_*`, uma vez, de forma síncrona, checado à mão (o módulo roda antes do
-  router montar). `SERVER_API_URL` é lida por requisição só no ramo `.server()`.
+- `src/env.ts` lê só `VITE_*`, uma vez, de forma síncrona, validado com Zod (o módulo roda antes do
+  router montar), sem default de rede em nenhum ramo, nem no de desenvolvimento (`DECISIONS.md` #335). `SERVER_API_URL` é lida por requisição só no ramo `.server()`.
   _doc-lib/vitejs.md#env-and-mode; _doc-lib/tanstack-start.md#guide/environment-variables.
 - Código que diverge entre cliente e servidor (base de URL, leitura de cookie, dedup de refresh)
   usa `createIsomorphicFn()`, nunca `typeof window` no meio da função.
   _doc-lib/tanstack-start.md#guide/environment-functions.
 - **Um `request()` só**, em `integrations/tanstack-query/http.ts` (`http.server.ts` para o ramo
-  de servidor). Ele:
+  de servidor). Nos projetos Adonis, o `request()` usa o cliente Tuyau como transporte e mantém a
+  validação pelo schema; `TuyauError` vira `HTTPError` ali e não sai do arquivo. O lowcodejs
+  (Fastify) usa `fetch` (`DECISIONS.md` #324; _doc-lib/tuyau.md). `MutationProps` mora no mesmo
+  arquivo (`DECISIONS.md` #356). Ele:
   - lança `HTTPError`, espelho do `ErrorEnvelope` de `@<projeto>/shared`, registrado como
     `Register['defaultError']` (_doc-lib/tanstack-query.md#typescript); a UI compara `code`, nunca
-    `message` (`typescript.md` §5);
+    `message` (`typescript.md` §5). A doc pede `unknown` quando o call site estreita; a casa
+    registra `HTTPError` porque todo erro passa por `HTTPError.from` aqui, e o conflito está em
+    `DECISIONS.md` #352;
   - converte o corpo `unknown` pelo schema `…Response` de `@<projeto>/shared`
     (`architecture.md` §10). É o **único** ponto onde o corpo vira tipo; `as` espalhado e
     `json()` tratado como `T` são desvio (`typescript.md` §2, §2.1);
+  - confere o corpo de erro campo a campo antes de montar o `HTTPError`: `message` e `code` só se
+    forem string, `status` só se for número, `errors` só se for objeto de `campo → string`; o que
+    não passa fica de fora e cai no padrão (`UNKNOWN_ERROR`, o status da resposta). Corpo de erro
+    é dado de fora como qualquer outro: proxy, CDN e pacote do backend respondem no formato deles,
+    e um `errors` em lista renderizado como mensagem vira "[object Object]" na tela
+    (`DECISIONS.md` #293);
   - deduplica o refresh em 401 por requisição (§3.1);
   - soma o `signal` da query com um teto de tempo, `AbortSignal.any([signal, timeout])`
     *(opinião da casa, API do runtime)*: sem o teto, API que não responde prende a tela ou o SSR;
@@ -381,7 +421,7 @@ const form = useForm<AdministratorPostCreatePayload>({
 - Mensagem de validação sai do locale do Zod e do mapa por idioma de `shared/src/validator.ts`,
   nunca string no campo (`i18n.md` §2). _doc-lib/zod.md#error-customization.
 - `mode: 'onTouched'` (valida ao sair do campo, não a cada tecla). Campo liga por `AppField`
-  (`Controller`), nunca `register`. `shouldFocusError` fica no padrão (ligado).
+  (`Controller`), inclusive o campo com máscara (abaixo). `shouldFocusError` fica no padrão (ligado).
   _doc-lib/react-hook-form.md#docs/usecontroller/controller.
 - Valor observado num filho por `useWatch({ control, name })`; `form.watch` só na raiz que
   precisa. _doc-lib/react-hook-form.md#docs/usewatch.
@@ -392,15 +432,19 @@ const form = useForm<AdministratorPostCreatePayload>({
 - **"Tentar de novo"** é oferecido em 409, 5xx e falha de rede, mantendo o digitado; nunca em
   401/403/404/422, que reenviar não resolve. Mesmo critério de `shouldRetryQuery` (§2.1)
   (`DECISIONS.md` #113, C16; revisa a #46).
-- Máscara (telefone, CPF, moeda) usa a lib de máscara instalada e lê o valor **sem máscara** por
-  `.parse()` antes de submeter, nunca regex tirando caractere.
-  _doc-lib/use-mask-input.md#tutorial-basics/static-mask.
+- Máscara (telefone, CPF, moeda) é `FieldMask` (`components/common/field/field-mask.tsx`) sob
+  `AppField`, com `useMaskInput({ mask, register: control.ref })` (`control.ref` é o `field.ref` do `Controller`, que o `AppField` repassa): o `ref` do RHF chega ao input
+  pela opção `register` da lib, o ponto de integração que ela documenta para lib de formulário, e
+  rótulo e erro ficam no `AppField` (_doc-lib/use-mask-input.md#api-reference, `DECISIONS.md` #325,
+  que revoga a parte de máscara da #320). Os aliases moram em `lib/mask.ts`. Lê o valor **sem
+  máscara** pelas funções dela (`unmaskedValue()` do ref, `getUnmaskedValue` ou `unformatWithMask`) antes de
+  submeter, nunca regex tirando caractere. _doc-lib/use-mask-input.md#api-reference.
 - **Formulário dinâmico** (campos definidos em runtime): o resolver recebe o schema montado pelo
   construtor de `@<projeto>/shared` a partir da definição dos campos (`architecture.md` §10);
   `rules` por campo e `resolver` nunca convivem no mesmo form (o RHF ignora `rules` quando há
   `resolver`). _doc-lib/react-hook-form.md#get-started#Applyvalidation.
-- **Formulário sensível** (login, cadastro, senha) tem `method="post"`: antes da hidratação, o
-  envio nativo não põe senha na query string *(opinião da casa)*.
+- **Todo `FormShellContent` tem `method="post"`**: antes da hidratação, o envio nativo não põe o
+  digitado (senha, documento) na query string *(opinião da casa, `DECISIONS.md` #356)*.
 - **Alteração não salva**: `useBlocker` quando `formState.isDirty`.
   _doc-lib/tanstack-router.md#guide/navigation-blocking.
 
@@ -408,7 +452,9 @@ const form = useForm<AdministratorPostCreatePayload>({
 (form + mutation + `applyHTTPErrorToForm` + retry) para diálogo, login e cadastro em linha;
 `useResourceForm` acrescenta `formId`, `validator`, `defaults`/`values`, `fields`, `mutation`,
 `invalidate`, `backTo`, `success`, `retry` e `payload`, e é o padrão de todo formulário de criação
-e edição de recurso. Os dois moram em `hooks/`.
+e edição de recurso. Os dois moram em `hooks/`. O `onSubmit` devolve a promise (`mutateAsync`): sem
+isso `isSubmitting` nunca vale `true`. Limpar o formulário depois do sucesso é a opção
+`resetOnSuccess` do `useMutationForm`.
 
 **Arquivos do formulário de recurso** *(opinião da casa)*:
 
@@ -423,11 +469,18 @@ e edição de recurso. Os dois moram em `hooks/`.
   vazio; `passwordConfirmation` é declarado no validator.
 
 **Upload em voo trava o submit** *(opinião da casa)*: campo que sobe o arquivo na escolha
-registra uma chave em `components/common/uploading-context.tsx` (`Set<string>`, não contador) e
+registra uma chave em `components/common/uploading-context/uploading-context.tsx` (`Set<string>`, não contador) e
 a remove ao terminar ou falhar; o salvar fica desabilitado enquanto o `Set` não estiver vazio.
 
-**Formulário dentro de Dialog/Sheet** é um componente interno montado só quando aberto, e
-`form.reset()` vem antes de fechar: dispensa `useEffect` atrelado a `open` (§6.2).
+**Upload multipart** pelo `hooks/use-multipart-upload.ts` do kit: `upload`, `cancel` (aborta e manda
+`DELETE`), `cancelAll` e aborto no unmount; os `headers` de cada parte vêm do servidor e o hook só
+os repete (`backend.md` §5.4, `DECISIONS.md` #349).
+
+**Formulário dentro de Dialog/Sheet** é um componente interno montado só quando aberto. O `reset`
+nunca vai dentro do `onSubmit`: o `handleSubmit` atualiza o estado de envio depois do handler, e o
+reset ali limpa os valores mas não o estado. Ele roda num `useEffect` quando
+`formState.isSubmitSuccessful` vira `true`, com o `defaultValues` inteiro, e é ali que o Dialog fecha
+(_doc-lib/react-hook-form.md#docs/useform/reset, `DECISIONS.md` #320).
 
 Acessibilidade do formulário (rótulo, `aria-invalid`, `aria-describedby`, atributos de entrada):
 §10.3.
@@ -458,7 +511,19 @@ _doc-lib/tanstack-query.md#guides/important-defaults; _doc-lib/tanstack-start.md
   404 da API vira `throw notFound()`, todo o resto relança. A rota declara `notFoundComponent`.
   5xx nunca vira 404, e "não encontrado" nunca responde 200 (soft 404).
   _doc-lib/tanstack-router.md#guide/not-found-errors.
-- **Mapa de status para a tela** *(opinião da casa)*: 401 → login, 403 → tela de permissão,
+  **Rota coringa** (`$.tsx`, a do "qualquer outro endereço") casa a URL, então para o roteador não
+  há nada "não encontrado": com a tela no `component`, o SSR desenha "Página não encontrada" com
+  status 200. O `loader` dela lança `notFound()` e a tela mora no `notFoundComponent` da mesma rota
+  (`DECISIONS.md` #306; https://tanstack.com/router/latest/docs/guide/not-found-errors, "Throwing
+  your own notFound errors", aberta: a doc recomenda lançar no loader e não no componente). O status
+  404 do SSR com isso foi conferido pelo E2E do academy (§11.2); a página do Start sobre o status:
+  não conferida.
+  **Layout sem página própria** também casa a URL exata (`/administrator`, `/owner`) e desenha o painel
+  vazio com 200. Todo layout tem `index.tsx`: ou uma página real, ou o índice que leva à primeira aba
+  (permitido pela #383, `backend.md` §2), ou um `loader` que lança `notFound()`, como o `$.tsx`. Nunca o
+  layout sem índice (achado do aporta, conferido com `matchRoutes` sobre o `routeTree` gerado).
+- **Mapa de status para a tela** *(opinião da casa)*: 401 → login; 403 do portão ou do guard de
+  área → redirect (§1.3); 403 da API dentro de uma tela → `AccessDenied` (`DECISIONS.md` #333);
   404 → não encontrado, 422 → campo (§4), 429 → aguarde, 5xx e rede → genérico com "tentar de
   novo". Erro de um bloco não derruba a tela inteira.
 
@@ -467,6 +532,26 @@ Os quatro estados de toda tela que lê dado (carregando, vazio, erro, preenchido
 ---
 
 ## 6. Design system e estilo
+
+### Toda interface é shadcn sobre Base UI *(regra universal, decisão do dono, `DECISIONS.md` #366)*
+
+Toda rota, página, sub-rota, layout, interface, componente, formulário e campo, pública ou privada,
+monta a tela com os componentes do shadcn (Base UI) de `components/ui/`, ou com peça do kit
+(`components/common/`) que já é composta por eles. Não há tela fora disso.
+
+- Elemento que tem par no registry nunca se escreve à mão: `<button>`, `<input>`, `<textarea>`,
+  `<select>`, `<label>`, `<table>`, `<dialog>`, `<form>` de campo solto, checkbox, radio, switch, tabs,
+  menu, popover, tooltip, toast, badge, card, separator, skeleton, avatar, breadcrumb, pagination,
+  sheet, drawer, accordion e o resto do registry. O elemento HTML nativo só aparece dentro de
+  `components/ui/` (o próprio shadcn) e como estrutura sem comportamento (`div`, `section`, `main`,
+  `header`, `footer`, `nav`, `ul`, `li`, `h1`..`h6`, `p`, `span`, `img` por `Picture`).
+- Link é o `Link` do TanStack Router, com o estilo do `Button` (`buttonVariants`) quando parece botão.
+- Campo de formulário é o `Field` do shadcn sob `AppField` (§4); ícone é Phosphor.
+- Peça que o registry não tem: procure no registry inteiro (`shadcn add --all` já instalado, #299)
+  e nos blocos; não achou, a peça nasce no kit do upstream, composta por `ui/`, nunca no projeto.
+- Cobrança: o ESLint do modelo proíbe o JSX intrínseco interativo fora de `components/ui/`
+  (`no-restricted-syntax`) e o `pattern:check` lista o resto; exceção não existe.
+
 
 ### `components/ui/` é arquivo do projeto, editável com marca
 
@@ -480,7 +565,18 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   registry.
 - **Não pode**: hook do app, regra de negócio, fetch, componente que não veio do registry (vai
   para `common/`).
-- Componente de `ui/` sem nenhum consumidor sai.
+- **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
+  sai" da #146): `shadcn add --all` sem `--overwrite`, que é o padrão da CLI, para não apagar
+  arquivo que já tem linha `// casa:`. Antes, `--dry-run` mostra o que entra; depois, o arquivo marcado que o
+  registry mudou se compara com `shadcn add <nome> --diff` e se reaplica à mão
+  (_doc-lib/shadcn.md#docs/cli, https://ui.shadcn.com/docs/cli, aberta). Componente instalado
+  e sem uso não pesa no bundle, porque só entra o que alguém importa; o ganho é a tela nova achar a
+  peça pronta em vez de alguém escrever uma do zero (_doc-lib/shadcn.md#docs/components).
+- **Cada componente do registry é avaliado** e registrado na seção "Componentes do shadcn" do
+  `docs/DESIGN.md` do projeto, numa tabela de três colunas: componente, decisão (**já usado**,
+  **aplicado** nesta revisão, **não se aplica**) e onde se usa ou por que não. Componente que o
+  registry traz depois entra na tabela no mesmo PR que atualiza `ui/` *(opinião da casa; a doc lista
+  os componentes, mas não manda avaliar)*.
 
 _doc-lib/shadcn.md#docs/theming, #docs/components-json.
 
@@ -566,21 +662,23 @@ export function UserCardAvatar({ className, ...props }: Readonly<ComponentProps<
   return <img data-slot="user-card-avatar" src={user.avatarUrl} alt={user.name} className={cn('size-8 rounded-full', className)} {...props} />
 }
 
-// certo: components/common/user-card/index.ts
-export { UserCard } from './user-card'
-export { UserCardAvatar } from './user-card-avatar'
-export { UserCardHeader } from './user-card-header'
+// certo: quem usa importa cada parte do arquivo dela, sem index.ts
+import { UserCard } from '#/components/common/user-card/user-card'
+import { UserCardAvatar } from '#/components/common/user-card/user-card-avatar'
 ```
 
 Regras:
 
-- **Named export por parte**, prefixado pela raiz, reexportado pelo `index.ts` da pasta. Nunca
+- **Named export por parte**, prefixado pela raiz, importado do arquivo da parte. Nunca
   objeto `{ Root, Header }` com acesso por ponto (`DECISIONS.md` #88).
 - **Pasta própria** (`DECISIONS.md` #89): `<nome>.tsx` (raiz), `<nome>-context.ts`,
-  `<nome>-<parte>.tsx` por parte grande, `index.ts`, `<nome>.test.tsx`. Parte de poucas linhas pode
+  `<nome>-<parte>.tsx` por parte grande, `<nome>.test.tsx`. Parte de poucas linhas pode
   morar no arquivo da raiz. Compound **route-local** (`-components/<peça>/`) segue a mesma forma.
-- `index.ts` só por peça. Barrel agregador (`components/common/index.ts`, `hooks/index.ts`,
-  `lib/index.ts`) é proibido; de fora da peça só se importa o `index.ts` dela (`tooling.md` §4).
+- **Sem barrel file.** Nenhum `index.ts` que só reexporta, nem por peça nem agregador
+  (`components/common/index.ts`, `hooks/index.ts`, `lib/index.ts`): a doc do Vite manda evitar barrel
+  porque ele obriga a carregar e transformar todo arquivo reexportado
+  (_doc-lib/vitejs.md#performance, `DECISIONS.md` #319). A única exceção é o ponto de entrada do
+  pacote `shared/` (`architecture.md` §9), que é o contrato do pacote.
 - **Toda parte leva `data-slot="<nome>-<parte>"`.** Layout que muda conforme a parte existe lê
   `has-data-[slot=<nome>-<parte>]:` no pai, nunca prop booleana. Slot nunca é detectado por
   `child.type`, `React.Children.map` ou `cloneElement`
@@ -683,6 +781,85 @@ código de terceiro e se revisa **antes** de instalar. Ao trazer:
 - **Efeito pesado** (WebGL, canvas, shader) entra com `lazy` e fora do caminho crítico (§9.4, §9.8):
   fundo animado não pode piorar o LCP da página.
 
+### 6.5 Uso estrito do kit *(opinião da casa sobre a doc, `DECISIONS.md` #300)*
+
+Toda rota (com as `-components/` dela), todo `components/common/`, todo Sheet e todo Dialog monta
+a tela com o componente de `components/ui/`. Elemento interativo cru (`<button>`, `<input>`,
+`<select>`, `<textarea>`, `<table>`, `<dialog>`) não entra onde o registry tem o equivalente: o
+`Button`, o `Input`, o `Select` e o resto já trazem o foco, o teclado, o estado e o alvo de toque
+que o elemento cru deixa para cada tela refazer (§10.2; _doc-lib/shadcn.md#docs/components,
+https://ui.shadcn.com/docs/components, aberta). A doc mostra o catálogo, mas não proíbe o elemento
+cru; a proibição é da casa.
+
+Só três exceções, e cada uma leva comentário de "por quê" na linha:
+
+- o HTML que sai do Markdown dentro do componente de texto rico (`components/common/rich-text/`,
+  estilizado por `prose`), que não é JSX escrito à mão;
+- o `<input type="file">` escondido atrás de um `Button`, que abre o seletor de arquivo;
+- o elemento que o registry não tem (a tabela de "Componentes do shadcn" do `docs/DESIGN.md` diz
+  qual foi procurado).
+
+**Cobrança**: `no-restricted-syntax` sobre `JSXOpeningElement` nos arquivos de `src/routes/**` e
+`src/components/common/**`, com o seletor
+`JSXOpeningElement[name.name=/^(button|input|select|textarea|table|dialog)$/]` e a mensagem
+apontando o componente de `ui/` (_doc-lib/eslint.md#docs/latest/rules/no-restricted-syntax,
+https://eslint.org/docs/latest/rules/no-restricted-syntax, aberta; seletor de atributo com regex em
+_doc-lib/eslint.md#docs/latest/extend/selectors, https://eslint.org/docs/latest/extend/selectors,
+aberta). `components/ui/` fica fora do `files`, porque é lá que o elemento cru mora. A exceção é
+`// eslint-disable-next-line no-restricted-syntax -- <motivo>`, e o `require-description` de
+`tooling.md` §4.1 já reprova a desativação sem motivo. O bloco do frontend repete o seletor de
+`new` da §4.1 ao lado deste: quando dois objetos de configuração casam o mesmo arquivo, o de baixo
+substitui as opções da regra em vez de somar (_doc-lib/eslint.md#docs/latest/use/configure/configuration-files,
+https://eslint.org/docs/latest/use/configure/configuration-files, aberta, "Cascading Configuration
+Objects"). A configuração pronta ainda não entrou em `tooling.md` §4.2: está como pendência em
+`CHECKLIST.md`, até rodar num projeto.
+
+### 6.6 Código exibido ao usuário *(`DECISIONS.md` #301)*
+
+Código que o usuário lê (aula, documentação, post de blog) sai do `CodeBlock` do shadcn
+(_doc-lib/shadcn.md#code-block, https://ui.shadcn.com/docs/components/base/code-block, aberta):
+
+- **Cabeçalho** com `CodeBlockTitle` dizendo a linguagem ou o nome do arquivo.
+- **Copiar** pelo `CodeBlockCopyButton`, com o `value` do código inteiro.
+- **Número de linha** (`lineNumbers` no `CodeBlockContent`) em código, que a doc não copia junto
+  com a seleção; **comando e saída de terminal** sem número, com título de terminal e a linguagem
+  `"ansi"` quando a saída tem cor.
+- **Realce sem pesar no cliente.** A doc tem dois caminhos: `highlightCode`, assíncrono, para o
+  servidor, que deixa o Shiki fora do bundle; e o hook `useHighlightedCode`, que carrega cada
+  linguagem no primeiro uso. A doc mostra o `highlightCode` dentro de Server Component, e RSC não
+  entra na casa (§9.2). No TanStack Start o equivalente é uma `createServerFn` chamada pelo
+  `loader` que devolve os tokens (texto e estilo de cada pedaço, que atravessam a rede) e não nó
+  React, que não atravessa; o cliente monta o `CodeBlockLine` com eles
+  (_doc-lib/tanstack-start.md#guide/server-functions, #guide/rendering-markdown). Essa adaptação é
+  opinião da casa: a doc não cobre o Start. Onde o código só existe no cliente (editor, streaming), vale o hook, e a lista
+  `languages` de `lib/highlighter.tsx` fica só com as linguagens que o projeto exibe.
+- **Um highlighter só**: o `lib/highlighter.tsx` que o registry instala junto do `code-block`, sobre
+  Shiki (`tooling.md` §0.1). Texto rico com bloco de código usa o mesmo, nunca um segundo
+  realçador.
+- **Ícone** da biblioteca do `components.json` (`iconLibrary`, `tooling.md` §0.1). Arquivo do
+  registry que chega com ícone de outra biblioteca é trocado, com a linha marcada `// casa:` (§6).
+- **Rótulos pelo i18n**: "Copiar", "Copiado", título de terminal e o `aria-label` de cada ação
+  saem de `m.*()` (`i18n.md`).
+
+### 6.7 Lista de passos com status: `Trace` *(`DECISIONS.md` #302)*
+
+Lista de passos em que cada item tem estado usa o `Trace` (_doc-lib/shadcn.md#trace,
+https://ui.shadcn.com/docs/components/base/trace, aberta): o resultado por item de um quiz ou de um
+formulário, um progresso em sequência (aulas de um curso, etapas de um protocolo), uma linha do
+tempo. Uma linha é `TraceLine` com `TraceIcon` e `TraceTitle`; o detalhe abre por
+`TraceCollapsible`. O `status` só tem `running`, `error` e `pending`: o passo concluído é a linha sem
+`status`, e o ícone diz o resto.
+
+- **Só onde não perde informação nem piora no celular.** O `TraceTitle` é uma linha que trunca: item
+  com enunciado longo, mais de um valor por linha ou comparação entre colunas continua em tabela,
+  lista ou card *(opinião da casa)*.
+- **O estado vai no título**, porque cor e movimento não chegam a todo mundo: "Questão 3: errada",
+  não só o ícone vermelho. O `TraceIcon` sai do leitor de tela, então o título é o nome acessível
+  (doc, "Accessibility"). Título e descrição saem de `m.*()`.
+- Os usos de IA do `Trace` (raciocínio, chamada de ferramenta, fontes) e os componentes de conversa
+  do registry (`bubble`, `message`, `message-scroller`) ficam como "não se aplica" na tabela do
+  `docs/DESIGN.md` até o projeto ter chat.
+
 ---
 
 ## 7. Nomenclatura
@@ -720,31 +897,41 @@ as de `typescript.md`; este documento não as repete.
 
 ## 8. Kit comum *(opinião da casa)*
 
-Todo frontend da casa tem estas peças, com o mesmo nome e a mesma API. Projeto novo traz o kit,
-não reescreve (`architecture.md` §1, princípio 9); peça nova nasce compound (§6.1) e entra no
-`docs/DESIGN.md` §7 (Componentes) no mesmo commit.
+Todo frontend da casa tem estas peças, com o mesmo nome e a mesma API, e elas são o mesmo arquivo em
+todo projeto: vêm de `_templates/code/` pelo sync e não se editam no projeto (`DECISIONS.md` #343;
+a API composta de cada peça está em `_standards/_map/canon-2026-11/SINTESE/KIT.md` §2). Peça nova do
+kit nasce compound (§6.1), entra no upstream e é citada no `docs/DESIGN.md` §7 (Componentes) do projeto.
+A lista é fechada:
 
 | Onde | Peça | Para quê |
 |---|---|---|
-| `components/common/page-shell/` | casca de tela: título, ações, corpo | toda tela do painel |
-| `components/common/form-shell/` | casca de formulário: título, corpo, ações | submit travado por upload em voo (§4) |
+| `components/common/page-shell/` | casca de tela: título, ações, corpo, breadcrumb, esqueleto | toda tela do painel |
+| `components/common/list-shell/` | casca de listagem: cabeçalho, filtro, corpo, rodapé | toda lista do painel |
+| `components/common/form-shell/` | casca de formulário: título, corpo, ações; `FormShellContent` é `<form method="post">` com `HydratedFieldset` | submit travado por upload em voo (§4) |
 | `components/common/submit-button/` | botão de envio com estado de envio | sem duplo envio (§10.1) |
-| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, paginação, colunas visíveis, redimensionar, `table-skeleton`, virtualização opcional (§9.9) | toda listagem; layout persistido validado pelo schema de `shared/` |
+| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, redimensionar, esqueleto, virtualização opcional (§9.9) | toda listagem; layout persistido validado pelo schema de `shared/` |
+| `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção) e o `FiltersSheet` | filtro de lista igual em toda tela |
 | `components/common/row-actions/` | menu de ações por linha | ação de linha igual em toda tabela |
 | `components/common/bulk-archive/` | arquivar, restaurar, remover em massa | detalhe e lista não reescrevem o ciclo |
-| `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog) | §10.6 |
+| `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog), com `confirm-dialog-handle.ts` | §10.6 |
 | `components/common/empty-state/` | estado vazio por motivo, sobre `ui/empty` | §10.1; _doc-lib/shadcn.md#empty |
-| `components/common/not-found-page/` | `notFoundComponent` padrão | §5 |
+| `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending`, `AccessDenied`, `QueryBoundary` | §5 |
 | `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox local e paginado |
+| `components/common/date-picker/` | data e intervalo, valor no formato da API (Luxon) | campo de data |
+| `components/common/field/` | campos do `AppField`: texto, área de texto, senha, número, seleção, combobox, data, switch, checkbox, imagem, arquivos, texto rico e máscara (`FieldMask`) | §4 |
+| `components/common/hydrated-fieldset/` | trava os campos até a hidratação | formulário antes do JavaScript (§4) |
 | `components/common/input-password/` | senha com mostrar/ocultar | formulário de sessão |
 | `components/common/picture/` | imagem com dimensão, `alt` e carregamento por posição | §9.6 |
 | `components/common/maiyu-credit/` | crédito do rodapé: logo da Maiyu (`src/assets/maiyu.png`) + "Desenvolvido por Maiyu", com `Maiyu` em link para `https://maiyu.com.br` | abaixo |
-| `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha | registra no `uploading-context` |
+| `components/common/brand-mark/` | marca do projeto, pelo SVG de `assets/brand/` | cabeçalho e rodapé |
+| `components/common/theme/` | provider, contexto, alternador de tema e o toaster | §6 |
+| `components/common/locale-switcher/` | troca de idioma (nome único) | `i18n.md` §2 |
+| `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha; I/O por prop | registra no `uploading-context` |
+| `components/common/uploading-context/` | registro de upload em voo (`UploadingProvider`, `useRegisterUpload`, `useIsUploading`) | §4 |
 | `components/common/rich-editor/` | editor de texto rico, carregado sob demanda (§9.4); grava o JSON do Tiptap | _doc-lib/tiptap.md |
 | `components/common/rich-text/` | leitura de conteúdo rico (JSON do editor ou Markdown de fora via `MarkdownManager.parse`) por `renderToReactElement` do `@tiptap/static-renderer`, sem editor e sem `innerHTML` | _doc-lib/tiptap.md#api/utilities/static-renderer |
-| `components/common/uploading-context.tsx` | registro de upload em voo | §4 |
 | `lib/cn.ts` | `cn()` | §6 |
-| `lib/labels.ts` | rótulo e variante visual de enum | abaixo |
+| `lib/labels.ts` | rótulo e variante visual de enum (do projeto, não do kit) | abaixo |
 | `lib/i18n.ts` | `localized()`, formatador de data (Luxon) e de número e moeda (`Intl`) | `i18n.md` §2, §3.5 |
 | `lib/form-errors.ts`, `lib/form-a11y.ts` | `applyHTTPErrorToForm`; `invalidProps`, `errorId` | §4, §10.3 |
 | `lib/list-search.ts`, `lib/redirect-search.ts` | fábrica de search de lista; `validateRedirectSearch` | §2.1, §3.5 |
@@ -752,11 +939,20 @@ não reescreve (`architecture.md` §1, princípio 9); peça nova nasce compound 
 | `lib/local-store.ts` | `localStorage` versionado e validado | §2 |
 | `lib/bulk.ts` | ação em massa sem endpoint dedicado | abaixo |
 | `lib/chunking.ts`, `upload-transport.ts`, `upload-resume.ts` | upload em partes, retomável | arquivo grande sem refazer do zero |
+| `lib/mask.ts` | aliases de máscara do `FieldMask` | §4 |
+
+**Regra de import do kit** (`DECISIONS.md` #343): a peça importa só `#/components/ui/*`, outra peça
+do kit pelo arquivo exato (nunca a pasta), os arquivos de `lib/` do kit, `m.kit_*()` de
+`#/paraglide/messages` e, de `@<projeto>/shared`, só `merge.ts`, `rich-text-schema.ts`,
+`table-layout.ts`, `enums/storage-mimetype.ts` e `enums/locale.ts`. I/O do projeto (mutation, upload,
+rota) entra por prop; peça que importa `mutations/*` ou `#/lib/labels` não é do kit. Recurso da peça
+liga por parte presente ou por prop de dado ou variante (`cva`), nunca por booleana de esconder ou de
+layout. Só o tema (`styles.css`, `assets/brand/`) é do projeto.
 
 **Crédito no rodapé** *(opinião da casa, `DECISIONS.md` #277)*: todo rodapé (o do site público e, onde
 existir, o do painel e o da tela de sessão) mostra só `<MaiyuCredit />`, igual em todo projeto: a logo
 decorativa (`alt=""`, 20 px, por `Picture`) e a frase "Desenvolvido por Maiyu" (mensagem
-`common_maiyu_credit`, `{#link}Maiyu{/link}` no catálogo de cada idioma), link com `target="_blank"` e
+`kit_maiyu_credit`, `{#link}Maiyu{/link}` no catálogo de cada idioma), link com `target="_blank"` e
 `rel="noopener noreferrer"`. Sem slogan, ano, "todos os direitos" ou outra frase de autoria; a cor vem
 de quem usa (`className`). Montar o crédito à mão na tela é desvio.
 
@@ -876,7 +1072,7 @@ restritiva (página oficial não conferida). Projeto que já hidrata o painel me
 
 ### 9.4 Divisão de código
 
-- `autoCodeSplitting` ligado no plugin; o par `index`/`index.lazy` é convenção de forma (§1.3).
+- `autoCodeSplitting` é o padrão do Start: não se desliga; o par `index`/`index.lazy` é convenção de forma (§1.3).
   _doc-lib/tanstack-router.md#guide/automatic-code-splitting.
 - Componente pesado fora do primeiro quadro (editor rico, gráfico, mapa, upload multipart) é
   `lazy` + `<Suspense>`, carregado no gesto ou na visibilidade, com fallback da mesma altura:
@@ -948,14 +1144,22 @@ _doc-lib/tanstack-start.md#guide/seo). O formato é da casa (`DECISIONS.md` #47)
   `localizeUrl(canonical, { locale }).href` do Paraglide: a função recebe URL absoluta (string ou
   `URL`) e devolve sempre `URL` absoluta, por isso o `.href` (_doc-lib/paraglide.md#/runtime;
   `i18n.md` §2);
+- **barra no fim**: nenhuma URL pública termina em barra (`https://x.com/pt-br/tracks`,
+  `https://x.com/pt-br`, `https://x.com/es`): todo idioma tem prefixo (#384), e a raiz exata de
+  `urlPatterns` gera a raiz do idioma sem barra (_doc-lib/paraglide.md#/i18n-routing; `DECISIONS.md`
+  #306). O `x-default` aponta para `/pt-br`. Canonical,
+  hreflang e sitemap saem da mesma função, com teste da raiz nos três idiomas: no academy, a
+  função tirava a barra de tudo, e o `hreflang` da raiz divergia do endereço que o navegador e o
+  buscador leem;
 - **Open Graph**: `og:title`, `og:description`, `og:image`, `og:url`, `og:locale`;
 - **JSON-LD** por `head().scripts` com `type: 'application/ld+json'`, com `<` escapado
   (`JSON.stringify(data).replaceAll('<', '\\u003c')`): `Organization` na raiz, `BreadcrumbList`
   em detalhe, e o tipo do domínio (`Product`, `Course`, `Event`, `NewsArticle`) a partir do
   `loaderData` (formato de `scripts`: página oficial não conferida);
 - `robots: noindex, nofollow` em `_private/`, `_authentication/` e no 404; ambiente que não é
-  produção responde `noindex` global, decidido por `SITE_ENV` lida no servidor (só `production`
-  indexa), nunca por `import.meta.env.PROD`, que é igual em staging e produção.
+  produção responde `X-Robots-Tag: noindex, nofollow` em toda resposta, posto pelo `server.ts`
+  quando `SITE_ENV` lida no servidor não é `production` (`DECISIONS.md` #356), nunca por
+  `import.meta.env.PROD`, que é igual em staging e produção.
 
 Mais:
 
@@ -976,7 +1180,8 @@ Mais:
   TTFB ≤ 0,8 s. Medida de campo por `web-vitals` é opcional (sem `_doc-lib`).
 - **CLS**: espaço reservado sempre (imagem, embed, fallback de `Suspense`, `pendingComponent`);
   conteúdo novo nunca empurra o de cima (toast em camada).
-- **INP**: filtro digitado vai para a URL com debounce; atualização pesada em transição (§9.1);
+- **INP**: busca aplica por Enter ou lupa (`TableSearch` do kit); filtro de controle (toggle, chip)
+  aplica na hora; debounce só no combobox, no valor da chave (§2.1, `DECISIONS.md` #347); atualização pesada em transição (§9.1);
   laço longo cede a vez (`scheduler.yield()` com recuo para `setTimeout`).
 - **Cache**: asset com hash `public, max-age=31536000, immutable`; HTML `no-cache`; resposta que é
   igual para todo visitante pode ter `public, s-maxage=<n>, stale-while-revalidate=<n>`; HTML ou
@@ -1004,8 +1209,14 @@ com `contain-intrinsic-size` antes. _doc-lib/tanstack-table.md#framework/react/g
   com o build verde; a causa típica é import de `Route` fora do arquivo da rota (§1.3).
 - **Orçamento** *(opinião da casa)*: JS inicial de rota pública ≤ 170 KB gzip; nenhum chunk acima
   de 200 KB gzip. Diagnóstico por `vite-bundle-visualizer` sob demanda, sem virar dependência.
-- Projeto com vitrine pode rodar Lighthouse CI no PR contra duas ou três URLs públicas (mobile,
-  mediana de 3), em workflow próprio (`tooling.md` §7).
+- Projeto com vitrine pode rodar o Lighthouse na rodada antes do PR contra duas ou três URLs
+  públicas (mobile, mediana de 3), pelo CLI, sem workflow (`tooling.md` §7).
+- **Método de medida no laboratório** *(opinião da casa, #382)*, para comparar antes e depois de uma
+  mudança, sempre na mesma máquina e no build de produção: TTFB por `curl`, 20 requisições por rota,
+  mediana e p90, descartando a primeira; LCP por `PerformanceObserver` no Playwright, 5 cargas frias por
+  rota nas larguras 390 e 1440, mediana; JS inicial é o que a rede baixa até o `load`, em gzip, sem o
+  prefetch de link. O número vai no corpo do PR com a máquina e o que estava mockado (fonte, imagem
+  externa). Laboratório compara; a meta de p75 de campo acima só se confere em produção.
 
 ---
 
@@ -1023,7 +1234,8 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 - **Vazio distingue o motivo**, pela peça `components/common/empty-state/` (compound sobre
   `ui/empty`, _doc-lib/shadcn.md#empty): primeiro uso (o que vai aparecer + ação de criar), busca
   ou filtro sem resultado ("limpar filtros"), sem permissão (por quê + como obter). Nunca "Nenhum
-  item" solto.
+  item" solto. O motivo é a prop `reason: 'first-use' | 'filtered' | 'trash' | 'forbidden' | 'error'`
+  (`DECISIONS.md` #343).
 
 ```tsx
 <EmptyState>
@@ -1247,6 +1459,8 @@ dentro do que a doc permite, a linha diz *(opinião da casa)*.
   typecheck não vê a ligação removida.
 - **Schema local** (o que `shared/` não cobre, em `lib/`) nasce com teste dos limites no mesmo
   commit: o tipo não vê um teto trocado.
+- `afterEach(cleanup)` em todo `.test.tsx`: sem `globals: true` no Vitest, a Testing Library não
+  limpa o DOM sozinha (_doc-lib/vitest.md#config/globals, `DECISIONS.md` #350).
 - Tempo por `vi.useFakeTimers()` com `vi.useRealTimers()` no `afterEach`.
   _doc-lib/vitest.md#mocking/timers.
 
@@ -1259,7 +1473,7 @@ dentro do que a doc permite, a linha diz *(opinião da casa)*.
 ```ts
 import { m } from '../src/paraglide/messages'
 
-await page.getByRole('button', { name: m.common_save() }).click()
+await page.getByRole('button', { name: m.posts_form_save() }).click()
 await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
 ```
 
@@ -1289,7 +1503,7 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   `touch-targets.spec.ts` roda só no `mobile` (§10.2). Projeto, dispositivo e viewport:
   _doc-lib/playwright.md#docs/test-projects (https://playwright.dev/docs/test-projects, aberta),
   #docs/emulation (https://playwright.dev/docs/emulation, aberta). Quando roda (fase final do plano,
-  e todo PR no CI): `tooling.md` §7 e §10.1.
+  e a rodada antes de todo PR): `tooling.md` §7 e §10.1.
 - **Axe ignora o interior de iframe de terceiro** *(opinião da casa, `DECISIONS.md` #268)*: vídeo e
   player embutidos têm marcação que não é do projeto. A fixture exclui o conteúdo e mantém o próprio
   `<iframe>` (título, tamanho) checado: `new AxeBuilder({ page }).exclude({ fromFrames: ['iframe', 'body'] })`.
@@ -1297,13 +1511,36 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   https://github.com/dequelabs/axe-core/blob/develop/doc/context.md (a página do GitHub responde 403
   neste ambiente; lido o mesmo arquivo cru em raw.githubusercontent.com, que cita `fromFrames`).
   O `exclude()` do `AxeBuilder` está em _doc-lib/playwright.md#docs/accessibility-testing.
+- **Sonda de rotas e páginas** *(opinião da casa, `DECISIONS.md` #305)*: `e2e/pages.spec.ts` lista
+  toda página pública (cada slug do seeder) e abre cada uma nos três idiomas e nos três viewports,
+  exigindo o status da navegação (`response.status()`) `200`, um `h1`, o `lang` do idioma, nenhuma
+  rolagem horizontal, console limpo e nenhum 5xx da API. URL inexistente, na raiz e com prefixo de
+  idioma, e slug inexistente de cada detalhe exigem `404` no status, não só a tela de "não
+  encontrado". No painel, cada recurso é **criado e editado pelo formulário** uma vez: dado criado
+  só pela API no setup deixa passar o formulário que manda um formato que o validator recusa. No
+  academy, com a suíte antiga verde, essa sonda achou cinco bugs: turma que o painel não criava nem
+  editava (data em ISO contra validator `YYYY-MM-DD`, `backend.md` §4.4), URL desconhecida com
+  `200` (§5), botão estourando a 360 px em `es` e `en`, `hreflang` da raiz sem a barra (SEO,
+  abaixo) e uma mensagem de "não encontrado" no lugar de "é da turma".
+- **Limiter ligado no E2E** *(opinião da casa, `DECISIONS.md` #305)*: desligar o limiter é testar
+  outro servidor, e o E2E inteiro sai de um IP só, então o sexto cadastro da rodada (ou a segunda
+  rodada na mesma hora) leva 429. Cada teste ganha um endereço de cliente próprio, da faixa de teste
+  `198.18.0.0/15` (RFC 2544), no `X-Forwarded-For` das requisições do navegador à API, por
+  `context.route('<api>/**', (route) => route.continue({ headers: { ...route.request().headers(),
+  'x-forwarded-for': ip } }))` (_doc-lib/playwright.md#docs/network,
+  https://playwright.dev/docs/network, "Modify requests", aberta). Não por `extraHTTPHeaders`: no
+  Chromium ele vira cabeçalho da página, a requisição ganha preflight de CORS, e a API, que lista os
+  próprios cabeçalhos, recusa. Funciona porque o backend da rodada confia no loopback
+  (`TRUSTED_PROXIES=loopback`, `backend.md` §6.2), como o Traefik em produção. Esse `route` não
+  simula resposta do backend, só identifica o cliente: não fere a regra de `page.route` acima. O
+  fetch do SSR não passa por ele e continua no IP do Nitro.
 - Todo spec termina sem erro de console inesperado (fixture `errors`); fluxo crítico roda
   `@axe-core/playwright` (falha em violação séria ou crítica) e tem um caso com
   `reducedMotion: 'reduce'` e viewport de 320 px.
 - Formulário crítico em quatro tempos: vazio, inválido, 409/422 no campo, válido (com F5 e duplo
   clique gerando uma requisição só, e 5xx com "Tentar de novo").
-- Configuração do runner (`forbidOnly`, `retries: 0`, trace na falha, credencial por env) e o passo
-  de CI: `tooling.md` §7.
+- Configuração do runner (`forbidOnly`, `retries: 0`, trace na falha, credencial por env) e o
+  comando da rodada: `tooling.md` §7.
 
 ---
 
@@ -1313,5 +1550,8 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   a #9); `queryOptions` e mutations por módulo (#113, C3).
 - **`components/ui/` editável com `// casa:`** (§6; #113, C10).
 - **Par `index`/`index.lazy` como convenção de forma**, não como mecanismo de chunk (§1.3).
-- **`verbatimModuleSyntax` ligado**: ver `typescript.md` §9 e `tooling.md` §3.
+- **`verbatimModuleSyntax` desligado no frontend**: a doc do TanStack Start avisa que ligado ele pode
+  vazar bundle de servidor para o cliente (_doc-lib/tanstack-start.md#build-from-scratch,
+  `tooling.md` §3, `DECISIONS.md` #319). O `import type` continua cobrado pelo
+  `consistent-type-imports`.
 - **Semicolon/prettier**: `tooling.md` §5, a mesma régua no frontend e no backend.

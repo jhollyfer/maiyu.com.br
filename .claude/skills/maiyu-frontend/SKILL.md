@@ -38,7 +38,7 @@ e `lib/utils.ts` são desvio e migram.
 | Dialog / Sheet | skill `dialog-pattern` / `sheet-pattern` (uncontrolled, `createHandle` sem gatilho visível, `ConfirmDialog` no destrutivo) | `_doc-lib/base-ui.md#react/components/dialog` |
 | Máscara | `use-mask-input`; o valor sem máscara sai por `.parse()` | `frontend.md` §4, `_doc-lib/use-mask-input.md` |
 | Componente | shadcn em `components/ui/` (só variante `cva` e rótulo, marcados `// casa:`); comportamento pelo Base UI (`render`, não `asChild`) | `frontend.md` §6, `_doc-lib/shadcn.md`, `base-ui.md` |
-| Componente da casa | compound em `components/common/<peça>/` (named export por parte, `data-slot`, contexto por `use()` via hook nomeado, `index.ts` da peça); só com 2+ rotas, senão `-components/`; veja antes o kit comum | `frontend.md` §6.1, §8; skills `compound-pattern`, `react-composition-patterns` |
+| Componente da casa | compound em `components/common/<peça>/` (named export por parte, `data-slot`, contexto por `use()` via hook nomeado, sem `index.ts`: import direto do arquivo da parte); só com 2+ rotas, senão `-components/`; veja antes o kit comum | `frontend.md` §6.1, §8; skills `compound-pattern`, `react-composition-patterns` |
 | Texto | `m.*()` do Paraglide nos três idiomas; rótulo de enum em `lib/labels.ts` como função; data, número e moeda por `Intl`; `aria-label` também por chave | `i18n.md` §2 |
 | Tabela | TanStack Table, features opt-in, kit `common/table/` | `frontend.md` §8, `_doc-lib/tanstack-table.md` |
 | Estilo | tokens do tema, Tailwind v4 em CSS, `cn()` de `lib/cn.ts` | `frontend.md` §6, `_doc-lib/tailwindcss.md` |

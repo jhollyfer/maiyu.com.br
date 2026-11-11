@@ -62,6 +62,84 @@ terços da fronteira.
 
 **Skills:** `vite-bundle-optimization`, `perf-web-optimization`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Nitro: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Versão e migração para v3
+
+- **Node 22, 24 ou mais novo (última LTS), também no runtime gerenciado pelo provedor.** É o mínimo suportado pelo Nitro v3. [`#docs/migration`](https://nitro.build/raw/docs/migration.md), [`#docs/quick-start`](https://nitro.build/raw/docs/quick-start.md)
+- **Nitro não tem auto-import: todo utilitário é importado de `nitro` ou de um subpath (`nitro/h3`, `nitro/cache`, `nitro/runtime-config`, `nitro/app`...).** Os auto-imports da v2 foram removidos. [`#docs/utils`](https://nitro.build/raw/docs/utils.md), [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+- **Tipo se importa de `nitro/types`, não de `nitro`; `NitroRouteConfig`/`NitroRouteRules` dão lugar a `RouteRuleConfig`/`NormalizedRouteRules`.** Os nomes antigos são aliases depreciados. [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+- **`useStorage`/`nitro/storage` estão depreciados: use `useKV` de `nitro/kv`, e a opção `storage` virou `kv`.** O nome antigo ainda funciona como alias e loga aviso. [`#docs/utils`](https://nitro.build/raw/docs/utils.md), [`#docs/migration`](https://nitro.build/raw/docs/migration.md), [`#docs/storage`](https://nitro.build/raw/docs/storage.md)
+- **`srcDir` está depreciado: use `serverDir`, que vem `false` e precisa ser ligado para varrer `routes/`, `middleware/`, `plugins/` e `tasks/`.** Sem ele nada é registrado por varredura. [`#docs/migration`](https://nitro.build/raw/docs/migration.md), [`#docs/configuration`](https://nitro.build/raw/docs/configuration.md)
+- **`unenv` está depreciado: use `alias`, `inject`, `polyfills` e `builtinModules`.** O preset passado a `unenv` ainda funciona com aviso. [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+- **`defineNitroConfig` está depreciado: use `defineConfig`.** É alias do mesmo export. [`#docs/utils`](https://nitro.build/raw/docs/utils.md)
+- **Handler sempre devolve o corpo (`return value`, `return redirect(...)`, `return noContent()`) ou lança o erro (`throw new HTTPError(...)`).** `send`, `sendStream`, `sendRedirect` e `sendError` do h3 v1 saíram. [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+
+### Rotas, middleware e server entry
+
+- **Middleware não devolve valor; resposta é de route handler.** Devolver encerra a requisição. [`#docs/routing`](https://nitro.build/raw/docs/routing.md), [`#docs/lifecycle`](https://nitro.build/raw/docs/lifecycle.md)
+- **Middleware e route rules não são fronteira de segurança: controle de acesso é feito explicitamente no código protegido (`requireBasicAuth` e afins do h3).** A página nega as duas coisas como barreira. [`#docs/routing`](https://nitro.build/raw/docs/routing.md)
+- **Não combine `prerender` e `isr` na mesma rota.** A página proíbe a combinação. [`#docs/routing`](https://nitro.build/raw/docs/routing.md)
+- **Regra de `headers`/`redirect` que a plataforma aplica na borda usa chave sem método e padrão simples.** Regra com método ou padrão complexo fica só no runtime e o asset estático perde o header. [`#docs/routing`](https://nitro.build/raw/docs/routing.md)
+- **CORS é aplicado pelo servidor em execução (`handleCors` do h3), não pelo config estático ou CDN.** A v3 deixou de expandir `cors` em headers estáticos. [`#docs/routing`](https://nitro.build/raw/docs/routing.md), [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+- **O que vale para toda requisição (autenticação, log, pré-processamento) vai em middleware, não no server entry; lógica de rota vai em route handler.** O server entry só roda para o que nenhuma rota casou, e route handler é mais rápido. [`#docs/server-entry`](https://nitro.build/raw/docs/server-entry.md)
+- **`useNitroApp()` é chamado dentro do handler, nunca no topo do módulo.** Alguns runtimes não permitem I/O no escopo global. [`#docs/server-entry`](https://nitro.build/raw/docs/server-entry.md)
+- **Framework Node no estilo `(req, res)` entra por `server.node.ts`, com export default do handler.** É o formato de entrada Node que a página exige. [`#docs/server-entry`](https://nitro.build/raw/docs/server-entry.md)
+- **Rota de servidor e página não ficam sob o `build.assetsDir` do Vite (`/assets/`).** Em produção essa pasta é servida sem fallthrough e o que falta responde 404. [`#docs/vite`](https://nitro.build/raw/docs/vite.md)
+- **Atualização só servidor-cliente em uma direção usa SSE, não WebSocket.** É o que a página indica para notificação e feed. [`#docs/websocket`](https://nitro.build/raw/docs/websocket.md)
+
+### Erros
+
+- **Erro para o cliente é `HTTPError`; `new Error()` comum vira 500 com mensagem, dado e stack escondidos.** O valor não reconhecido é tratado como erro não tratado, por segurança. [`#docs/lifecycle`](https://nitro.build/raw/docs/lifecycle.md), [`#docs/migration`](https://nitro.build/raw/docs/migration.md)
+- **Em produção o erro sai sempre em JSON pelo handler padrão; `errorHandler` customizado pode ser lista e o padrão fica por último.** Sempre há resposta de fallback. [`#docs/lifecycle`](https://nitro.build/raw/docs/lifecycle.md), [`#docs/routing`](https://nitro.build/raw/docs/routing.md)
+
+### Plugins
+
+- **Plugin assíncrono não aguarda requisição à própria aplicação (`fetch('/api/...')`).** As requisições esperam o plugin terminar e o `await` nunca resolve. [`#docs/plugins`](https://nitro.build/raw/docs/plugins.md)
+- **Conexão (banco, socket) aberta em plugin é preguiçosa, no primeiro uso.** Plataformas como Cloudflare Workers proíbem I/O fora de requisição, e plugin roda na partida. [`#docs/plugins`](https://nitro.build/raw/docs/plugins.md)
+- **Plugin que rejeita impede os seguintes de rodar.** A página avisa da cadeia. [`#docs/plugins`](https://nitro.build/raw/docs/plugins.md)
+
+### Configuração e ambiente
+
+- **Config em `nitro.config.ts` (ou no plugin `nitro()` do `vite.config.ts`).** É a convenção recomendada. [`#docs/configuration`](https://nitro.build/raw/docs/configuration.md), [`#docs/vite`](https://nitro.build/raw/docs/vite.md)
+- **Runtime config só leva valor serializável, e é sobrescrito em runtime por variável com prefixo `NITRO_`.** Valor não serializável dá aviso no build; variável sem o prefixo não entra. [`#docs/configuration`](https://nitro.build/raw/docs/configuration.md)
+- **`.env` não é carregado pelo servidor buildado: em produção a variável vem do mecanismo da plataforma.** O `.env` só é lido na resolução do config, em dev e build. [`#docs/configuration`](https://nitro.build/raw/docs/configuration.md)
+- **Variável de ambiente não se lê no topo de módulo.** A página manda evitar o contexto global para não ter comportamento inesperado. [`#docs/configuration`](https://nitro.build/raw/docs/configuration.md)
+- **Opção de mount de storage é serializável em JSON; driver de storage ou banco precisa estar instalado antes do build de CI.** As opções vão para a saída do build, e em CI a falta do driver reprova o build salvo com `deps.install`. [`#docs/storage`](https://nitro.build/raw/docs/storage.md), [`#docs/database`](https://nitro.build/raw/docs/database.md)
+- **URL de asset importada por `new URL(..., import.meta.url)` é string literal.** Em preset com sistema de arquivos, o import só é reescrito com a string literal e `import.meta.url` como segundo argumento. [`#docs/assets`](https://nitro.build/raw/docs/assets.md)
+
+### Cache
+
+- **`maxAge` é posto explicitamente em todo cache.** O padrão é 1 segundo. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Função cacheada devolve só valor serializável em JSON (sem `Map`, `Set`, `Symbol`).** A entrada é guardada como JSON. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Função ou handler gerado por factory ou laço leva `name` (ou `getKey`) explícito.** O nome padrão é hash do código-fonte, e cópias com closure diferente sobrescrevem a mesma entrada. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Resposta que nunca pode ser compartilhada usa `shouldBypassCache`; cookie liberado em `allowCookies` é só preferência (tema, idioma), nunca segredo por usuário.** Por padrão o cache tira `cookie` e `set-cookie` para sessão não vazar entre usuários. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **`swr` fica desligado onde o chamador não pode receber dado velho (token de acesso, checagem de autorização).** `swr` serve valor vencido enquanto revalida. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Header de requisição que muda a resposta entra em `varies`; query que importa entra em `allowQuery`.** Fora deles o header e a query são removidos antes do handler. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **`last-modified` é posto pelo handler quando ele sabe a data real.** O cache nunca o gera. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Rota que faz proxy de resposta de tamanho que você não controla define `maxBodySize`.** Com os drivers `fs` e `kv` não há teto padrão. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Em edge worker, `defineCachedFunction` recebe o `event` como primeiro argumento.** Sem o `event` a função cacheada não funciona como esperado nesses ambientes. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+- **Driver `fs` de cache tem a pasta limpa periodicamente.** Ele nunca apaga entrada vencida sozinho. [`#docs/cache`](https://nitro.build/raw/docs/cache.md)
+
+### Tarefas
+
+- **Endpoint que dispara tarefa autentica o usuário e valida o payload; o payload vai na propriedade `payload` do corpo.** A página marca o ponto como importante. [`#docs/tasks`](https://nitro.build/raw/docs/tasks.md)
+
+### Deploy e produção
+
+- **Servidor Node em produção fica atrás de proxy reverso que termina o TLS.** O HTTPS embutido é só para teste. [`#deploy/runtimes/node`](https://nitro.build/raw/deploy/runtimes/node.md)
+- **`compatibilityDate` é atualizada periodicamente, com teste completo do deploy depois.** A página pede as duas coisas. [`#deploy`](https://nitro.build/raw/deploy.md)
+- **Preset de deploy em CI vem por variável de ambiente.** É a abordagem recomendada para CI/CD. [`#deploy`](https://nitro.build/raw/deploy.md)
+- **OpenAPI ligado em produção fica atrás de autenticação ou controle de acesso.** O padrão é desligado em produção. [`#docs/openapi`](https://nitro.build/raw/docs/openapi.md)
+
+### TanStack Router
+
+- **`routeTree.gen.ts` não se edita e fica fora do linter e do formatter.** É regenerado e sobrescrito. [`#examples/vite-ssr-tss-react`](https://nitro.build/raw/examples/vite-ssr-tss-react.md), [`#examples/vite-ssr-tsr-react`](https://nitro.build/raw/examples/vite-ssr-tsr-react.md)
+
 ---
 
 ## Fundamentos
@@ -131,7 +209,7 @@ quebra com erro claro: ele quebra com "não é uma função", ou pior, compila e
 // plugin:      defineNitroPlugin          →  definePlugin
 // handler:     defineEventHandler         →  defineHandler
 // erro:        createError / isError      →  HTTPError / HTTPError.isError()
-// runtime:     nitropack/runtime/*        →  nitro/*   (nitro/storage, nitro/cache…)
+// runtime:     nitropack/runtime/*        →  nitro/*   (nitro/kv, nitro/cache…)
 // tipos:       nitropack                  →  nitro/types
 // hooks:       useNitroApp().hooks        →  useNitroHooks()
 //
@@ -422,17 +500,17 @@ arquivo que devia ser privado, ou incha o bundle do servidor com um PNG.
 
 ```ts
 import { defineHandler } from 'nitro'
-import { useStorage } from 'nitro/storage'
+import { useKV } from 'nitro/kv'
 
 // assets/templates/email.html → lido pelo servidor, NUNCA servido por URL
 export default defineHandler(async () => {
-  return useStorage('assets:server').getItem('templates/email.html')
+  return useKV('assets:server').getItem('templates/email.html')
 })
 
 // public/logo.png → servido em /logo.png, copiado para .output/public/
 //
 // Duas pegadinhas juntas: (1) arquivo em assets/ só entra no bundle se alguém
-// o alcançar via useStorage — import direto inlineia o conteúdo no código;
+// o alcançar via useKV — import direto inlineia o conteúdo no código;
 // (2) em dev ele é lido do disco, em produção vem embutido, então "funciona
 // em dev e some em produção" costuma ser isto.
 ```
@@ -473,10 +551,10 @@ rascunho — sem decidir hoje onde ela vai morar em produção.
 demais para a necessidade. **Não** é substituto de banco: não tem consulta, nem transação.
 
 ```ts
-import { useStorage } from 'nitro/storage'
+import { useKV } from 'nitro/kv'
 
 // a API é a mesma, mude só o driver na config
-const cache = useStorage('redis')
+const cache = useKV('redis')
 await cache.setItem('users:42', { name: 'Ana' })
 const user = await cache.getItem<{ name: string }>('users:42')
 
@@ -486,10 +564,10 @@ const user = await cache.getItem<{ name: string }>('users:42')
 ```
 
 ```ts
-// nitro.config.ts — `devStorage` sobrepõe `storage` em desenvolvimento, que é
+// nitro.config.ts: `devStorage` sobrepõe `kv` em desenvolvimento (nitro@3.0.261103-rc), que é
 // como se usa disco local no dev e Redis gerenciado em produção
 export default defineConfig({
-  storage: { redis: { driver: 'redis', url: process.env.REDIS_URL } },
+  kv: { redis: { driver: 'redis', url: process.env.REDIS_URL } },
   devStorage: { redis: { driver: 'fs', base: '.data/redis' } },
 })
 ```
@@ -925,7 +1003,7 @@ nitro({
 [doc](https://nitro.build/docs/utils) | [markdown](https://nitro.build/raw/docs/utils.md)
 **O que é:** o mapa de tudo que se importa de `nitro` e seus subpaths — **sem auto-import**, tudo
 precisa de `import` explícito.
-**Para que serve:** achar o import certo (`defineEventHandler`, `useStorage`, `defineTask`, etc.)
+**Para que serve:** achar o import certo (`defineEventHandler`, `useKV`, `defineTask`, etc.)
 sem adivinhar o subpath.
 **Quando usar:** **antes de escrever qualquer coisa que rode no runtime do Nitro** — importar do
 caminho errado é o erro mais comum.
@@ -951,11 +1029,11 @@ export default defineHandler((event) => {
 ```
 
 ```ts
-// errado — useStorage não existe no pacote raiz, só no subpath
-import { useStorage } from 'nitro'
+// errado: useKV não existe no pacote raiz, só no subpath (useStorage/nitro/storage é alias depreciado)
+import { useKV } from 'nitro'
 
 // certo — cada utilitário mora no subpath que a tabela desta página lista
-import { useStorage } from 'nitro/storage'
+import { useKV } from 'nitro/kv'
 ```
 
 #### docs/typescript

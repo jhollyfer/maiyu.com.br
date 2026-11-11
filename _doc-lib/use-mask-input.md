@@ -63,6 +63,33 @@ reaplica a máscara.
 
 **Skills:** `maiyu-frontend`, `web-accessibility`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com use-mask-input: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### API e estabilidade do ref
+
+- **Prefira os hooks (`useMaskInput`, `useHookFormMask`) às funções `withMask` e `withHookFormMask`.** Os hooks mantêm o ref estável sozinhos; dentro de componente, `useMaskInput` é a escolha mais segura. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference)
+- **Componente que usa `withMask` ou `withHookFormMask` é envolvido em `React.memo`.** Elas não são hooks, e um ref callback novo a cada render faz a máscara ser reaplicada em todo render. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference)
+
+### React Hook Form
+
+- **Com React Hook Form, a integração completa é `useHookFormMask(register)` espalhado no input.** Ele devolve `ref`, `name`, `onChange` e `onBlur` do `register` já com a máscara. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference) [`#shadcn`](https://use-mask-input.eduardoborges.dev/shadcn)
+- **`useMaskInput` junto de `useController` (`{...field}` mais `ref={ref}`) só quando o RHF não precisa do ref para focar o campo.** O React fica com o último ref passado, e o do RHF se perde. [`#shadcn`](https://use-mask-input.eduardoborges.dev/shadcn)
+- **Para entregar o elemento a uma lib de formulário, use a opção `register` de `useMaskInput` (callback que recebe o elemento resolvido).** É o ponto de integração que a API oferece para bibliotecas de formulário de terceiros. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference)
+
+### Valor sem máscara
+
+- **O valor cru sai de `unmaskedValue()` do ref (ou de `getUnmaskedValue`/`unformatWithMask`), não de tratamento manual do texto.** A doc expõe essas funções justamente para ler os dígitos sem os caracteres de formatação. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference) [`#shadcn`](https://use-mask-input.eduardoborges.dev/shadcn)
+- **`isMaskComplete` é `false` antes da montagem e no servidor.** O elemento ainda é `null` nesses momentos, então a checagem não serve para SSR. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference)
+
+### Aliases
+
+- **Use o alias pronto quando existir (`cpf`, `cnpj`, `brl-currency`, `br-bank-account`, `email`...); padrão próprio só para formato que não é embutido.** Os aliases já trazem a configuração do formato. [`#tutorial-basics/alias-mask`](https://use-mask-input.eduardoborges.dev/tutorial-basics/alias-mask)
+- **Opção passada pelo usuário prevalece sobre o default do alias, e o resto do alias continua valendo.** O merge preserva o que não foi sobrescrito. [`#api-reference`](https://use-mask-input.eduardoborges.dev/api-reference)
+
 ---
 
 ## Fundamentos

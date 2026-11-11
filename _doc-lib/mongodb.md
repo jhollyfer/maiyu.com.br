@@ -92,6 +92,87 @@ semanas depois.
 
 **Skills:** `maiyu-backend`, `tactical-ddd` (só em modelagem de agregado). Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`). Versão nova: `deprecation-and-migration`.
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com MongoDB (driver Node.js): projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Conexão e cliente
+
+- **Um `MongoClient` por processo, reutilizado em todas as operações e requisições.** Cada client é um pool de conexões; a doc manda criar um e reaproveitá-lo. [`#connect/mongoclient`](https://www.mongodb.com/docs/drivers/node/current/connect/mongoclient/) [`#connect/connection-options/connection-pools`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/connection-pools/)
+- **Usuário ou senha com `:`, `/`, `?`, `#`, `[`, `]` ou `@` na connection string vai com percent-encoding (`encodeURIComponent`).** Sem isso a autenticação falha na leitura da URI. [`#connect/connection-troubleshooting`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-troubleshooting/)
+- **Replica set: a connection string lista todos os nós, com os hostnames exatos da configuração do replica set.** A descoberta e o failover dependem de o driver alcançar cada nó pelo nome configurado. [`#connect/connection-targets`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-targets/) [`#connect/connection-troubleshooting`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-troubleshooting/)
+- **Com Atlas, ligue a Stable API (`serverApi: { version: ServerApiVersion.v1 }`).** A doc recomenda para evitar quebra quando o Atlas sobe a versão do servidor; um client por versão da API. [`#connect/connection-targets`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-targets/) [`#connect/connection-options/stable-api`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/stable-api/) [`#reference/upgrade`](https://www.mongodb.com/docs/drivers/node/current/reference/upgrade/)
+- **Com `serverApi.strict: true`, comando fora da Stable API falha; desligue `strict` para rodá-lo.** `deprecationErrors: true` faz o driver lançar ao chamar comando deprecado na versão declarada. [`#connect/connection-options/stable-api`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/stable-api/)
+- **Defina `socketTimeoutMS` com duas a três vezes a duração da operação mais lenta.** O padrão é nunca expirar o socket, e a doc recomenda esse valor para o driver fechar socket travado. [`#connect/connection-options`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/)
+- **Tempo de conexão inicial se controla por `serverSelectionTimeoutMS`, não por `connectTimeoutMS`.** A doc manda usar essa opção para limitar o `MongoClient.connect`. [`#connect/connection-options`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/)
+- **Não use `keepAlive`/`keepAliveInitialDelay`.** Deprecadas desde a 5.3; desde a 6.0 o keepalive é sempre ligado. [`#connect/connection-options`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/)
+- **Não use `timeoutMS`/`timeoutMode` (CSOT); use os timeouts por etapa (seleção de servidor, checkout de conexão, execução no servidor).** As duas opções estão deprecadas a partir do driver 7.8. [`#connect/connection-options/csot`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/csot/)
+- **Com erro `SystemOverloadedError`/`RetryableError`, use driver 7.2 ou mais novo.** É a versão que suporta o load shedding do cluster. [`#connect/connection-options`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/)
+- **Limite `maxPoolSize` ao que a carga pede: pool grande demais gera timeout de socket ocioso.** Cada socket precisa de atividade dentro do `socketTimeoutMS` para não ser fechado. [`#connect/connection-options/connection-pools`](https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/connection-pools/)
+- **Driver 7.x exige servidor MongoDB 4.4 ou mais novo, e as opções `ssl*` deram lugar às `tls*`.** As opções com prefixo `ssl` e `tlsCertificateFile` foram removidas. [`#reference/upgrade`](https://www.mongodb.com/docs/drivers/node/current/reference/upgrade/)
+
+### TypeScript
+
+- **Não ponha `_id` no tipo do model; se ele precisar ser obrigatório no tipo, crie a collection com `OptionalId<T>`.** A doc não recomenda `_id` no model, e chave fora do tipo recebe `any`. [`#typescript`](https://www.mongodb.com/docs/drivers/node/current/typescript/) [`#types/OptionalUnlessRequiredId`](https://mongodb.github.io/node-mongodb-native/7.6/types/OptionalUnlessRequiredId.html)
+- **Com projeção no `find`, passe o tipo do documento projetado como parâmetro de tipo.** O tipo da collection não reflete o documento cortado. [`#typescript`](https://www.mongodb.com/docs/drivers/node/current/typescript/)
+- **Chave de filtro montada com variável usa `as const`.** Sem a asserção o driver não infere a chave literal. [`#typescript`](https://www.mongodb.com/docs/drivers/node/current/typescript/)
+- **`StrictFilter`/`StrictUpdateFilter` são experimentais e podem acusar erro em consulta válida.** A doc avisa antes de adotar. [`#typescript`](https://www.mongodb.com/docs/drivers/node/current/typescript/)
+- **Tipo recursivo aninhado em consulta com dot notation perde a checagem; para ter segurança, escreva sem dot notation.** O driver não percorre tipo recursivo além do limite de profundidade. [`#typescript`](https://www.mongodb.com/docs/drivers/node/current/typescript/)
+
+### Promises e cursores
+
+- **Toda chamada do cursor (`hasNext()`, `next()`, `toArray()`) leva `await`.** Sem `await` o laço vira infinito, lança `MongoError` ou imprime Promises. [`#promises`](https://www.mongodb.com/docs/drivers/node/current/promises/)
+- **Não misture paradigmas de cursor (iterador, stream, `toArray`, evento) no mesmo cursor, nem rode chamadas assíncronas simultâneas nele.** O resultado é indefinido; espere a operação anterior terminar. [`#crud/query/cursor`](https://www.mongodb.com/docs/drivers/node/current/crud/query/cursor/)
+- **Feche (`close()`) o cursor que não foi consumido até o fim.** A doc recomenda para evitar vazamento de recurso. [`#crud/query/cursor`](https://www.mongodb.com/docs/drivers/node/current/crud/query/cursor/)
+- **Encadeie `sort()`, `limit()`, `skip()`, `project()` antes de iterar o cursor.** Método encadeado depois da iteração não se aplica à leitura. [`#crud/query/retrieve`](https://www.mongodb.com/docs/drivers/node/current/crud/query/retrieve/) [`#crud/query/project`](https://www.mongodb.com/docs/drivers/node/current/crud/query/project/)
+- **Consulta que precisa de ordem declara `sort()`.** Sem sort o MongoDB não garante a ordem do resultado. [`#crud/query/specify-documents-to-return`](https://www.mongodb.com/docs/drivers/node/current/crud/query/specify-documents-to-return/)
+- **Defina `batchSize` explicitamente quando ele importar.** O driver 7 removeu o padrão de 1000 do cursor. [`#reference/upgrade`](https://www.mongodb.com/docs/drivers/node/current/reference/upgrade/)
+
+### Escrita
+
+- **Deixe o driver gerar o `_id`, salvo garantia forte de unicidade.** Todo documento precisa de `_id` único. [`#crud/insert`](https://www.mongodb.com/docs/drivers/node/current/crud/insert/)
+- **Para ler e escrever sem janela de corrida, use `findOneAndUpdate`/`findOneAndReplace`/`findOneAndDelete`.** Leitura e escrita separadas deixam outra requisição alterar o dado no meio. [`#crud/compound-operations`](https://www.mongodb.com/docs/drivers/node/current/crud/compound-operations/) [`#crud/update/replace`](https://www.mongodb.com/docs/drivers/node/current/crud/update/replace/) [`#crud/delete`](https://www.mongodb.com/docs/drivers/node/current/crud/delete/)
+- **Update e replace não alteram `_id` nem violam índice único.** O servidor recusa as duas coisas. [`#crud/update/modify`](https://www.mongodb.com/docs/drivers/node/current/crud/update/modify/) [`#crud/update/replace`](https://www.mongodb.com/docs/drivers/node/current/crud/update/replace/)
+- **`bulkWrite` com `ordered: true` para na primeira falha (`MongoBulkWriteError`); o `MongoClient.bulkWrite` exige servidor 8.0 ou mais novo.** As operações seguintes não rodam. [`#crud/bulk-write`](https://www.mongodb.com/docs/drivers/node/current/crud/bulk-write/)
+- **Chave `undefined` vira `null` na gravação, a menos que `ignoreUndefined: true` esteja configurado.** A opção vale por client, database, collection ou operação. [`#data-formats/bson/undefined-values`](https://www.mongodb.com/docs/drivers/node/current/data-formats/bson/undefined-values/)
+- **Com `pkFactory`, todo `_id` inserido segue o tipo da fábrica; upsert não usa a fábrica.** `_id` de tipo diferente deixa o dado inconsistente. [`#crud/pkfactory`](https://www.mongodb.com/docs/drivers/node/current/crud/pkfactory/)
+- **Read concern, write concern e collation definidos no nível mais interno sobrescrevem os de cima (client, database, collection, operação, transação).** A doc descreve essa herança para configurar cada nível. [`#crud/configure`](https://www.mongodb.com/docs/drivers/node/current/crud/configure/)
+
+### Transações
+
+- **Transação exige replica set ou cluster (servidor 4.0+); antes do 4.2 só escreve em collection que já existe.** A doc lista o requisito de servidor. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/)
+- **Prefira a API conveniente (`withTransaction`/`withSession`): ela repete em `TransientTransactionError` e `UnknownTransactionCommitResult`.** Com a Core API a aplicação tem de escrever as duas rotinas de repetição. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/) [`#crud/transactions/transaction-conv`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/transaction-conv/) [`#crud/transactions/transaction-core`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/transaction-core/)
+- **O callback do `withTransaction` trata os próprios erros.** Sem isso a repetição pode entrar em laço infinito. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/)
+- **Passe a `session` a cada operação, use `await` em cada uma e nunca rode em paralelo (`Promise.all`) na mesma sessão.** Sessão em paralelo costuma dar erro no servidor. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/)
+- **Sessão só serve ao `MongoClient` que a criou.** O driver lança erro com sessão de outro client. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/)
+- **Na Core API, a transação define read concern, write concern (`majority`) e termina com `abortTransaction()` no erro e `endSession()` no `finally`.** É o roteiro de passos que a doc exige. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/) [`#crud/transactions/transaction-core`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/transaction-core/)
+- **Consistência causal exige sessão com `causalConsistency`, read e write concern `majority`, e operações numa única sessão.** São os requisitos listados pela doc. [`#crud/transactions`](https://www.mongodb.com/docs/drivers/node/current/crud/transactions/)
+
+### Consulta, índice e agregação
+
+- **Prefira métodos do driver a `db.command()`; tarefa administrativa vai pelo MongoDB Shell.** A doc recomenda o wrapper sempre que existir. [`#run-command`](https://www.mongodb.com/docs/drivers/node/current/run-command/)
+- **Contagem exata com filtro é `countDocuments()`; `estimatedDocumentCount()` é estimativa pelos metadados.** A doc manda escolher pelo caso: o estimado é mais rápido, o exato varre. [`#crud/query/count`](https://www.mongodb.com/docs/drivers/node/current/crud/query/count/)
+- **`distinct` com `options` exige o filtro (use `{}` sem filtro).** O parâmetro de query é obrigatório quando há opções. [`#crud/query/distinct`](https://www.mongodb.com/docs/drivers/node/current/crud/query/distinct/)
+- **`$text` exige índice de texto no campo consultado.** Sem o índice a consulta falha. [`#crud/query/text`](https://www.mongodb.com/docs/drivers/node/current/crud/query/text/)
+- **Projeção não mistura inclusão e exclusão, exceto `_id: 0`.** `_id` sai sempre, a menos que excluído explicitamente. [`#crud/query/project`](https://www.mongodb.com/docs/drivers/node/current/crud/query/project/)
+- **Índice declara a direção de cada campo; índice 2dsphere só em campo com GeoJSON; índice único impede duplicata.** Sem índice o MongoDB varre a collection inteira. [`#indexes`](https://www.mongodb.com/docs/drivers/node/current/indexes/)
+- **Documento devolvido pela agregação respeita o limite BSON de 16 MB; estágio que passa de 100 MB de memória precisa de `allowDiskUse`.** São os dois limites que a doc fixa para a agregação. [`#aggregation`](https://www.mongodb.com/docs/drivers/node/current/aggregation/)
+- **Respeite a posição dos estágios: `$out`, `$merge` e `$changeStreamSplitLargeEvent` por último, `$changeStream` em primeiro.** A doc fixa a posição desses estágios. [`#aggregation/pipeline-stages`](https://www.mongodb.com/docs/drivers/node/current/aggregation/pipeline-stages/)
+
+### Change streams, GridFS e BSON
+
+- **Não use `ChangeStream` em modo evento e modo iterador ao mesmo tempo.** O driver não suporta e lança erro. [`#monitoring-and-logging/change-streams`](https://www.mongodb.com/docs/drivers/node/current/monitoring-and-logging/change-streams/)
+- **Renomear e apagar arquivo no GridFS é pelo `_id`, não pelo nome.** A doc exige o `_id` nas duas operações. [`#crud/gridfs`](https://www.mongodb.com/docs/drivers/node/current/crud/gridfs/)
+- **Use o BSON (`ObjectId` etc.) reexportado por `mongodb`, não um pacote `bson` à parte.** Evita incompatibilidade entre versões do BSON. [`#data-formats/bson`](https://www.mongodb.com/docs/drivers/node/current/data-formats/bson/)
+- **Não instancie `MongoServerError` diretamente.** A referência da classe marca o construtor como "Do not use". [`#classes/MongoServerError`](https://mongodb.github.io/node-mongodb-native/7.6/classes/MongoServerError.html)
+
+### Logging
+
+- **Configure o log do driver por opção do client, não pela connection string.** A connection string é compartilhada entre aplicações com suporte de log diferente. [`#monitoring-and-logging/logging`](https://www.mongodb.com/docs/drivers/node/current/monitoring-and-logging/logging/)
+- **Função `write` de log customizada não lança erro (vira no-op na falha) e se liga a uma biblioteca de log.** A doc recomenda os dois para não derrubar a operação por causa do log. [`#monitoring-and-logging/logging`](https://www.mongodb.com/docs/drivers/node/current/monitoring-and-logging/logging/)
+
 ---
 
 ## Fundamentos

@@ -94,6 +94,66 @@ no Fastify, `i18n.md` §3), não o Paraglide.
 (hreflang e canonical por idioma). Dispare junto com a leitura da entrada; a entrada é o contrato,
 a skill executa (`SKILLS-MAP.md`).
 
+## Decisões que a doc impõe
+
+O que as páginas oficiais mandam fazer, lido página a página (`DECISIONS.md` #313). Vale antes de
+qualquer decisão ou implementação com Paraglide JS: projeto segue, e regra de `_standards/` que
+contradiga uma destas linhas está errada. Cada linha aponta a entrada e a página de onde saiu.
+
+### Estratégia de idioma
+
+- **Estratégia que sempre resolve (`url` com curinga, `baseLocale`) fica no fim do array.** Ela encerra a avaliação: nenhuma estratégia posta depois dela é consultada. [`#/strategy`](https://paraglidejs.com/strategy) [`#/i18n-routing`](https://paraglidejs.com/i18n-routing)
+- **`baseLocale` é a última estratégia, para o idioma sempre resolver, inclusive em requisição de API.** Sem ela, a requisição que nenhuma estratégia reconhece fica sem idioma. [`#/server-side-rendering`](https://paraglidejs.com/server-side-rendering) [`#/errors`](https://paraglidejs.com/errors) [`#/multi-tenancy`](https://paraglidejs.com/multi-tenancy)
+- **Servidor e cliente usam a mesma fonte e a mesma ordem de estratégia.** Ordem diferente faz o SSR e o cliente divergirem no idioma. [`#/server-side-rendering`](https://paraglidejs.com/server-side-rendering)
+- **Preferência guardada que precisa valer na primeira resposta usa estratégia visível ao servidor, como `cookie`; `localStorage` não serve.** No servidor o `localStorage` é pulado e não existe na primeira requisição do SSR. [`#/server-side-rendering`](https://paraglidejs.com/server-side-rendering) [`#/strategy`](https://paraglidejs.com/strategy) [`#/i18n-routing`](https://paraglidejs.com/i18n-routing)
+- **`url` vem antes de `cookie` e `preferredLanguage` quando todo URL localizado deve ser acessível.** Com a URL primeiro, ela sempre decide o idioma e o middleware não redireciona. [`#/middleware`](https://paraglidejs.com/middleware)
+- **Rota de API e RPC fica fora do middleware de i18n.** A doc manda pular o middleware nessas rotas, ou excluí-las com `routeStrategies` para nunca redirecionar. [`#/strategy`](https://paraglidejs.com/strategy) [`#/i18n-routing`](https://paraglidejs.com/i18n-routing) [`#/middleware`](https://paraglidejs.com/middleware)
+- **Padrão de URL mais específico vem antes do genérico.** O primeiro que casa vence, e o específico posto depois nunca é alcançado. [`#/i18n-routing`](https://paraglidejs.com/i18n-routing)
+- **Estratégia própria se chama `custom-<nome>` e implementa `getLocale()` e `setLocale()`; no cliente, `getLocale` é síncrono.** Detecção assíncrona no cliente vai por `overwriteGetLocale()`. [`#/strategy`](https://paraglidejs.com/strategy)
+
+### Middleware e SSR
+
+- **Passe a requisição original ao handler (`paraglideMiddleware(req, () => handler.fetch(req))`), não a do callback.** A requisição modificada causa loop de redirecionamento. [`#/middleware`](https://paraglidejs.com/middleware) [`#/server`](https://paraglidejs.com/server)
+- **No TanStack Router, a reescrita de URL é do próprio router (`rewrite.input` / `rewrite.output`).** O middleware avisa que não reescreve a URL nesse caso. [`#/middleware`](https://paraglidejs.com/middleware)
+- **Mensagem no servidor é chamada dentro do contexto aberto pelo `paraglideMiddleware`.** Fora dele a lib não sabe o idioma da requisição e acusa erro. [`#/errors`](https://paraglidejs.com/errors)
+- **Não desligue o `AsyncLocalStorage` (`disableAsyncLocalStorage`) se o runtime o oferece.** Só vale para runtime sem `AsyncLocalStorage` que garante isolamento por requisição; sem isso o idioma vaza entre requisições. [`#/middleware`](https://paraglidejs.com/middleware) [`#/compiler-options`](https://paraglidejs.com/compiler-options) [`#/strategy`](https://paraglidejs.com/strategy)
+- **Em SSR, `lang` e `dir` do `<html>` saem do HTML renderizado no servidor.** A doc do plugin do Vite pede isso no lugar de mexer no documento pelo cliente. [`#/vite`](https://paraglidejs.com/vite)
+- **`extractLocaleFromCookie()` não é chamada no SSR.** Ela lê do `document`, que não existe no servidor. [`#/runtime`](https://paraglidejs.com/runtime)
+- **`localizeUrl` e `deLocalizeUrl` são para o servidor, recebem URL absoluta e devolvem `URL` absoluta; componente de UI usa `localizeHref` / `deLocalizeHref`.** A string passada a elas precisa ser absoluta. [`#/runtime`](https://paraglidejs.com/runtime)
+
+### Troca de idioma
+
+- **Troca de idioma é navegação de documento inteiro.** Assim `<html lang>`, HTML do servidor e estado do cliente ficam no mesmo idioma; troca reativa no lugar deixa casca de documento velha. [`#/tanstack-start`](https://paraglidejs.com/tanstack-start) [`#/i18n-routing`](https://paraglidejs.com/i18n-routing) [`#/strategy`](https://paraglidejs.com/strategy)
+- **`setLocale(locale, { reload: false })` nunca serve de seletor de idioma, nunca em documento SSR, SSG ou hidratado e nunca em rota com estratégia `url`.** Com `url`, ele deixa a URL antiga e `getLocale()` continua devolvendo o idioma velho; é escape só para superfície 100% cliente que guarda trabalho em memória. [`#/basics`](https://paraglidejs.com/basics) [`#/`](https://paraglidejs.com/) [`#/vite`](https://paraglidejs.com/vite) [`#/paraglide-vs-react-i18next`](https://paraglidejs.com/paraglide-vs-react-i18next)
+- **Prévia de mensagem em outro idioma usa a opção `locale` da mensagem, não `reload: false`.** A doc de formatação reserva a opção por mensagem para esse caso. [`#/formatting`](https://paraglidejs.com/formatting)
+
+### Chaves e mensagens
+
+- **Nunca monte a chave em tempo de execução (`m[name]()`, `` m[`${name}_label`]() ``); use mapa explícito de funções com valor de reserva.** O bundler mantém todas as mensagens e o `inlang check` fica incompleto quando a chave é dinâmica. [`#/basics`](https://paraglidejs.com/basics) [`#/checking-translations`](https://paraglidejs.com/checking-translations) [`#/m/2qj2w8pu/app-inlang-cli`](https://inlang.com/m/2qj2w8pu/app-inlang-cli)
+- **Chave existente não se renomeia só para mudar de estilo.** O objetivo é a identidade estável da mensagem. [`#/message-keys`](https://paraglidejs.com/message-keys)
+- **Chave plana; aninhada é aceita mas não recomendada.** Tradutor e ferramenta lidam melhor com chave e valor simples. [`#/message-keys`](https://paraglidejs.com/message-keys)
+- **Não compartilhe mensagem entre contextos sem relação.** Os contextos evoluem separados e a tradução de um quebra o outro. [`#/message-keys`](https://paraglidejs.com/message-keys)
+- **O seletor de plural devolve categoria (`zero`, `one`, `few`, `other`...), nunca número.** Uma chave `0` no próprio seletor de plural nunca casa. [`#/variants`](https://paraglidejs.com/variants)
+- **Variantes são testadas em ordem de preferência: chave literal antes do curinga, seletor por seletor.** Mudança de comportamento registrada no changelog, no lugar da ordem de armazenamento. [`#/changelog`](https://paraglidejs.com/changelog)
+- **Em markup, o nome da tag não é tag HTML; quem chama passa o renderizador de cada tag, conferido pelo tipo.** Mensagem com markup exige renderizador. [`#/markup`](https://paraglidejs.com/markup)
+
+### Formatação
+
+- **Data formatada pela mensagem leva `timeZone` explícito quando a saída precisa ser igual em todo ambiente.** Sem ele vale o fuso de quem roda. [`#/formatting`](https://paraglidejs.com/formatting)
+- **`datetime` sem opções renderiza data e hora médias ("Oct 9, 2026, 4:30 PM"), não só a data curta.** Mudança de comportamento do changelog. [`#/changelog`](https://paraglidejs.com/changelog)
+- **Formatador desconhecido, esqueleto ICU (`::yyyyMMdd`) e `currency` sem a opção de moeda são ignorados com aviso.** O valor sai interpolado sem a formatação pedida. [`#/formatting`](https://paraglidejs.com/formatting)
+- **`relativetime` exige `unit`, de preferência no singular.** O Paraglide obriga a unidade e recomenda o singular por consistência. [`#/formatting`](https://paraglidejs.com/formatting)
+
+### Compilação e ferramentas
+
+- **Compile pelo plugin do bundler (Vite), não por comando de watch separado.** O plugin recompila quando a tradução muda e entra no build existente. [`#/compiling-messages`](https://paraglidejs.com/compiling-messages)
+- **A saída compilada fica fora do git e é gerada no dev e no build.** Os arquivos gerados são ignorados por padrão; não é commit obrigatório antes do push. [`#/comparison`](https://paraglidejs.com/comparison)
+- **Não carregue tradução sob demanda (lazy-load).** O catálogo adiado cria cascata de requisições: baixar o app, executar, descobrir e só então buscar o catálogo. [`#/`](https://paraglidejs.com/) [`#/comparison`](https://paraglidejs.com/comparison)
+- **Para enviar só as mensagens do idioma ativo, o caminho recomendado é o build por idioma, com as restrições de deploy dele.** E `reload: false` nunca se combina com `experimentalPerLocaleBuild`. [`#/comparison`](https://paraglidejs.com/comparison) [`#/compiling-messages`](https://paraglidejs.com/compiling-messages) [`#/basics`](https://paraglidejs.com/basics)
+- **Use `inlang check`; `inlang validate` e `inlang lint` estão obsoletos.** `lint` não faz nada e sai com 0, então script antigo passa sem conferir. [`#/checking-translations`](https://paraglidejs.com/checking-translations) [`#/m/2qj2w8pu/app-inlang-cli`](https://inlang.com/m/2qj2w8pu/app-inlang-cli)
+- **O CLI do inlang roda por `npx`, sem instalação global.** A versão fica no escopo do projeto. [`#/m/2qj2w8pu/app-inlang-cli`](https://inlang.com/m/2qj2w8pu/app-inlang-cli)
+- **Tradução por máquina só em pipeline de build.** A doc do CLI aconselha isso para evitar tradução fora de contexto ou errada. [`#/m/2qj2w8pu/app-inlang-cli`](https://inlang.com/m/2qj2w8pu/app-inlang-cli)
+
 ---
 
 ## Overview
@@ -364,7 +424,10 @@ declarados em `modules` do `settings.json` por URL do jsDelivr.
 [doc](https://paraglidejs.com/checking-translations)
 **O que é:** `npx @inlang/cli check`: tradução faltando ou vazia, variável faltando ou desconhecida,
 forma de plural faltando e mensagem não usada (com `@inlang/plugin-m-function-matcher` 2.3.0+);
-sai com 1 quando acha algo; `--locales`, `--source`, `--format json`.
+sai com 1 quando acha algo; `--locales`, `--source`, `--format json`. Sem `--source`, a busca de uso
+varre os arquivos do diretório pai do projeto (o `frontend/`), pulando o que o git ignora,
+`node_modules`, a saída compilada do Paraglide e config de build: na casa a flag não é precisa
+(página aberta em 2026-11-08).
 **Para que serve:** a rede automática de chave órfã e tradução faltando, no CI.
 **Quando usar:** no `check` do frontend e no CI (`tooling.md` §7). Cobre boa parte do meta-teste de
 `i18n.md` §4 (chave nos três arquivos, valor vazio, chave sem uso); o que é só da casa (travessão,
