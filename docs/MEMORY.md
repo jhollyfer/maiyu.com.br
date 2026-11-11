@@ -22,8 +22,11 @@ Frente do frontend (item G, sub-sessão), na branch `feat/frontend-regua`, nasci
 `feat/backend-inicial`. O lote 1 juntou, por merge e sem force, as branches prontas da fase 1:
 espelhos (R1.1), husky e commitlint (R1.3), Luxon (R1.6, parte), versões (R1.7), piso do
 `tsconfig` (R1.8) e o `AGENTS.md` da régua (RD.1). Os espelhos foram ressincronizados com o upstream
-de 2026-11-11 (`--so-regua`). O `pnpm-lock.yaml` regenera quando os pacotes do backend passam do
-`minimumReleaseAge`. Seguem as rotas em inglês (#383) e o prefixo de idioma (#384, #385).
+de 2026-11-11 (`--so-regua`). O `pnpm-lock.yaml` foi regenerado depois que os pacotes do backend passaram
+do `minimumReleaseAge`. As rotas já estavam em inglês e sem alias (#383). Toda URL tem prefixo
+`/pt-br`, `/en` ou `/es` pelo `paraglide.config.ts` do kit (#384, #385), com sitemap, hreflang,
+canonical e JSON-LD prefixados. O lote 2 traz só o kit livre do backend (corte aceito pela regente);
+router, http, env, page-head, sitemap do kit, route-error e os hooks esperam o merge do backend.
 
 A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
 upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o
@@ -55,8 +58,7 @@ do `shared/` em 3.30.5, que são da frente do backend. O frontend não importa o
 
 1. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
    anunciar envio que não acontece.
-2. Lote 1 do frontend: rotas em inglês (#383) e prefixo de idioma (#384, #385); depois o lote 2
-   (kit do frontend, R3.1 a R3.5, R1.4, R1.9, R0.1). R1.2 e RB.1 a RB.4 esperam a leva do kit.
+2. Lote 2 do frontend: kit livre do backend (R3.1 a R3.5), R1.4, R1.9, R0.1. R1.2 e RB.1 a RB.4 esperam a leva do kit.
 3. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
    sem passar pelo crivo de quem é da Maiyu.
 4. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
