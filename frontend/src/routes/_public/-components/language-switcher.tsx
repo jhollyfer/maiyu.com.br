@@ -28,7 +28,7 @@ const OPTIONS = {
 /**
  * Troca o idioma do site.
  *
- * `setLocale` leva à mesma página no endereço do outro idioma (`/portfolio`
+ * `setLocale` leva à mesma página no endereço do outro idioma (`/pt-br/portfolio`
  * vira `/en/portfolio`), e o recarregamento é o ponto: o servidor responde no
  * idioma escolhido desde o primeiro byte, com `lang`, título, canônico e cartão
  * de link certos. Trocar só no cliente deixaria o `head` no idioma anterior.

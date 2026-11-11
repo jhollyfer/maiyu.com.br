@@ -13,7 +13,7 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 import { Toaster } from '#/components/ui/sonner'
 import { TooltipProvider } from '#/components/ui/tooltip'
 
-import { SITE_IMAGE, SITE_TITLE, SITE_URL } from '#/lib/site'
+import { SITE_IMAGE, SITE_TITLE } from '#/lib/site'
 import { ogLocale } from '#/lib/i18n'
 import { jsonLdScript, organizationJsonLd } from '#/lib/structured-data'
 import { m } from '#/paraglide/messages'
@@ -55,10 +55,16 @@ export const Route = createRootRouteWithContext<RouterContext>()({
        */
       { name: 'description', content: m.meta_description() },
       { name: 'robots', content: 'index, follow' },
+      /*
+       * Sem `og:url` nem `canonical` aqui, de propósito: a raiz do domínio
+       * responde 307 para `/pt-br` (`DECISIONS.md` #384), então um valor global
+       * declararia como canônica uma URL que redireciona e herdaria em toda
+       * rota que esquecesse o seu. Cada página os traz pelo `pageHead`, já
+       * prefixados.
+       */
       { property: 'og:site_name', content: SITE_TITLE },
       { property: 'og:locale', content: ogLocale() },
       { property: 'og:type', content: 'website' },
-      { property: 'og:url', content: SITE_URL },
       { property: 'og:title', content: m.meta_title() },
       { property: 'og:description', content: m.meta_description() },
       { property: 'og:image', content: SITE_IMAGE },
@@ -79,7 +85,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
        * direto.
        */
       { rel: 'icon', href: '/maiyu-symbol.svg', type: 'image/svg+xml' },
-      { rel: 'canonical', href: SITE_URL },
       {
         rel: 'preload',
         as: 'font',

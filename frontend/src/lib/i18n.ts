@@ -1,6 +1,11 @@
 import { DateTime } from 'luxon'
 
-import { getLocale, locales, localizeHref } from '#/paraglide/runtime'
+import {
+  baseLocale,
+  getLocale,
+  locales,
+  localizeHref,
+} from '#/paraglide/runtime'
 import type { Locale } from '#/paraglide/runtime'
 
 import { absoluteUrl } from './site'
@@ -80,9 +85,13 @@ export function ogLocale(): string {
  * O endereço absoluto de um caminho interno, no idioma pedido (ou no da
  * requisição).
  *
- * `localizeHref` e não concatenação de prefixo: o português é o idioma base e
- * não leva prefixo (`/portfolio`), os outros levam (`/en/portfolio`), e a regra
- * mora no paraglide, que é quem a aplica no roteamento também.
+ * `localizeHref` e não concatenação de prefixo: todo idioma leva prefixo
+ * minúsculo (`/pt-br/portfolio`, `/en/portfolio`, `/es/portfolio`), e a regra
+ * mora nos `urlPatterns` de `project.inlang/paraglide.config.ts`, que é o que o
+ * roteamento também aplica (`DECISIONS.md` #384,
+ * _doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
+ * Nenhuma URL absoluta sai sem prefixo: a raiz responde 307 para `/pt-br`, e
+ * um canônico que redireciona é um canônico que o buscador descarta.
  */
 export function localizedUrl(path: string, locale?: Locale): string {
   return absoluteUrl(localizeHref(path, { locale }))
@@ -92,10 +101,11 @@ export function localizedUrl(path: string, locale?: Locale): string {
  * Os `<link rel="alternate" hreflang>` de uma página, um por idioma e mais o
  * `x-default`.
  *
- * Sem eles o buscador trata `/portfolio` e `/en/portfolio` como conteúdo
+ * Sem eles o buscador trata `/pt-br/portfolio` e `/en/portfolio` como conteúdo
  * duplicado e escolhe um sozinho, e quem busca em espanhol cai na versão em
- * português. O `x-default` aponta para o idioma base, que é o que o site serve
- * a quem não pediu nenhum.
+ * português. O `x-default` aponta para o idioma base já prefixado
+ * (`/pt-br/...`), que é o destino do 307 de quem chega sem prefixo: apontá-lo
+ * para a raiz seria declarar como padrão uma URL que redireciona.
  */
 export function alternateLinks(
   path: string,
@@ -111,7 +121,7 @@ export function alternateLinks(
     {
       rel: 'alternate',
       hrefLang: 'x-default',
-      href: localizedUrl(path, 'pt-BR'),
+      href: localizedUrl(path, baseLocale),
     },
   ]
 }
