@@ -18,6 +18,9 @@ project.inlang/cache
 # próxima execução da ferramenta reabre.
 project.inlang/.meta.json
 project.inlang/README.md
+# A partir da `@inlang/cli` 3.6 a ferramenta também escreve `.lix/README.md`, pelo mesmo motivo e
+# também ignorado pelo `project.inlang/.gitignore`.
+project.inlang/.lix
 
 # Saída do build do Nitro. O `.gitignore` da raiz a ignora, mas o Prettier só lê o `.gitignore`
 # da pasta onde roda (`frontend/`), e sem esta linha o `format:check` cobraria o bundle compilado.

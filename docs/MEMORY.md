@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-09 | Migração para a régua | 2 de 47 itens | Em desenvolvimento |
+| 2026-11-09 | Migração para a régua | 3 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -39,6 +39,10 @@ de storage rodada contra ele não conta como prova de PR até a régua escolher 
 
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
+
+R1.7 feito na branch `chore/frontend-versoes`: o `frontend/` está na última versão publicada, com
+um dia de idade mínima. Ficam de fora o TypeScript 7 (exceção do `tooling.md` §0) e os `@tiptap/*`
+do `shared/` em 3.30.5, que são da frente do backend. O frontend não importa o Tiptap hoje.
 
 ## Próximos passos
 
