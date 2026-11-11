@@ -9,6 +9,7 @@ import type { SortDirection } from './enums/sort-direction.js'
 import { TRASHED_MODES } from './enums/trashed-mode.js'
 import type { TrashedMode } from './enums/trashed-mode.js'
 import { PROJECT_FIELD_LABELS } from './records/field-labels.js'
+import { PROJECT_RULE_MESSAGES } from './records/rule-messages.js'
 
 /**
  * The configured Zod, the rules that more than one resource uses, the rule messages
@@ -75,7 +76,7 @@ type RuleMessages = Record<keyof typeof PT_BR_MESSAGES, string>
  * Each language's messages. `satisfies` demands the same list of keys in all
  * three: a new rule in pt-BR without translation does not compile.
  */
-export const RULE_MESSAGES = {
+const KIT_RULE_MESSAGES = {
   'pt-BR': PT_BR_MESSAGES,
   es: {
     required: 'Ingrese {{ field }}',
@@ -134,6 +135,20 @@ export const RULE_MESSAGES = {
     'fileName.regex': 'The file name cannot have control characters',
   },
 } as const satisfies Record<Locale, RuleMessages>
+
+/**
+ * The kit's rule messages plus the project's (`records/rule-messages.ts`, KIT.md §3.4), in the
+ * same order as `FIELD_LABELS`: the project spreads last, so a repeated key is a deliberate
+ * rewording and the three locales must carry it (`validator.test.ts`).
+ */
+export const RULE_MESSAGES = {
+  'pt-BR': {
+    ...KIT_RULE_MESSAGES['pt-BR'],
+    ...PROJECT_RULE_MESSAGES['pt-BR'],
+  },
+  es: { ...KIT_RULE_MESSAGES.es, ...PROJECT_RULE_MESSAGES.es },
+  en: { ...KIT_RULE_MESSAGES.en, ...PROJECT_RULE_MESSAGES.en },
+} as const satisfies Record<Locale, Readonly<Record<string, string>>>
 
 /**
  * The friendly name of each field the kit itself validates (session, storage, user,
@@ -595,7 +610,8 @@ export class Rule {
   }
 
   static email(): z.ZodEmail {
-    return z.email().max(254)
+    // Lowercase, like the backend pair: `A@x.com` and `a@x.com` are one account.
+    return z.email().toLowerCase().max(254)
   }
 
   /**
@@ -665,8 +681,9 @@ export class Rule {
     perPage: BlankableField<z.ZodNumber>
   } {
     return {
-      page: Rule.optional(z.number().min(1)),
-      perPage: Rule.optional(z.number().min(1).max(100)),
+      // Whole numbers with a ceiling: `page=1.5` or `page=1e308` would reach the offset (#382).
+      page: Rule.optional(z.number().int().min(1).max(10_000)),
+      perPage: Rule.optional(z.number().int().min(1).max(100)),
     }
   }
 

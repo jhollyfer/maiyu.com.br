@@ -1,0 +1,30 @@
+// dependency-cruiser does not resolve the `#x/*` aliases of the package.json `imports` to `.ts`;
+// this file repeats them as `paths`, read only by scripts/depcruise.config.ts (`tsConfig.fileName`).
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "#features/*": ["./app/features/*"],
+      "#validators/*": ["./app/validators/*"],
+      "#core/*": ["./app/core/*"],
+      "#domain/*": ["./app/domain/*"],
+      "#repositories/*": ["./app/repositories/*"],
+      "#exceptions/*": ["./app/exceptions/*"],
+      "#models/*": ["./app/models/*"],
+      "#policies/*": ["./app/policies/*"],
+      "#abilities/*": ["./app/abilities/*"],
+      "#services/*": ["./app/services/*"],
+      "#generated/*": ["./.adonisjs/server/*"],
+      "#middleware/*": ["./app/middleware/*"],
+      "#jobs/*": ["./app/jobs/*"],
+      "#guards/*": ["./app/guards/*"],
+      "#providers/*": ["./providers/*"],
+      "#commands/*": ["./commands/*"],
+      "#database/*": ["./database/*"],
+      "#tests/*": ["./tests/*"],
+      "#scripts/*": ["./scripts/*"],
+      "#start/*": ["./start/*"],
+      "#config/*": ["./config/*"]
+    }
+  }
+}

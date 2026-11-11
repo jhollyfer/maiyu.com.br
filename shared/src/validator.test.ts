@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { LOCALE, LOCALES } from './enums/locale.js'
 import * as shared from './index.js'
 import { PROJECT_FIELD_LABELS } from './records/field-labels.js'
+import { PROJECT_RULE_MESSAGES } from './records/rule-messages.js'
 import { ValidationFixture } from './validation-fixtures.js'
 import {
   FIELD_LABELS,
@@ -10,6 +11,7 @@ import {
   PageValidator,
   PaginationValidator,
   Rule,
+  RULE_MESSAGES,
   ValidationMessage,
   z,
 } from './validator.js'
@@ -125,6 +127,30 @@ describe('FIELD_LABELS', () => {
   })
 })
 
+/** The project's rule messages (`records/rule-messages.ts`), with the same two traps. */
+describe('RULE_MESSAGES', () => {
+  it('when the project adds a message, it has the message in the three languages', () => {
+    const base = Object.keys(PROJECT_RULE_MESSAGES[LOCALE.PT_BR]).sort()
+
+    for (const locale of LOCALES) {
+      expect(Object.keys(PROJECT_RULE_MESSAGES[locale]).sort(), locale).toEqual(
+        base,
+      )
+    }
+  })
+
+  it('when the project repeats a kit rule, the project text wins', () => {
+    for (const locale of LOCALES) {
+      const project: Readonly<Record<string, string>> =
+        PROJECT_RULE_MESSAGES[locale]
+      const merged: Readonly<Record<string, string>> = RULE_MESSAGES[locale]
+      for (const [key, text] of Object.entries(project)) {
+        expect(merged[key], `${locale}.${key}`).toBe(text)
+      }
+    }
+  })
+})
+
 /**
  * The friendly name of every field the package validates, in the three languages. A missing
  * label breaks nothing: the form only reads "Informe avatarId" instead of "Informe o avatar",
@@ -188,6 +214,12 @@ describe('Rule.optional', () => {
   })
 })
 
+describe('Rule.email', () => {
+  it('when the address comes in capitals, it is stored in lowercase', () => {
+    expect(Rule.email().parse('Ana@Maiyu.COM.br')).toBe('ana@maiyu.com.br')
+  })
+})
+
 describe('Rule.pageFields', () => {
   it('when a listing has no search, it does not accept `search`', () => {
     expect(Object.keys(PageValidator.shape).sort()).toEqual(['page', 'perPage'])
@@ -202,6 +234,15 @@ describe('Rule.pageFields', () => {
     expect(
       ValidationFixture.fields(PageValidator.safeParse({ perPage: 101 })),
     ).toEqual(['perPage'])
+  })
+
+  it('when the page is fractional or past the ceiling, it is refused before the offset', () => {
+    for (const page of [1.5, 10_001, 1e308]) {
+      expect(
+        ValidationFixture.fields(PageValidator.safeParse({ page })),
+        String(page),
+      ).toEqual(['page'])
+    }
   })
 })
 
