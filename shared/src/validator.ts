@@ -8,6 +8,7 @@ import { SORT_DIRECTIONS } from './enums/sort-direction.js'
 import type { SortDirection } from './enums/sort-direction.js'
 import { TRASHED_MODES } from './enums/trashed-mode.js'
 import type { TrashedMode } from './enums/trashed-mode.js'
+import { PROJECT_FIELD_LABELS } from './records/field-labels.js'
 
 /**
  * The configured Zod, the rules that more than one resource uses, the rule messages
@@ -135,9 +136,15 @@ export const RULE_MESSAGES = {
 } as const satisfies Record<Locale, RuleMessages>
 
 /**
- * The friendly name of each field in pt-BR, in the form that fits well after
- * "Informe". A field outside the map appears with its raw name; `validator.test.ts`
- * walks the validators and demands the whole list.
+ * The friendly name of each field the kit itself validates (session, storage, user,
+ * listing), in pt-BR, in the form that fits well after "Informe". A field outside the
+ * map appears with its raw name; the backend's `validator.unit.spec.ts` walks the
+ * validators and demands the whole list.
+ *
+ * Only the kit's fields live here: this file is overwritten by the sync, so a
+ * resource's label (title, gallery, presenters) would be one project's domain leaking
+ * into every other. The project adds its own in `records/field-labels.ts`
+ * (`PROJECT_FIELD_LABELS`, KIT.md §3.4).
  *
  * The key is the field path and nothing more: the message is global and does not know which
  * validator is running. The label swaps only the **displayed** text; the error
@@ -155,44 +162,7 @@ const PT_BR_LABELS = {
   status: 'o status',
   avatarId: 'o avatar',
   id: 'o identificador',
-
-  // Content, common to more than one resource
-  title: 'o título',
   slug: 'o slug',
-  category: 'a categoria',
-  resume: 'o resumo',
-  content: 'o conteúdo',
-  type: 'o tipo',
-  description: 'a descrição',
-  tags: 'as etiquetas',
-  coverId: 'a imagem de capa',
-  imageIds: 'as imagens',
-  date: 'a data',
-  hour: 'o horário',
-  duration: 'a duração',
-  url: 'o link',
-
-  // Contact and registration on the storefront and in the panel
-  subject: 'o assunto',
-  message: 'a mensagem',
-  phone: 'o telefone',
-  eventId: 'o evento',
-
-  // Event
-  location: 'o local',
-  address: 'o endereço',
-  capacity: 'a capacidade',
-
-  // Podcast and video
-  audioId: 'o áudio',
-  presenters: 'os apresentadores',
-  guests: 'os convidados',
-  instructor: 'o instrutor',
-
-  // Testimonial
-  position: 'o cargo',
-  testimonial: 'o depoimento',
-  rating: 'a nota',
 
   // File
   fileName: 'o nome do arquivo',
@@ -209,12 +179,12 @@ const PT_BR_LABELS = {
   sort: 'a ordenação',
   direction: 'a direção da ordenação',
   trashed: 'o filtro de arquivados',
-  unread: 'o filtro de não lidas',
 } as const
 
 type FieldLabels = Record<keyof typeof PT_BR_LABELS, string>
 
-export const FIELD_LABELS = {
+/** The kit's labels alone, so a spec can tell them apart from the project's. */
+export const KIT_FIELD_LABELS = {
   'pt-BR': PT_BR_LABELS,
   es: {
     name: 'el nombre',
@@ -226,34 +196,7 @@ export const FIELD_LABELS = {
     status: 'el estado',
     avatarId: 'el avatar',
     id: 'el identificador',
-    title: 'el título',
     slug: 'el slug',
-    category: 'la categoría',
-    resume: 'el resumen',
-    content: 'el contenido',
-    type: 'el tipo',
-    description: 'la descripción',
-    tags: 'las etiquetas',
-    coverId: 'la imagen de portada',
-    imageIds: 'las imágenes',
-    date: 'la fecha',
-    hour: 'la hora',
-    duration: 'la duración',
-    url: 'el enlace',
-    subject: 'el asunto',
-    message: 'el mensaje',
-    phone: 'el teléfono',
-    eventId: 'el evento',
-    location: 'el lugar',
-    address: 'la dirección',
-    capacity: 'la capacidad',
-    audioId: 'el audio',
-    presenters: 'los presentadores',
-    guests: 'los invitados',
-    instructor: 'el instructor',
-    position: 'el cargo',
-    testimonial: 'el testimonio',
-    rating: 'la nota',
     fileName: 'el nombre del archivo',
     mimetype: 'el tipo del archivo',
     size: 'el tamaño',
@@ -266,7 +209,6 @@ export const FIELD_LABELS = {
     sort: 'el orden',
     direction: 'la dirección del orden',
     trashed: 'el filtro de archivados',
-    unread: 'el filtro de no leídas',
   },
   en: {
     name: 'the name',
@@ -278,34 +220,7 @@ export const FIELD_LABELS = {
     status: 'the status',
     avatarId: 'the avatar',
     id: 'the identifier',
-    title: 'the title',
     slug: 'the slug',
-    category: 'the category',
-    resume: 'the summary',
-    content: 'the content',
-    type: 'the type',
-    description: 'the description',
-    tags: 'the tags',
-    coverId: 'the cover image',
-    imageIds: 'the images',
-    date: 'the date',
-    hour: 'the time',
-    duration: 'the duration',
-    url: 'the link',
-    subject: 'the subject',
-    message: 'the message',
-    phone: 'the phone',
-    eventId: 'the event',
-    location: 'the venue',
-    address: 'the address',
-    capacity: 'the capacity',
-    audioId: 'the audio',
-    presenters: 'the hosts',
-    guests: 'the guests',
-    instructor: 'the instructor',
-    position: 'the position',
-    testimonial: 'the testimonial',
-    rating: 'the rating',
     fileName: 'the file name',
     mimetype: 'the file type',
     size: 'the size',
@@ -318,9 +233,23 @@ export const FIELD_LABELS = {
     sort: 'the sort order',
     direction: 'the sort direction',
     trashed: 'the archived filter',
-    unread: 'the unread filter',
   },
 } as const satisfies Record<Locale, FieldLabels>
+
+/**
+ * The kit's labels plus the project's. The project spreads last: a project key that
+ * repeats a kit key renames that field in every form, on purpose, because the word the user
+ * reads is the product's (an ad's address, not "slug"). The repetition is deliberate and
+ * the three locales must carry it (`validator.test.ts`).
+ */
+export const FIELD_LABELS = {
+  'pt-BR': {
+    ...KIT_FIELD_LABELS['pt-BR'],
+    ...PROJECT_FIELD_LABELS['pt-BR'],
+  },
+  es: { ...KIT_FIELD_LABELS.es, ...PROJECT_FIELD_LABELS.es },
+  en: { ...KIT_FIELD_LABELS.en, ...PROJECT_FIELD_LABELS.en },
+} as const satisfies Record<Locale, Readonly<Record<string, string>>>
 
 /**
  * Zod's locale for each language: it is the fallback for what `RULE_MESSAGES` does not
@@ -452,21 +381,6 @@ z.config({ customError: (issue) => ValidationMessage.resolve(issue) })
 // Shared rules
 // ---------------------------------------------------------------------------
 
-/**
- * How many items each list accepts. Without a ceiling, an array that fit in the request
- * body would go whole into the database. The numbers are the domain's: the gallery is
- * the largest list that exists here, and the name lists of a podcast are short
- * by nature.
- */
-export const LIST_LIMITS = {
-  /** Images of a news item's or an album's gallery. */
-  GALLERY: 60,
-  /** A news item's tags. */
-  TAGS: 20,
-  /** A podcast's presenters and guests. */
-  PEOPLE: 20,
-} as const
-
 /** The Postgres `integer` ceiling: above it the column overflows and becomes a 500. */
 export const INTEGER_MAX = 2_147_483_647
 
@@ -535,6 +449,25 @@ type NullableField<T extends z.ZodType> = z.ZodOptional<
   z.ZodPreprocess<z.ZodNullable<T>, z.input<T> | null | undefined>
 >
 
+/**
+ * What `Rule.notNull` returns: a field that may be missing, but never `null` nor `''` (both become
+ * the `required` message), the pair of `.optional().use(Rule.notNull())` on the API.
+ */
+type NotNullField<T extends z.ZodType> = z.ZodOptional<
+  z.ZodPreprocess<T, z.input<T> | null | undefined>
+>
+
+/** The fields of `Rule.partial`: each one of the create, now optional. */
+type PartialShape<TShape extends z.ZodRawShape> = {
+  -readonly [K in keyof TShape]: z.ZodOptional<TShape[K]>
+}
+
+/** What `Rule.partial` returns: the update object, with `''` read as `null` before the fields. */
+type PartialObject<TShape extends z.ZodRawShape> = z.ZodPreprocess<
+  z.ZodObject<PartialShape<TShape>, z.core.$strip>,
+  z.input<z.ZodObject<PartialShape<TShape>, z.core.$strip>>
+>
+
 /** The two fields that `Rule.confirmed()` compares. */
 type PasswordPair = {
   readonly password?: string | undefined
@@ -581,6 +514,39 @@ export class Rule {
         schema.nullable(),
       )
       .optional()
+  }
+
+  /**
+   * A field of an update that may be missing (do not touch) but never `null` nor `''`: on the API
+   * the bodyparser turns `''` into `null`, and `Rule.notNull()` refuses it with the `required`
+   * message, so `{ title: null }` does not erase a required column (`_standards/backend.md` §4.4).
+   * A field that accepts `null` on purpose is `Rule.nullable` instead.
+   */
+  static notNull<T extends z.ZodType>(schema: T): NotNullField<T> {
+    return z
+      .preprocess(
+        (value: z.input<T> | null | undefined) => Rule.blankAs(value, null),
+        schema,
+      )
+      .optional()
+  }
+
+  /**
+   * The update of a resource from the same fields as its create (`postFields()`): every field
+   * becomes optional, and `''` becomes `null` before them, so a required field left blank is the
+   * `required` message and not an empty string that the API refuses later. A field built with
+   * `Rule.nullable` keeps accepting `null`. The pair of `Rule.partial()` on the API, which does
+   * the same with `.partial()` and `Rule.notNull()` (`_standards/backend.md` §4.4,
+   * _doc-lib/zod.md#api, https://zod.dev/api#partial).
+   */
+  static partial<TShape extends z.ZodRawShape>(
+    fields: TShape,
+  ): PartialObject<TShape> {
+    return z.preprocess(
+      (value: z.input<z.ZodObject<PartialShape<TShape>, z.core.$strip>>) =>
+        Rule.blankFieldsAsNull(value),
+      z.object(fields).partial(),
+    )
   }
 
   /**
@@ -689,15 +655,29 @@ export class Rule {
     return z.enum(ACTIVE_STATUSES)
   }
 
-  /** The three fields that every listing accepts. The `perPage` ceiling lives here. */
+  /**
+   * The page of a listing that has no text search. The `perPage` ceiling lives here, and
+   * `paginationFields()` spreads it: a listing that does not filter by `search` does not accept
+   * it (`_standards/backend.md` §4.4).
+   */
+  static pageFields(): {
+    page: BlankableField<z.ZodNumber>
+    perPage: BlankableField<z.ZodNumber>
+  } {
+    return {
+      page: Rule.optional(z.number().min(1)),
+      perPage: Rule.optional(z.number().min(1).max(100)),
+    }
+  }
+
+  /** The page plus `search`, only for the listing that really reads `payload.search`. */
   static paginationFields(): {
     page: BlankableField<z.ZodNumber>
     perPage: BlankableField<z.ZodNumber>
     search: BlankableField<z.ZodString>
   } {
     return {
-      page: Rule.optional(z.number().min(1)),
-      perPage: Rule.optional(z.number().min(1).max(100)),
+      ...Rule.pageFields(),
       search: Rule.optional(z.string().max(100)),
     }
   }
@@ -729,6 +709,19 @@ export class Rule {
     }
   }
 
+  /** The bodyparser's `convertEmptyStringsToNull` on the top fields of an object. */
+  private static blankFieldsAsNull<TValue>(value: TValue): TValue | object {
+    if (typeof value !== 'object' || value === null || Array.isArray(value))
+      return value
+
+    return Object.fromEntries(
+      Object.entries(value).map(([key, field]) => [
+        key,
+        Rule.blankAs(field, null),
+      ]),
+    )
+  }
+
   private static blankAs<TValue, TBlank extends null | undefined>(
     value: TValue,
     blank: TBlank,
@@ -745,6 +738,9 @@ export class Rule {
 /** The identifier in the URL. The PK is a uuid in every table. */
 export const IdentifierValidator = z.object({ id: z.uuid() })
 
+/** The listing without text search (`Rule.pageFields()`). */
+export const PageValidator = z.object(Rule.pageFields())
+
 export const PaginationValidator = z.object(Rule.paginationFields())
 
 /**
@@ -757,6 +753,7 @@ export const TrashablePaginationValidator = z.object({
 })
 
 export type IdentifierPayload = z.infer<typeof IdentifierValidator>
+export type PagePayload = z.infer<typeof PageValidator>
 export type PaginationPayload = z.infer<typeof PaginationValidator>
 export type TrashablePaginationPayload = z.infer<
   typeof TrashablePaginationValidator
