@@ -4,6 +4,13 @@
  */
 
 export const controllers = {
+  account: {
+    profile: {
+      show: {
+        Show: () => import('#features/account/profile/show/show.controller'),
+      },
+    },
+  },
   administrator: {
     contacts: {
       answer: {

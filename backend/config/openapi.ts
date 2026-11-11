@@ -38,6 +38,15 @@ const tags: TagRule[] = [
     plural: 'sessões',
   },
   {
+    prefix: '/account',
+    name: 'Conta',
+    description:
+      'A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um ' +
+      'dos dois exige a senha atual e derruba todas as sessões da conta.',
+    singular: 'perfil',
+    plural: 'perfis',
+  },
+  {
     prefix: '/storages',
     name: 'Arquivos',
     description:

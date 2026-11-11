@@ -120,8 +120,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] e2e: 200 sem senha nem hash; 401 sem sessão
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: 200 sem senha nem hash; 401 sem sessão
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full

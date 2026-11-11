@@ -1,4 +1,5 @@
 {
+  "GET /account/profile": "authenticated",
   "GET /administrator/contacts": "ADMINISTRATOR",
   "GET /administrator/contacts/{id}": "ADMINISTRATOR",
   "DELETE /administrator/contacts/{id}": "ADMINISTRATOR",

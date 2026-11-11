@@ -16,6 +16,10 @@
       "description": "Entrada, saída e renovação da sessão. O par de tokens viaja em cookies `httpOnly`, então estas rotas respondem `204` sem corpo."
     },
     {
+      "name": "Conta",
+      "description": "A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um dos dois exige a senha atual e derruba todas as sessões da conta."
+    },
+    {
       "name": "Arquivos",
       "description": "Upload em três passos: o `POST` abre e assina as URLs das partes, o navegador manda os bytes direto ao bucket e o `complete` confirma."
     },
@@ -29,6 +33,58 @@
     }
   ],
   "paths": {
+    "/account/profile": {
+      "get": {
+        "operationId": "accountProfileShow",
+        "summary": "Ver a própria conta",
+        "tags": [
+          "Conta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileShowResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AccountProfileShowError"
+                }
+              }
+            }
+          }
+        },
+        "description": "A conta de quem está na sessão, seja qual for o papel: id, nome, e-mail e papel, nunca a senha nem o hash. Não há identificador no caminho: o escopo vem sempre do cookie.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
     "/administrator/contacts": {
       "get": {
         "operationId": "administratorContactsPaginate",
@@ -1387,6 +1443,36 @@
       }
     },
     "schemas": {
+      "AccountProfileShowResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "additionalProperties": false
+      },
       "AdministratorContactsAnswerResponse200": {
         "type": "object",
         "properties": {
@@ -2072,6 +2158,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "TOO_MANY_REQUESTS"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AccountProfileShowError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCOUNT_PROFILE_SHOW_ERROR"
             ]
           },
           "errors": {

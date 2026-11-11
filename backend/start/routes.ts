@@ -103,6 +103,23 @@ router
   .use(middleware.auth())
 
 /**
+ * The owner's own account, for any signed-in role: the group carries `auth` and no `role`,
+ * because the scope is the session's account and never an identifier in the path.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .get('/', [controllers.account.profile.show.Show])
+          .as('account.profile.show')
+      })
+      .prefix('profile')
+  })
+  .prefix('account')
+  .use(middleware.auth())
+
+/**
  * The public area: no session, so every write here is declared in
  * `core/openapi/public-routes.ts` and carries its own limiter.
  */
