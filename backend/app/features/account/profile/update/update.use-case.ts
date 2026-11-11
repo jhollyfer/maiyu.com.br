@@ -39,6 +39,8 @@ type Response = Either<HTTPException, Result>
  * included: the entity asks for it, and the repository writes the row and the revocation on
  * the same unit of work, so a failed save keeps the old credential and its sessions.
  *
+ * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`.
+ *
  * An e-mail equal to the current one is not a change: `200` and the sessions stay.
  */
 @inject()
@@ -76,6 +78,13 @@ export default class AccountProfileUpdateUseCase {
         ))
       if (!proven) return left(this.wrongCurrentPassword())
 
+      // Same password is not a change, yet it would end every session: refused before the entity
+      // is touched. The entity only holds the hash, so the comparison is a verify against it.
+      if (await this.isSamePassword(user.snapshot().password, patch.password))
+        return left(
+          ProfileRefusal.http({ code: 'PASSWORD_SAME_AS_CURRENT' }, this.i18n),
+        )
+
       user.update(patch, this.clock.now().toJSDate())
 
       const saved = await this.unitOfWork.run(() => this.users.save(user))
@@ -95,6 +104,15 @@ export default class AccountProfileUpdateUseCase {
     } catch (error) {
       return left(this.failure(error))
     }
+  }
+
+  private async isSamePassword(
+    stored: string,
+    candidate: string | undefined,
+  ): Promise<boolean> {
+    if (candidate === undefined) return false
+
+    return LegacyAwareHashDriver.hasher().verify(stored, candidate)
   }
 
   private wrongCurrentPassword(): HTTPException {

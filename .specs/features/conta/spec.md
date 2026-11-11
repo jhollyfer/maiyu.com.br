@@ -54,6 +54,7 @@ trabalho (`backend.md` §4.10), e o roteiro validado pede prova de 200 seguido d
 4. IF `currentPassword` está errada THEN the system SHALL responder 422 no campo `currentPassword` e não mudar nada  <!-- unwanted -->
 5. IF a senha nova não cumpre a regra THEN the system SHALL responder 422 no campo `password`  <!-- unwanted -->
 6. IF o save falha THEN the system SHALL manter a senha antiga e as sessões  <!-- unwanted -->
+7. IF a senha nova é igual à atual THEN the system SHALL responder 422 `PASSWORD_SAME_AS_CURRENT` no campo `password` e não mudar nada nem derrubar sessão  <!-- unwanted -->
 
 **Independent Test**: entrar, trocar a senha (200), repetir o `GET` com o cookie antigo (401), entrar com a senha nova (204).
 

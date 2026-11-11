@@ -2,5 +2,7 @@
   "email_in_use": "This email already belongs to another account",
   "email_in_use_field": "This email is already used by another account",
   "current_password_invalid": "Incorrect current password",
-  "current_password_invalid_field": "The current password does not match"
+  "current_password_invalid_field": "The current password does not match",
+  "password_same_as_current": "The new password must be different from the current one",
+  "password_same_as_current_field": "The new password must be different from the current one"
 }

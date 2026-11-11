@@ -154,6 +154,28 @@ test.group('account/profile > update (unit)', (group) => {
     assert.deepEqual(sessions.revokedAll, [])
   })
 
+  test('a new password equal to the current one is 422 PASSWORD_SAME_AS_CURRENT and changes nothing', async ({
+    assert,
+  }) => {
+    const { users, sessions, useCase } = await setup()
+    const before = (await users.findById(USER_ID))?.snapshot().password
+
+    const result = await useCase.execute({
+      actor: ACTOR,
+      password: PASSWORD,
+      currentPassword: PASSWORD,
+    })
+
+    assert.deepInclude(result.value, {
+      status: 422,
+      code: 'PASSWORD_SAME_AS_CURRENT',
+    })
+    if (result.isRight()) throw new Error('expected a refusal')
+    assert.deepEqual(Object.keys(result.value.errors ?? {}), ['password'])
+    assert.equal((await users.findById(USER_ID))?.snapshot().password, before)
+    assert.deepEqual(sessions.revokedAll, [])
+  })
+
   test('a missing current password is refused the same way', async ({
     assert,
   }) => {

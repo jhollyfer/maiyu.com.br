@@ -15,7 +15,8 @@ export default class AccountProfileUpdateController {
       'Troca o e-mail, a senha ou os dois. O corpo precisa de `email` ou `password`, e trocar ' +
       'qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um ' +
       'cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo ' +
-      '`currentPassword`; e-mail de outra conta responde `409` `EMAIL_IN_USE`.\n\n' +
+      '`currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no ' +
+      'campo `password`; e-mail de outra conta responde `409` `EMAIL_IN_USE`.\n\n' +
       'Trocar e-mail ou senha **derruba todas as sessões da conta**, inclusive a que fez esta ' +
       'chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono ' +
       'entra de novo com a credencial nova. Enviar o e-mail que a conta já tem responde `200` e ' +

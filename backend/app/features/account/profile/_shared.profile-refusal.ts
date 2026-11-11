@@ -13,6 +13,14 @@ export class ProfileRefusal extends RefusalBase {
       HTTPException.Conflict(i18n.t('account.email_in_use'), 'EMAIL_IN_USE', {
         email: i18n.t('account.email_in_use_field'),
       }),
+    // The new password is the one the owner already has: nothing would change, yet every
+    // session would end, so it is refused at the field instead of silently signing the owner out.
+    PASSWORD_SAME_AS_CURRENT: (_fact, i18n) =>
+      HTTPException.UnprocessableEntity(
+        i18n.t('account.password_same_as_current'),
+        'PASSWORD_SAME_AS_CURRENT',
+        { password: i18n.t('account.password_same_as_current_field') },
+      ),
   } satisfies RefusalTable<UserError>
 
   static http(error: UserError, i18n: I18n): HTTPException {

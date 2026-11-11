@@ -116,6 +116,32 @@ test.group('account/profile > update', (group) => {
     alive.assertStatus(200)
   })
 
+  test('a new password equal to the current one answers 422 PASSWORD_SAME_AS_CURRENT and changes nothing', async ({
+    client,
+    assert,
+  }) => {
+    const { user, session } = await signInWithFactory(client, 'administrator')
+    const before = (await findUserByEmail(user.email)).password
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({
+        password: FACTORY_PASSWORD,
+        passwordConfirmation: FACTORY_PASSWORD,
+        currentPassword: FACTORY_PASSWORD,
+      })
+
+    response.assertStatus(422)
+    const error: ErrorBody = body(response, ErrorEnvelope)
+    assert.equal(error.code, 'PASSWORD_SAME_AS_CURRENT')
+    assert.deepEqual(Object.keys(error.errors ?? {}), ['password'])
+    assert.equal((await findUserByEmail(user.email)).password, before)
+    // Nothing was revoked: the very same cookie still reads the account.
+    const alive = await client.get('/account/profile').cookies(session)
+    alive.assertStatus(200)
+  })
+
   test('a weak new password answers 422', async ({ client, assert }) => {
     const { session } = await signInWithFactory(client, 'administrator')
 
