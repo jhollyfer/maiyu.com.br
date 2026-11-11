@@ -137,9 +137,9 @@ T4 → T5
 
 **Done when**:
 
-- [ ] e2e: troca de senha 200 e cookie antigo 401; troca de e-mail 200 e cookie antigo 401; 409; 422 da senha atual; 422 da senha nova; 429; e-mail igual não derruba
-- [ ] `openapi:check`, `authz:check`, `validators:check` verdes
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: troca de senha 200 e cookie antigo 401; troca de e-mail 200 e cookie antigo 401; 409; 422 da senha atual; 422 da senha nova; 429; e-mail igual não derruba
+- [x] `openapi:check`, `authz:check`, `validators:check` verdes
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full

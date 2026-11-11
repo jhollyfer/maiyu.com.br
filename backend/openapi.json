@@ -83,6 +83,96 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ]
+      },
+      "put": {
+        "operationId": "accountProfileUpdate",
+        "summary": "Trocar e-mail ou senha",
+        "tags": [
+          "Conta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileUpdateResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Este e-mail já pertence a outra conta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409EmailInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Senha atual incorreta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422CurrentPasswordInvalidValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AccountProfileUpdateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Troca o e-mail, a senha ou os dois. O corpo precisa de `email` ou `password`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; e-mail de outra conta responde `409` `EMAIL_IN_USE`.\n\nTrocar e-mail ou senha **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a credencial nova. Enviar o e-mail que a conta já tem responde `200` e mantém as sessões.\n\nLimite de 5 trocas por 15 minutos por usuário. O papel e o nome não mudam por aqui.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountProfileUpdateBody"
+              }
+            }
+          }
+        }
       }
     },
     "/administrator/contacts": {
@@ -1473,6 +1563,76 @@
         ],
         "additionalProperties": false
       },
+      "AccountProfileUpdateBody": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 32,
+            "description": "Requires at least one lowercase letter, one uppercase letter, one digit and one special character.",
+            "allOf": [
+              {
+                "pattern": "[a-z]"
+              },
+              {
+                "pattern": "[A-Z]"
+              },
+              {
+                "pattern": "[0-9]"
+              },
+              {
+                "pattern": "[^a-zA-Z0-9]"
+              }
+            ]
+          },
+          "currentPassword": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "passwordConfirmation": {
+            "type": "string",
+            "description": "Exact repetition of `password`."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "AccountProfileUpdateResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "additionalProperties": false
+      },
       "AdministratorContactsAnswerResponse200": {
         "type": "object",
         "properties": {
@@ -1997,6 +2157,40 @@
           "code"
         ]
       },
+      "Error409EmailInUse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "EMAIL_IN_USE"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error409StorageAlreadyUploadedStorageInUse": {
         "type": "object",
         "properties": {
@@ -2064,6 +2258,42 @@
           "message",
           "status",
           "code"
+        ]
+      },
+      "Error422CurrentPasswordInvalidValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CURRENT_PASSWORD_INVALID",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
         ]
       },
       "Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError": {
@@ -2192,6 +2422,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "ACCOUNT_PROFILE_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AccountProfileUpdateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCOUNT_PROFILE_UPDATE_ERROR"
             ]
           },
           "errors": {

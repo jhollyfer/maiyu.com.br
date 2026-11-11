@@ -9,6 +9,9 @@ export const controllers = {
       show: {
         Show: () => import('#features/account/profile/show/show.controller'),
       },
+      update: {
+        Update: () => import('#features/account/profile/update/update.controller'),
+      },
     },
   },
   administrator: {

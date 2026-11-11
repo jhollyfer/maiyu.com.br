@@ -68,6 +68,7 @@ Backend (`backend/app/features/`): o kit da régua e o contato do site:
 | `authentication/sessions` | `POST /authentication/{sign-in,sign-out,refresh}` | o dono |
 | `storages/files` | `/storages` (abrir, partes, confirmar, listar, ver, baixar, apagar) | sessão |
 | `documentation` | `GET /openapi.json`, `GET /documentation` | papel de staff |
+| `account/profile` | `GET /account/profile`, `PUT /account/profile` | qualquer papel, com sessão |
 | `storefront/contacts` | `POST /storefront/contacts` | visitante, sem sessão |
 | `administrator/contacts` | `GET /administrator/contacts`, `GET /administrator/contacts/:id`, `POST /administrator/contacts/:id/answer`, `DELETE /administrator/contacts/:id`; mais o comando `contacts:prune` | papel de staff |
 
@@ -84,7 +85,7 @@ Frontend: o site tem um grupo de rotas, `_public`.
 | `/sitemap.xml` | `routes/sitemap[.]xml.ts` | buscadores |
 | qualquer outra | `_public/$.tsx` | 404 |
 
-Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
+Entidades de domínio do backend: `user` (a conta do dono, que troca e-mail e senha por `update` e marca a revogação das sessões em `credentials()`) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
 
 ### 4.1 Linguagem do domínio
 
@@ -139,6 +140,21 @@ trocada). Sessão por par de tokens opacos em cookie `httpOnly` (guard `cookie-a
 com refresh rotativo e checagem de origem em toda escrita. Mudar senha, e-mail, papel ou status da
 conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Papéis do esqueleto do kit em `shared/src/enums/user-role.ts`:
 `ADMINISTRATOR`, que é a lista de staff, e `MEMBER`, o papel menos privilegiado, que nenhuma rota cria hoje.
+
+Troca de senha e de e-mail (`PUT /account/profile`, `.specs/features/conta/`): o dono ou qualquer conta
+com sessão troca a própria credencial, sem `role`, e a rota não recebe id: o escopo é o `actor` do
+cookie. O corpo precisa de `email` ou `password`, e trocar qualquer um exige `currentPassword`
+(422 no campo `currentPassword` se errada, antes de qualquer outra regra); a senha nova segue o
+`Rule.password()` do `shared/`, com confirmação. E-mail de outra conta é 409 `EMAIL_IN_USE`, vindo do
+índice `UNIQUE` (`UNIQUE_CONFLICT` do repository, traduzido em `_shared.profile-refusal.ts`); e-mail
+igual ao atual é 200 e não derruba nada. Quando muda o e-mail ou a senha, a entidade `User` marca a
+revogação, e o `UserRepository.save` grava a linha e chama `SessionRepository.revokeAll` na mesma
+`UnitOfWork`: ou ficam a credencial antiga e as sessões, ou nenhuma das duas. A revogação inclui a
+sessão que fez a chamada, então a resposta 200 limpa os cookies (`SessionCookie.clear`) e o dono entra
+de novo com a credencial nova; o cookie de antes responde 401. O limite é de 5 trocas por 15 minutos
+por usuário (`accountUpdateThrottle` em `start/limiter.ts`, com bloqueio de 15 minutos), porque a
+rota compara a senha atual e seria um oráculo de senha para quem roubasse o cookie. Aviso por e-mail
+ao endereço antigo ficou fora, por decisão do dono: o e-mail novo vale na hora.
 
 ## 9. Ambientes
 

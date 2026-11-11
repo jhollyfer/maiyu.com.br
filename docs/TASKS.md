@@ -88,7 +88,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 |---|---|---|---|---|
 | RB.1 | `backend/` AdonisJS 7 + Lucid + PostgreSQL a partir do esqueleto de `_templates/code/backend` | G | Feita | kit da leva 8 pelo sync; format, lint, tsc, `pattern:check`, `validators:check`, unitário 233 de 233 e funcional 143 de 143 |
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | Feita | `/health-check`, OpenAPI (`openapi:check` e `authz:check` verdes), i18n pt-BR, en e es e as specs do kit |
-| RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta espera rota de conta (R2.10) |
+| RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta entregue pela rota de conta (R2.10) |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
 | RB.5 | Tuyau dentro do `request()` no frontend | M | A fazer | #324; depois de RB.1 |
 
@@ -105,7 +105,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R2.7 | Busca do diário pela forma canônica do `validateSearch` | P | A fazer | |
 | R2.8 | Código em inglês: comentários, JSDoc, `Merge` no lugar de `&`, `satisfies` | G | A fazer | `typescript.md` |
 | R2.9 | Código morto do registry fora de `hooks/` e `lib/`; arquivos que a árvore manda tirar | P | A fazer | |
-| R2.10 | Proposta ao dono: o que vira recurso do backend (contato, candidatura, conteúdo) | P | Em andamento | aprovada pelo dono: contato e conta do dono; spec em `.specs/features/{contato,conta}/`, branch `feat/backend-contato-conta`. Contato feito no backend (T1 a T10: envio público, caixa de entrada, resposta, exclusão e `contacts:prune`); falta a conta do dono e, no frontend, ligar o formulário (RB.5 e R3) |
+| R2.10 | Proposta ao dono: o que vira recurso do backend (contato, candidatura, conteúdo) | P | Em andamento | aprovada pelo dono: contato e conta do dono; spec em `.specs/features/{contato,conta}/`, branch `feat/backend-contato-conta`. Contato feito no backend (T1 a T10: envio público, caixa de entrada, resposta, exclusão e `contacts:prune`) e conta do dono feita no backend (`GET` e `PUT /account/profile`, troca de senha e de e-mail com revogação das sessões na mesma transação); falta, no frontend, ligar o formulário e a tela da conta (RB.5 e R3), e a verificação do contrato da conta |
 
 ### Régua 3 · Kit do frontend (espera o aviso da regente geral)
 

@@ -1,0 +1,6 @@
+{
+  "email_in_use": "Este correo electrónico ya pertenece a otra cuenta",
+  "email_in_use_field": "Este correo electrónico ya lo usa otra cuenta",
+  "current_password_invalid": "Contraseña actual incorrecta",
+  "current_password_invalid_field": "La contraseña actual no coincide"
+}

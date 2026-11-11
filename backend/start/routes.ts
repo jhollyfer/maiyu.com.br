@@ -14,7 +14,7 @@ import { STAFF_USER_ROLES } from '@maiyu/shared'
 
 import { controllers } from '#generated/controllers'
 import { middleware } from '#start/kernel'
-import { contactThrottle } from '#start/limiter'
+import { accountUpdateThrottle, contactThrottle } from '#start/limiter'
 import {
   refreshThrottle,
   signInAccountThrottle,
@@ -113,6 +113,11 @@ router
         router
           .get('/', [controllers.account.profile.show.Show])
           .as('account.profile.show')
+        // Changing e-mail or password checks the current password, so it carries its own ceiling.
+        router
+          .put('/', [controllers.account.profile.update.Update])
+          .as('account.profile.update')
+          .use(accountUpdateThrottle)
       })
       .prefix('profile')
   })
