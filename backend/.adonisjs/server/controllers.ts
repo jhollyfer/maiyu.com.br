@@ -9,6 +9,9 @@ export const controllers = {
       answer: {
         Answer: () => import('#features/administrator/contacts/answer/answer.controller'),
       },
+      delete: {
+        Delete: () => import('#features/administrator/contacts/delete/delete.controller'),
+      },
       paginate: {
         Paginate: () => import('#features/administrator/contacts/paginate/paginate.controller'),
       },

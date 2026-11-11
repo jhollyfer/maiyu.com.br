@@ -110,6 +110,12 @@ const routes = {
     tokens: [[0,"administrator"],[0,"contacts"],[1,"id"],[0,"answer"]],
     types: placeholder as Registry['administrator.contacts.answer']['types'],
   },
+  'administrator.contacts.delete': {
+    methods: ["DELETE"],
+    pattern: '/administrator/contacts/:id',
+    tokens: [[0,"administrator"],[0,"contacts"],[1,"id"]],
+    types: placeholder as Registry['administrator.contacts.delete']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }

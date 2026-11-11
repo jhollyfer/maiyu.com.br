@@ -208,11 +208,12 @@ T9 → T10
 
 **Done when**:
 
-- [ ] e2e: 204 e a linha some; 404; 401; 403
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e: 204 e a linha some; 404; 401; 403
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full
+**Status**: Done
 
 ---
 

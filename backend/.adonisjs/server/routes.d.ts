@@ -21,6 +21,7 @@ export type ScannedRoutes = {
     'administrator.contacts.paginate': { paramsTuple?: []; params?: {} }
     'administrator.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'administrator.contacts.answer': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'administrator.contacts.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
   GET: {
     'health_check': { paramsTuple?: []; params?: {} }
@@ -55,6 +56,7 @@ export type ScannedRoutes = {
   }
   DELETE: {
     'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'administrator.contacts.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }
 }
 declare module '@adonisjs/core/types/http' {

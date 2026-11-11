@@ -138,6 +138,9 @@ router
             controllers.administrator.contacts.answer.Answer,
           ])
           .as('administrator.contacts.answer')
+        router
+          .delete(':id', [controllers.administrator.contacts.delete.Delete])
+          .as('administrator.contacts.delete')
       })
       .prefix('contacts')
   })
