@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (2 feitos, 9 bloqueados, 36 a fazer); atualizado 2026-11-09
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (2 feitos, 2 em andamento, 11 bloqueados, 32 a fazer); atualizado 2026-11-09
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -75,7 +75,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
 | R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
-| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | A fazer | `tooling.md` §0.1 |
+| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Em andamento | `tooling.md` §0.1; Luxon feito; Tiptap estático bloqueado por lacuna do RichText do kit |
 | R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | A fazer | `tooling.md` §0; MIGRATIONS.md |
 | R1.8 | `tsconfig` com as flags do piso | P | A fazer | `tooling.md` §3 |
 | R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | A fazer | `tooling.md` §4.1, §4.2 |
