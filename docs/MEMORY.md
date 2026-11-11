@@ -25,8 +25,12 @@ espelhos (R1.1), husky e commitlint (R1.3), Luxon (R1.6, parte), versões (R1.7)
 de 2026-11-11 (`--so-regua`). O `pnpm-lock.yaml` foi regenerado depois que os pacotes do backend passaram
 do `minimumReleaseAge`. As rotas já estavam em inglês e sem alias (#383). Toda URL tem prefixo
 `/pt-br`, `/en` ou `/es` pelo `paraglide.config.ts` do kit (#384, #385), com sitemap, hreflang,
-canonical e JSON-LD prefixados. O lote 2 traz só o kit livre do backend (corte aceito pela regente);
-router, http, env, page-head, sitemap do kit, route-error e os hooks esperam o merge do backend.
+canonical e JSON-LD prefixados. O lote 2 trouxe o kit livre do backend (levas 7 e 8), o ESLint do
+kit (que ignora `components/ui/`, #391) e o merge da `feat/backend-inicial` (PR B, #23). O VineJS saiu
+do frontend; contato e carreiras não têm formulário, só o aviso honesto e os canais reais
+(`DECISIONS.md` #17, decisão do dono); o contato volta numa PR que consome o recurso do backend.
+Seguem o R0.1 e as peças do kit que esperavam o backend (router, http, env, page-head, sitemap,
+route-error, Tuyau, start.ts, `areas.ts`).
 
 A varredura de 2026-11-08 comparou o projeto com o `maiyu-pattern` e deu 154 achados, levados ao
 upstream; o plano de migração saiu dela e está em `TASKS.md` (itens R, RB e RD). A fase 0 traz o
@@ -49,26 +53,28 @@ R1.7 feito na branch `chore/frontend-versoes`: o `frontend/` está na última ve
 um dia de idade mínima. Ficam de fora o TypeScript 7 (exceção do `tooling.md` §0) e os `@tiptap/*`
 do `shared/` em 3.30.5, que são da frente do backend. O frontend não importa o Tiptap hoje.
 
+R1.4, R3.2 e R0.3 (parte) no working tree: contato e candidatura com schema Zod no `shared/`
+(`validators/contact/messages`, `validators/careers/applications`, `PROJECT_FIELD_LABELS`), `zodResolver` e as peças do kit; o VineJS saiu do
+frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falta o merge do R0.1 e a prova da CSP.
+
 ## Próximos passos
 
-1. Regente verifica a `feat/backend-inicial` e abre a PR do backend inicial.
-2. R0.3 com o dono: o destino dos formulários de contato e candidatura (R2.10); até lá, sem
-   anunciar envio que não acontece.
-3. Frente do frontend: merge da `feat/backend-inicial` feito; entram as peças do kit que esperavam o
-   backend (router, http, env, page-head, sitemap, route-error, Tuyau, start.ts: R1.10, R1.11, RB.5).
+1. PR do backend inicial (#23) em revisão; a PR do frontend vai empilhada sobre ela.
+2. R0.3: formulários desligados com aviso honesto (`DECISIONS.md` #17) até o recurso de contato do
+   backend, que vem numa PR seguinte.
+3. Frente do frontend: R0.1 e as peças do kit que esperavam o backend (router, http, env, page-head,
+   sitemap, route-error, Tuyau, start.ts: R1.10, R1.11, RB.5); depois snake_case (R3.5) e #366 (R3.4).
 4. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes
    sem passar pelo crivo de quem é da Maiyu.
 5. Trocar as fotos de terceiros por fotos próprias do time e da região, com autorização.
-6. Confirmar o e-mail de contato: `lib/site.ts` diz `contato@maiyu.com`, e o domínio do site é
-   `maiyu.com.br`.
-7. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
-8. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
+6. Levar ao dono as perguntas de `PRD.md` §8 e cadastrar os secrets novos (`ENV.md` §3).
+7. Se o time quiser um grafismo do próprio povo no lugar do trançado genérico, entra com autorização
    de quem o pinta (`DESIGN.md` §2).
 
 ## Contexto importante
 
 - Posicionamento: primeira empresa de consultoria e desenvolvimento de software sob demanda da tríplice fronteira, feita por indígenas e pessoas originárias da região (`PRD.md`).
-- O site não tem backend; os formulários confirmam na tela e não enviam (`DECISIONS.md` #7).
+- Contato e carreiras sem formulário: aviso honesto e canais reais, `contato@maiyu.com.br` e WhatsApp (`DECISIONS.md` #17, que substitui a #7).
 
 ## Lições
 

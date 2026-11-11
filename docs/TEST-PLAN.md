@@ -25,7 +25,7 @@
 | Vitrine acessível | `motion-reduce` presente, painel do celular com texto | `motion` importado, painel mudo | `routes/_public/vitrine-contract.test.ts` |
 | Três idiomas | toda chave nos três | chave faltando, mensagem vazia, chave sem uso | `lib/messages.test.ts` |
 | Idioma na URL | prefixo e `localized()` | idioma desconhecido | `lib/i18n.test.ts` |
-| Contato e candidatura | campos válidos aceitos | mensagem curta, URL ruim, vaga fora da lista | `lib/validator.test.ts`, `lib/validator-messages.test.ts` |
+| Contato e carreiras sem formulário | aviso e canais (e-mail, WhatsApp) nas três línguas | campo, botão de envio ou texto de "enviado" na página | `routes/_public/-components/channels-notice.test.tsx` |
 | Filtro do diário | `?category=` válido | valor fora da lista cai para "tudo" | `lib/blog-search.test.ts` |
 | SEO | JSON-LD com `areaServed`, sitemap bem formado | escape de XML | `lib/structured-data.test.ts`, `lib/sitemap.test.ts` |
 
@@ -39,8 +39,8 @@ Os requisitos do `PRD.md` §4 ainda não têm id EARS; a linha usa o número da 
 | PRD-6 | Toda chave de mensagem existe em pt-BR, en e es | unitário | `messages.test.ts` |
 | PRD-7 | O JSON-LD lista Brasil, Peru e Colômbia em `areaServed` | unitário | `structured-data.test.ts` |
 | PRD-7 | O sitemap escapa os cinco caracteres do XML | unitário | `sitemap.test.ts` |
-| PRD-4 | A candidatura recusa vaga fora da lista | unitário | `validator.test.ts` |
-| PRD-5 | O contato recusa mensagem com menos de dez caracteres | unitário | `validator.test.ts` |
+| PRD-4 | A página de carreiras não tem formulário e leva aos canais | unitário | `channels-notice.test.tsx` |
+| PRD-5 | A página de contato mostra o aviso e os canais, sem formulário | unitário | `channels-notice.test.tsx` |
 
 ### 3.1 Join de cobertura
 

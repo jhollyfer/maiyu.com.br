@@ -6,7 +6,7 @@ import { TALENT_AREAS } from '#/lib/jobs'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { CareerForm } from './-components/career-form'
+import { ChannelsNotice } from './-components/channels-notice'
 import { PageHero } from './-components/page-hero'
 import { Photo } from './-components/photo'
 import { REVEAL, STAGGER } from './-components/reveal'
@@ -44,16 +44,16 @@ const PRINCIPLES: ReadonlyArray<Principle> = [
   },
 ]
 
-/** O alvo das áreas: o formulário, embaixo. */
-const APPLY_ID = 'candidatura'
+/** O alvo das áreas: o aviso com os canais, embaixo. */
+const APPLY_ID = 'contato'
 
 /**
  * Carreiras: o banco de talentos.
  *
  * Não há vaga aberta para listar, então a página convida por área. Cada área é
- * uma âncora para o formulário, e não uma página de detalhe: não existe
+ * uma âncora para os canais de contato, e não uma página de detalhe: não existe
  * descrição de cargo, e um link para lugar nenhum seria pior que levar direto
- * ao cadastro.
+ * a quem responde. Não há formulário de candidatura (`docs/DECISIONS.md` #17).
  */
 function RouteComponent(): React.JSX.Element {
   return (
@@ -165,13 +165,13 @@ function RouteComponent(): React.JSX.Element {
       >
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 md:px-8 lg:grid-cols-12">
           <div className="lg:col-span-5">
-            <h2 className="text-h2 lg:text-h1">{m.career_formTitle()}</h2>
+            <h2 className="text-h2 lg:text-h1">{m.career_contact_title()}</h2>
             <p className="mt-5 max-w-[62ch] text-body-lg text-foreground/75">
-              {m.career_formSubtitle()}
+              {m.career_contact_subtitle()}
             </p>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-6 md:p-10 lg:col-span-7">
-            <CareerForm />
+          <div className="lg:col-span-7">
+            <ChannelsNotice />
           </div>
         </div>
       </section>

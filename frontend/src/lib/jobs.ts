@@ -13,8 +13,7 @@ import { JOB_POSITION_LABELS } from './labels'
  *
  * Conteúdo em código, como `projects.ts`: não há painel nem API. O texto é
  * função pela razão de `labels.ts`, lido no render, no idioma de quem visita.
- * O `id` é o mesmo valor do `Select` do formulário, para o rótulo vir de um
- * lugar só.
+ * O `id` é o valor fechado de `JobPosition`, e o rótulo vem de `labels.ts`.
  */
 export type TalentArea = {
   id: JobPosition

@@ -17,6 +17,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- Contato e carreiras deixam de ter formulário: as páginas avisam que o formulário está fora do ar por enquanto e levam ao e-mail e ao WhatsApp da Maiyu, sem prometer que algo foi enviado.
 - Endereço que não existe passa a responder 404 de verdade, mantendo a tela "Você saiu da trilha" com menu e rodapé.
 - Saem da vitrine o serviço de aplicativos, que nenhum produto do portfólio usa, e a caixa de newsletter do diário, que não enviava e-mail.
 
@@ -24,7 +25,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 - O Maiyu Academy, plataforma gratuita de ensino de tecnologia da própria Maiyu, entra no portfólio e na home entre os projetos no ar.
 
-- O espanhol do site passa a tratar o visitante sempre por "usted", inclusive nas mensagens de erro dos formulários, e o inglês ganha contrações e frases mais naturais.
+- O espanhol do site passa a tratar o visitante sempre por "usted", e o inglês ganha contrações e frases mais naturais.
 
 - As datas do diário aparecem por extenso no idioma da página (8 de setembro de 2026), e não mais como 2026-09-08.
 - Segunda revisão dos textos das páginas públicas: sem frase repetida na mesma página, sem jargão ("borda", "full-stack"), sem tecnologia que a Maiyu não usa na faixa do time e sem citar termos de privacidade que não existem.

@@ -32,7 +32,7 @@ para o dono (R2.10 de `TASKS.md`), e o frontend ainda não a chama (RB.5).
 | Linguagem | TypeScript | ver `frontend/package.json` | `_standards/typescript.md` |
 | Repositório | pnpm workspace com `backend`, `frontend` e `shared`, um `pnpm-lock.yaml` na raiz | pnpm 12 | `_standards/tooling.md` §1 |
 | Web | TanStack Start (React 19) sobre Vite e Nitro, Tailwind v4, shadcn sobre Base UI | ver `frontend/package.json` | `_standards/frontend.md` |
-| Validação | VineJS nos formulários, com react-hook-form | ver `frontend/package.json` | `_standards/frontend.md` |
+| Validação | nenhuma no site: sem formulário (`DECISIONS.md` #17); o do contato volta com Zod no `shared/` e o recurso do backend | ver `frontend/package.json` | `_standards/frontend.md` |
 | Idiomas | Paraglide (`project.inlang`, `messages/{locale}.json`), idioma no prefixo da URL | ver `frontend/package.json` | `_standards/i18n.md` |
 | API | AdonisJS 7, VineJS nos validators de request, `@adonisjs/i18n` (pt-BR, en, es) | ver `backend/package.json` | `_standards/backend.md` |
 | Banco | PostgreSQL pelo Lucid | 18 no compose local | `_standards/backend.md` §4.7 |
@@ -170,4 +170,4 @@ régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECIS
 
 - Conteúdo em código: artigo, projeto ou vaga novos exigem commit e deploy.
 - A API tem uma réplica só: os limites de taxa contam no Postgres (`rate_limits`), sem Redis.
-- Os formulários não enviam nada (`DECISIONS.md` #7).
+- Contato e carreiras não têm formulário: um aviso e os canais reais, e-mail e WhatsApp (`DECISIONS.md` #17).

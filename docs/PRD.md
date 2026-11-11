@@ -42,15 +42,15 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 | 1 | Home com a proposta, a capacidade, o processo, o trabalho e o mapa da borda | todos | `USER-FLOWS.md#conhecer-a-maiyu` |
 | 2 | Portfólio de projetos no ar | organizações | `USER-FLOWS.md#ver-o-portfólio` |
 | 3 | Diário (blog) com filtro por categoria e artigo | leitor | `USER-FLOWS.md#ler-o-diário` |
-| 4 | Carreiras com candidatura | candidato | `USER-FLOWS.md#candidatar-se-a-uma-vaga` |
-| 5 | Contato por formulário, e-mail, telefone e WhatsApp | todos | `USER-FLOWS.md#falar-com-a-maiyu` |
+| 4 | Carreiras: áreas do banco de talentos e canais para escrever | candidato | `USER-FLOWS.md#candidatar-se-a-uma-vaga` |
+| 5 | Contato por e-mail, telefone e WhatsApp | todos | `USER-FLOWS.md#falar-com-a-maiyu` |
 | 6 | Três idiomas, com troca de idioma e de tema | todos | `USER-FLOWS.md#trocar-idioma-e-tema` |
 | 7 | SEO: sitemap, `robots.txt`, JSON-LD com `areaServed` em Brasil, Peru e Colômbia | buscadores | `USER-FLOWS.md#conhecer-a-maiyu` |
 
 ## 5. Fica de fora (nesta versão)
 
 - Backend e API: o site não tem servidor de dados; o conteúdo mora em `lib/`.
-- Envio real dos formulários de contato e de candidatura: eles confirmam na tela, como o site anterior. O contato de verdade segue por e-mail e WhatsApp. Volta quando houver endpoint.
+- Formulários de contato e de candidatura: o site não tem nenhum, só um aviso e os canais reais, e-mail e WhatsApp (`DECISIONS.md` #17). O de contato volta quando o backend tiver o recurso de contato; o de candidatura está fora por decisão do dono.
 - Painel de edição de conteúdo: artigos, projetos e vagas mudam por commit.
 - Área logada.
 
@@ -63,7 +63,7 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 | Disponibilidade | imagem Nitro na porta 3000, healthcheck em `/health-check` |
 | Acessibilidade | WCAG 2.1 AA, `motion-reduce` em toda animação (`DESIGN.md` §10) |
 | Dispositivos | celular primeiro; desktop com a barra completa |
-| Dados pessoais | o site não grava dado pessoal; o formulário não envia nada (`SECURITY.md` §8) |
+| Dados pessoais | o site não grava dado pessoal; o site não tem formulário e não envia nada (`SECURITY.md` §8) |
 
 ## 7. Métricas de sucesso
 
@@ -73,7 +73,7 @@ pelo dono (§8).
 ## 8. Perguntas em aberto
 
 - [ ] Quais as metas numéricas do site (conversas iniciadas por mês, idiomas mais usados)? Há ferramenta de métricas desejada? Quem responde: dono do produto.
-- [ ] O que os formulários de contato e candidatura devem fazer quando houver endpoint (e-mail, planilha, CRM)? Quem responde: dono do produto.
+- [ ] O que o formulário de contato deve fazer quando o backend tiver o recurso (e-mail, planilha, CRM), e se a candidatura volta um dia? Quem responde: dono do produto.
 - [ ] Qual o contato de segurança a publicar em `SECURITY.md` §1? Quem responde: dono do produto.
 - [ ] Os workflows de `.github/workflows` ficam como estão ou o upstream ganha um modelo para site sem backend? Ver `DECISIONS.md` #6. Quem responde: dono do produto.
 - [ ] A política de dados pessoais (LGPD e equivalentes no Peru e na Colômbia) precisa de página pública? Quem responde: dono do produto.

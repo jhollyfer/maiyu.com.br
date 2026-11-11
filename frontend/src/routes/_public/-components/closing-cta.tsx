@@ -15,8 +15,8 @@ import { REVEAL } from './reveal'
  * do outro lado da fronteira.
  *
  * "Agendar conversa" abre o WhatsApp, e não a página de contato: é o fim da
- * leitura, e quem chegou até aqui já decidiu falar. O formulário continua a um
- * link embaixo, para quem prefere escrever.
+ * leitura, e quem chegou até aqui já decidiu falar. A página de contato
+ * fica a um link embaixo, para quem prefere escrever.
  */
 export function ClosingCta(): React.JSX.Element {
   return (

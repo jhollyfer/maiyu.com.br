@@ -12,7 +12,7 @@ import { CALL_URL, CONTACT } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { ContactForm } from './-components/contact-form'
+import { ChannelsNotice } from './-components/channels-notice'
 import { PageHero } from './-components/page-hero'
 import { Photo } from './-components/photo'
 import { REVEAL, STAGGER } from './-components/reveal'
@@ -29,7 +29,7 @@ type Channel = {
   lines: ReadonlyArray<{ text: string; href?: string }>
 }
 
-/** Os jeitos de falar com a Maiyu fora do formulário. */
+/** Os jeitos de falar com a Maiyu, já que o site não tem formulário. */
 const CHANNELS: ReadonlyArray<Channel> = [
   {
     icon: WhatsappLogoIcon,
@@ -67,7 +67,8 @@ const CHANNELS: ReadonlyArray<Channel> = [
 ]
 
 /**
- * Contato: os canais em lista com fios, o formulário ao lado e a cidade embaixo.
+ * Contato: os canais em lista com fios, o aviso de que o formulário está fora
+ * do ar ao lado e a cidade embaixo.
  *
  * Os canais vêm de `CONTACT`, em `lib/site.ts`, e não escritos aqui: o rodapé
  * e o JSON-LD da raiz mostram os mesmos dados, e três cópias do telefone
@@ -129,10 +130,7 @@ function RouteComponent(): React.JSX.Element {
           </ul>
 
           <div className="lg:col-span-7">
-            <h2 className="mb-6 text-h2">{m.contactPage_formTitle()}</h2>
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-10">
-              <ContactForm />
-            </div>
+            <ChannelsNotice />
           </div>
         </div>
       </section>

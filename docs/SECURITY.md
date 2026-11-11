@@ -9,7 +9,7 @@
 
 ## 1. Como reportar uma vulnerabilidade
 
-Não abra issue pública. Escreva para `contato@maiyu.com` com os passos para reproduzir. O prazo de
+Não abra issue pública. Escreva para `contato@maiyu.com.br` com os passos para reproduzir. O prazo de
 resposta e um endereço dedicado de segurança estão pendentes do dono (`PRD.md` §8).
 
 ## 2. Modelo de ameaças
@@ -58,7 +58,7 @@ flowchart LR
 |---|---|---|---|
 | páginas SSR | `GET` em `/`, `/portfolio`, `/blog`, `/career`, `/contact` | internet para o SSR | `frontend/src/routes/_public/` |
 | filtro do diário | `?category=` | internet para o SSR | `frontend/src/lib/blog-search.ts` |
-| formulários | validação no cliente; nada é enviado | cliente | `frontend/src/routes/_public/-components/contact-form.tsx` |
+| aviso de contato | sem formulário e sem envio (`DECISIONS.md` #17); só links `mailto:` e WhatsApp | cliente | `frontend/src/routes/_public/-components/channels-notice.tsx` |
 | `/health-check`, `/sitemap.xml` | `GET` | internet para o SSR | `frontend/src/routes/health-check.ts` |
 | deploy | `POST` ao Coolify | CI para o Coolify | `.github/workflows/main-deploy-coolify.yml` |
 
@@ -78,7 +78,7 @@ trocado. Médio: indisponibilidade prolongada. Baixo: enumeração de conteúdo 
 
 ### 2.8 Para revisão manual
 
-- Qualquer endpoint novo, incluindo o futuro envio dos formulários (`DECISIONS.md` #7), reabre este modelo.
+- Qualquer endpoint novo, incluindo o futuro formulário de contato (`DECISIONS.md` #17), reabre este modelo.
 - Cabeçalhos de segurança e CSP: não coberto por teste; conferir no proxy do Coolify.
 
 ## 3. Autenticação e sessão
@@ -91,7 +91,7 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 
 ## 5. Entrada e saída
 
-- Os formulários validam no cliente com VineJS (`frontend/src/lib/validator.ts`), com teto de tamanho por campo.
+- O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada à mão em `lib/blog-search.ts`.
 - Não há upload.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLdScript` escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
 
@@ -109,7 +109,7 @@ Não se aplica: todas as rotas são públicas e de leitura. Perfis: nenhum.
 
 | Dado | Finalidade | Base legal | Retenção | Exclusão |
 |---|---|---|---|---|
-| nome, e-mail e mensagem digitados nos formulários | nenhuma: o site não envia nem guarda | Não se aplica: sem tratamento | não há | não há |
+| nenhum: o site não tem formulário | nenhuma | Não se aplica: sem tratamento | não há | não há |
 
 O contato por e-mail e WhatsApp acontece fora do site, nos serviços do próprio visitante.
 

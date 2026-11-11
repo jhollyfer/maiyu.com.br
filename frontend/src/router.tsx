@@ -11,12 +11,26 @@ import {
 } from '#/components/common/not-found-page'
 import { Button } from '#/components/ui/button'
 import { m } from '#/paraglide/messages'
-import { deLocalizeUrl, localizeUrl } from '#/paraglide/runtime'
+import {
+  deLocalizeUrl,
+  getLocale,
+  isServer,
+  localizeUrl,
+} from '#/paraglide/runtime'
+import { ValidationMessage } from '@maiyu/shared'
 
 import { getContext } from './integrations/tanstack-query/query-context'
 import { routeTree } from './routeTree.gen'
 
 export function getRouter() {
+  /*
+   * O idioma das mensagens de validação é estado de módulo: no servidor seria um
+   * valor só para requisições paralelas em idiomas diferentes, então só o
+   * navegador o troca. Trocar de idioma é navegar para outro documento, que
+   * roda isto de novo (_doc-lib/paraglide.md#/tanstack-start).
+   */
+  if (!isServer) ValidationMessage.setLocale(getLocale())
+
   const context = getContext()
 
   const router = createTanStackRouter({

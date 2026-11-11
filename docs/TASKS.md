@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (12 feitos, 1 em andamento, 8 bloqueados, 26 a fazer); atualizado 2026-11-11
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (16 feitos, 2 em andamento, 6 bloqueados, 23 a fazer); atualizado 2026-11-11
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -30,7 +30,7 @@ Dizer, no site, quem é a Maiyu: tríplice fronteira, equipe indígena e origin�
 |---|---|---|---|---|
 | 2.1 | Reposicionar a vitrine: copy indígena/tríplice fronteira e design mais amazônico | Alta | Feita | checklist abaixo; aguarda PR |
 | 2.2 | Decidir os workflows de `.github/workflows` com o dono ou ajustar o upstream | Média | Feita | cópia do modelo, como nos irmãos (`DECISIONS.md` #6) |
-| 2.3 | Definir o destino dos formulários de contato e candidatura | Média | A fazer | `PRD.md` §8 |
+| 2.3 | Definir o destino do formulário de contato (a candidatura ficou fora) | Média | A fazer | `PRD.md` §8; `DECISIONS.md` #17 |
 | 2.4 | Redesign editorial: fotografia do lugar, Fraunces nos títulos, cinco produtos no portfólio, diário e carreiras reescritos no contexto | Alta | Feita | `DECISIONS.md` #12 e #13 |
 
 Checklist da 2.1:
@@ -60,9 +60,9 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; bloqueado por R1.4 (a CSP recusa o VineJS no navegador) |
+| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; R1.4 feita, falta o merge e a prova da CSP no navegador |
 | R0.2 | JSON-LD serializado com `<` escapado | P | Feita | `frontend.md` §9.7; `docs/SECURITY.md` |
-| R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | A fazer | dono decide o destino (R2.10); até lá, sem coletar dado pessoal à toa |
+| R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | Feita | `DECISIONS.md` #17: sem formulário, aviso e canais reais; contato volta com o recurso do backend (R2.10) |
 | R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | Feita | `tooling.md` §9 e §7, KIT.md §3.3 |
 | R0.5 | `.claude/settings.json` com `attribution` vazio e guarda `PreToolUse` | P | Bloqueada | dono: agente não edita `settings.json` |
 
@@ -73,12 +73,12 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | Feita | `sync --check`; espelhos no upstream de 2026-11-11 |
 | R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Feita | `feat/backend-inicial`; workspace do modelo e `shared/` (`@maiyu/shared`) com o kit da leva 8: format, lint, tsc e 62 testes |
 | R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
-| R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
+| R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | Feita | #241; MIGRATIONS.md; `@vinejs/vine` fora do frontend; os schemas dos formulários saíram do `shared/` com a decisão #17 (sem formulário no site) |
 | R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
 | R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Em andamento | `tooling.md` §0.1; Luxon feito; Tiptap estático bloqueado por lacuna do RichText do kit |
 | R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | Feita | `tooling.md` §0; MIGRATIONS.md; fica fora só o TypeScript 7 (exceção do §0); o `@tiptap/*` do `shared/` é da outra frente |
 | R1.8 | `tsconfig` com as flags do piso | P | Feita | `tooling.md` §3; `verbatimModuleSyntax: false` (#319) |
-| R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | A fazer | `tooling.md` §4.1, §4.2 |
+| R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | Feita | `tooling.md` §4.1, §4.2; `eslint.config.js` do kit, que ignora `components/ui/` (#391) |
 | R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | A fazer | `architecture.md` §4; ENV do modelo |
 | R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | A fazer | ARVORE.md |
 
@@ -111,8 +111,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Bloqueada | aguarda o kit |
-| R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Bloqueada | #325, #366 |
+| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Em andamento | kit livre do backend entrou (levas 7 e 8); o resto espera o merge do backend no frontend |
+| R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
 | R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Bloqueada | #366 |
 | R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Bloqueada | `i18n.md` |
@@ -140,7 +140,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 ## Fase N · Ideias (fora do escopo atual)
 
-- Envio real dos formulários, quando houver endpoint (origem: `PRD.md` §5)
+- Formulário de contato, quando o backend tiver o recurso (origem: `PRD.md` §5)
 - Painel de edição de conteúdo (origem: `PRD.md` §5)
 
 ---
