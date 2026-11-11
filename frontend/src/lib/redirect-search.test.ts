@@ -1,6 +1,6 @@
 import { expect, test } from 'vitest'
 
-import { validateRedirectSearch } from './redirect-search'
+import { redirectDestination, validateRedirectSearch } from './redirect-search'
 
 test('accepts an internal path', () => {
   expect(validateRedirectSearch({ redirect: '/administrator' })).toEqual({
@@ -22,6 +22,10 @@ test('refuses an external destination', () => {
     '/\\evil.com',
     'javascript:alert(1)',
     'evil.com',
+    '/\t/evil.com',
+    '/\n/evil.com',
+    '/\r/evil.com',
+    '/\u007f/evil.com',
   ]
 
   for (const redirect of attacks) {
@@ -43,4 +47,9 @@ test('ignores what is not a string', () => {
   ).toStrictEqual({
     redirect: undefined,
   })
+})
+
+test('the destination is the validated redirect, or the home given', () => {
+  expect(redirectDestination({ redirect: '/a' }, '/home')).toBe('/a')
+  expect(redirectDestination({ redirect: undefined }, '/home')).toBe('/home')
 })
