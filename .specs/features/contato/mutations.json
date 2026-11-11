@@ -1,0 +1,23 @@
+[
+  {
+    "file": "backend/app/features/administrator/contacts/prune/prune.use-case.ts",
+    "old": "export const CONTACT_RETENTION_MONTHS = 12",
+    "new": "export const CONTACT_RETENTION_MONTHS = 13",
+    "proof": "cd backend && node ace test functional --files=\"commands/_contacts-prune.command.e2e.spec.ts\" --tests=\"deletes contacts older than 12 months\"",
+    "label": "C17: guarda de 12 meses vira 13"
+  },
+  {
+    "file": "backend/app/policies/contact.policy.ts",
+    "old": "if (!STAFF_USER_ROLES.includes(actor.role))",
+    "new": "if (!STAFF_USER_ROLES.includes(actor.role) && false)",
+    "proof": "cd backend && node ace test functional --files=\"app/features/administrator/contacts/delete/delete.e2e.spec.ts\" --tests=\"a member cannot delete\"",
+    "label": "C24: ContactPolicy deixa o MEMBER passar"
+  },
+  {
+    "file": "backend/app/repositories/contact/contact.lucid.repository.ts",
+    "old": "      .where('id', id)\n      .whereNull('answeredAt')\n      .update({ answeredAt, updatedAt })",
+    "new": "      .where('id', id)\n      .update({ answeredAt, updatedAt })",
+    "proof": "cd backend && node ace test functional --files=\"app/features/administrator/contacts/answer/answer.e2e.spec.ts\" --tests=\"two answers at once give one 200 and one 409\"",
+    "label": "edge case: claimAnswer sem o answered_at IS NULL regrava answered_at"
+  }
+]
