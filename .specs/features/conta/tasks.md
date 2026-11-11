@@ -103,8 +103,8 @@ T4 → T5
 
 **Done when**:
 
-- [ ] e2e de contrato: troca de senha apaga os tokens; save sem troca mantém; erro no save mantém tudo
-- [ ] Gate check passes: `cd backend && node ace test unit && node ace test functional`
+- [x] e2e de contrato: troca de senha apaga os tokens; save sem troca mantém; erro no save mantém tudo
+- [x] Gate check passes: `cd backend && node ace test unit && node ace test functional`
 
 **Tests**: e2e
 **Gate**: full

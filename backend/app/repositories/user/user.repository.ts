@@ -1,6 +1,7 @@
 import type { Either } from '@maiyu/shared'
 
 import type RepositoryFailure from '#core/repository-failure'
+import type { UniqueConflict } from '#core/unique-conflict'
 import type { User } from '#domain/user/user.entity'
 
 /**
@@ -17,7 +18,15 @@ export abstract class UserRepository {
   abstract findById(id: string): Promise<User | null>
   /** The e-mail `unique` holds for the whole table. */
   abstract findByEmail(email: string): Promise<User | null>
-  abstract save(user: User): Promise<void>
+  /**
+   * Writes the account. When the entity asks (`credentials().revokeSessions`), the account's
+   * sessions are revoked on the same client as the row, so a unit of work either keeps the old
+   * credential and its sessions or has neither. `left(UNIQUE_CONFLICT)` when the e-mail is
+   * another account's, with nothing written and no session revoked.
+   */
+  abstract save(
+    user: User,
+  ): Promise<Either<UniqueConflict | RepositoryFailure, void>>
   abstract delete(user: User): Promise<void>
   /**
    * Redoes the hash only while the row still holds `stored` (`backend.md` §5.6 item 6):
