@@ -101,6 +101,7 @@ contradiga uma destas linhas está errada. Cada linha aponta a entrada e a pági
 ### Middleware, DI e ciclo de vida
 
 - **Tipo do `HttpContext` só se aumenta em middleware de server ou router.** A mudança de tipo é global, e a propriedade só existiria nas rotas do middleware nomeado. [`#guides/basics/middleware`](https://docs.adonisjs.com/guides/basics/middleware)
+- **O `handle` termina em `await next()`; o que vem depois dele é a fase de volta, com a resposta já montada.** A página escreve todos os exemplos assim e só usa `return next()` para sair cedo de um middleware desligado. [`#guides/basics/middleware`](https://docs.adonisjs.com/guides/basics/middleware)
 - **Código que roda fora de requisição (job, comando) recebe o que precisa por parâmetro, sem ler o `HttpContext` do AsyncLocalStorage.** Fora da requisição não há contexto. [`#guides/basics/http-context`](https://docs.adonisjs.com/guides/basics/http-context)
 - **Injeção por construtor com `@inject()` na classe (ou no método, antes dele), no lugar do serviço de container importado.** A doc diz que a injeção deixa o código mais testável, porque a dependência se troca no teste. [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection), [`#guides/concepts/container-services`](https://docs.adonisjs.com/guides/concepts/container-services)
 - **Classe com dependência que o container não resolve sozinho vira binding, registrado no `register` do provider, síncrono e sem I/O; binding por requisição vai no `container_bindings_middleware`.** Nesse momento os outros providers ainda não terminaram de registrar. [`#guides/concepts/dependency-injection`](https://docs.adonisjs.com/guides/concepts/dependency-injection), [`#guides/concepts/service-providers`](https://docs.adonisjs.com/guides/concepts/service-providers)
@@ -609,7 +610,7 @@ export default class RoleMiddleware {
     if (!user || !roles.includes(user.role)) {
       throw HTTPException.Forbidden('Acesso negado', 'ACCESS_DENIED')
     }
-    return next() // esquecer o `return next()` engasga a requisição em silêncio
+    await next() // esquecer o `next()` engasga a requisição em silêncio
   }
 }
 // start/kernel.ts: export const middleware = router.named({ role: () => import(...) })
@@ -621,7 +622,7 @@ export default class RoleMiddleware {
 export default class ForceJsonResponseMiddleware {
   async handle({ request }: HttpContext, next: NextFn) {
     request.request.headers.accept = 'application/json'
-    return next()
+    await next()
   }
 }
 ```
@@ -631,14 +632,14 @@ export default class ForceJsonResponseMiddleware {
 // o content-type e popular `request.body()`
 async handle({ request }: HttpContext, next: NextFn) {
   const payload = request.body() // pode vir vazio, dependendo da ordem no kernel
-  return next()
+  await next()
 }
 
 // certo: middleware só decide passagem (auth, papel, cabeçalho); validação de
 // corpo fica no controller, depois do bodyparser já ter rodado
 async handle({ auth }: HttpContext, next: NextFn) {
   auth.getUserOrFail()
-  return next()
+  await next()
 }
 ```
 
@@ -2450,7 +2451,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 // os parâmetros extras são o que `middleware.role(['owner'])` passa adiante
 export default class RoleMiddleware {
   async handle(ctx: HttpContext, next: NextFn, roles: string[]) {
-    return next()
+    await next()
   }
 }
 ```

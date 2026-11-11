@@ -175,7 +175,7 @@ Toda função tem casa, e a casa decide quem pode chamá-la:
 | pura, sobre dado já em mãos, usada por 2+ use-cases | `app/features/<módulo>/_shared.<tema>.ts` (entre módulos, `app/features/_shared.<tema>.ts`) |
 | invariante e transição de uma entidade | método da entidade em `app/domain/<entidade>/` (`domain.md`) |
 | regra de validação de um recurso | `shared/src/validators/<módulo>/<recurso>.validator.ts` |
-| regra de validação usada por 2+ recursos | função em `shared/src/validator.ts` (`architecture.md` §9) |
+| regra de validação usada por 2+ recursos | método `static` de `Rule` em `shared/src/validator.ts`; no Adonis, o par VineJS em `Rule` de `app/core/validator.ts`, com o mesmo nome (`architecture.md` §9, `backend.md` §4.4) |
 | entidade → resposta da API | método do presenter `<recurso>.presenter.ts` (`architecture.md` §10) |
 | precisa de dependência (banco, drive, outro service) ou configuração | service injetável (`backend.md` §4.9) |
 | regra de UI de uma rota | `routes/<rota>/-components/`, `-<nome>.ts` ao lado da rota (`-search.ts`) ou hook da rota |

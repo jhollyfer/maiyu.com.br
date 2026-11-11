@@ -33,7 +33,9 @@ often a different agent with none of this conversation.
    to save one. Asking clarifies how, never whether to add a capability.
 3. A capture, frame or live site that comes with the request binds unless the user called it
    inspiration. Only the user changes a binding source: a departure from it is asked, recorded as
-   an `AD-NNN` in `.specs/STATE.md`, and listed in `## Differences from the source`.
+   an `AD-NNN` in `.specs/STATE.md`, and listed in `## Differences from the source`. A project that
+   keeps its decisions in `docs/DECISIONS.md` (Maiyu standard) records it there and cites
+   `DECISIONS.md #N` instead, with no `.specs/STATE.md` copy.
 4. The rules that change what a user sees run in a layer the repo's tests reach. Filtering,
    searching, sorting and counting are rules.
 5. Only what is hard to reverse is decided here, with its literal shape. Placement, names and

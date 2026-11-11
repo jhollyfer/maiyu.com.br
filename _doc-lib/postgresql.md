@@ -30,7 +30,7 @@ diff antes.sql depois.sql
 CREATE DATABASE app_test_w1 TEMPLATE app_test_base;
 ```
 
-**Links:** 7.
+**Links:** 12.
 
 **Skills:** `maiyu-backend`, `migration`. Dispare junto com a leitura da entrada; a entrada é o contrato, a skill executa (`SKILLS-MAP.md`).
 
@@ -127,3 +127,43 @@ encoding e locale, e as notas sobre conexões no template e o que não é copiad
 `datistemplate` e `datallowconn`.
 **Para que serve:** entender por que o clone exige o template sem sessões e quem pode clonar.
 **Quando usar:** ao montar o banco base dos testes ou criar banco para restaurar dump.
+
+## Desempenho de consulta
+
+#### using-explain
+[doc](https://www.postgresql.org/docs/current/using-explain.html)
+
+**O que é:** como ler o plano do `EXPLAIN` e do `EXPLAIN (ANALYZE, BUFFERS)`: custo estimado, linhas,
+tempo real e leitura de bloco por nó.
+**Para que serve:** a medida com volume que a #382 pede no PR que mexe em listagem.
+**Quando usar:** antes e depois de criar índice ou reescrever filtro de listagem.
+
+#### indexes-multicolumn
+[doc](https://www.postgresql.org/docs/current/indexes-multicolumn.html)
+
+**O que é:** índice de várias colunas e quando a coluna da esquerda serve sozinha.
+**Para que serve:** saber se um composto que começa pela coluna de `sort` já a atende.
+**Quando usar:** ao decidir se uma coluna de ordenação precisa de índice próprio.
+
+#### indexes-ordering
+[doc](https://www.postgresql.org/docs/current/indexes-ordering.html)
+
+**O que é:** índice que entrega a ordem do `ORDER BY` sem `Sort`, em `ASC` e `DESC`.
+**Para que serve:** listagem paginada por coluna escolhida pelo usuário.
+**Quando usar:** ao indexar coluna de `sort`.
+
+#### indexes-partial
+[doc](https://www.postgresql.org/docs/current/indexes-partial.html)
+
+**O que é:** índice com `WHERE`; o planejador só o usa quando o predicado da consulta implica o do
+índice, e predicado com parâmetro não casa.
+**Para que serve:** `deleted_at is null` dos ativos e `deleted_at is not null` da lixeira.
+**Quando usar:** em tabela com soft delete; o predicado vai literal na consulta.
+
+#### jit-decision
+[doc](https://www.postgresql.org/docs/current/jit-decision.html)
+
+**O que é:** quando o JIT liga: custo estimado acima de `jit_above_cost` (100000 por padrão).
+**Para que serve:** explicar consulta de listagem lenta por compilação JIT, como filtro "pertence a"
+escrito com `OR EXISTS`.
+**Quando usar:** quando o `EXPLAIN ANALYZE` mostra tempo de JIT relevante.

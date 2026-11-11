@@ -81,8 +81,13 @@ NODE_ENV=test pnpm openapi:check      # no `check`: falha se alguém esqueceu de
 ```
 
 A geração é determinística: rodar duas vezes produz bytes idênticos, e é isso que faz o `--check`
-funcionar. O campo `servers` é normalizado para a variável `{APP_SERVER_URL}` — gravar o valor
-concreto faria o `--check` acusar divergência só porque o `.env` de quem gerou é outro.
+funcionar. O campo `servers` é relativo, `[{ url: '/' }]`, escrito pelo gerador
+(`scripts/openapi/emit.ts`), e não lê ENV nem `config/openapi.ts`: a especificação permite URL de
+servidor relativa "to the location where the OpenAPI document is being served" (OpenAPI 3.1.0,
+Server Object, https://spec.openapis.org/oas/v3.1.0#server-object), e a API serve o próprio
+`/openapi.json`. Gravar o valor concreto do `.env` de quem gerou deixaria o documento commitado
+errado em todo outro ambiente e faria o `--check` acusar divergência só por isso. Cliente gerado
+fora da API recebe o endereço base na configuração dele, não no documento.
 
 #### dois-artefatos
 código: `app/core/openapi/schema.generated.ts`
@@ -278,11 +283,18 @@ import {
   AdministratorUserShowResponse,
 } from '@<projeto>/shared'
 
-export const RESPONSES = {
+import type { FeatureResponse } from '#core/openapi/types'
+
+export const RESPONSES: Record<string, FeatureResponse> = {
   'administrator/users': AdministratorUserShowResponse,
   'administrator/users/paginate': AdministratorUserPaginateResponse,
-} satisfies Record<string, ResponseSchema>   // ResponseSchema: app/core/openapi/types.ts
+}
 ```
+
+O tipo vem anotado, não por `satisfies`: o gerador busca a chave por uma string montada em runtime, e
+o `satisfies` deixaria o tipo literal do objeto, sem assinatura de índice. O esqueleto do kit
+(`_templates/code/backend/app/core/openapi/response.ts`) traz as entradas de `storages/files`; o
+projeto acrescenta as dele e o sync não sobrescreve o arquivo.
 
 A chave é o caminho da ação sob `app/features/` e a busca **sobe**:
 `administrator/users/update` tenta a chave inteira, depois `administrator/users`. Uma entrada cobre
@@ -294,20 +306,20 @@ não se promete até existir (`DECISIONS.md` #357).
 #### prosa-no-controller
 código: `app/core/openapi/types.ts`
 
-**O que é:** o bloco opcional `docs`, com o helper `defineDocs`.
+**O que é:** o bloco opcional `docs`, com o helper `OpenApiDocs.defineDocs` (método estático: função tem casa, `typescript.md` §6).
 **Para que serve:** a prosa que explica a regra de negócio, e a correção de uma derivação errada.
 **Quando usar:** só quando houver o que dizer. **Rota sem `docs` sai documentada do mesmo jeito.**
 
 ```ts
 // Fastify: export no módulo do controller
-export const docs = defineDocs({
+export const docs = OpenApiDocs.defineDocs({
   handle: {
     description: 'Cria uma nova conta de usuário com nome, email e grupo.',
   },
 });
 
 // Adonis: propriedade estática do controller
-static docs = defineDocs({ handle: { description: 'Cria uma nova conta de usuário com nome, email e grupo.' } })
+static docs = OpenApiDocs.defineDocs({ handle: { description: 'Cria uma nova conta de usuário com nome, email e grupo.' } })
 ```
 
 A prosa é em pt-BR (`DECISIONS.md` #357).

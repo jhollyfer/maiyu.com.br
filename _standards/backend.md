@@ -167,6 +167,17 @@ Todo nome de arquivo é **kebab-case com sufixo de papel** (lista fechada em `ar
 migration. Identificador, rota e comentário em inglês; texto que o usuário vê por chave i18n
 (`typescript.md` §12, `i18n.md`).
 
+**Rota em inglês, sem alias nem redirect** (`DECISIONS.md` #383), na API e no frontend: o caminho
+é inglês (`/courses`, `/sign-in`, `/administrator/users`), e a rota renomeada morre no nome antigo, que
+passa a responder 404. Não há segundo caminho para o mesmo recurso, nem 301/302/307 de caminho antigo
+para novo, nem rota que só repassa. Quem consome o caminho antigo (link, painel do Coolify, cliente) muda
+no mesmo PR ou antes do merge. O prefixo de idioma do frontend é *rewrite* do Paraglide (`i18n.md`),
+não alias: `/es/courses` e `/pt-br/courses` são a mesma rota. A URL sem prefixo redirecionar para
+`/pt-br` é a única exceção (#384).
+Não são alias: a guarda de sessão e de papel (`/sign-in?redirect=`), o download que responde com a URL
+assinada do bucket e o índice de um layout que leva à primeira aba (`/$company` para
+`/$company/dashboard`), desde que o índice nunca tenha sido uma página própria.
+
 **Tudo que nomeia a ação deriva do caminho** `features/<módulo>/<recurso>/<ação>/` (C1, C11),
 e o `pattern:check` gera cada nome do caminho e compara:
 
@@ -224,45 +235,27 @@ o use-case, escolher o status.
 // app/features/administrator/posts/update/update.controller.ts  (Adonis)
 @inject()
 export default class AdministratorPostUpdateController {
-  static docs = defineDocs({ /* summary when the action is not derivable */ })
+  static docs = OpenApiDocs.defineDocs({ /* summary when the action is not derivable */ })
 
   constructor(private readonly useCase: AdministratorPostUpdateUseCase) {}
 
   async handle(context: HttpContext) {
-    const body = await context.request.validateUsing(AdministratorPostUpdateValidator)
-    const { id } = await context.request.validateUsing(IdentifierValidator, { data: context.params })
-    const result = await this.useCase.execute({ ...body, postId: id, actor: context.actor })
+    const { params, ...body } = await context.request.validateUsing(AdministratorPostUpdateValidator)
+    const result = await this.useCase.execute({ ...body, postId: params.id, actor: context.actor })
     if (result.isLeft()) throw result.value
     return context.response.ok(result.value)
   }
 }
 ```
 
-- **Uma forma de ler a entrada.** Body por `validateUsing(<Validator>)`; params por
-  `validateUsing(IdentifierValidator, { data: context.params })`; os dois fundidos no payload.
-  Nunca `request.input()`, `request.body()`, `request.all()` nem `V.validate(request.body())`
-  (`_doc-lib/adonisjs.md#guides/basics/validation`). A página, conferida em 2026-10-14, documenta
-  outro caminho para params: o bloco `params: vine.object({...})` (VineJS, Adonis) dentro do schema, que o
-  `validateUsing` extrai sozinho. A opção `data` não está na página; existe no tipo
-  `RequestValidationOptions` de `@adonisjs/core@7.6.0` (`data?: any`). Qual dos dois a casa adota
-  está em aberto (`_map/scan-2026-10/application/final-review.md` §5, item 3).
-- **O use-case só recebe a saída do validator** mais o `actor`. Espalhar `request.body()` ou
-  `request.all()` no payload é mass assignment: o cliente manda `role`, `ownerId` ou um operador
-  Mongo (`$ne`) e o use-case grava. Cobrado por `pattern:check` (spread de corpo cru em
-  controller).
-- **`summary` é obrigatório** quando a ação não está em `ACTION_SUMMARY` de
-  `app/core/openapi/` (`openapi.md`). As derivadas (`create`, `paginate`, `show`, `update`,
-  `archive`, `unarchive`, `delete`, `sign-in`, `sign-out`, `refresh`, `complete`, `parts`,
-  `download`) não precisam.
-- **`errors:` só para o que nasce fora do que o gerador lê.** O introspector do OpenAPI colhe por
-  AST os `HTTPException` do use-case irmão, da tabela de tradução de fatos e do
-  `_shared.<recurso>-refusal.ts` que o use-case importa (`openapi.md` #erros-do-use-case); esses
-  **não** se declaram, senão viram uma segunda fonte que envelhece. Declara-se só o que nasce em
-  outra camada da cadeia (o 403 da policy, o que um middleware recusa), com comentário dizendo de
-  onde vem. O gerador que não segue o import do refusal tem defeito: corrige-se nele, nunca
-  duplicando a fábrica em dois use-cases nem declarando à mão (`DECISIONS.md` #259).
-  A prosa da `description` **não** lista códigos.
-- Import do use-case irmão por caminho relativo com extensão.
+- **Uma forma de ler a entrada.** Um `validateUsing(<Validator>)` por ação, com o parâmetro de rota no
+  bloco `params: vine.object({ id: ... })` do próprio schema, que o `validateUsing` extrai sozinho
+  (_doc-lib/adonisjs.md#guides/basics/validation, "Validating query strings, params, headers, and cookies",
+  conferida em 2026-11-09). O gerador do Tuyau lê esse bloco como `params` da rota: com o
+  `IdentifierValidator` passado por `{ data: context.params }` ele trata o `id` como query obrigatória e o
+  cliente do frontend não compila (`DECISIONS.md` #375, que substitui a forma da #126). O campo do erro
+  segue o caminho no schema: o 422 de um `:id` malformado aponta `params.id` em `errors`, nunca `id`. Nunca
+  `request.input()`, `request.body()`, `request.all()` nem `V.validate(request.body())`.
 
 **`HTTPException`** (`exceptions/http.exception.ts`): construtor `protected`; criação só pelas
 fábricas estáticas por status, com argumentos posicionais `(message, code, errors?)`, sem default em
@@ -307,10 +300,18 @@ export default class AdministratorPostUpdateUseCase {
   requisição (§5.6, item 4): `HttpContext.getOrFail().logger`, com `useAsyncLocalStorage: true`
   (_doc-lib/adonisjs.md#guides/basics/http-context). Use-case chamado por job ou comando, que não
   tem `HttpContext`, recebe do chamador o logger filho com o id do job (`DECISIONS.md` #314).
+  O logger entra pelo payload, como campo opcional (`Merge<Payload, { logger?: Logger }>`), e o
+  use-case usa `payload.logger ?? HttpContext.getOrFail().logger`; o comando passa
+  `logger.child({ ... })` (`storages/files/delete` e `storages:prune` no kit). Repository não
+  loga: devolve `null` ou lança, e quem loga é o use-case (`pattern:check`, regra
+  `request-logger`, cobre `app/features` e `app/repositories`). Unit spec de use-case que loga
+  roda dentro de `insideHttpContext(group)` (`tests/http-context-fixtures.ts`); o que não loga
+  não chama o fixture.
 - **Falha de negócio é `left`, nunca `throw`.** Quem transforma em resposta é o controller.
   Método `*OrFail()` do ORM conta como `throw` (cai no `catch` global e vira 500 onde deveria
   haver 404) e não aparece nem na implementação do repository: o contrato devolve `null` e o
-  use-case decide. Cobrado por `pattern:check`.
+  use-case decide. Cobrado por `pattern:check` (regra `or-fail`), que deixa passar
+  `HttpContext.getOrFail()`: não é método do ORM, é a entrada do logger da requisição do item acima.
 - **`try/catch` global obrigatório**, começando antes da primeira ida ao repository, com a tag de
   log e o código de 500 derivados do caminho (§3). O 500 sai com mensagem genérica; o detalhe só
   no log (§5.5).
@@ -389,7 +390,7 @@ const postFields = () => ({
 export const AdministratorPostCreateValidator = z.object(postFields())
 export type AdministratorPostCreatePayload = z.infer<typeof AdministratorPostCreateValidator>
 
-export const AdministratorPostUpdateValidator = AdministratorPostCreateValidator.partial()
+export const AdministratorPostUpdateValidator = Rule.partial(postFields())
 ```
 
 ```ts
@@ -401,9 +402,7 @@ const postFields = () => ({
 
 export const AdministratorPostCreateValidator = vine.create(vine.object(postFields()))
 
-export const AdministratorPostUpdateValidator = vine.create(
-  vine.object(mapFields(postFields(), (field) => field.optional().use(notNull()))),
-)
+export const AdministratorPostUpdateValidator = vine.create(Rule.partial(postFields()))
 ```
 
 - **Ninguém importa `zod` direto nos validators** nem `@vinejs/vine`, nem os subpaths
@@ -426,13 +425,24 @@ export const AdministratorPostUpdateValidator = vine.create(
   índice único é defeito.
 - **Bloco reusável é função**, não constante: no VineJS, nó de schema compartilhado vaza
   `.optional()` entre validators; o Zod é imutável e não vaza, mas a casa mantém a função nos dois
-  lados para os pares ficarem iguais (`paginationFields()`, `trashedField()`, `sortFields(tupla)`,
-  `password()`, `email()`). Bloco usado por um recurso só fica no arquivo dele.
-- **`Update` não repete o `Create` campo a campo**: no Zod, `.partial()` do create; no VineJS, os
-  campos nascem de uma função do recurso e o update os torna opcionais com `notNull()` (exemplos
-  acima). `convertEmptyStringsToNull` ligado no `vine` configurado do Adonis; opcional de update
-  usa `notNull()` para não aceitar `null` como "apagar" (`_doc-lib/vinejs.md#getting_started`,
-  `#types/object`; Zod: _doc-lib/zod.md#api).
+  lados para os pares ficarem iguais. A casa dela é a classe `Rule`, com o mesmo nome de método nos
+  dois lados: `Rule` de `shared/src/validator.ts` no Zod e `Rule` de `app/core/validator.ts` no
+  VineJS (`Rule.pageFields()`, `Rule.paginationFields()`, `Rule.trashedField()`,
+  `Rule.sortFields(tupla)`, `Rule.partial(campos)`, `Rule.notNull()`, `Rule.password()`,
+  `Rule.email()`, `Rule.identifierParams()`), nunca `export function` solta
+  (`typescript.md` §6). Bloco usado por um recurso só fica no arquivo dele.
+- **`Update` não repete o `Create` campo a campo**: os campos nascem de uma função do recurso e o
+  update é `Rule.partial(<recurso>Fields())` nos dois lados (exemplos acima, `DECISIONS.md` #386). No
+  VineJS ele usa o `.partial()` do objeto e põe `Rule.notNull()` em todo campo que não é
+  `.nullable()`: o `.optional()` do VineJS aceita `null` como ausente, e o `convertEmptyStringsToNull`
+  do `vine` configurado do Adonis já transformou `''` em `null`, então sem a regra `{ title: null }`
+  apaga a coluna obrigatória e volta 200. No Zod ele é o `.partial()` do objeto com `''` lido como
+  `null` antes dos campos, para o formulário recusar o campo obrigatório apagado com a mesma
+  mensagem `required` da API. Campo escrito à mão no update usa `.optional().use(Rule.notNull())` no
+  VineJS e `Rule.notNull(schema)` no Zod (_doc-lib/vinejs.md#extend/custom_rules, regra implícita,
+  https://vinejs.dev/docs/extend/custom_rules; `VineObject.partial()` pelo tipo instalado da 4.4,
+  `build/src/schema/object/main.d.ts`, que a página `#types/object` não cobre; Zod:
+  _doc-lib/zod.md#api, https://zod.dev/api#partial).
 - Validator final é constante: `export const <X>Validator = z.object(...)` ou, no Adonis,
   `vine.create(...)`, criado fora do handler. `vine.compile()` está `@deprecated` desde a 4.x.
 - **Data declara os formatos que os clientes mandam** (`DECISIONS.md` #307). Sem `formats`, o
@@ -443,7 +453,9 @@ export const AdministratorPostUpdateValidator = vine.create(
   https://vinejs.dev/docs/types/date, aberta), e o E2E do painel prova pela tela
   (`frontend.md` §11.2).
 - **Todo texto tem teto** (`maxLength`). **Quem não filtra por `search` não o aceita**:
-  parâmetro aceito e ignorado promete no OpenAPI um filtro que não existe.
+  parâmetro aceito e ignorado promete no OpenAPI um filtro que não existe. A listagem sem busca usa
+  `Rule.pageFields()` (`page`, `perPage`) e o global `PageValidator`; `Rule.paginationFields()` é ele
+  mais `search`.
 - **Regra que serve a mais de um campo tem nome próprio** (`cpfLength`, `phone`): a chave do
   provider é `campo.regra`, e `cpf.fixedLength` não é chave de campo nenhum. Regra que valida
   formato de value object chama o predicado do VO (`Email.isValid`, `domain.md` §3).
@@ -479,7 +491,9 @@ sai da tradução, nunca do pacote. *(Fastify)* o mesmo vale para o `errorRespon
 **Erro esperado não vai para o log de erro** (`DECISIONS.md` #352). O handler declara
 `protected ignoreStatuses = [401, 403, 404, 422, 429]` e `ignoreCodes` com os códigos esperados
 (`_doc-lib/adonisjs.md`, "Decisões que a doc impõe", `#guides/basics/exception-handling`). O 401 de sessão sai sempre com
-`code: 'UNAUTHORIZED'`, venha do guard, do middleware ou do refresh.
+`code: 'AUTHENTICATION_REQUIRED'`, venha do guard, do middleware ou do refresh; credencial errada no
+sign-in é `INVALID_CREDENTIALS`, também 401, e só o primeiro dispara o refresh no cliente (`DECISIONS.md`
+#376).
 
 **Toda resposta passa por schema**, inclusive 201 e 204: o `http.ts` serializa pelo schema de
 `shared/src/responses/` e o que não está nele não sai. Resposta montada à mão (`response.created(model)`,
@@ -521,8 +535,8 @@ na fronteira do `Paginated<T>` declarado.
 - **`OR` de busca dentro de `where((builder) => …)`**: solto, o `OR` escapa do filtro de lixeira e
   de posse e devolve linha que não deveria.
 - **Ordenação por tupla fechada**: `<RECURSO>_SORT_COLUMNS` (`as const`) no arquivo do validator do
-  recurso, lida por `sortFields(tupla)`; a coluna nunca é string livre do cliente.
-- O default (`PAGINATION`) mora junto de `paginationFields()` em `shared/src/validator.ts`; não há
+  recurso, lida por `Rule.sortFields(tupla)`; a coluna nunca é string livre do cliente.
+- O default (`PAGINATION`) mora junto de `Rule.paginationFields()` em `shared/src/validator.ts`; não há
   `const PAGE`/`PER_PAGE` por caso de uso.
 
 **Resposta de arquivo** (exportar CSV) sai de um helper único de resposta (`sendCsv`), que põe
@@ -561,26 +575,26 @@ revelar. Dois mecanismos, nesta ordem de preferência:
 renomeada para `<entidade>.policy.ts`), e a checagem passa por `ctx.bouncer`, nunca por chamada
 direta de método (`_doc-lib/adonisjs.md#guides/auth/authorization`). O Bouncer é inicializado com
 o `actor` do contexto, não com o model (§2.1), e a policy só importa `core/`, `domain/` e
-`shared/`. A base `session-scoped-policy.base.ts` concentra o "nulo ou de outro tenant nega com 404" (a regra aqui é tenant + papel; se fosse só posse, o mecanismo 1 bastaria). A base expõe `hidden(code)` (404) e `forbidden(code)` (403): a policy passa a chave i18n, e quem traduz é o handler (`DECISIONS.md` #346, #358):
+`shared/`. A base `session-scoped-policy.base.ts` concentra o "nulo ou de outro tenant nega com 404" (a regra aqui é tenant + papel; se fosse só posse, o mecanismo 1 bastaria). A base expõe `hidden(code, key)` (404) e `forbidden(code, key)` (403): a policy passa o `code` estável e a chave i18n (`<módulo>.<fato_snake>`, #334), nunca texto traduzido, e quem traduz é o handler (`DECISIONS.md` #346, #358, #387). A chave vai no `.t()` do `AuthorizationResponse`, que a doc reserva para isso, e o `code` na mensagem, que a doc faz de reserva quando falta a tradução (_doc-lib/adonisjs.md#guides/auth/authorization, "When your application uses @adonisjs/i18n"):
 
 ```ts
 // app/policies/session-scoped-policy.base.ts
 export default abstract class SessionScopedPolicy extends BasePolicy {
   // missing and foreign answer the same 404, so the response never reveals existence
-  protected hidden(code: string): AuthorizerResponse {
-    return AuthorizationResponse.deny(code, 404)
+  protected hidden(code: string, key: string): AuthorizationResponse {
+    return AuthorizationResponse.deny(code, 404).t(key)
   }
 
-  protected forbidden(code: string): AuthorizerResponse {
-    return AuthorizationResponse.deny(code, 403)
+  protected forbidden(code: string, key: string): AuthorizationResponse {
+    return AuthorizationResponse.deny(code, 403).t(key)
   }
 }
 
 // app/policies/post.policy.ts
 export default class PostPolicy extends SessionScopedPolicy {
-  update(actor: Actor, post: Post | null): AuthorizerResponse {
-    if (!post || post.snapshot().teamId !== actor.teamId) return this.hidden('posts.not_found')
-    if (!actor.roles.includes(ROLE.EDITOR)) return this.forbidden('posts.forbidden')   // seen but not allowed
+  update(actor: Actor, post: Post | null): true | AuthorizationResponse {
+    if (!post || post.snapshot().teamId !== actor.teamId) return this.hidden('POST_NOT_FOUND', 'posts.not_found')
+    if (!actor.roles.includes(ROLE.EDITOR)) return this.forbidden('POST_FORBIDDEN', 'posts.forbidden')   // seen but not allowed
     return true
   }
 }
@@ -592,21 +606,20 @@ O `*.policy.unit.spec.ts` chama a policy direto, sem rota nem Bouncer
 ```ts
 // app/features/account/posts/update/update.controller.ts
 async handle(context: HttpContext) {
-  const body = await context.request.validateUsing(AccountPostUpdateValidator)
-  const { id } = await context.request.validateUsing(IdentifierValidator, { data: context.params })
-  const post = await this.posts.findById(id)          // repository contract; never *OrFail
+  const { params, ...body } = await context.request.validateUsing(AccountPostUpdateValidator)
+  const post = await this.posts.findById(params.id)          // repository contract; never *OrFail
   await context.bouncer.with(PostPolicy).authorize('update', post)
 
-  const result = await this.useCase.execute({ ...body, postId: id, actor: context.actor })
+  const result = await this.useCase.execute({ ...body, postId: params.id, actor: context.actor })
   if (result.isLeft()) throw result.value
   return context.response.ok(result.value)
 }
 ```
 
 `bouncer.with(Policy).authorize(acao, registro)` lança `AuthorizationException` quando nega,
-com o status que a resposta declarou; `app/exceptions/handler.ts` a converte no envelope, com o
-`code` de "não encontrado" do recurso quando o status é 404, para a resposta ser idêntica à do
-inexistente. `allows`/`denies` servem para quando a negação não deve interromper o fluxo;
+com o status que a resposta declarou; `app/exceptions/handler.ts` a converte no envelope com o `code` e a chave traduzida que a base
+passou; a negação 404 usa o mesmo `code` e a mesma chave do "não encontrado" do use-case, para a
+resposta ser idêntica à do inexistente. `allows`/`denies` servem para quando a negação não deve interromper o fluxo;
 `execute` devolve `AuthorizationResponse` para quando mensagem e código variam por regra. Não
 existe quinto caminho: nenhum código de produção chama `PostPolicy.update` direto (só o spec da policy). O status no `deny` é da
 doc: `AuthorizationResponse.deny('Post not found', 404)`, "útil para esconder a existência do
@@ -663,10 +676,35 @@ presenter.
 
 Dentro da implementação do repository:
 
-- **`refresh()` depois de `create`** quando a coluna tem `DEFAULT` do banco: sem ele, a entidade
-  reidratada não tem o valor que o banco gerou (`_doc-lib/lucid.md#crud-operations`).
+- **`refresh()` depois de `create`** quando a coluna tem `DEFAULT` do banco: `Model.create()` grava a
+  linha mas não traz para o objeto em memória o valor que o banco gerou, e a entidade reidratada sai
+  com o campo vazio (_doc-lib/lucid.md#models, https://lucid.adonisjs.com/docs/models, "Runtime
+  customization", `refresh`: "useful after a write that triggered database-side defaults"). O
+  sintoma não é erro, é dado errado em silêncio: no academy o `locale` do convite tinha `DEFAULT` no
+  banco, o objeto voltava sem ele e o e-mail saía no idioma de quem convidou, não no do convidado.
+  Vale para todo `DEFAULT` que a regra lê logo depois de criar (idioma, status, contador).
 - **Relação lida em laço é carregada antes** (`preload`) para não gerar N+1
   (`_doc-lib/lucid.md#relationships`: `query().preload('posts')`, conferida em 2026-10-14).
+- **Listagem tem índice no que filtra e ordena** (`deleted_at`, coluna de busca, **toda** coluna que o
+  usuário pode escolher como `sort`, a FK do escopo, e a lixeira `trashed=only` com índice parcial próprio
+  `deleted_at is not null`, porque o parcial dos ativos não a atende). Índice composto que já começa
+  pela coluna e dá Index Scan com volume conta como índice dela. `trashed=with` (ativos e arquivados
+  juntos) não pede índice cheio redundante: a medida com volume vai no PR e basta, e o número de queries por rota é fixo: um teste e2e trava a contagem, e a medida com
+  volume (`generate_series` e `EXPLAIN ANALYZE`) entra no PR que mexe na listagem (`DECISIONS.md` #382).
+  A contagem usa `assertQueryCount` de `tests/query-count-fixtures.ts` (kit), que escuta o evento
+  `db:query`; ele só dispara com `debug` na conexão, e o `config/database.ts` do kit liga `debug` em
+  dev e teste (_doc-lib/lucid.md#debugging).
+  Lentidão em produção se separa antes de corrigir: `pg_stat_statements`, contagem da tabela e tempo
+  da rota na API contra o do proxy.
+  Armadilhas medidas nos projetos (interclasse, 51 mil linhas):
+  - filtro "pertence a" com `OR EXISTS` estoura o custo estimado e liga o JIT (213 ms); escreva
+    `whereIn(col, sub).orWhereIn(outra, sub)` com índice (12 ms) (_doc-lib/postgresql.md#jit-decision);
+  - índice parcial só serve com o predicado literal na consulta (`whereNull`/`whereNotNull` do Lucid
+    não geram binding) (_doc-lib/postgresql.md#indexes-partial);
+  - índice entra sem `CONCURRENTLY`: o Lucid exige `disableTransactions` para ele e a falha deixa índice
+    inválido (_doc-lib/lucid.md#migrations); tabela grande o bastante para precisar é decisão do dono;
+  - escrita em lote: `createMany` do Lucid faz um `INSERT` por linha; lote grande vai por
+    `client.table(...).multiInsert(...)` (_doc-lib/lucid.md), e `updateOrCreate` em laço é N+1 de escrita.
 - **SQL só pelo query builder ou `db.rawQuery(sql, bindings)`.** Template literal com valor de fora
   dentro de `rawQuery` é injeção (`_doc-lib/lucid.md#raw-query-builder`); cobrável por
   `no-restricted-syntax`.
@@ -698,7 +736,8 @@ filtro de segurança. O scope vive no arquivo do model, que não é regerado. De
 (não existe no Lucid). Listagem que mostra a lixeira recebe o modo no critério tipado do contrato
 (`trashed: TrashedMode`, de `shared/src/enums/`), e a implementação escolhe o scope.
 `whereNull('deletedAt')`/`whereNotNull('deletedAt')` fora do model é cobrado por `pattern:check`
-(sensor qualificado, que pega também `posts.deleted_at`). Exceção legítima entra em
+(sensor qualificado, que pega também `posts.deleted_at`). `database/migrations/` fica fora do
+sensor, porque migration não pode usar scope do model. Outra exceção legítima entra em
 `softDeleteExempt` da configuração do `pattern:check`, com o porquê.
 
 **Vocabulário único do ciclo de vida** (C5):
@@ -822,9 +861,11 @@ formulário HTML servido por outro site do mesmo domínio-pai.
 refletir `Origin` sem conferir; métodos e `exposeHeaders` só os usados
 (`_doc-lib/adonisjs.md#guides/security/cors`).
 
-**Rate limit nomeado** em `start/limiter.ts`, um `limiter.define` por política, citado na rota
+**Rate limit nomeado**, um `limiter.define` por política, citado na rota
 (`_doc-lib/adonisjs.md#guides/security/rate-limiting`; *(Fastify)* `@fastify/rate-limit`, §5 de
-`backend-fastify.md`):
+`backend-fastify.md`). As políticas das rotas do kit moram em `start/limiter.base.ts`, que o sync
+sobrescreve; `start/limiter.ts` só acrescenta as do projeto e nunca redefine uma do kit, e a rota
+importa cada política do arquivo que a declara:
 
 - Obrigatório em toda rota que aceita escrita sem sessão: sign-in, sign-up, recuperação de senha,
   reenvio de e-mail, código de verificação (OTP), upload anônimo (onde existir, §5.4).
@@ -849,8 +890,13 @@ registrada.
 **Ordem da cadeia** *(opinião da casa)*: id de requisição e logger → cabeçalhos de segurança →
 CORS → origem (CSRF) → limite global, se houver → parser de corpo com teto → autenticação →
 papel (grupo) → limite da rota → policy (controller) → validator → use-case. Cada middleware faz
-uma coisa e termina em `return next()`. O parser de corpo tem teto explícito por grupo; corpo cru
-só na rota de webhook que confere assinatura (§4.11).
+uma coisa e termina em `await next()`, a forma de todos os exemplos da página
+(`_doc-lib/adonisjs.md#guides/basics/middleware`, https://docs.adonisjs.com/guides/basics/middleware).
+A saída cedo vira `if` em volta do `throw`, nunca `return next()`: o `NextFn` é
+`() => Promise<any> | any` (`@poppinss/middleware` 3.2.7, reexportado por `@adonisjs/core` 7.6.0), e
+devolver o resultado dele cai no `no-unsafe-return` do lint do kit; sem `await` no corpo, o
+`require-await` reprova o `async`. O parser de corpo tem teto explícito por grupo; corpo cru só na
+rota de webhook que confere assinatura (§4.11).
 
 ### 4.11 Webhook, idempotência e transação
 
@@ -952,8 +998,13 @@ evento ou fila, ou o fluxo é idempotente para poder repetir.
 - **Mudança em produção em dois passos (expandir e contrair).** Coluna nova nasce anulável; backfill
   em lote; `NOT NULL` numa migration seguinte. Coluna removida só sai depois do deploy que parou de
   lê-la. Renomear é adicionar, copiar, trocar a leitura, remover.
-- **Perda de dado é explícita**: migration que apaga dado declara `down` que recusa
-  (irreversível) e é autorizada à parte, nunca contração implícita.
+- **Perda de dado é explícita**: migration que apaga dado é autorizada à parte, nunca contração
+  implícita, e o `down` dela não tem efeito, com um comentário dizendo que o dado não volta. Não
+  lança: o teardown de `testUtils.db().migrate()` roda `migration:reset` e chama todo `down`, e um
+  `down` que lança quebra a suíte. Em produção o rollback já recusa (`DECISIONS.md` #291, #377).
+- **Migration não importa model**: lê e escreve por `this.db.from(...)`/`this.schema` cru. O model
+  muda depois (coluna, scope, hook) e a migration antiga, que roda de novo em banco novo, quebra ou
+  faz outra coisa (achado do academy, 2026-11-09).
 - **Tabela criada na branch tem a forma inteira numa migration só**: antes do merge, corrige-se a
   migration da branch em vez de empilhar migrations corretivas da mesma tabela.
 - **A virada é o primeiro dado real** (`DECISIONS.md` #297). Enquanto nenhum banco guarda dado que
@@ -1221,7 +1272,15 @@ uso é a skill `maiyu-node`. Decisões #215 a #223.
      que é o que a página manda (_doc-lib/adonisjs.md#guides/security/hashing). Projeto que já tem
      hash em `scrypt` mantém esse driver no `list` até todo hash ser refeito: `hash.verify` não
      reconhece o algoritmo do hash gravado, e o login refaz o hash quando `hash.needsReHash` diz que
-     ele está velho.
+     ele está velho. Durante a migração, o hasher que verifica é escolhido pelo que o hash declara
+     (`hash.use('scrypt').isValidHash(hash)`, a forma da página em "Migrating between algorithms").
+     Com `withAuthFinder`, que recebe um hasher só, o model recebe um driver composto em
+     `app/core/legacy-aware-hash-driver.ts`, que grava no algoritmo novo e devolve `needsReHash`
+     verdadeiro para o legado. O rehash fica no use-case do sign-in, depois da credencial e de a
+     conta poder abrir sessão, por método do repository com escrita condicional (`WHERE password =
+     <lido>`) que devolve `Either`; falha no rehash é logada e não recusa o login (exceção nomeada ao
+     §4.2: é efeito que tolera perda). O driver composto sai quando o último hash legado for refeito
+     (`DECISIONS.md` #370).
    - Fastify: `crypto.argon2` da stdlib (Node 24.7 ou maior), variante `argon2id`, `nonce` de
      `randomBytes(16)` e os parâmetros gravados junto do hash, para poder subir o custo sem
      invalidar senha antiga; comparação por `crypto.timingSafeEqual`; um service injetável
@@ -1460,7 +1519,7 @@ a página do Fastify consultada só documenta IP/CIDR, então o uso das palavras
 | Nome | App | Obrigatória | Segredo | Significado |
 |---|---|---|---|---|
 | `COOKIE_DOMAIN` | api | em produção com web e API em hosts irmãos | não | `Domain` do cookie de sessão; o domínio pai que cobre os dois hosts (`.exemplo.com.br` para `app.exemplo.com.br` e `api.exemplo.com.br`); sem ela o SSR do frontend não vê a sessão (§4.10) |
-| `CORS_ORIGINS` | api | fora de dev | não | origens do navegador aceitas, separadas por vírgula, nunca `*`; ausente fora de dev recusa todo cross-origin |
+| `CORS_ORIGINS` | api | sim, em todo ambiente | não | origens do navegador aceitas, separadas por vírgula, nunca `*`; a barreira de origem recusa escrita de origem fora da lista também em dev (#353), e vazia em produção derruba o boot |
 
 **`# Database`**
 
@@ -1478,6 +1537,7 @@ unitário, `DRIVE_DISK` escolhe o disco, `supportsACL: false` no R2; `DECISIONS.
 | `STORAGE_KEY` | api | sim | sim | chave de acesso; no MinIO local, o usuário de escopo mínimo, nunca o root |
 | `STORAGE_SECRET` | api | sim | sim | segredo de acesso |
 | `STORAGE_BUCKET` | api | sim | não | nome do bucket, privado |
+| `DRIVE_DISK` | api | sim | não | disco do `config/drive.ts`: `s3` em produção (R2, S3) e em dev e e2e (MinIO), porque o upload multipart presignado só existe no S3 (o unitário usa `drive.fake()`, §7); `fs` só para rodar sem MinIO, sem upload; sem default, porque um `fs` esquecido em produção grava no container e some no próximo deploy |
 | `STORAGE_ENDPOINT` | api | sim | não | endpoint S3-compatível |
 | `STORAGE_FORCE_PATH_STYLE` | api | não | não | `true` só para MinIO; em R2, S3 e Spaces fica ausente |
 
@@ -1726,7 +1786,7 @@ abaixo diz o que cada script do backend reprova.
 | `typecheck` | `tsc --noEmit` |
 | `openapi:check` | `openapi:generate --check --strict`: documento desatualizado, ou operação sem resposta descrita |
 | `pattern:check` | o que o ESLint não alcança porque depende de *onde* o arquivo está: a árvore inteira de `architecture.md` §6; nomes derivados do caminho (§3); camada que importa outra (§1.3); `@vinejs/vine` e subpaths fora do `vine` configurado do Adonis; validator do Adonis sem par no `shared/`; spread de corpo cru em controller (§4.1); `throw` e `*OrFail()` em use-case e repository; `actor` com outro nome; policy fora do mecanismo do framework e `BOUNCER_REQUIRED` (§4.6); filtro de `deletedAt` fora do model, inclusive qualificado (§4.8); `_shared` com I/O (§4.9); diretórios obrigatórios; as checagens de ENV (§6) |
-| `authz:check` | mudança na cadeia de autorização de qualquer rota, e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json` |
+| `authz:check` | mudança na cadeia de autorização de qualquer rota, e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json`; a proteção sai como `anonymous`, `authenticated` ou os papéis, e o `public-routes.unit.spec.ts` lê o mesmo rótulo contra a lista do projeto em `app/core/openapi/public-routes.ts` (escrita anônima por desenho e prefixo público só de leitura) |
 | `test:unit` | a suíte `unit`, sem banco |
 | `di:check` | constrói todo service, repository e policy pelo container e reprova o que não sobe; **reprova também se encontrar zero alvos** (varredura vazia é guard que não guarda) |
 

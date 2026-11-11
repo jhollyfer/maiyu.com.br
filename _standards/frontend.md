@@ -226,7 +226,7 @@ Duas ou mais rotas leem: `lib/<tema>-search.ts`. Lista do painel usa a fábrica 
 `lib/list-search.ts`: `listValidateSearch(schema)` e `LIST_SEARCH_DEFAULTS`, que lê os tetos
 (`page ≥ 1`, `perPage ≤ 100`) do validator de `@<projeto>/shared` em vez de redigitá-los, e
 `stripSearchParams` tira o default da URL; `withExtra` sai. O `-search.ts` exporta `validateSearch`
-e `to<Recurso>Params`, que converte a busca da URL nos parâmetros da API (`DECISIONS.md` #347). _doc-lib/tanstack-router.md#how-to/validate-search-params.
+e `to<Recurso>Params`, que converte a busca da URL nos parâmetros da API (`DECISIONS.md` #347). O tipo da busca do recurso mora nesse `-search.ts`, como `z.output` do validator de `@<projeto>/shared`, com o filtro no enum do domínio e nunca `string`; `lib/list-search.ts` guarda só os genéricos (`ListSearch`, `StorefrontSearch`) e o `compactQuery`, que tira o filtro em branco antes do `query` do cliente. _doc-lib/tanstack-router.md#how-to/validate-search-params, #guide/search-params.
 
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
@@ -247,6 +247,13 @@ _doc-lib/socket-io.md; _doc-lib/tanstack-query.md#guides/polling.
 
 **SSE** (Transmit no Adonis): `hooks/use-channel.ts` genérico e um hook fino por canal, com a
 mesma regra de limpar ao desmontar (`DECISIONS.md` #351).
+O estado inicial se relê **depois** que a assinatura (ou a reassinatura) completa, com o
+`subscription.create()` resolvido, nunca antes nem no evento `connected` do cliente, que dispara antes
+do `forceCreate()` da reconexão: mensagem publicada na janela entre a leitura e a assinatura se perde,
+porque o Transmit não reenvia a quem assina depois. Mensagem que chega antes da releitura fica em buffer
+e é aplicada depois dela. Assinatura recusada religa o polling. Toda espera por `onSubscription` ou
+`onSubscribeFailed` tem teto nomeado: o `transmit-client` 1.1.0 engole a queda de rede no POST de
+reassinatura (`catch {}`) sem chamar nenhum dos dois (achado do academy, live-session, 2026-11-09).
 
 ### 2.2 Leitura sem cascata
 
@@ -511,6 +518,10 @@ _doc-lib/tanstack-query.md#guides/important-defaults; _doc-lib/tanstack-start.md
   your own notFound errors", aberta: a doc recomenda lançar no loader e não no componente). O status
   404 do SSR com isso foi conferido pelo E2E do academy (§11.2); a página do Start sobre o status:
   não conferida.
+  **Layout sem página própria** também casa a URL exata (`/administrator`, `/owner`) e desenha o painel
+  vazio com 200. Todo layout tem `index.tsx`: ou uma página real, ou o índice que leva à primeira aba
+  (permitido pela #383, `backend.md` §2), ou um `loader` que lança `notFound()`, como o `$.tsx`. Nunca o
+  layout sem índice (achado do aporta, conferido com `matchRoutes` sobre o `routeTree` gerado).
 - **Mapa de status para a tela** *(opinião da casa)*: 401 → login; 403 do portão ou do guard de
   área → redirect (§1.3); 403 da API dentro de uma tela → `AccessDenied` (`DECISIONS.md` #333);
   404 → não encontrado, 422 → campo (§4), 429 → aguarde, 5xx e rede → genérico com "tentar de
@@ -1133,9 +1144,10 @@ _doc-lib/tanstack-start.md#guide/seo). O formato é da casa (`DECISIONS.md` #47)
   `localizeUrl(canonical, { locale }).href` do Paraglide: a função recebe URL absoluta (string ou
   `URL`) e devolve sempre `URL` absoluta, por isso o `.href` (_doc-lib/paraglide.md#/runtime;
   `i18n.md` §2);
-- **barra no fim**: página interna sem barra (`https://x.com/tracks`, `https://x.com/es`), e a raiz
-  do idioma sem prefixo **com** a barra (`https://x.com/`), que é a forma que a `URL` serializa a
-  origem (`DECISIONS.md` #306; WHATWG URL sem entrada em `_doc-lib`: não coberto). Canonical,
+- **barra no fim**: nenhuma URL pública termina em barra (`https://x.com/pt-br/tracks`,
+  `https://x.com/pt-br`, `https://x.com/es`): todo idioma tem prefixo (#384), e a raiz exata de
+  `urlPatterns` gera a raiz do idioma sem barra (_doc-lib/paraglide.md#/i18n-routing; `DECISIONS.md`
+  #306). O `x-default` aponta para `/pt-br`. Canonical,
   hreflang e sitemap saem da mesma função, com teste da raiz nos três idiomas: no academy, a
   função tirava a barra de tudo, e o `hreflang` da raiz divergia do endereço que o navegador e o
   buscador leem;
@@ -1199,6 +1211,12 @@ com `contain-intrinsic-size` antes. _doc-lib/tanstack-table.md#framework/react/g
   de 200 KB gzip. Diagnóstico por `vite-bundle-visualizer` sob demanda, sem virar dependência.
 - Projeto com vitrine pode rodar o Lighthouse na rodada antes do PR contra duas ou três URLs
   públicas (mobile, mediana de 3), pelo CLI, sem workflow (`tooling.md` §7).
+- **Método de medida no laboratório** *(opinião da casa, #382)*, para comparar antes e depois de uma
+  mudança, sempre na mesma máquina e no build de produção: TTFB por `curl`, 20 requisições por rota,
+  mediana e p90, descartando a primeira; LCP por `PerformanceObserver` no Playwright, 5 cargas frias por
+  rota nas larguras 390 e 1440, mediana; JS inicial é o que a rede baixa até o `load`, em gzip, sem o
+  prefetch de link. O número vai no corpo do PR com a máquina e o que estava mockado (fonte, imagem
+  externa). Laboratório compara; a meta de p75 de campo acima só se confere em produção.
 
 ---
 

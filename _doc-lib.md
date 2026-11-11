@@ -48,7 +48,7 @@ O objetivo é escolher o link certo sem visitar os outros 2737.
 | **Japa**             | [`_doc-lib/japa.md`](_doc-lib/japa.md)                             | Runner de teste do Adonis: suítes unit/functional, api-client, hooks, datasets, pin |   27  |
 | **Node.js 24**       | [`_doc-lib/nodejs.md`](_doc-lib/nodejs.md)                         | O runtime: erro, sinal, timeout, stream, contexto, crypto, processo filho, ESM, flags |   37  |
 | **OpenTimestamps**   | [`_doc-lib/opentimestamps.md`](_doc-lib/opentimestamps.md)         | Carimbo do tempo no Bitcoin; sem site de doc, a página descreve a API instalada        |    0  |
-| **PostgreSQL** | [`_doc-lib/postgresql.md`](_doc-lib/postgresql.md) | pg_dump, restore, banco template por worker de teste | 7 |
+| **PostgreSQL** | [`_doc-lib/postgresql.md`](_doc-lib/postgresql.md) | pg_dump, restore, banco template por worker de teste, EXPLAIN e índices | 12 |
 | **ioredis** | [`_doc-lib/ioredis.md`](_doc-lib/ioredis.md) | Cliente Redis do BullMQ e do limiter; TLS, retry e fila offline | 10 |
 | **argon2** | [`_doc-lib/argon2.md`](_doc-lib/argon2.md) | Hash de senha Argon2 (argon2id) e os parâmetros | 6 |
 | **AWS SDK S3** | [`_doc-lib/aws-sdk-s3.md`](_doc-lib/aws-sdk-s3.md) | S3 e R2 em produção: cliente, URL pré-assinada, multipart | 7 |

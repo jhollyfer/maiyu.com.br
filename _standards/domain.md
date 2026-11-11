@@ -117,6 +117,14 @@ Quando a mesma tradução serve a várias ações do recurso, ela sobe para
 `features/<módulo>/<recurso>/_shared.<recurso>-refusal.ts` (`DECISIONS.md` #113, C6). A mensagem
 sai pela chave i18n (`i18n.md`); o `code` é o contrato.
 
+Refusal só traduz fato de domínio, o `{ code }` da união de `<e>.errors.ts`. Recusa sem fato (registro
+não encontrado, credencial inválida, sessão ausente) é `left(HTTPException.<X>(...))` escrito no
+use-case, como o `sign-in` do kit; método de atalho no refusal (`notFound()`, `alreadyExists()`) é
+desvio. Conta da sessão que sumiu entre o guard e a leitura responde 401 `AUTHENTICATION_REQUIRED`,
+não 500 nem 404. Falha de infraestrutura vira 500 com o código do use-case em três lugares: o `catch`,
+o `Left` de repository ou de serviço externo (bucket, multipart, e-mail) e o recurso que não foi
+emitido (token, URL assinada); fora deles, 500 no use-case é desvio.
+
 **Falha que precisa sobreviver à requisição** (entrega, sincronização, cobrança que falhou) não é
 só um `left`: fica registrada no próprio registro (`failedAt`, `failureCode`), consultável e
 reprocessável. O `left` responde à requisição; o registro responde a quem vai reprocessar.

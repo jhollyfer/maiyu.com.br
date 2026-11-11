@@ -28,7 +28,7 @@ Application (API)
                     pnpm-lock.yaml
   Auto deploy       Deploy on push (webhooks)        (Advanced > Deployment)
   Pre-deployment    (vazio)
-  Post-deployment   node ace migration:run --force && node ace db:seed --force
+  Post-deployment   node ace migration:run --force && node ace db:seed
   Healthcheck       HEALTHCHECK do Dockerfile-production, /health-check
 ```
 

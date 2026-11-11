@@ -118,7 +118,7 @@ ordem entre projetos.
 | 2 | `hash.verify` importado nos use-cases (4) vira `PasswordContract`; `origin.middleware` sem `#start/env` (config); `features/authentication/session` para `sessions` | M |
 | 2 | `scripts/depcruise-resolve.mjs` para `scripts/depcruise.config.ts` | P |
 | 3 | 43 `common/*/index.ts` e 7 de `-components/` saem; kit inteiro (table, confirm-dialog, form-shell, page-shell sem `borderBottom`, empty-state com `reason`, image-field com upload por prop, option-combobox compound, filters, row-actions, bulk-archive, route-status, theme; `copy-id-menu-item` some; `currency-input` e `basis-points-input` viram `FieldMask` ou `FieldNumber`, #325); telas: 20 `table.tsx`, 15 `form-edit`, 12 `form-create`, 19 `row-actions`, 12 `bulk-actions` | G |
-| 3 | `invalidate.ts`; `new.tsx` só onde há loader (#356); `routes/{artesao.$slug,organizacao.$slug,carrinho,authentication.*}.ts` viram server routes de redirect em `_public/`; `routes/-theme.ts` para `integrations/theme/get-theme.ts`; `router-register.d.ts` e `query-register.d.ts` para `router.tsx` e `http.ts`; `lib/interfaces.ts` e `lib/async-handler.ts` redistribuídos; `http.ts:185`; usar o `_schema` que hoje é ignorado (`http.ts:524-532`) | M |
+| 3 | `invalidate.ts`; `new.tsx` só onde há loader (#356); `routes/{artesao.$slug,organizacao.$slug,carrinho,authentication.*}.ts` e `lib/moved-url.ts` saem, sem redirect (#383: o caminho antigo dá 404); `routes/-theme.ts` para `integrations/theme/get-theme.ts`; `router-register.d.ts` e `query-register.d.ts` para `router.tsx` e `http.ts`; `lib/interfaces.ts` e `lib/async-handler.ts` redistribuídos; `http.ts:185`; usar o `_schema` que hoje é ignorado (`http.ts:524-532`) | M |
 | 4 | `tsr.config.json` sai; `paraglide.config.ts`; `.env.production`; `.env.example` (back e front) pelo modelo; `.github/workflows/` (10) e secrets saem; `docs/ARCHITECTURE.md` atualizado; e2e com três viewports, `touch-targets`, `responsive`, `pages`; `afterEach(cleanup)` nos 13 `.test.tsx` | M |
 
 ### Versões — simple-hub
@@ -394,6 +394,19 @@ manganga, matiscraft. Passa ao próximo só com `sync-to-project.mjs <dir> --che
 limpo no anterior, `pnpm check` verde, suítes pesadas uma vez antes do PR e deploy com healthcheck
 verde.
 
+## Todos os projetos: rótulo de campo e teto de lista saem do kit
+
+O `shared/src/validator.ts` e o `resources/lang/<l>/validator.json` do kit passam a ter só os
+rótulos que o próprio kit valida (sessão, storage, usuário, listagem), e `LIST_LIMITS` sai dos dois
+`validator.ts`. O sync seguinte sobrescreve os dois arquivos: o rótulo de recurso e o teto de lista
+que o projeto tinha ali somem no mesmo passo, e o typecheck quebra onde `LIST_LIMITS` era importado.
+
+| Hoje | Vira | Como |
+|---|---|---|
+| rótulo de recurso (`title`, `tags`, `coverId`...) em `FIELD_LABELS` do `shared/src/validator.ts` | `PROJECT_FIELD_LABELS` em `shared/src/records/field-labels.ts` (KIT.md §3.4) | o sync cria o arquivo vazio quando falta; antes do sync, copiar para ele as chaves que não são do kit, nos três idiomas |
+| o mesmo rótulo em `shared.fields` do `resources/lang/<l>/validator.json` | `resources/lang/<l>/validator/shared/fields.json`, só as chaves do projeto, sem o prefixo | o `lang.unit.spec.ts` acusa a chave do shared que falta no backend |
+| `LIST_LIMITS` em `shared/src/validator.ts` e em `backend/app/core/validator.ts` | `LIST_LIMITS` em `shared/src/records/list-limits.ts`, uma cópia, importada de `@<projeto>/shared` pelos dois lados | trocar o import nos validators que o usam; projeto sem lista com teto não cria o arquivo |
+
 ---
 
 ## curupira
@@ -454,7 +467,7 @@ a régua já provada.
 | 0 | `password` fora das respostas (S3, SEC-2); `PermissionMiddleware` nega sem usuário (S4); upload e delete com sessão e posse (S5); IDOR (S6); listagem pública só de aprovados, com DTO (S7); rascunho filtrado (S8); upload com allowlist e sem SVG inline (SEC-1); `rehypeRaw` sai da vitrine (XSS) | M |
 | 0 | QueryClient por requisição (S9); guard de papel no front (S10); rate limit registrado com `trustProxy` (S11, SEC-7); helmet (SEC-8); enumeração (S12, SEC-3, SEC-4); cookie `maxAge` e sign-out (S13, S14); seeder de faker com guarda (SEC-9); tetos (SEC-10, SEC-16); doc fora de produção (SEC-17) | M |
 | 1 | Adonis 7, Lucid, VineJS, `@adonisjs/auth` e Argon2 (rehash ou reset); front: Radix (26) para Base UI, axios para o `request()` sobre Tuyau (#324), zustand sai, `react-markdown` para o renderer estático do Tiptap com o dado migrado para JSON, `jsonwebtoken`, `@modelcontextprotocol/sdk`, `@t3-oss/env-core`, `next-themes` e `vite-tsconfig-paths` saem, i18n para Paraglide | G |
-| 2 | `application/` para `app/`; `resources/<m>/<r>/<a>/` para `features/<m>/<r>/<a>/`, toda ação com módulo; 69 `.schema.ts` para `app/validators/` (Vine) com o Zod no shared, deduplicados (approve x6, `SectionSchema` x5); 76 `.doc.ts` para `defineDocs`; `repositories/<e>-repository/*` para `repositories/<e>/*` com spec de contrato; `domain/` a partir de `core/entities.ts`; migrations a partir do `schema.prisma`; seeders para `database/seeders/` e `dev/demo.ts`; `services/email` para `services/mail`; presenters (#315) | G |
+| 2 | `application/` para `app/`; `resources/<m>/<r>/<a>/` para `features/<m>/<r>/<a>/`, toda ação com módulo; 69 `.schema.ts` para `app/validators/` (Vine) com o Zod no shared, deduplicados (approve x6, `SectionSchema` x5); 76 `.doc.ts` para `OpenApiDocs.defineDocs`; `repositories/<e>-repository/*` para `repositories/<e>/*` com spec de contrato; `domain/` a partir de `core/entities.ts`; migrations a partir do `schema.prisma`; seeders para `database/seeders/` e `dev/demo.ts`; `services/email` para `services/mail`; presenters (#315) | G |
 | 3 | `common/` reescrito no kit (36 soltos); front refeito por rota (par `.lazy`, `-components/`, layouts de área, `start.ts`, `server.ts`, `http.ts`, `invalidate.ts`); `dialog-*-report.tsx` e `edit-*-profile-sheet.tsx` ficam como domínio sobre o kit; PDF no servidor | G |
 | 4 | `package.json` na raiz (o sync não roda sem); pnpm no lugar de `package-lock.json`; `Dockerfile-production`, `prettier.config.js`, `vitest.config.ts`, `check-chunk-cycles.mjs`; `e2e/` inteiro; `.cta.json`, `.vscode/`, `.prettierrc` e `dockerfile-development` saem; 7 workflows saem | G |
 
