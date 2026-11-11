@@ -7,8 +7,9 @@
 > leitor de ENV (`_standards/backend.md` §6, `backend-fastify.md` §7); este arquivo explica.
 
 O `backend/` (API AdonisJS, `ARCHITECTURE.md` §1) lê as chaves do `backend/.env.example`, validadas no
-boot por `backend/start/env.ts`; a seção 1.1 diz cada uma. O frontend ainda não lê **nenhuma** variável
-de ambiente em tempo de execução (`import.meta.env.DEV` é o único acesso, e é flag do Vite). O
+boot por `backend/start/env.ts`; a seção 1.1 diz cada uma. O frontend lê `VITE_API_URL`, `VITE_SITE_URL`
+e `VITE_UPLOAD_MAX_SIZE` no build (`src/env.ts`) e `SITE_ENV`, `SERVER_API_URL`, `STORAGE_PUBLIC_URL` e
+`SECURITY_CONTACT` por requisição no servidor (`src/lib/server-env.ts`, `src/server.ts`). O
 `frontend/.env.example` é o modelo fechado da casa e traz chaves que o site ainda não usa
 (`DECISIONS.md` #9); a seção 1.2 diz, chave a chave, o que vale aqui.
 
@@ -61,7 +62,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 | `VITE_API_URL` | web | sim, no build | não | raiz da API que o `request()` do kit chama; o `build-env.ts` do kit recusa o build sem ela. Em produção está **pendente da decisão do dono** (domínio público da API), e a linha de `frontend/.env.production` fica comentada até lá; o site ainda não chama a API | `http://localhost:3333` |
 | `SERVER_API_URL` | web | não | não | endereço da API visto pelo SSR; sem uso aqui | `http://api:3333` |
 | `VITE_SITE_URL` | web | sim, no build | não | origem pública do site, sem barra no fim: canônico, hreflang, sitemap, `robots.txt` e JSON-LD; `SITE_URL` de `lib/site.ts` lê dela. Produção em `frontend/.env.production` (`https://maiyu.com.br`) | `http://localhost:3000` |
-| `SITE_ENV` | web | não | não | lida a cada requisição pelo `server.ts`: só `production` é indexável, o resto responde `noindex` e `Disallow: /` | `development` |
+| `SITE_ENV` | web | sim em produção | não | onde o site roda, lida pelo `server.ts` a cada requisição; só `production` deixa indexar, ausente ou outro valor responde `X-Robots-Tag: noindex, nofollow` e `Disallow: /` | `development` |
 | `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
@@ -100,7 +101,7 @@ CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHU
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
 | Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `maiyu_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
-| Produção | painel do Coolify, um recurso por app | API: as de runtime da seção 1.1, nunca no repositório; o site ainda sem variável de aplicação |
+| Produção | painel do Coolify, um recurso por app | API: as de runtime da seção 1.1, nunca no repositório; site: `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores); healthcheck e porta também ficam no painel |
 
 ## 5. Primeira configuração
 
