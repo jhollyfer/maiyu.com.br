@@ -1,0 +1,23 @@
+[
+  {
+    "file": "backend/app/features/account/profile/update/update.use-case.ts",
+    "old": "await this.unitOfWork.run(() => this.users.save(user))",
+    "new": "await this.users.save(user)",
+    "proof": "cd backend && node ace test unit --files=app/features/account/profile/update/update.unit.spec.ts && node ace test functional --files=app/features/account/profile/update/update.e2e.spec.ts",
+    "label": "save + revokeAll fora da unidade de trabalho no use case"
+  },
+  {
+    "file": "backend/app/features/account/profile/update/update.use-case.ts",
+    "old": "currentPassword !== undefined &&\n        (await LegacyAwareHashDriver",
+    "new": "currentPassword !== undefined &&\n        (patch.password === undefined || await LegacyAwareHashDriver",
+    "proof": "cd backend && node ace test unit --files=app/features/account/profile/update/update.unit.spec.ts && node ace test functional --files=app/features/account/profile/update/update.e2e.spec.ts",
+    "label": "troca de e-mail sem conferir o hash de currentPassword"
+  },
+  {
+    "file": "backend/app/features/account/profile/update/update.controller.ts",
+    "old": "if (result.value.sessionsRevoked) SessionCookie.clear(context.response)",
+    "new": "SessionCookie.clear(context.response)",
+    "proof": "cd backend && node ace test functional --files=app/features/account/profile/update/update.e2e.spec.ts",
+    "label": "200 limpa os cookies mesmo com o e-mail igual (sessao do navegador cai)"
+  }
+]
