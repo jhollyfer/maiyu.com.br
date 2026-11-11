@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em ac4edd2) | 7 de 47 itens | Em desenvolvimento |
+| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -25,7 +25,7 @@ modelo, `frontend/.vscode/` fora do índice). O R0.1 (cabeçalhos de segurança)
 `fix/seguranca-cabecalhos` e está bloqueado por R1.4 (o Zod), porque a CSP recusa o VineJS no navegador.
 
 Frente do backend (R1.2 e RB.1 a RB.4) feita na branch `feat/backend-inicial`, com a leva 8 do kit
-(`maiyu-pattern` em ac4edd2): `shared/` e `backend/` verdes em format, lint, tsc, `pattern:check`,
+(`maiyu-pattern` em 1a9a636): `shared/` e `backend/` verdes em format, lint, tsc, `pattern:check`,
 `validators:check`, `openapi:check` e `authz:check`; `shared/` com 62 testes, backend com unitário 233
 de 233 e funcional 143 de 143. Os pontos de extensão nunca editados foram apagados e recriados pelo
 sync, e a migration de `users` segue a do kit (papéis `ADMINISTRATOR` e `MEMBER`). A funcional de

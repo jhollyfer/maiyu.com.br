@@ -91,7 +91,8 @@ export class PatternRules {
       section: 'architecture.md §3 (DECISIONS.md #319)',
       message:
         'no `index.ts`: import the exact file; a barrel defeats tree shaking and hides cycles',
-      scope: /^(backend\/app|frontend\/src)\/(.+\/)?index\.tsx?$/,
+      // `routes/**/index.tsx` is a route file (TanStack file routing, architecture.md tree), not a barrel.
+      scope: /^(backend\/app\/|frontend\/src\/(?!routes\/))(.+\/)?index\.tsx?$/,
       lines: () => [1],
     },
     {

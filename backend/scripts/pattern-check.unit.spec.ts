@@ -30,6 +30,10 @@ test.group('pattern:check > catalog', () => {
       ['index-barrel'],
     )
     assert.deepEqual(rules([{ path: 'shared/src/index.ts', text: '' }]), [])
+    assert.deepEqual(
+      rules([{ path: 'frontend/src/routes/_public/index.tsx', text: '' }]),
+      [],
+    )
   })
 
   test('shared/ importing VineJS is refused', ({ assert }) => {
