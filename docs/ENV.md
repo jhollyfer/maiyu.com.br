@@ -59,7 +59,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 
 | Variável | App | Obrigatória | Segredo | O que é | Exemplo |
 |---|---|---|---|---|---|
-| `VITE_API_URL` | web | sim, no build | não | raiz da API que o `request()` do kit chama; o `build-env.ts` do kit recusa o build sem ela. Em produção está **pendente da decisão do dono** (domínio público da API), e a linha de `frontend/.env.production` fica comentada até lá; o site ainda não chama a API | `http://localhost:3333` |
+| `VITE_API_URL` | web | sim, no build | não | raiz da API que o `request()` do kit chama; o `build-env.ts` do kit recusa o build sem ela. Em produção é `https://api.maiyu.com.br` (decisão do dono, 2026-11-11), em `frontend/.env.production`; o site ainda não chama a API | `http://localhost:3333` |
 | `SERVER_API_URL` | web | não | não | endereço da API visto pelo SSR; sem uso aqui | `http://api:3333` |
 | `VITE_SITE_URL` | web | sim, no build | não | origem pública do site, sem barra no fim: canônico, hreflang, sitemap, `robots.txt` e JSON-LD; `SITE_URL` de `lib/site.ts` lê dela. Produção em `frontend/.env.production` (`https://maiyu.com.br`) | `http://localhost:3000` |
 | `SITE_ENV` | web | sim em produção | não | onde o site roda, lida pelo `server.ts` a cada requisição; só `production` deixa indexar, ausente ou outro valor responde `X-Robots-Tag: noindex, nofollow` e `Disallow: /` | `development` |

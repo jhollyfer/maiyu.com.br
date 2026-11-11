@@ -144,7 +144,7 @@ conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Pap�
 | Desenvolvimento | site http://localhost:3000, API http://localhost:3333 | máquina local (`pnpm dev`) | Postgres do `backend/docker-compose.yml` na porta 5440 | não se aplica |
 | Preview / Homologação | Não se aplica | | | |
 | Produção | https://maiyu.com.br | Coolify, imagem Nitro na porta 3000 | não se aplica | push na `main` dispara o workflow |
-| Produção (API) | ainda sem recurso no Coolify: endereço a definir pelo dono | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
+| Produção (API) | `https://api.maiyu.com.br` (decisão do dono, 2026-11-11); recurso no Coolify a criar, com `CORS_ORIGINS=https://maiyu.com.br` | Coolify, `backend/Dockerfile-production` na porta 3333 | Postgres do Coolify na rede interna | *Auto Deploy* do recurso, `_standards/tooling.md` §8.3 |
 
 Health check: `GET /health-check` (resposta `{ "status": "ok" }`, `no-store`), o nome exato que a
 régua exige em todo frontend, sem alias (`_standards/DECISIONS.md` #184, `DECISIONS.md` #15).
