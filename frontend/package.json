@@ -6,19 +6,21 @@
     "#/*": "./src/*"
   },
   "scripts": {
+    "build:deps": "pnpm --filter \"{.}^...\" build",
     "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --silent",
     "i18n:check": "inlang check --project ./project.inlang --source ./src",
     "dev": "vite dev --host --port 3000",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "vitest run",
     "test:unit": "pnpm i18n:compile && vitest run",
+    "test:e2e": "playwright test --config e2e/playwright.config.ts",
+    "test:changed": "pnpm i18n:compile && vitest run --changed origin/main && playwright test --config e2e/playwright.config.ts --only-changed=origin/main",
     "typecheck": "tsc --noEmit",
     "check-cycles": "node scripts/check-chunk-cycles.mjs",
     "lint": "eslint",
     "format": "prettier --write . && eslint --fix",
     "format:check": "prettier --check .",
-    "check": "pnpm i18n:compile && pnpm i18n:check && pnpm lint && pnpm typecheck && pnpm format:check"
+    "check": "pnpm build:deps && pnpm i18n:compile && pnpm i18n:check && pnpm lint && pnpm typecheck && pnpm format:check && pnpm test:unit"
   },
   "dependencies": {
     "@base-ui/react": "1.9.0",

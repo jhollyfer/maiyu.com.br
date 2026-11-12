@@ -1,44 +1,49 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { NotFoundPage } from '#/components/common/route-status/not-found-page'
-import { SITE_TITLE } from '#/lib/site'
+import { pageHead } from '#/lib/page-head'
 import { m } from '#/paraglide/messages'
 
-/** A tela do endereço que não existe, dentro da casca pública. */
+/** The screen for the address that does not exist, inside the public shell. */
 function NotFound(): React.JSX.Element {
   return <NotFoundPage className="min-h-[80dvh]" />
 }
 
 /**
- * O endereço público que não existe.
+ * The public address that does not exist.
  *
- * O `defaultNotFoundComponent` do `router.tsx` desenha a mesma tela, e desenha
- * **fora** de qualquer casca: um endereço que não casa com rota nenhuma nunca
- * chega ao `_public`, e quem erra o endereço ficaria sem menu e sem rodapé.
- * Esta rota-curinga traz a tela para dentro da casca.
+ * The `defaultNotFoundComponent` of `router.tsx` draws the same screen, and draws it **outside**
+ * any shell: an address that matches no route never reaches `_public`, and whoever mistypes the
+ * address would be left without a menu and a footer. This catch-all route brings the screen
+ * inside the shell.
  *
- * O `loader` lança `notFound()` em vez de desenhar a tela como `component`:
- * desenhada como página comum, a rota casava e o SSR respondia **200** para
- * qualquer endereço inventado (soft 404), e buscador, monitor e proxy liam
- * sucesso. Com o `notFound()` o roteador responde 404 e desenha o
- * `notFoundComponent` desta mesma rota, como o `blog/$slug` já fazia
+ * The `loader` throws `notFound()` instead of drawing the screen as a `component`: drawn as a
+ * common page, the route matched and SSR answered **200** for any made-up address (soft 404), and
+ * the search engine, monitor and proxy read success. With `notFound()` the router answers 404 and
+ * draws this same route's `notFoundComponent`, as `blog/$slug` already did
  * (_doc-lib/tanstack-router.md#guide/not-found-errors).
  *
- * **Sem arquivo `.lazy`, e é decisão**, como no academy: dividi-la custaria
- * uma ida ao servidor para carregar seis linhas.
+ * **No `.lazy` file, and it is a decision**, as in academy: splitting it would cost a trip to the
+ * server to load six lines.
  *
- * `noindex` continua: o status já diz que o endereço não existe, e a meta
- * cobre o rastreador que ignora o status.
+ * `noindex` stays: the status already says the address does not exist, and the meta covers the
+ * crawler that ignores the status.
  */
 export const Route = createFileRoute('/_public/$')({
   loader: () => {
     throw notFound()
   },
-  head: () => ({
-    meta: [
-      { title: `${m.kit_not_found_title()} · ${SITE_TITLE}` },
-      { name: 'robots', content: 'noindex' },
-    ],
-  }),
+  // Title, `robots` and canonical come from `pageHead` as on every public route (`frontend.md` §9.7):
+  // by hand the separator diverged (`·`) and `robots` was left without the `nofollow`.
+  head: ({ params }) => {
+    let splat = ''
+    if (params._splat) splat = params._splat
+
+    return pageHead({
+      pathname: '/'.concat(splat),
+      title: m.kit_not_found_title(),
+      noindex: true,
+    })
+  },
   notFoundComponent: NotFound,
 })

@@ -1,15 +1,15 @@
 import * as React from 'react'
 
 /**
- * Se a página já rolou além de `offset`.
+ * Whether the page has already scrolled past `offset`.
  *
- * O mesmo hook do simple-hub, e pelo mesmo motivo: o cabeçalho só ganha fundo,
- * aro e sombra depois que há conteúdo passando por baixo dele. No topo ele é
- * transparente e deixa o céu do hero inteiro à vista.
+ * The same hook as simple-hub's, and for the same reason: the header only gains a background,
+ * ring and shadow once there is content passing underneath it. At the top it is
+ * transparent and leaves the hero's sky fully in view.
  *
- * `useSyncExternalStore` e não `useState` + `useEffect`: o snapshot do
- * servidor é `false` explicitamente, e é o que evita o primeiro quadro com o
- * fundo desenhado antes de o navegador saber onde a página está.
+ * `useSyncExternalStore` and not `useState` + `useEffect`: the server snapshot is
+ * explicitly `false`, and that is what avoids the first frame with the
+ * background drawn before the browser knows where the page is.
  */
 export function useScrolled(offset: number): boolean {
   const subscribe = React.useCallback((listener: () => void) => {

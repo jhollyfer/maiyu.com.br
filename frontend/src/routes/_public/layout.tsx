@@ -7,26 +7,26 @@ import { Footer } from './-components/footer'
 import { Header } from './-components/header'
 
 /**
- * O site.
+ * The site.
  *
- * Sem guard nenhum, e não por esquecimento: é a vitrine inteira, e não há área
- * autenticada neste projeto. A casca (cabeçalho, conteúdo, rodapé) mora aqui e
- * não no `__root.tsx` para que o 404 e o erro do router, que não passam por
- * este layout, desenhem a tela sozinha e sem menu quebrado.
+ * No guard at all, and not by oversight: it is the whole storefront, and there is no
+ * authenticated area in this project. The shell (header, content, footer) lives here and
+ * not in `__root.tsx` so that the 404 and the router's error, which do not go through
+ * this layout, draw the screen on their own and without a broken menu.
  */
 export const Route = createFileRoute('/_public')({
   component: RouteComponent,
 })
 
-/** O alvo do "pular para o conteúdo". */
+/** The target of the "skip to content" link. */
 const MAIN_ID = 'conteudo'
 
 function RouteComponent(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/*
-        Primeiro elemento focável da página. `sr-only` com `focus:not-sr-only`
-        e não `display: none`: escondido de verdade o link não receberia foco.
+        The first focusable element on the page. `sr-only` with `focus:not-sr-only`
+        and not `display: none`: truly hidden, the link would not receive focus.
       */}
       <a
         href={'#'.concat(MAIN_ID)}

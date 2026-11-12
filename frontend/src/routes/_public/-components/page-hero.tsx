@@ -5,26 +5,26 @@ import { cn } from '#/lib/utils'
 import { REVEAL } from './reveal'
 
 type PageHeroProps = {
-  /** O `h1` da página. */
+  /** The page's `h1`. */
   title: React.ReactNode
-  /** A frase sob o título. */
+  /** The phrase under the title. */
   lead?: string
-  /** O que vem depois do texto: pílula de categoria, ações. */
+  /** What comes after the text: category pill, actions. */
   children?: React.ReactNode
 }
 
 /**
- * A capa editorial das páginas internas: título grande à
- * esquerda, a frase de apoio e o trançado como fio de base.
+ * The editorial cover of the inner pages: a large title on the
+ * left, the supporting phrase and the weave as a base line.
  *
- * Sem ilustração: a página abre só com tipografia, e a foto de lugar entra
- * logo abaixo, na seção seguinte. O papel do `SectionTitle as="h1"` do
- * academy, que abre as páginas internas de lá, e mora aqui pelo mesmo motivo
- * de antes: é peça da vitrine.
+ * No illustration: the page opens with typography only, and the photo of a place comes in
+ * right below, in the next section. It plays the role of academy's `SectionTitle as="h1"`,
+ * which opens the inner pages there, and lives here for the same reason as before: it is a
+ * storefront piece.
  *
- * O trançado fica no fim da capa, e não no meio da página: ele separa o
- * capítulo de abertura do primeiro conteúdo, como o fio que fecha a página
- * de um caderno.
+ * The weave sits at the end of the cover, and not in the middle of the page: it separates the
+ * opening chapter from the first content, like the line that closes a notebook's
+ * page.
  */
 export function PageHero({
   title,

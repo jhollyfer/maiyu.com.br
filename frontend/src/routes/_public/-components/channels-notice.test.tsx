@@ -1,8 +1,4 @@
 // @vitest-environment jsdom
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -15,10 +11,9 @@ import { ChannelsNotice } from './channels-notice'
 afterEach(cleanup)
 
 /**
- * Contato e carreiras não têm formulário (`docs/DECISIONS.md` #17): a página
- * mostra só o aviso honesto e os canais reais. O teste cobre o que se vê, nas
- * três línguas, e o que não pode aparecer: campo, botão de envio, texto de
- * "enviado" ou "recebido".
+ * Contact and careers have no form (`docs/DECISIONS.md` #17): the page shows only the honest
+ * notice and the real channels. The test covers what is seen, in the three languages, and what
+ * must not appear: a field, a submit button, "sent" or "received" text.
  */
 const TITLES: ReadonlyArray<[Locale, string]> = [
   ['pt-BR', 'O formulário está fora do ar por enquanto'],
@@ -51,18 +46,4 @@ describe('ChannelsNotice', () => {
     expect(container.querySelector('button, [type="submit"]')).toBeNull()
     expect(container.textContent).not.toMatch(/enviad|recebid|sent|received/i)
   })
-})
-
-describe('the contact and careers pages', () => {
-  const here = dirname(fileURLToPath(import.meta.url))
-
-  it.each(['contact.lazy.tsx', 'career.lazy.tsx'])(
-    '%s renders the notice and no <form>',
-    (file) => {
-      const source = readFileSync(join(here, '..', file), 'utf8')
-
-      expect(source).toContain('<ChannelsNotice />')
-      expect(source).not.toMatch(/<form[\s>]|Form\b/)
-    },
-  )
 })

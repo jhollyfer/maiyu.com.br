@@ -18,6 +18,21 @@
 
 ## Parou em
 
+Correção pós-R2.2: o gerador de rotas trocou `_public/index.lazy.tsx` pelo placeholder (`Hello "/_public/"!`) ao mover a home; o arquivo volta a montar `Home` de `-components/home/home` e `_public/lazy-routes.test.tsx` prova que cada rota lazy pública monta a própria tela. O wordmark do rodapé virou um `<svg>` decorativo (`aria-hidden`, `focusable=false`) com o mesmo texto, fonte, tamanho e opacidade, e deixou de reprovar o axe `color-contrast`; o filtro de categoria ativo do diário no tema escuro (`dark:bg-input/30` do `Badge` vencia o `bg-foreground`) ganhou `dark:data-[active=true]:bg-foreground`.
+
+R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
+
+R2.6: os ícones gerados (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) entraram em `public/` e estão ligados no `__root.tsx`; o `manifest.json` espera o modelo do kit.
+
+R2.3 volta a Em andamento: os enums `PROJECT_STATUS`, `JOB_POSITION` e `ARTICLE_CATEGORY` ficam em
+`lib/` até o sync da leva 10A, quando a sessão do `shared/` os publica em `shared/src/enums/`.
+
+R2.1 feita: as telas de career, contact, portfolio e blog moram em `-components/` da rota e os `.lazy.tsx` são stubs; os testes de contrato leem os caminhos novos. R2.2 feita: as peças só da home desceram para `_public/-components/home/`. R2.3 feita: `lib/entity.ts` e `lib/interfaces.ts` saíram e as enums viraram trinca nos arquivos de `lib/` que as leem. R2.7 feita: a busca do diário é `blog/-search.ts` com `listValidateSearch` do kit. R2.5 feita: o 404 público e o artigo inexistente montam o head pelo `pageHead`, e a imagem da marca nos dados estruturados é a `logo-512.png` do tema. R2.6 feita: `public/` só com `favicon.svg` e `maiyu-symbol.svg`, o símbolo da vitrine vem de `assets/brand/logo.svg` e as capturas de projeto moram em `assets/projects/`. R2.9 bloqueada: sem código morto do projeto; `lib/utils.ts` espera o sync do kit (`cn.ts`, `cn-project.ts`) e o alias `utils` do `components.json`, porque `ui/` o importa.
+
+R4.5 feita: os três testes que liam o código-fonte por regex (`composition.test.ts`, `vitrine-contract.test.ts` e a parte de `channels-notice.test.tsx` que abria `contact.tsx` e `career.tsx`) viraram testes de renderização ao lado de cada peça (`home.test.tsx`, `reveal.test.ts`, `vision-scenes.test.tsx`, `header.test.tsx`, `layout.test.tsx`, `contact.test.tsx`, `career.test.tsx`). "Nada importa `motion`" saiu sem teste: o pacote não está no `package.json`, então o import reprova no typecheck e no build.
+
+R4.6 feita: scripts do `frontend/package.json` pela régua (`tooling.md` §6, §7 e §10.6): `check` com `build:deps` e `test:unit`, `test:e2e`, `test:changed` e `build:deps` novos, `test` removido. O hook do kit roda `check && test:unit`, então o unitário passa duas vezes por commit; o hook é do kit e a correção vai ao upstream. O `test:e2e` roda e sobe os dois servidores, mas reprova sem o `playwright/.auth/owner.json`, que o `setup` do dono geraria (lacuna do R4.4).
+
 RD.3 feita: `ARCHITECTURE.md` §9.1 descreve os dois recursos do Coolify (site e API) pelo quadro da régua, sem workflows de entrega. RD.2 feita: `docs/` posto em dia (SECURITY, TEST-PLAN, ENV, ARCHITECTURE, RULES, PRD) e as decisões locais substituídas marcadas em `DECISIONS.md`. RD.4 feita: `frontend/README.md` e `frontend/AGENTS.md` pela régua, `frontend/CLAUDE.md` com `@AGENTS.md`, `components/common/CLAUDE.md` removido. Régua D fechada na branch `docs/regua-docs`.
 
 R4.1 e R4.3: os sete workflows saíram de `.github/workflows/` (`--remover-workflows`); `dependabot.yml` e `.editorconfig` já estavam iguais ao kit. Falta o dono: ligar o *Auto Deploy* no Coolify e apagar os secrets do Actions (`ENV.md` §3). O `AGENTS.md` (seção Produção, ainda cita workflows e smoke por `revision.txt`) não diverge do modelo no `sync --check` e não foi editado.
@@ -123,6 +138,7 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 | 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge | todo projeto |
 | 2026-11-04 | Merge feito pelo agente | o merge é do dono; o agente abre o PR verificado e para | todo projeto |
 | 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados) | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu" | todo projeto |
+| 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`) | todo projeto com rota lazy |
 
 ## Problemas conhecidos
 

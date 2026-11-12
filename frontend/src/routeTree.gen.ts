@@ -16,11 +16,11 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as DotwellKnownSecurityDottxtRouteImport } from './routes/[.]well-known/security[.]txt'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
-import { Route as PublicCareerRouteImport } from './routes/_public/career'
-import { Route as PublicContactRouteImport } from './routes/_public/contact'
-import { Route as PublicPortfolioRouteImport } from './routes/_public/portfolio'
 import { Route as PublicBlogIndexRouteImport } from './routes/_public/blog/index'
 import { Route as PublicBlogSlugRouteImport } from './routes/_public/blog/$slug'
+import { Route as PublicCareerIndexRouteImport } from './routes/_public/career/index'
+import { Route as PublicContactIndexRouteImport } from './routes/_public/contact/index'
+import { Route as PublicPortfolioIndexRouteImport } from './routes/_public/portfolio/index'
 
 const PublicLayoutRoute = PublicLayoutRouteImport.update({
   id: '/_public',
@@ -57,27 +57,6 @@ const PublicSplatRoute = PublicSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => PublicLayoutRoute,
 } as any)
-const PublicCareerRoute = PublicCareerRouteImport.update({
-  id: '/career',
-  path: '/career',
-  getParentRoute: () => PublicLayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_public/career.lazy').then((d) => d.Route),
-)
-const PublicContactRoute = PublicContactRouteImport.update({
-  id: '/contact',
-  path: '/contact',
-  getParentRoute: () => PublicLayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_public/contact.lazy').then((d) => d.Route),
-)
-const PublicPortfolioRoute = PublicPortfolioRouteImport.update({
-  id: '/portfolio',
-  path: '/portfolio',
-  getParentRoute: () => PublicLayoutRoute,
-} as any).lazy(() =>
-  import('./routes/_public/portfolio.lazy').then((d) => d.Route),
-)
 const PublicBlogIndexRoute = PublicBlogIndexRouteImport.update({
   id: '/blog/',
   path: '/blog/',
@@ -92,6 +71,27 @@ const PublicBlogSlugRoute = PublicBlogSlugRouteImport.update({
 } as any).lazy(() =>
   import('./routes/_public/blog/$slug.lazy').then((d) => d.Route),
 )
+const PublicCareerIndexRoute = PublicCareerIndexRouteImport.update({
+  id: '/career/',
+  path: '/career/',
+  getParentRoute: () => PublicLayoutRoute,
+} as any).lazy(() =>
+  import('./routes/_public/career/index.lazy').then((d) => d.Route),
+)
+const PublicContactIndexRoute = PublicContactIndexRouteImport.update({
+  id: '/contact/',
+  path: '/contact/',
+  getParentRoute: () => PublicLayoutRoute,
+} as any).lazy(() =>
+  import('./routes/_public/contact/index.lazy').then((d) => d.Route),
+)
+const PublicPortfolioIndexRoute = PublicPortfolioIndexRouteImport.update({
+  id: '/portfolio/',
+  path: '/portfolio/',
+  getParentRoute: () => PublicLayoutRoute,
+} as any).lazy(() =>
+  import('./routes/_public/portfolio/index.lazy').then((d) => d.Route),
+)
 
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
@@ -100,11 +100,11 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
-  '/career': typeof PublicCareerRoute
-  '/contact': typeof PublicContactRoute
-  '/portfolio': typeof PublicPortfolioRoute
   '/blog/$slug': typeof PublicBlogSlugRoute
   '/blog/': typeof PublicBlogIndexRoute
+  '/career/': typeof PublicCareerIndexRoute
+  '/contact/': typeof PublicContactIndexRoute
+  '/portfolio/': typeof PublicPortfolioIndexRoute
 }
 export interface FileRoutesByTo {
   '/health-check': typeof HealthCheckRoute
@@ -112,12 +112,12 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
-  '/career': typeof PublicCareerRoute
-  '/contact': typeof PublicContactRoute
-  '/portfolio': typeof PublicPortfolioRoute
   '/': typeof PublicIndexRoute
   '/blog/$slug': typeof PublicBlogSlugRoute
   '/blog': typeof PublicBlogIndexRoute
+  '/career': typeof PublicCareerIndexRoute
+  '/contact': typeof PublicContactIndexRoute
+  '/portfolio': typeof PublicPortfolioIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -127,12 +127,12 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/_public/$': typeof PublicSplatRoute
-  '/_public/career': typeof PublicCareerRoute
-  '/_public/contact': typeof PublicContactRoute
-  '/_public/portfolio': typeof PublicPortfolioRoute
   '/_public/': typeof PublicIndexRoute
   '/_public/blog/$slug': typeof PublicBlogSlugRoute
   '/_public/blog/': typeof PublicBlogIndexRoute
+  '/_public/career/': typeof PublicCareerIndexRoute
+  '/_public/contact/': typeof PublicContactIndexRoute
+  '/_public/portfolio/': typeof PublicPortfolioIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,11 +143,11 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.well-known/security.txt'
     | '/$'
-    | '/career'
-    | '/contact'
-    | '/portfolio'
     | '/blog/$slug'
     | '/blog/'
+    | '/career/'
+    | '/contact/'
+    | '/portfolio/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/health-check'
@@ -155,12 +155,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.well-known/security.txt'
     | '/$'
-    | '/career'
-    | '/contact'
-    | '/portfolio'
     | '/'
     | '/blog/$slug'
     | '/blog'
+    | '/career'
+    | '/contact'
+    | '/portfolio'
   id:
     | '__root__'
     | '/_public'
@@ -169,12 +169,12 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/.well-known/security.txt'
     | '/_public/$'
-    | '/_public/career'
-    | '/_public/contact'
-    | '/_public/portfolio'
     | '/_public/'
     | '/_public/blog/$slug'
     | '/_public/blog/'
+    | '/_public/career/'
+    | '/_public/contact/'
+    | '/_public/portfolio/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -236,27 +236,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicSplatRouteImport
       parentRoute: typeof PublicLayoutRoute
     }
-    '/_public/career': {
-      id: '/_public/career'
-      path: '/career'
-      fullPath: '/career'
-      preLoaderRoute: typeof PublicCareerRouteImport
-      parentRoute: typeof PublicLayoutRoute
-    }
-    '/_public/contact': {
-      id: '/_public/contact'
-      path: '/contact'
-      fullPath: '/contact'
-      preLoaderRoute: typeof PublicContactRouteImport
-      parentRoute: typeof PublicLayoutRoute
-    }
-    '/_public/portfolio': {
-      id: '/_public/portfolio'
-      path: '/portfolio'
-      fullPath: '/portfolio'
-      preLoaderRoute: typeof PublicPortfolioRouteImport
-      parentRoute: typeof PublicLayoutRoute
-    }
     '/_public/blog/': {
       id: '/_public/blog/'
       path: '/blog'
@@ -271,27 +250,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PublicBlogSlugRouteImport
       parentRoute: typeof PublicLayoutRoute
     }
+    '/_public/career/': {
+      id: '/_public/career/'
+      path: '/career'
+      fullPath: '/career/'
+      preLoaderRoute: typeof PublicCareerIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_public/contact/': {
+      id: '/_public/contact/'
+      path: '/contact'
+      fullPath: '/contact/'
+      preLoaderRoute: typeof PublicContactIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
+    '/_public/portfolio/': {
+      id: '/_public/portfolio/'
+      path: '/portfolio'
+      fullPath: '/portfolio/'
+      preLoaderRoute: typeof PublicPortfolioIndexRouteImport
+      parentRoute: typeof PublicLayoutRoute
+    }
   }
 }
 
 interface PublicLayoutRouteChildren {
   PublicSplatRoute: typeof PublicSplatRoute
-  PublicCareerRoute: typeof PublicCareerRoute
-  PublicContactRoute: typeof PublicContactRoute
-  PublicPortfolioRoute: typeof PublicPortfolioRoute
   PublicIndexRoute: typeof PublicIndexRoute
   PublicBlogSlugRoute: typeof PublicBlogSlugRoute
   PublicBlogIndexRoute: typeof PublicBlogIndexRoute
+  PublicCareerIndexRoute: typeof PublicCareerIndexRoute
+  PublicContactIndexRoute: typeof PublicContactIndexRoute
+  PublicPortfolioIndexRoute: typeof PublicPortfolioIndexRoute
 }
 
 const PublicLayoutRouteChildren: PublicLayoutRouteChildren = {
   PublicSplatRoute: PublicSplatRoute,
-  PublicCareerRoute: PublicCareerRoute,
-  PublicContactRoute: PublicContactRoute,
-  PublicPortfolioRoute: PublicPortfolioRoute,
   PublicIndexRoute: PublicIndexRoute,
   PublicBlogSlugRoute: PublicBlogSlugRoute,
   PublicBlogIndexRoute: PublicBlogIndexRoute,
+  PublicCareerIndexRoute: PublicCareerIndexRoute,
+  PublicContactIndexRoute: PublicContactIndexRoute,
+  PublicPortfolioIndexRoute: PublicPortfolioIndexRoute,
 }
 
 const PublicLayoutRouteWithChildren = PublicLayoutRoute._addFileChildren(

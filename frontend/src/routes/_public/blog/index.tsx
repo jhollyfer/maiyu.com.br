@@ -1,15 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 
-import { validateBlogSearch } from '#/lib/blog-search'
 import { pageHead } from '#/lib/page-head'
 import { m } from '#/paraglide/messages'
 
+import { validateSearch } from './-search'
+
 /**
- * O diário. O filtro de categoria mora na URL (`?category=design`), validado
- * por `validateBlogSearch`.
+ * The journal. The category filter lives in the URL (`?category=design`), validated
+ * by `validateSearch`, from `-search.ts`.
  */
 export const Route = createFileRoute('/_public/blog/')({
-  validateSearch: validateBlogSearch,
+  validateSearch,
   head: () =>
     pageHead({
       pathname: '/blog',

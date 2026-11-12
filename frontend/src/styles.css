@@ -3,15 +3,14 @@
 @import 'shadcn/tailwind.css';
 
 /*
- * As três famílias, servidas do próprio bundle.
+ * The three families, served from the bundle itself.
  *
- * Raleway é a voz da marca, títulos e corpo. Michroma só existe para o
- * wordmark MAIYU, o lettering do logo; Geist Mono fica com número e código.
+ * Raleway is the brand's voice, headings and body. Michroma exists only for the MAIYU wordmark,
+ * the logo's lettering; Geist Mono is for numbers and code.
  *
- * Do pacote e não do Google Fonts: o site antigo já tinha trocado para o
- * pacote depois de ver a página cair na fonte reserva quando o domínio do
- * Google não respondia. Fonte que depende de terceiro para chegar é fonte que
- * às vezes não chega.
+ * From the package and not from Google Fonts: the old site had already switched to the package
+ * after seeing the page fall back to the reserve font when the Google domain did not answer. A
+ * font that depends on a third party to arrive is a font that sometimes does not arrive.
  */
 @import '@fontsource-variable/raleway';
 @import '@fontsource/michroma';
@@ -21,28 +20,28 @@
 @plugin '@tailwindcss/typography';
 
 /*
- * O tema escuro é uma classe no `<html>`, escrita pelo `ThemeProvider` do kit, a partir do cookie, no
- * `__root.tsx` (`lib/theme.ts`). Sem esta linha a classe cairia no vazio.
+ * The dark theme is a class on `<html>`, written by the kit's `ThemeProvider`, from the cookie, in
+ * `__root.tsx` (`lib/theme.ts`). Without this line the class would fall into the void.
  */
 @custom-variant dark (&:is(.dark *));
 
 /*
  * ============================================================================
- * PALETA MAIYU
+ * MAIYU PALETTE
  * ============================================================================
  *
- * A paleta sai do guia da marca: verde #88FF9A, azul-água #77EED7, ciano
- * #31E1F7, azul #3168F7, lilás #A480F5 e rosa #FB80C1, sobre o navy-noite
- * #01111B do logo.
+ * The palette comes from the brand guide: green #88FF9A, aqua blue #77EED7, cyan
+ * #31E1F7, blue #3168F7, lilac #A480F5 and pink #FB80C1, over the logo's night navy
+ * #01111B.
  *
- * Duas camadas, como nos irmãos. Os nomes do shadcn (`--primary`, `--card`,
- * `--border`) são o que a página inteira lê e o que troca entre claro e
- * escuro. As cores da marca (`--color-brand-*`) são fixas nos dois temas: são
- * assinatura, não superfície.
+ * Two layers, as in the siblings. The shadcn names (`--primary`, `--card`,
+ * `--border`) are what the whole page reads and what switches between light and
+ * dark. The brand colors (`--color-brand-*`) are fixed in both themes: they are
+ * a signature, not a surface.
  *
- * Os pastéis (`--tint-*`) são as cores da marca clareadas para servirem de
- * fundo de cartão. No escuro eles viram superfícies noturnas, e quem devolve a
- * cor é o aro fino no fim deste arquivo.
+ * The pastels (`--tint-*`) are the brand colors lightened to serve as a card
+ * background. In dark they become night surfaces, and what gives the color back
+ * is the thin ring at the end of this file.
  */
 :root {
   --radius: 1rem;
@@ -83,8 +82,8 @@
   --overlay: rgba(1, 17, 27, 0.4);
 
   /*
-   * O destaque de título. É o ciano da marca escurecido: o #31E1F7 puro sobre
-   * papel claro não tem contraste para texto.
+   * The heading highlight. It is the brand cyan darkened: pure #31E1F7 over light
+   * paper has no contrast for text.
    */
   --highlight: #0bafc7;
   --highlight-bar: #88ff9a;
@@ -100,13 +99,13 @@
   --navy-2: #0b1e2b;
   --on-navy: #e8f6ff;
 
-  /* A mata: o verde da frase de alcance e dos losangos do trançado. */
+  /* The forest: the green of the reach phrase and of the weave's diamonds. */
   --forest-front: #2c7652;
 
   /*
-   * A terra da região: o urucum da pintura, o açaí e o barro do Solimões, que
-   * é rio de água branca. A terra é o `--clay` do aporta, a mesma região.
-   * Só para o trançado e detalhes, nunca superfície.
+   * The region's earth: the annatto of the body paint, the acai and the clay of the Solimões, which
+   * is a white-water river. The earth is the `--clay` of aporta, the same region.
+   * Only for the weave and details, never a surface.
    */
   --urucum: #b5402a;
   --acai: #4b1f45;
@@ -124,7 +123,7 @@
   --badge-warning-fg: #01111b;
 }
 
-/* O mesmo site à noite: a mata escura. */
+/* The same site at night: the dark forest. */
 .dark {
   color-scheme: dark;
 
@@ -239,7 +238,7 @@
   --color-badge-warning: var(--badge-warning);
   --color-badge-warning-foreground: var(--badge-warning-fg);
 
-  /* As cores da marca, iguais nos dois temas. */
+  /* The brand colors, the same in both themes. */
   --color-brand-green: #88ff9a;
   --color-brand-blue: #77eed7;
   --color-brand-cyan: #31e1f7;
@@ -256,11 +255,11 @@
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   /*
-   * A escala fluida da vitrine.
+   * The showcase's fluid scale.
    *
-   * Nomes próprios, e não os degraus do Tailwind: o registry `base-mira` é
-   * miúdo (botão de 28px, `text-xs/relaxed`), e redefinir `--text-sm` mudaria
-   * o tamanho dos componentes de `ui/` junto.
+   * Own names, and not the Tailwind steps: the `base-mira` registry is
+   * small (28px button, `text-xs/relaxed`), and redefining `--text-sm` would change
+   * the size of the `ui/` components along with it.
    */
   --text-2xs: 0.625rem;
   --text-micro: clamp(0.68rem, 0.65rem + 0.15vw, 0.78rem);
@@ -298,8 +297,8 @@
   }
 
   /*
-   * Os títulos na Raleway da marca, no peso pesado de antes do redesign: o dono
-   * preferiu a voz da marca à serifa editorial (`docs/DECISIONS.md` #16).
+   * Headings in the brand's Raleway, at the heavy weight from before the redesign: the owner
+   * preferred the brand's voice to the editorial serif (`docs/DECISIONS.md` #16).
    */
   h1,
   h2,
@@ -332,8 +331,8 @@
   }
 
   /*
-   * O grão, numa camada fixa por cima de tudo. Fixa e não na superfície que
-   * rola: textura que rola junto repinta a página inteira a cada quadro.
+   * The grain, on a fixed layer above everything. Fixed and not on the surface that
+   * scrolls: a texture that scrolls along repaints the whole page on every frame.
    */
   body::before {
     content: '';
@@ -353,8 +352,8 @@
 }
 
 /*
- * Respeita quem pediu menos movimento. Uma regra só, no fim, alcança tudo -
- * inclusive a animação que alguém acrescentar amanhã sem lembrar disto.
+ * Respects whoever asked for less motion. A single rule, at the end, reaches everything,
+ * including the animation someone adds tomorrow without remembering this.
  */
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -380,7 +379,7 @@
   --tw-prose-quote-borders: var(--highlight-bar);
 }
 
-/* A barra verde curta sob os títulos, tirada das artes de divulgação. */
+/* The short green bar under headings, taken from the promotional artwork. */
 @utility brand-bar {
   display: block;
   height: 0.375rem;
@@ -390,10 +389,10 @@
 }
 
 /*
- * O trançado: a faixa de cestaria que costura uma seção na outra. Losangos de
- * fibra em urucum, terra e mata, desenhados em SVG com as cores do tema, e não
- * o grafismo de um povo específico: grafismo tem dono, e só entra aqui com a
- * autorização de quem o pinta.
+ * The weave: the basketry band that stitches one section to the next. Fiber diamonds
+ * in annatto, earth and forest, drawn in SVG with the theme's colors, and not
+ * the graphic pattern of a specific people: a graphic pattern has an owner, and only goes in here
+ * with the authorization of whoever paints it.
  */
 @utility trancado {
   height: 0.875rem;
@@ -411,7 +410,7 @@
     0.875rem 0;
 }
 
-/* Os dois fios verticais que emolduram o conteúdo como página pautada. */
+/* The two vertical lines that frame the content like a ruled page. */
 @utility rails {
   background-image:
     linear-gradient(to right, var(--border), var(--border)),
@@ -436,10 +435,10 @@
 }
 
 /*
- * O traço que se desenha, nas ilustrações da visão. O elemento declara
- * `pathLength="1"`, então o tracejado de uma unidade cobre o traço inteiro
- * qualquer que seja o comprimento real, e a animação só leva o deslocamento de
- * 1 a 0. É o `pathLength` do motion, em CSS.
+ * The stroke that draws itself, in the vision illustrations. The element declares
+ * `pathLength="1"`, so a dash of one unit covers the whole stroke
+ * whatever the real length is, and the animation only moves the offset from
+ * 1 to 0. It is motion's `pathLength`, in CSS.
  */
 @utility vision-draw {
   stroke-dasharray: 1;
@@ -448,8 +447,8 @@
 }
 
 /*
- * À noite o pastel vira superfície escura, e a cor da marca volta como um aro
- * fino - o mesmo desenho dos cartões do portfólio pessoal.
+ * At night the pastel becomes a dark surface, and the brand color comes back as a thin
+ * ring: the same design as the personal portfolio's cards.
  */
 .dark .bg-tint-mint {
   box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.3);

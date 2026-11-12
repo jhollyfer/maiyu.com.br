@@ -1,19 +1,19 @@
 import type * as React from 'react'
 
 import { Badge } from '#/components/ui/badge'
-import type { ProjectStatus } from '#/lib/entity'
 import { PROJECT_STATUS_LABELS } from '#/lib/labels'
+import type { ProjectStatus } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 
 /**
- * A cor do ponto por status: mata para o que está no ar, urucum para o que
- * ainda está em validação. Lookup e não ternário, e chave fechada: status novo
- * sem cor não compila.
+ * The dot color per status: forest for what is live, annatto for what
+ * is still in validation. A lookup and not a ternary, and a closed key: a new status
+ * without a color does not compile.
  */
-const DOT: Record<ProjectStatus, string> = {
+const DOT = {
   production: 'bg-forest dark:bg-brand-green',
   validation: 'bg-urucum',
-}
+} satisfies Record<ProjectStatus, string>
 
 type ProjectStatusBadgeProps = {
   status: ProjectStatus
@@ -21,11 +21,11 @@ type ProjectStatusBadgeProps = {
 }
 
 /**
- * O selo que diz se o projeto está no ar ou em validação.
+ * The badge that says whether the project is live or in validation.
  *
- * Mora na casca pública porque a home (`work.tsx`) e o portfólio desenham o
- * mesmo selo: escrito duas vezes, um dos dois acabaria prometendo "no ar" para
- * o que a prefeitura ou a escola ainda estão testando.
+ * It lives in the public shell because the home (`work.tsx`) and the portfolio draw the
+ * same badge: written twice, one of the two would end up promising "live" for
+ * what the city hall or the school are still testing.
  */
 export function ProjectStatusBadge({
   status,

@@ -5,20 +5,20 @@ import { getLocale } from '#/paraglide/runtime'
 import type { Locale } from '#/paraglide/runtime'
 
 /*
- * O que o site escreve por idioma e o kit não cobre: a data de registro, que não tem hora.
- * Mora aqui e não em `lib/i18n.ts` porque aquele é espelho do kit (o sync o sobrescreve), e o
- * `localDateTime` dele lê o texto no fuso do processo antes de converter, o que recuaria um dia
- * numa data sem hora (`DECISIONS.md` #384).
+ * What the site writes per language that the kit does not cover: the registry date, which has no
+ * time. It lives here and not in `lib/i18n.ts` because that one mirrors the kit (the sync
+ * overwrites it), and its `localDateTime` reads the text in the process time zone before
+ * converting, which would move a date without a time back one day (`DECISIONS.md` #384).
  */
 
 /**
- * Uma data de registro (`AAAA-MM-DD`) escrita por extenso no idioma da requisição, como
- * "8 de setembro de 2026".
+ * A registry date (`YYYY-MM-DD`) written out in full in the request's language, such as
+ * "September 8, 2026".
  *
- * `fromISO` com `zone` lê a data já no fuso do produto (`TIME_ZONE` do kit), e não no do
- * servidor ou do navegador: `2026-09-08` lida em UTC viraria 7 de setembro a oeste de
- * Greenwich, e o SSR e a hidratação desenhariam dias diferentes. `DATE_FULL` é o formato
- * predefinido de data por extenso, que segue a ordem de cada idioma
+ * `fromISO` with `zone` reads the date already in the product's time zone (the kit's `TIME_ZONE`),
+ * and not in the server's or the browser's: `2026-09-08` read in UTC would become September 7 west
+ * of Greenwich, and SSR and hydration would draw different days. `DATE_FULL` is the predefined
+ * long-date format, which follows the order of each language
  * (_doc-lib/luxon.md#zones, https://moment.github.io/luxon/docs/zones.md;
  * _doc-lib/luxon.md#formatting, https://moment.github.io/luxon/docs/formatting.md).
  */

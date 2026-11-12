@@ -10,21 +10,20 @@ import river640 from '#/assets/photos/rio-solimoes-640.webp'
 import type { LocalizedText } from '@maiyu/shared'
 
 /**
- * As fotos de terceiros que o site publica, com o crédito que a licença exige.
+ * The third-party photos the site publishes, with the credit the license requires.
  *
- * A Maiyu ainda não tem acervo próprio, então a vitrine usa paisagem do lugar
- * (rio, cidade, fronteira) do Wikimedia Commons, em licença livre. Rosto de
- * pessoa indígena não entra: foto de banco não traz o consentimento de quem
- * aparece, e o site fala justamente de respeito a esses povos.
+ * Maiyu does not have its own collection yet, so the showcase uses landscapes of the place (river,
+ * city, border) from Wikimedia Commons, under a free license. The face of an indigenous person does
+ * not go in: a stock photo does not carry the consent of whoever appears, and the site is precisely
+ * about respect for these peoples.
  *
- * Toda foto nova entra aqui, com autor, licença e página de origem: a legenda
- * (`Photo`) lê o crédito deste registro, e foto sem crédito não tem como ser
- * desenhada.
+ * Every new photo goes in here, with author, license and source page: the caption (`Photo`) reads
+ * the credit from this registry, and a photo without a credit cannot be drawn.
  */
 export type Photo = {
-  /** O arquivo de 1280 px, o do `src` do `img`. */
+  /** The 1280 px file, the one in the `img` `src`. */
   src: string
-  /** Os três tamanhos (640, 1280 e 1920 px) no formato do `srcset`, importados de `src/assets` para ganhar hash. */
+  /** The three sizes (640, 1280 and 1920 px) in the `srcset` format, imported from `src/assets` to get a hash. */
   srcSet: string
   width: number
   height: number

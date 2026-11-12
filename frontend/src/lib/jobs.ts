@@ -1,19 +1,35 @@
 import { m } from '#/paraglide/messages'
 
-import type { JobPosition } from './entity'
 import { JOB_POSITION_LABELS } from './labels'
 
 /**
- * As áreas do banco de talentos, na página de carreiras.
+ * The talent pool's areas, listed on the careers page.
  *
- * A Maiyu não publica vaga: ela guarda o contato de quem trabalha em cada
- * área e chama quando um projeto pede. Listar cargo e benefício que a empresa
- * não oferece seria inventar o que o site promete, então o registro descreve
- * só o ofício.
+ * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
+ * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
+ * and the `shared/` session is the one that moves it. After that this file imports the triplet from
+ * `@maiyu/shared`.
+ */
+export const JOB_POSITION = {
+  DEVELOPMENT: 'development',
+  DESIGN: 'design',
+  DATA: 'data',
+} as const
+
+export type JobPosition = (typeof JOB_POSITION)[keyof typeof JOB_POSITION]
+
+export const JOB_POSITIONS = Object.values(JOB_POSITION)
+
+/**
+ * The talent pool's areas, on the careers page.
  *
- * Conteúdo em código, como `projects.ts`: não há painel nem API. O texto é
- * função pela razão de `labels.ts`, lido no render, no idioma de quem visita.
- * O `id` é o valor fechado de `JobPosition`, e o rótulo vem de `labels.ts`.
+ * Maiyu does not publish job openings: it keeps the contact of whoever works in each area and calls
+ * when a project asks for it. Listing a role and a benefit the company does not offer would be
+ * inventing what the site promises, so the registry describes only the craft.
+ *
+ * Content in code, like `projects.ts`: there is no panel or API. The text is a function for the
+ * reason given in `labels.ts`, read at render time, in the language of whoever visits. The `id` is
+ * the closed value of `JobPosition`, and the label comes from `labels.ts`.
  */
 export type TalentArea = {
   id: JobPosition

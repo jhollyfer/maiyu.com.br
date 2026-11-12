@@ -1,19 +1,36 @@
 import type { LocalizedText } from '@maiyu/shared'
 
-import type { ArticleCategory } from './entity'
 import type { PhotoKey } from './photos'
 
 /**
- * Os artigos do diário.
+ * The journal's categories. "All" is not a category: it is the absence of a filter.
  *
- * Conteúdo em código, e não de uma API: o site não tem backend, e o diário
- * muda quando alguém escreve, não a cada visita. As rotas leem daqui e o
- * sitemap também, então artigo novo entra nos dois de uma vez.
+ * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
+ * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
+ * and the `shared/` session is the one that moves it. After that this file imports the triplet from
+ * `@maiyu/shared`.
+ */
+export const ARTICLE_CATEGORY = {
+  TECH: 'tech',
+  DESIGN: 'design',
+  MARKETING: 'marketing',
+} as const
+
+export type ArticleCategory =
+  (typeof ARTICLE_CATEGORY)[keyof typeof ARTICLE_CATEGORY]
+
+export const ARTICLE_CATEGORIES = Object.values(ARTICLE_CATEGORY)
+
+/**
+ * The journal's articles.
  *
- * Autoria é da Maiyu, como organização: os textos saem da equipe, e nenhum
- * nome de pessoa entra sem que ela tenha pedido para assinar. A capa é uma
- * chave de `photos.ts`, e não uma URL: o crédito da foto mora lá, e é a
- * `Photo` quem o desenha.
+ * Content in code, not from an API: the site has no backend, and the journal changes when someone
+ * writes, not on every visit. The routes read from here and so does the sitemap, so a new article
+ * enters both at once.
+ *
+ * Authorship belongs to Maiyu as an organization: the texts come from the team, and no person's
+ * name goes in unless they asked to sign. The cover is a key of `photos.ts`, not a URL: the photo
+ * credit lives there, and `Photo` is what draws it.
  */
 
 export type Article = {
@@ -25,18 +42,18 @@ export type Article = {
   readTime: LocalizedText
   photo: PhotoKey
   /**
-   * O corpo como documento Tiptap em JSON, um por língua: é o formato que o editor grava e que o
-   * `RichText` do kit lê no servidor. Markdown só renderiza no cliente (frontend.md §8), e o
-   * artigo tem de estar no HTML que o rastreador recebe.
+   * The body as a Tiptap document in JSON, one per language: it is the format the editor saves and
+   * that the kit's `RichText` reads on the server. Markdown only renders on the client
+   * (frontend.md §8), and the article has to be in the HTML the crawler receives.
    */
   body: LocalizedText
   featured?: boolean
 }
 
 /**
- * Tupla não vazia, e não `ReadonlyArray`: com `noUncheckedIndexedAccess`, `articles[0]` tiparia
- * `Article | undefined` e o destaque do diário herdaria o `undefined`. O compilador recusa o
- * registro vazio.
+ * A non-empty tuple, not `ReadonlyArray`: with `noUncheckedIndexedAccess`, `articles[0]` would be
+ * typed `Article | undefined` and the journal's featured article would inherit the `undefined`.
+ * The compiler rejects the empty registry.
  */
 export const articles: readonly [Article, ...Article[]] = [
   {
@@ -155,11 +172,13 @@ export const articles: readonly [Article, ...Article[]] = [
   },
 ]
 
-/** O artigo em destaque no topo do diário: o marcado, ou o primeiro. */
-export const featuredArticle =
-  articles.find((article) => article.featured) ?? articles[0]
+/** The featured article at the top of the journal: the flagged one, or the first. */
+const flaggedArticle = articles.find((article) => article.featured)
+let leadArticle = articles[0]
+if (flaggedArticle) leadArticle = flaggedArticle
+export const featuredArticle = leadArticle
 
-/** O artigo do endereço, ou `undefined` quando o slug não existe. */
+/** The article for the address, or `undefined` when the slug does not exist. */
 export function getArticleBySlug(slug: string): Article | undefined {
   return articles.find((article) => article.slug === slug)
 }

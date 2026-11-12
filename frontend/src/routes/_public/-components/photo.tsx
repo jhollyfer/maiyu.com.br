@@ -12,30 +12,30 @@ import { m } from '#/paraglide/messages'
 
 type PhotoProps = {
   name: PhotoKey
-  /** A proporção do recorte; a foto preenche por `object-cover`. */
+  /** The aspect ratio of the crop; the photo fills it through `object-cover`. */
   ratio: number
-  /** O `sizes` do `srcset`: quanto da tela a foto ocupa em cada largura. */
+  /** The `sizes` of the `srcset`: how much of the screen the photo takes at each width. */
   sizes: string
-  /** Só a foto da primeira dobra: carrega antes de tudo e é o LCP da página. */
+  /** Only the above-the-fold photo: loads before everything and is the page's LCP. */
   priority?: boolean
   className?: string
 }
 
-/** A posição pelo valor de `priority`, por lookup e não por ternário. */
+/** The position from the `priority` value, through a lookup and not a ternary. */
 const PLACEMENT = {
   true: 'lcp',
   false: 'fold',
 } as const satisfies Record<`${boolean}`, PicturePlacement>
 
 /**
- * Uma foto de terceiro com a legenda e o crédito que a licença pede.
+ * A third-party photo with the caption and the credit the license asks for.
  *
- * O crédito vem do registro (`lib/photos.ts`), e não de prop: a licença CC BY-SA
- * exige autor e licença junto da obra, e deixar isso para quem usa o
- * componente é como uma foto acaba publicada sem crédito.
+ * The credit comes from the registry (`lib/photos.ts`), and not from a prop: the CC BY-SA license
+ * requires author and license alongside the work, and leaving that to whoever uses the
+ * component is how a photo ends up published without credit.
  *
- * `width` e `height` vão no `Picture` para o navegador reservar o espaço antes de
- * baixar: sem eles a página pula quando a foto chega (CLS).
+ * `width` and `height` go in `Picture` so the browser reserves the space before
+ * downloading: without them the page jumps when the photo arrives (CLS).
  */
 export function Photo({
   name,
@@ -67,9 +67,9 @@ export function Photo({
       <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small text-muted-foreground">
         <span>{localized(photo.caption)}</span>
         {/*
-         * Button do ui/ e não `<a>` cru (#366). `min-h-11` porque o crédito
-         * também é alvo de toque no celular (44px, WCAG 2.5.5); o tamanho do
-         * texto segue o da legenda, não o do botão.
+         * Button from ui/ and not a bare `<a>` (#366). `min-h-11` because the credit
+         * is also a touch target on the phone (44px, WCAG 2.5.5); the text size
+         * follows the caption's, not the button's.
          */}
         <Button
           variant="link"
