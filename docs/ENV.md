@@ -25,7 +25,7 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `NODE_ENV` | api | sim | não | `development`, `production` ou `test` | `development` |
 | `PORT` | api | sim | não | porta HTTP | `3333` |
 | `HOST` | api | sim | não | interface de escuta; `0.0.0.0` em container | `localhost` |
-| `TZ` | api | não | não | fuso do processo e da sessão do banco: `America/Eirunepe` em todo ambiente, e no recurso da API no Coolify (`_standards/DECISIONS.md` #393). O `backend/.env.example` ainda traz `UTC`, pendente de ressincronizar com o modelo | `America/Eirunepe` |
+| `TZ` | api | não | não | fuso do processo e da sessão do banco: `America/Eirunepe` em todo ambiente, e no recurso da API no Coolify (`_standards/DECISIONS.md` #393) | `America/Eirunepe` |
 | `LOG_LEVEL` | api | sim | não | nível do logger | `info` |
 | `APP_KEY` | api | sim | **sim** | chave de cifra, gerada por `node ace generate:key` | `<segredo>` |
 | `APP_SERVER_URL` | api | sim | não | endereço público da API | `http://localhost:3333` |

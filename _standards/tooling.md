@@ -861,6 +861,15 @@ grava em `<caminho>` no projeto e o `--check` reprova divergência (`code-diverg
 existe ali é cobrado; o resto do projeto continua dele. Bug achado num projeto num arquivo desses se
 corrige aqui e volta para todos (`DECISIONS.md` #280).
 
+**Ponto de extensão** (`EXTENSION_POINTS` e `EXTENSION_DIRS` de `scripts/kit-manifest.mjs`: rotas, seed,
+models, `env.ts`, migrations) o sync cria se faltar e nunca reescreve. Para o modelo que muda não passar
+em silêncio, o sync grava em `.maiyu/kit-extension-points.json` (versionado no projeto) o sha256 do modelo
+que o projeto recebeu. O `--check` lista `extension-stale: <arquivo>` quando o modelo atual difere do
+registrado (o projeto faz o merge à mão e confirma com `--ack-extension=<arquivo>` ou `--ack-extensions`,
+que regravam o sha) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
+ou mesma tabela); os dois saem com 1. Sem manifesto, o `--check` avisa `extension-baseline` e não falha, e
+o sync cria o manifesto com o modelo atual (`DECISIONS.md` #398).
+
 - **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
 - **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,
   com a *branch* `develop`, *Auto Deploy* e domínio e variáveis próprios; a régua não a exige.
@@ -1154,7 +1163,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 - **`.gitignore` na raiz**, obrigatório, cada bloco com um comentário dizendo o motivo. Ignora
   `node_modules/`, `build/`, `.output/`, `.env` (o `.env.example` e o `.env.test` são versionados,
-  `backend.md` §6), `src/paraglide/`, relatório de teste e de Playwright, e o que a árvore declara
+  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, e o que a árvore declara
   fora dela: `.idea/`, `.vscode/`, `.claude/worktrees/`, pastas de resultado, e
   `CLAUDE-SECURITY-*/` (relatório de varredura com cenário de exploração não vai para o histórico,
   §10.4).
@@ -1190,6 +1199,10 @@ Processo das etapas 5 a 7 do `AGENTS.md`. As skills (`systematic-debugging`,
   ou confere os E2E de caracterização dos fluxos críticos que o plano toca (cadastro, login,
   dinheiro, permissão, webhook) e registra o resultado como linha de base. As fases do meio seguem
   só com unitário; a final roda tudo e compara com a linha de base. Fora de plano, toda branch roda as suítes uma vez antes do PR (§7).
+- **E2E local não usa a API de produção**: o `pnpm build` do frontend lê o `.env.production`
+  versionado e embute os `VITE_*` de produção; o build do E2E local passa `VITE_API_URL` e
+  `VITE_SITE_URL` do ambiente local na linha de comando, ou a suíte falha por CORS contra produção
+  (relato do academy, 2026-11-11: 30 falhas falsas).
 - **Critério atrás de ENV, sem instância real que se possa exercitar com segurança** (produção, por
   exemplo): prova-se pelo mecanismo de gating já exercitado em outro ambiente, e o relatório diz
   que é evidência indireta, não execução direta.
