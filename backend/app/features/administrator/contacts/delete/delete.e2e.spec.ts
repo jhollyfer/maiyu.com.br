@@ -2,14 +2,16 @@ import { test } from '@japa/runner'
 
 import { ErrorEnvelope } from '@maiyu/shared'
 
-import { ContactFactory } from '#database/factories/contact.factory'
+import { contactRow } from '#tests/contacts-fixtures'
 import {
   authenticateAsAdministrator,
   authenticateAsNonStaff,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 const UNKNOWN = '0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f'
 
@@ -19,8 +21,8 @@ test.group('administrator/contacts > delete', (group) => {
 
   test('deleting removes the contact for good', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    const contact = await ContactFactory.create()
-    const kept = await ContactFactory.create()
+    const contact = await contactRow()
+    const kept = await contactRow()
 
     const response = await client
       .delete(`/administrator/contacts/${contact.id}`)
@@ -33,7 +35,7 @@ test.group('administrator/contacts > delete', (group) => {
 
   test('deleting an unknown id answers 404', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    const kept = await ContactFactory.create()
+    const kept = await contactRow()
 
     const response = await client
       .delete(`/administrator/contacts/${UNKNOWN}`)
@@ -44,8 +46,25 @@ test.group('administrator/contacts > delete', (group) => {
     assert.isNotNull(await Stored.contact(kept.id))
   })
 
+  test('an administrator of another tenant answers 404 and deletes nothing', async ({
+    client,
+    assert,
+  }) => {
+    const contact = await contactRow()
+    const other = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', other)
+
+    const response = await client
+      .delete(`/administrator/contacts/${contact.id}`)
+      .cookies(session)
+
+    response.assertStatus(404)
+    assert.equal(body(response, ErrorEnvelope).code, 'CONTACT_NOT_FOUND')
+    assert.isNotNull(await Stored.contact(contact.id))
+  })
+
   test('deleting without a session answers 401', async ({ client, assert }) => {
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const response = await client.delete(
       `/administrator/contacts/${contact.id}`,
@@ -57,7 +76,7 @@ test.group('administrator/contacts > delete', (group) => {
 
   test('a member cannot delete', async ({ client, assert }) => {
     const session = await authenticateAsNonStaff(client)
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const response = await client
       .delete(`/administrator/contacts/${contact.id}`)

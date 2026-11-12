@@ -3,9 +3,9 @@ import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
 import ContactsPrune from '#commands/contacts-prune.command'
-import { ContactFactory } from '#database/factories/contact.factory'
 import { ClockContract } from '#services/clock/clock.contract'
 import { ClockFake } from '#services/clock/clock.fake'
+import { contactRow } from '#tests/contacts-fixtures'
 import { resetDatabase } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
 
@@ -38,13 +38,13 @@ test.group('contacts > prune', (group) => {
   })
 
   test('deletes contacts older than 12 months', async ({ assert }) => {
-    const pending = await ContactFactory.merge(created(13)).create()
-    const answered = await ContactFactory.merge({
+    const pending = await contactRow(created(13))
+    const answered = await contactRow({
       ...created(14),
       answeredAt: NOW.minus({ months: 1 }),
-    }).create()
+    })
     // One day over the 12 months is already old.
-    const dayOver = await ContactFactory.merge(created(12, 1)).create()
+    const dayOver = await contactRow(created(12, 1))
 
     const command = await prune()
 
@@ -55,9 +55,9 @@ test.group('contacts > prune', (group) => {
   })
 
   test('keeps contacts of 12 months or less', async ({ assert }) => {
-    const recent = await ContactFactory.merge(created(11)).create()
-    const exactly = await ContactFactory.merge(created(12)).create()
-    const fresh = await ContactFactory.merge(created(0)).create()
+    const recent = await contactRow(created(11))
+    const exactly = await contactRow(created(12))
+    const fresh = await contactRow(created(0))
 
     const command = await prune()
 
@@ -68,7 +68,7 @@ test.group('contacts > prune', (group) => {
   })
 
   test('dry run counts and deletes nothing', async ({ assert }) => {
-    const old = await ContactFactory.merge(created(13)).create()
+    const old = await contactRow(created(13))
 
     const command = await prune('--dry-run')
 
@@ -77,8 +77,8 @@ test.group('contacts > prune', (group) => {
   })
 
   test('running twice leaves the same state', async ({ assert }) => {
-    await ContactFactory.merge(created(13)).create()
-    const kept = await ContactFactory.merge(created(2)).create()
+    await contactRow(created(13))
+    const kept = await contactRow(created(2))
 
     const first = await prune()
     const second = await prune()

@@ -79,12 +79,14 @@ export class ConsumedRefreshTokenSchema extends BaseModel {
 }
 
 export class ContactSchema extends BaseModel {
-  static $columns = ['answeredAt', 'createdAt', 'email', 'id', 'locale', 'message', 'name', 'updatedAt'] as const
+  static $columns = ['answeredAt', 'createdAt', 'customerId', 'email', 'id', 'locale', 'message', 'name', 'tenantId', 'updatedAt'] as const
   $columns = ContactSchema.$columns
   @column.dateTime()
   declare answeredAt: DateTime | null
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare customerId: string | null
   @column()
   declare email: string
   @column({ isPrimary: true })
@@ -95,6 +97,8 @@ export class ContactSchema extends BaseModel {
   declare message: string
   @column()
   declare name: string
+  @column()
+  declare tenantId: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
 }

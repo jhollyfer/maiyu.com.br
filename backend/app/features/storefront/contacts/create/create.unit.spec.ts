@@ -2,14 +2,19 @@ import { test } from '@japa/runner'
 
 import StorefrontContactCreateUseCase from './create.use-case.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { ContactMemoryRepository } from '#repositories/contact/contact.memory.repository'
 import { ContactRepository } from '#repositories/contact/contact.repository'
 import { ClockContract } from '#services/clock/clock.contract'
 import { ClockFake } from '#services/clock/clock.fake'
 import { IdGeneratorContract } from '#services/id-generator/id-generator.contract'
 import { IdGeneratorFake } from '#services/id-generator/id-generator.fake'
+import { OTHER_TENANT_ID, TENANT_ID } from '#tests/contacts-unit-fixtures'
 import { makeWithMemory } from '#tests/container-fixtures'
-import { insideHttpContext } from '#tests/http-context-fixtures'
+import {
+  insideHttpContext,
+  scopedHttpContext,
+} from '#tests/http-context-fixtures'
 
 const PAYLOAD = {
   name: 'Ana Souza',
@@ -49,6 +54,11 @@ async function stored(contacts: ContactMemoryRepository) {
 
 test.group('storefront/contacts > create (unit)', (group) => {
   insideHttpContext(group)
+  const within = scopedHttpContext(group)
+
+  group.each.setup(() =>
+    within(TenantScope.ofPublic(TENANT_ID, [], { inserts: true })),
+  )
 
   test('a valid message is saved pending, with the clock instant and a new id', async ({
     assert,
@@ -65,6 +75,8 @@ test.group('storefront/contacts > create (unit)', (group) => {
     const [saved] = await stored(contacts)
     assert.deepInclude(saved?.snapshot(), {
       id: '00000000-0000-4000-8000-000000000001',
+      tenantId: TENANT_ID,
+      customerId: null,
       ...PAYLOAD,
       answeredAt: null,
       createdAt: clock.now().toJSDate(),
@@ -97,5 +109,44 @@ test.group('storefront/contacts > create (unit)', (group) => {
       status: 500,
       code: 'STOREFRONT_CONTACT_CREATE_ERROR',
     })
+  })
+
+  test('the message is stored in the tenant of the public route, owned by nobody', async ({
+    assert,
+  }) => {
+    await within(TenantScope.ofPublic(OTHER_TENANT_ID, [], { inserts: true }))
+    const contacts = new ContactMemoryRepository()
+    const { useCase } = await setup(contacts)
+
+    await useCase.execute({ ...PAYLOAD, website: null })
+
+    const [saved, ...others] = await stored(contacts)
+    assert.lengthOf(others, 0)
+    assert.equal(saved?.snapshot().tenantId, OTHER_TENANT_ID)
+    assert.isNull(saved?.snapshot().customerId)
+  })
+
+  test('a route that names no tenant answers 403 TENANT_REQUIRED and saves nothing', async ({
+    assert,
+  }) => {
+    await within(TenantScope.ofPublic(null, [], { inserts: true }))
+    const contacts = new ContactMemoryRepository()
+    const { useCase } = await setup(contacts)
+
+    const result = await useCase.execute({ ...PAYLOAD, website: null })
+
+    assert.deepInclude(result.value, { status: 403, code: 'TENANT_REQUIRED' })
+    assert.lengthOf(await stored(contacts), 0)
+  })
+
+  test('a read-only public scope cannot write', async ({ assert }) => {
+    await within(TenantScope.ofPublic(TENANT_ID, []))
+    const contacts = new ContactMemoryRepository()
+    const { useCase } = await setup(contacts)
+
+    const result = await useCase.execute({ ...PAYLOAD, website: null })
+
+    assert.deepInclude(result.value, { status: 403, code: 'TENANT_REQUIRED' })
+    assert.lengthOf(await stored(contacts), 0)
   })
 })
