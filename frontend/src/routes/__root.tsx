@@ -71,7 +71,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
        * o ícone antigo. O `favicon.svg` segue em `public/` para quem o pede
        * direto.
        */
+      /*
+       * O `.ico` vem antes do SVG: o navegador que lê vetor fica com o SVG, e o que
+       * não lê cai no `.ico`, que declara o tamanho real de 32px. O
+       * `apple-touch-icon` é o atalho do iOS. Página oficial não conferida.
+       */
+      { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
       { rel: 'icon', href: '/maiyu-symbol.svg', type: 'image/svg+xml' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
       {
         rel: 'preload',
         as: 'font',

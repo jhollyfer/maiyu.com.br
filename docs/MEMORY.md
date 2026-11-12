@@ -18,6 +18,8 @@
 
 ## Parou em
 
+R2.6: os ícones gerados (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) entraram em `public/` e estão ligados no `__root.tsx`; o `manifest.json` espera o modelo do kit.
+
 R2.3 volta a Em andamento: os enums `PROJECT_STATUS`, `JOB_POSITION` e `ARTICLE_CATEGORY` ficam em
 `lib/` até o sync da leva 10A, quando a sessão do `shared/` os publica em `shared/src/enums/`.
 
