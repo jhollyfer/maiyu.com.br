@@ -18,6 +18,8 @@
 
 ## Parou em
 
+Correção pós-R2.2: o gerador de rotas trocou `_public/index.lazy.tsx` pelo placeholder (`Hello "/_public/"!`) ao mover a home; o arquivo volta a montar `Home` de `-components/home/home` e `_public/lazy-routes.test.tsx` prova que cada rota lazy pública monta a própria tela. O wordmark do rodapé deixou de reprovar o axe (próximo commit).
+
 R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
 
 R2.6: os ícones gerados (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) entraram em `public/` e estão ligados no `__root.tsx`; o `manifest.json` espera o modelo do kit.
@@ -136,6 +138,7 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 | 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge | todo projeto |
 | 2026-11-04 | Merge feito pelo agente | o merge é do dono; o agente abre o PR verificado e para | todo projeto |
 | 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados) | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu" | todo projeto |
+| 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`) | todo projeto com rota lazy |
 
 ## Problemas conhecidos
 
