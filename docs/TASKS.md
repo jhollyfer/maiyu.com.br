@@ -128,7 +128,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | Feita | já iguais ao kit; `sync --check` sem linha de dependabot ou editorconfig; `tooling.md` §9 |
 | R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | Feita | `tooling.md` §10.6, `architecture.md` §8; nenhum teste lê código-fonte: a home, o cabeçalho, o layout, as cenas da visão, o `REVEAL` e as páginas de contato e carreiras são renderizados e conferidos pelo que aparece; "nada importa `motion`" não tem teste, porque o pacote não está no `package.json` e o import já quebra o typecheck e o build |
-| R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | A fazer | |
+| R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | Feita | `tooling.md` §6, §7, §10.6; `check` pela fórmula (`build:deps` + `i18n:compile` + `i18n:check` + lint + typecheck + `format:check` + `test:unit`); o script `test` saiu; o `test:e2e` roda o Playwright pelo config da casa e depende do `setup` do dono que o R4.4 ainda resolve |
 
 ### Régua D · Documentação
 

@@ -15,7 +15,7 @@
 | `shared/` | Vitest (`test:unit`) | `shared/src/**/*.test.ts` | hook local |
 | Unitário do frontend | Vitest (`pnpm test:unit`) | `frontend/src/**/*.test.ts(x)`, ao lado do arquivo que cobre, um teste por arquivo | hook local |
 | Ciclo de chunk | `check-chunk-cycles.mjs` (`pnpm check-cycles`) | `frontend/scripts/` | depois do build |
-| E2E do frontend | Playwright com axe (`frontend/e2e/`), as páginas públicas nos três idiomas | `frontend/e2e/*.spec.ts` | sessão do agente, antes do PR |
+| E2E do frontend | Playwright com axe (`pnpm test:e2e`, `frontend/e2e/`), as páginas públicas nos três idiomas | `frontend/e2e/*.spec.ts` | sessão do agente, antes do PR |
 
 ## 2. Fluxos críticos
 
@@ -66,7 +66,7 @@ Frontend: os registros de `lib/` e valores literais. Backend: banco `maiyu_test`
 
 A definição de pronto da casa vale aqui sem cópia: `_standards/tooling.md` §10.1. Deste projeto:
 
-- `pnpm lint`, `pnpm typecheck` e `pnpm test` verdes no `HEAD`, com as mensagens compiladas antes.
+- `pnpm check` verde no `HEAD` (já roda `test:unit`). Durante o trabalho, `pnpm test:changed` roda só o afetado; o `pnpm test:e2e` roda uma vez, antes do PR, com o build feito e as `E2E_*` definidas.
 - `pnpm build` seguido de `pnpm check-cycles` quando mexer em rota ou em chunk.
 - Cobertura: o join do §3.1 sem lacuna nova. Percentual mínimo: não exigido.
 

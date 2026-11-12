@@ -20,13 +20,16 @@ Reinicie o `pnpm dev` depois de mudar `messages/`.
 
 ## Scripts
 
-| Script              | O que faz                                                                   |
-| ------------------- | --------------------------------------------------------------------------- |
-| `pnpm build`        | gera o bundle e o `.output/` do Nitro, e regenera `src/routeTree.gen.ts`    |
-| `pnpm check`        | compila as mensagens, confere o i18n, roda lint, typecheck e `format:check` |
-| `pnpm test:unit`    | compila as mensagens e roda o Vitest                                        |
-| `pnpm check-cycles` | procura ciclo de chunk em `.output/`; roda depois do build                  |
-| `pnpm format`       | Prettier e `eslint --fix`                                                   |
+| Script              | O que faz                                                                    |
+| ------------------- | ---------------------------------------------------------------------------- |
+| `pnpm build`        | gera o bundle e o `.output/` do Nitro, e regenera `src/routeTree.gen.ts`     |
+| `pnpm check`        | `build:deps`, mensagens, i18n, lint, typecheck, `format:check` e `test:unit` |
+| `pnpm build:deps`   | compila `shared/` e `backend/`, de que o frontend depende                    |
+| `pnpm test:unit`    | compila as mensagens e roda o Vitest                                         |
+| `pnpm test:e2e`     | Playwright (`e2e/`) nos três viewports; precisa do build e das `E2E_*`       |
+| `pnpm test:changed` | só o afetado: Vitest `--changed origin/main` e Playwright `--only-changed`   |
+| `pnpm check-cycles` | procura ciclo de chunk em `.output/`; roda depois do build                   |
+| `pnpm format`       | Prettier e `eslint --fix`                                                    |
 
 O Playwright mora em `e2e/` e roda na sessão, antes do PR (`docs/TEST-PLAN.md`).
 
