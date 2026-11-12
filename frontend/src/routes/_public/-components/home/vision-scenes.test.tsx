@@ -15,17 +15,16 @@ describe('VisionScene', () => {
     (step) => {
       const { container } = render(<VisionScene step={step} />)
 
-      expect(
-        container
-          .querySelector('[data-slot="vision-scene"]')
-          ?.classList.contains('motion-reduce:animate-none'),
-      ).toBe(true)
+      const scene = container.querySelector('[data-slot="vision-scene"]')
+      if (!scene) throw new Error('the vision scene was not rendered')
+
+      expect(scene.classList.contains('motion-reduce:animate-none')).toBe(true)
     },
   )
 
   it('when the rings scene is shown, every stroke comes back without animation', () => {
-    // Sem isto o anel da samaúma fica invisível para quem desligou o
-    // movimento: o deslocamento do traçado é o próprio estado inicial.
+    // Without this the samauma ring is invisible to whoever turned off
+    // motion: the stroke offset is the very initial state.
     const { container } = render(<VisionScene step={2} />)
     const strokes = Array.from(container.querySelectorAll('path.vision-draw'))
 

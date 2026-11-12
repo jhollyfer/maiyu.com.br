@@ -6,9 +6,9 @@ import { m } from '#/paraglide/messages'
 import { REVEAL, STAGGER } from '../reveal'
 
 /**
- * Os três fatos que sustentam a frase. Funções e não chaves montadas por
- * texto, pelo mesmo motivo da visão: o compilador do paraglide confere a
- * função, e ninguém confere a chave montada.
+ * The three facts that support the phrase. Functions and not keys assembled from
+ * text, for the same reason as the vision: the paraglide compiler checks the
+ * function, and nobody checks the assembled key.
  */
 const FACTS = [
   {
@@ -26,15 +26,15 @@ const FACTS = [
 ] as const
 
 /**
- * Quem somos: a frase que diz de onde a Maiyu vem, dita logo depois da prova
- * de que ela entrega.
+ * Who we are: the phrase that says where Maiyu comes from, said right after the proof
+ * that it delivers.
  *
- * O diferencial da empresa (indígena, da tríplice fronteira, a primeira) não
- * cabe num card de serviço nem numa linha do rodapé: sem uma seção própria ele
- * só aparecia diluído no texto da hero, e quem lê rápido passava sem ver.
+ * The company's differentiator (Indigenous, from the triple border, the first) does not
+ * fit in a service card or in a footer line: without a section of its own it
+ * only appeared diluted in the hero's text, and whoever reads fast passed without seeing it.
  *
- * Os fatos ficam numa lista de definição com fios entre as colunas, e não em
- * cards: são três afirmações de uma mesma frase, não três produtos.
+ * The facts sit in a definition list with lines between the columns, and not in
+ * cards: they are three statements of one same phrase, not three products.
  */
 export function Roots(): React.JSX.Element {
   return (

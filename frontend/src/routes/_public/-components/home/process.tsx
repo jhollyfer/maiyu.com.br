@@ -10,7 +10,7 @@ type Step = {
   description: () => string
 }
 
-/** Os quatro passos, do diagnóstico à evolução. */
+/** The four steps, from diagnosis to evolution. */
 const STEPS: ReadonlyArray<Step> = [
   {
     title: () => m.home_step1_title(),
@@ -31,12 +31,12 @@ const STEPS: ReadonlyArray<Step> = [
 ]
 
 /**
- * "Como trabalhamos": os quatro passos numa lista numerada.
+ * "How we work": the four steps in a numbered list.
  *
- * Aqui a numeração carrega informação, porque a ordem importa (o diagnóstico
- * vem antes do desenho, e este antes da obra), e por isso o número é grande e
- * em urucum. É `ol` de verdade: o leitor de tela anuncia "item 2 de 4" sozinho,
- * o que os painéis de antes, que dependiam de passar o mouse, não davam.
+ * Here the numbering carries information, because the order matters (diagnosis
+ * comes before design, and design before the build), and so the number is large and
+ * in annatto. It is a real `ol`: the screen reader announces "item 2 of 4" on its own,
+ * which the earlier panels, which depended on hovering, did not give.
  */
 export function Process(): React.JSX.Element {
   return (

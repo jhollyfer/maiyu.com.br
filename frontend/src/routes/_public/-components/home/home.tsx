@@ -11,17 +11,17 @@ import { Vision } from './vision'
 import { Work } from './work'
 
 /**
- * A home, montada.
+ * The home, assembled.
  *
- * Só composição, como no academy: a ordem aqui é a ordem na tela. Primeiro o
- * que a Maiyu é (hero) e a prova de que entrega (projetos no ar); logo depois
- * de onde ela vem (indígena, da tríplice fronteira), que é o diferencial; então
- * a tese (a visão), o método (como trabalhamos), o que ela faz (serviços) e
- * para quem (os públicos); por fim quem faz (o time e o diário, na faixa navy)
- * e o convite.
+ * Composition only, as in academy: the order here is the order on screen. First
+ * what Maiyu is (hero) and the proof that it delivers (live projects); right after,
+ * where it comes from (Indigenous, from the triple border), which is the differentiator; then
+ * the thesis (the vision), the method (how we work), what it does (services) and
+ * for whom (the audiences); finally who does it (the team and the journal, in the navy band)
+ * and the invitation.
  *
- * Nenhuma seção lê API: o conteúdo mora em `lib/`, e por isso não há
- * `useQuery` nem guarda de dado ausente aqui.
+ * No section reads an API: the content lives in `lib/`, and so there is no
+ * `useQuery` or missing-data guard here.
  */
 export function Home(): React.JSX.Element {
   return (

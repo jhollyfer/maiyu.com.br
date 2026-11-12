@@ -5,8 +5,8 @@ import { sitemapXml } from '#/lib/sitemap'
 import type { SitemapEntry } from '#/lib/sitemap'
 
 /**
- * As páginas fixas do site, sem prefixo de idioma. O kit escreve cada uma nas três línguas, com
- * o `hreflang` das irmãs e o `x-default` em pt-BR (`lib/sitemap.ts`).
+ * The site's fixed pages, without a language prefix. The kit writes each one in all three
+ * languages, with the siblings' `hreflang` and the `x-default` in pt-BR (`lib/sitemap.ts`).
  */
 const STATIC_PATHNAMES = [
   '/',
@@ -17,12 +17,12 @@ const STATIC_PATHNAMES = [
 ] as const
 
 /**
- * O sitemap, servido em `/sitemap.xml`.
+ * The sitemap, served at `/sitemap.xml`.
  *
- * Rota de servidor e não página: quem consome é o rastreador do buscador, que precisa de
- * `Content-Type` e status próprios. Os artigos saem de `lib/articles.ts`, e não de uma lista
- * escrita aqui: um artigo novo entra no sitemap no mesmo commit que o publica. A raiz do domínio
- * responde 307 para `/pt-br` (`DECISIONS.md` #384), e o kit nunca a lista sem prefixo.
+ * A server route and not a page: whoever consumes it is the search engine's crawler, which needs
+ * its own `Content-Type` and status. The articles come from `lib/articles.ts`, and not from a list
+ * written here: a new article enters the sitemap in the same commit that publishes it. The domain
+ * root answers 307 to `/pt-br` (`DECISIONS.md` #384), and the kit never lists it without a prefix.
  * _doc-lib/tanstack-start.md#guide/server-routes.
  */
 export const Route = createFileRoute('/sitemap.xml')({

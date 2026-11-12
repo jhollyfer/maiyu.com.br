@@ -15,14 +15,14 @@ import { PillButton } from '../../-components/pill-button'
 import { ProjectStatusBadge } from '../../-components/project-status'
 import { REVEAL, STAGGER } from '../../-components/reveal'
 
-/** Os outros projetos, sem o que já está em destaque no topo. */
+/** The other projects, without the one already featured at the top. */
 const REST = projects.filter((project) => project.slug !== featuredProject.slug)
 
 type ProjectProps = {
   project: Project
 }
 
-/** A captura do site no ar, na proporção do print, com um fio de borda. */
+/** The screenshot of the live site, in the print's proportion, with a border line. */
 function ProjectShot({ project }: ProjectProps): React.JSX.Element {
   return (
     <AspectRatio
@@ -42,7 +42,7 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
   )
 }
 
-/** Ano e tecnologias: a ficha que acompanha todo projeto. */
+/** Year and technologies: the sheet that goes with every project. */
 function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
   return (
     <dl className="grid grid-cols-[5.5rem_1fr] gap-x-6 gap-y-4 border-t border-border pt-6 text-small">
@@ -70,7 +70,7 @@ function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
   )
 }
 
-/** O link para o site no ar, que abre em outra aba. */
+/** The link to the live site, which opens in another tab. */
 function VisitLink({ project }: ProjectProps): React.JSX.Element {
   return (
     <PillButton
@@ -87,11 +87,11 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
 }
 
 /**
- * O portfólio: o produto em destaque, grande, e os outros em fileiras com fio.
+ * The portfolio: the featured product, large, and the others in ruled rows.
  *
- * Cada projeto leva ao site dele, em outra aba, e não a uma página de detalhe
- * daqui: o que prova o trabalho é o produto no ar. Por isso a captura vem
- * inteira, sem recorte de cartão, e o texto é lista e tipografia.
+ * Each project leads to its own site, in another tab, and not to a detail page
+ * here: what proves the work is the live product. That is why the screenshot comes
+ * whole, without a card crop, and the text is a list and typography.
  */
 export function Portfolio(): React.JSX.Element {
   return (
@@ -157,10 +157,10 @@ export function Portfolio(): React.JSX.Element {
 
           <ul className="mt-6 divide-y divide-border">
             {/*
-             * O lado da captura alterna por linha: a alternância quebra a coluna reta de imagens
-             * à esquerda e dá o ritmo de revista. É `group-even/row:` no CSS, e não lookup pelo
-             * índice: `SIDES[index % 2]` tipava `undefined` com `noUncheckedIndexedAccess`. No
-             * celular a ordem é sempre a da fonte: imagem, texto.
+             * The screenshot's side alternates per row: the alternation breaks the straight column of images
+             * on the left and gives the magazine rhythm. It is `group-even/row:` in CSS, and not a lookup by
+             * index: `SIDES[index % 2]` was typed `undefined` with `noUncheckedIndexedAccess`. On the
+             * phone the order is always the source's: image, text.
              */}
             {REST.map((project, index) => {
               return (

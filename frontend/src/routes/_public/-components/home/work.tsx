@@ -8,6 +8,7 @@ import { projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+import type { Merge } from '@maiyu/shared'
 
 import { PillButton } from '../pill-button'
 import { ProjectStatusBadge } from '../project-status'
@@ -17,7 +18,7 @@ type ProjectProps = {
   project: Project
 }
 
-/** A stack do projeto em etiquetas, no máximo três: o resto está no portfólio. */
+/** The project's stack as labels, three at most: the rest is in the portfolio. */
 function Stack({ project }: ProjectProps): React.JSX.Element {
   return (
     <ul className="flex flex-wrap gap-1.5">
@@ -35,7 +36,7 @@ function Stack({ project }: ProjectProps): React.JSX.Element {
   )
 }
 
-/** O botão de visitar, igual no destaque e nas linhas. */
+/** The visit button, the same in the featured one and in the rows. */
 function Visit({ project }: ProjectProps): React.JSX.Element {
   return (
     <PillButton
@@ -52,16 +53,16 @@ function Visit({ project }: ProjectProps): React.JSX.Element {
 }
 
 /**
- * A captura de tela do projeto, com a moldura fina.
+ * The project's screenshot, with the thin frame.
  *
- * `width` e `height` reais do arquivo para o navegador reservar o espaço antes
- * de baixar, e `object-position` do registro para a manchete do print não sair
- * do recorte.
+ * The file's real `width` and `height` so the browser reserves the space before
+ * downloading, and the registry's `object-position` so the screenshot's headline does not leave
+ * the crop.
  */
 function Shot({
   project,
   className,
-}: ProjectProps & { className?: string }): React.JSX.Element {
+}: Merge<ProjectProps, { className?: string }>): React.JSX.Element {
   return (
     <div
       className={cn(
@@ -83,12 +84,12 @@ function Shot({
 }
 
 /**
- * "Já em produção": um projeto em destaque, grande, e os demais em lista com
- * fios.
+ * "Already in production": one featured project, large, and the others in a list with
+ * lines.
  *
- * Substitui o carrossel: no carrossel só um projeto aparecia por vez, e a prova
- * de que a Maiyu entrega precisa estar toda à vista. O primeiro do registro é
- * o destaque; a ordem do registro é a ordem na tela.
+ * It replaces the carousel: in the carousel only one project appeared at a time, and the proof
+ * that Maiyu delivers needs to be fully in view. The first in the registry is
+ * the featured one; the registry's order is the order on screen.
  */
 export function Work(): React.JSX.Element {
   const [lead, ...rest] = projects

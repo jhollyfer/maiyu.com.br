@@ -6,8 +6,8 @@ import { m } from '#/paraglide/messages'
 import { validateSearch } from './-search'
 
 /**
- * O diário. O filtro de categoria mora na URL (`?category=design`), validado
- * por `validateSearch`, de `-search.ts`.
+ * The journal. The category filter lives in the URL (`?category=design`), validated
+ * by `validateSearch`, from `-search.ts`.
  */
 export const Route = createFileRoute('/_public/blog/')({
   validateSearch,

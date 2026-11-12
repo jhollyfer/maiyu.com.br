@@ -8,12 +8,11 @@ import { m } from '#/paraglide/messages'
 import { PillButton } from './pill-button'
 
 /**
- * O aviso no lugar dos formulários de contato e de candidatura: diz que o
- * formulário está fora do ar e leva a pessoa aos canais que existem de
- * verdade, o e-mail e o WhatsApp de `lib/site.ts`. Não há campo nem envio, e o
- * texto nunca diz que algo foi recebido: quem digita uma mensagem inteira num
- * formulário que não entrega perde o texto e acredita que falou com a Maiyu
- * (`docs/DECISIONS.md` #17).
+ * The notice in place of the contact and application forms: it says the form is offline and
+ * takes the person to the channels that really exist, the email and the WhatsApp from
+ * `lib/site.ts`. There is no field or submission, and the text never says something was
+ * received: whoever types a whole message into a form that does not deliver loses the text and
+ * believes they spoke to Maiyu (`docs/DECISIONS.md` #17).
  */
 export function ChannelsNotice(): React.JSX.Element {
   return (

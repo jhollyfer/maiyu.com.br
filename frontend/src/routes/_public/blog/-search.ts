@@ -3,17 +3,17 @@ import { listValidateSearch } from '#/lib/list-search'
 import { z } from '@maiyu/shared'
 
 /**
- * O filtro do diário, na URL (`?category=design`).
+ * The journal filter, in the URL (`?category=design`).
  *
- * Na URL e não em `useState`, como as listagens do painel: o filtro escolhido
- * sobrevive ao recarregar, ao voltar do artigo e ao link compartilhado. Sem
- * `category`, é "tudo".
+ * In the URL and not in `useState`, like the panel's listings: the chosen filter
+ * survives a reload, coming back from the article and a shared link. Without
+ * `category`, it is "all".
  *
- * Só esta rota lê a busca, então o módulo mora ao lado dela (`frontend.md` §1,
- * `-search.ts`) e o `validateSearch` nunca fica inline no `createFileRoute`. O
- * schema é o `z` do `shared/` e a fábrica é a do kit: valor fora da lista (um
- * link antigo ou digitado errado) é descartado e cai para "tudo", como o
- * `.catch()` da página oficial, em vez de derrubar a página.
+ * Only this route reads the search, so the module lives beside it (`frontend.md` §1,
+ * `-search.ts`) and `validateSearch` is never inline in `createFileRoute`. The
+ * schema is the `z` from `shared/` and the factory is the kit's: a value outside the list (an
+ * old or mistyped link) is discarded and falls back to "all", like the official page's
+ * `.catch()`, instead of bringing the page down.
  * _doc-lib/tanstack-router.md#how-to/validate-search-params,
  * https://tanstack.com/router/latest/docs/how-to/validate-search-params.
  */

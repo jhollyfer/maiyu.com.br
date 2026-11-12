@@ -9,9 +9,9 @@ import { VisionScene } from './vision-scenes'
 import type { VisionStep } from './vision-scenes'
 
 /**
- * Os três passos da visão. Funções e não chaves montadas por texto
- * (`home.vision${n}Title`): a chave montada não é conferida por ninguém, e a
- * função do paraglide é, pelo compilador.
+ * The three steps of the vision. Functions and not keys assembled from text
+ * (`home.vision${n}Title`): nobody checks the assembled key, and the paraglide
+ * function is checked, by the compiler.
  */
 const ITEMS = [
   {
@@ -28,21 +28,21 @@ const ITEMS = [
   },
 ] as const
 
-/** O índice como passo tipado, para a cena só aceitar o que existe. */
+/** The index as a typed step, so the scene only accepts what exists. */
 const STEPS: readonly [VisionStep, ...VisionStep[]] = [0, 1, 2]
 
 /**
- * "A visão": três passos numerados à esquerda e o palco navy à direita, preso
- * na tela enquanto a leitura desce.
+ * "The vision": three numbered steps on the left and the navy stage on the right, pinned
+ * to the screen while the reading goes down.
  *
- * No desktop a seção tem 280vh e o conteúdo é `sticky`: a rolagem por dentro
- * dela escolhe o passo. Quem pediu menos movimento não recebe nada disso, e
- * por CSS (`motion-safe:`): a seção tem a altura do conteúdo e os três passos
- * aparecem abertos de uma vez.
+ * On desktop the section is 280vh tall and the content is `sticky`: the scroll inside
+ * it chooses the step. Whoever asked for less motion gets none of this, and through
+ * CSS (`motion-safe:`): the section has the height of the content and the three steps
+ * show open all at once.
  *
- * O passo ativo é marcado por `data-active`, e o desenho dele mora nas classes
- * `data-[active=true]:`. No celular os três ficam sempre abertos, porque ali o
- * palco não fica preso ao lado.
+ * The active step is marked by `data-active`, and its design lives in the
+ * `data-[active=true]:` classes. On the phone all three stay always open, because there the
+ * stage is not pinned to the side.
  */
 export function Vision(): React.JSX.Element {
   const ref = React.useRef<HTMLElement>(null)

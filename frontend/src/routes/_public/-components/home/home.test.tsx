@@ -21,26 +21,27 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 afterEach(cleanup)
 
 /**
- * A ordem das seções da home, que é o argumento da página e não um detalhe.
+ * The order of the home's sections, which is the page's argument and not a detail.
  *
- * Renderiza a home e lê a ordem em que as seções aparecem na tela (cada uma
- * traz o seu `data-slot`), em vez de ler o texto de `home.tsx`: um componente
- * que deixa de renderizar ou troca de lugar quebra aqui, e um import sem uso
- * não. E não congela a lista inteira: crava só as relações que a página
- * defende, para que uma seção nova não reprove por existir.
+ * It renders the home and reads the order in which the sections appear on screen (each
+ * one carries its `data-slot`), instead of reading the text of `home.tsx`: a component
+ * that stops rendering or changes place breaks here, and an unused import
+ * does not. And it does not freeze the whole list: it pins only the relations that the page
+ * defends, so that a new section does not fail for existing.
  */
-function renderedSections(): Array<string> {
+function renderedSections(): Array<string | undefined> {
   const { container } = render(<Home />)
 
-  return Array.from(container.querySelectorAll('section[data-slot]')).map(
-    (section) => section.getAttribute('data-slot') ?? '',
+  return Array.from(
+    container.querySelectorAll<HTMLElement>('section[data-slot]'),
+    ({ dataset }) => dataset.slot,
   )
 }
 
 describe('Home', () => {
   it('when rendered, it shows every section', () => {
-    // Guarda das guardas: se a leitura parar de achar seção, os testes de
-    // ordem abaixo comparariam `-1` com `-1` e ficariam verdes.
+    // Guard of the guards: if the reading stops finding a section, the order tests
+    // below would compare `-1` with `-1` and stay green.
     expect(renderedSections().length).toBeGreaterThanOrEqual(7)
   })
 
@@ -52,15 +53,15 @@ describe('Home', () => {
   })
 
   it('when rendered, it shows the live work right after the hero', () => {
-    // A prova antes da tese: quem chega quer ver que a Maiyu entrega, e só
-    // depois se interessa pelo que ela pensa.
+    // The proof before the thesis: whoever arrives wants to see that Maiyu delivers, and only
+    // afterwards cares about what it thinks.
     expect(renderedSections().indexOf('home-work')).toBe(1)
   })
 
   it('when rendered, it says where Maiyu comes from right after the proof', () => {
-    // O diferencial (indígena, da tríplice fronteira) vem antes da tese: é o
-    // que separa a Maiyu de qualquer outra software house, e quem lê rápido
-    // precisa encontrá-lo na segunda rolagem.
+    // The differentiator (Indigenous, from the triple border) comes before the thesis: it is
+    // what sets Maiyu apart from any other software house, and whoever reads fast
+    // needs to find it on the second scroll.
     expect(renderedSections().indexOf('home-roots')).toBe(2)
   })
 

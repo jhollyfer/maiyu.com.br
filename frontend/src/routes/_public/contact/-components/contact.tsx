@@ -20,11 +20,11 @@ type Channel = {
   icon: Icon
   title: () => string
   subtitle: () => string
-  /** Cada linha do canal; `href` ausente é texto, e não link. */
+  /** Each line of the channel; a missing `href` is text, not a link. */
   lines: ReadonlyArray<{ text: string; href?: string }>
 }
 
-/** Os jeitos de falar com a Maiyu, já que o site não tem formulário. */
+/** The ways to talk to Maiyu, since the site has no form. */
 const CHANNELS: ReadonlyArray<Channel> = [
   {
     icon: WhatsappLogoIcon,
@@ -62,12 +62,12 @@ const CHANNELS: ReadonlyArray<Channel> = [
 ]
 
 /**
- * Contato: os canais em lista com fios, o aviso de que o formulário está fora
- * do ar ao lado e a cidade embaixo.
+ * Contact: the channels in a ruled list, the notice that the form is offline
+ * beside it and the city below.
  *
- * Os canais vêm de `CONTACT`, em `lib/site.ts`, e não escritos aqui: o rodapé
- * e o JSON-LD da raiz mostram os mesmos dados, e três cópias do telefone
- * divergiriam na primeira troca de número.
+ * The channels come from `CONTACT`, in `lib/site.ts`, and are not written here: the footer
+ * and the root JSON-LD show the same data, and three copies of the phone number
+ * would diverge on the first number change.
  */
 export function Contact(): React.JSX.Element {
   return (

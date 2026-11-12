@@ -24,8 +24,8 @@ type Role = {
 }
 
 /**
- * O que o time faz, por ofício e não por rosto: a home apresenta engenheiros,
- * designers e analistas, e não as pessoas uma a uma.
+ * What the team does, by craft and not by face: the home presents engineers,
+ * designers and analysts, and not the people one by one.
  */
 const ROLES: ReadonlyArray<Role> = [
   {
@@ -42,7 +42,7 @@ const ROLES: ReadonlyArray<Role> = [
   },
 ]
 
-/** A stack que a Maiyu usa, em fita. */
+/** The stack Maiyu uses, as a ribbon. */
 const STACK = [
   'React',
   'TanStack Start',
@@ -55,15 +55,15 @@ const STACK = [
   'Figma',
 ]
 
-/** Quantas entradas do diário a home mostra. */
+/** How many journal entries the home shows. */
 const JOURNAL_SIZE = 4
 
 /**
- * A faixa navy: o time, a stack, o convite de carreira e o diário.
+ * The navy band: the team, the stack, the career invitation and the journal.
  *
- * Um bloco escuro só para as quatro coisas, e é decisão como a do academy com
- * os blocos de marca: uma cor de assinatura que aparece em toda seção deixa de
- * assinar. Aqui ela marca a parte da home que fala de gente.
+ * A dark block only for the four things, and it is a decision like academy's with
+ * the brand blocks: a signature color that appears in every section stops
+ * signing. Here it marks the part of the home that talks about people.
  */
 export function NavyBand(): React.JSX.Element {
   return (

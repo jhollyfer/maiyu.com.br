@@ -17,12 +17,12 @@ import { REVEAL, STAGGER } from '../../-components/reveal'
 
 const route = getRouteApi('/_public/blog/')
 
-/** As entradas da lista: todas, menos a que já está em destaque no topo. */
+/** The list entries: all, except the one already featured at the top. */
 const RECENT = articles.filter(
   (article) => article.slug !== featuredArticle.slug,
 )
 
-/** Uma opção do filtro: `undefined` é "tudo". */
+/** A filter option: `undefined` is "all". */
 const FILTERS: ReadonlyArray<{
   category: ArticleCategory | undefined
   label: () => string
@@ -35,18 +35,18 @@ const FILTERS: ReadonlyArray<{
 ]
 
 /**
- * O diário: o texto em destaque com a foto de lugar e a lista filtrável em
- * fileiras com fio. A caixa de newsletter saiu: não havia serviço de e-mail
- * por trás, e ela prometia um e-mail que nunca chegava.
+ * The journal: the featured text with the photo of a place and the filterable list in
+ * ruled rows. The newsletter box is gone: there was no email service
+ * behind it, and it promised an email that never arrived.
  *
- * O filtro é `Link` e não botão com estado: a categoria mora na URL, então o
- * filtro sobrevive ao recarregar e ao voltar do artigo, e é compartilhável.
- * `resetScroll={false}` porque trocar de categoria não é trocar de página, e
- * pular para o topo tiraria a lista da frente de quem acabou de filtrar.
+ * The filter is a `Link` and not a button with state: the category lives in the URL, so the
+ * filter survives a reload and coming back from the article, and is shareable.
+ * `resetScroll={false}` because changing category is not changing page, and
+ * jumping to the top would take the list away from whoever just filtered.
  *
- * A lista não leva foto: o diário se lê pelo título, e miniaturas iguais
- * competiriam com a foto do destaque, que é quem carrega o lugar. A `Photo`
- * também traz um link de crédito, então não pode morar dentro de outro link.
+ * The list carries no photo: the journal is read by title, and identical thumbnails
+ * would compete with the featured photo, which is what carries the place. `Photo`
+ * also brings a credit link, so it cannot live inside another link.
  */
 export function BlogIndex(): React.JSX.Element {
   const { category } = route.useSearch()
@@ -128,7 +128,7 @@ export function BlogIndex(): React.JSX.Element {
 
                 return (
                   <Badge
-                    key={filter.category ?? 'all'}
+                    key={String(filter.category)}
                     variant="outline"
                     data-active={active}
                     render={
@@ -149,10 +149,10 @@ export function BlogIndex(): React.JSX.Element {
           </div>
 
           {/*
-            `key` na categoria: trocar o filtro remonta a lista, e a remontagem
-            refaz a entrada em cascata, como o `StaggerContainer` fazia.
+            `key` on the category: changing the filter remounts the list, and the remount
+            redoes the cascading entrance, as `StaggerContainer` did.
           */}
-          <ul key={category ?? 'all'} className="mt-8 divide-y divide-border">
+          <ul key={String(category)} className="mt-8 divide-y divide-border">
             {filtered.map((article, index) => (
               <li
                 key={article.slug}

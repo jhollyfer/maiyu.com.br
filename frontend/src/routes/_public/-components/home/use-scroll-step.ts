@@ -1,19 +1,19 @@
 import * as React from 'react'
 
 /**
- * Em qual de `steps` trechos da rolagem por dentro de `ref` a leitura está.
+ * Which of `steps` stretches of scrolling inside `ref` the reading is in.
  *
- * É o que o `useScroll({ target, offset: ['start start', 'end end'] })` do
- * motion fazia na seção da visão: o progresso vai de 0, quando o topo da seção
- * encosta no topo da janela, a 1, quando o fim dela encosta no fim. Aqui é a
- * mesma conta com um ouvinte de rolagem, sem carregar a biblioteca para isso.
+ * It is what motion's `useScroll({ target, offset: ['start start', 'end end'] })` did in the
+ * vision section: progress goes from 0, when the top of the section touches the top of the
+ * window, to 1, when its end touches the end. Here it is the same calculation with a scroll
+ * listener, without loading the library for it.
  *
- * O estado só muda quando o trecho muda, e não a cada pixel: `setState` com o
- * mesmo passo não renderiza de novo.
+ * The state only changes when the stretch changes, and not on every pixel: `setState` with the
+ * same step does not render again.
  *
- * Recebe os passos, e não a contagem, e devolve o passo, e não o índice: com
- * `noUncheckedIndexedAccess`, quem indexasse a lista pelo número receberia
- * `T | undefined`. A tupla não vazia dá o passo inicial já tipado.
+ * It receives the steps, and not the count, and returns the step, and not the index: with
+ * `noUncheckedIndexedAccess`, whoever indexed the list by number would receive
+ * `T | undefined`. The non-empty tuple gives the initial step already typed.
  */
 export function useScrollStep<T>(
   ref: React.RefObject<HTMLElement | null>,

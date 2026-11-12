@@ -21,8 +21,8 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 afterEach(cleanup)
 
 /**
- * Contato não tem formulário (`docs/DECISIONS.md` #17): o que a pessoa vê é o
- * aviso e os canais reais, e nenhum campo que perderia o texto digitado.
+ * Contact has no form (`docs/DECISIONS.md` #17): what the person sees is the
+ * notice and the real channels, and no field that would lose the typed text.
  */
 describe('Contact', () => {
   it('when rendered, it shows the notice and no form', () => {

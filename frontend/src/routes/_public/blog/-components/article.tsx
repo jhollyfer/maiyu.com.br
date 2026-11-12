@@ -34,11 +34,11 @@ import { REVEAL } from '../../-components/reveal'
 const route = getRouteApi('/_public/blog/$slug')
 
 /**
- * O artigo que não existe.
+ * The article that does not exist.
  *
- * Separado do 404 genérico, como o post do academy: quem chega aqui quase
- * sempre veio de um link para um texto que saiu do ar, e o que precisa saber
- * é que **há** outros textos, não que errou o endereço.
+ * Separate from the generic 404, like academy's post: whoever arrives here almost
+ * always came from a link to a text that was taken down, and what they need to know
+ * is that there **are** other texts, not that they mistyped the address.
  */
 export function ArticleNotFound(): React.JSX.Element {
   return (
@@ -54,28 +54,28 @@ export function ArticleNotFound(): React.JSX.Element {
 }
 
 /**
- * A tipografia do corpo, por classe sobre o `prose` do `RichText`: a medida vem do `max-w` do
- * artigo, e não de cada linha. O intertítulo leva o losango de urucum como marcador de capítulo
- * e mais espaço acima do que abaixo, para que ele pertença ao parágrafo que abre, e não ao que
- * fecha.
+ * The body typography, by class over the `RichText` `prose`: the measure comes from the article's
+ * `max-w`, and not from each line. The subheading carries the annatto diamond as a chapter marker
+ * and more space above than below, so that it belongs to the paragraph it opens, and not to the
+ * one it closes.
  */
 const BODY_CLASS = cn(
   'prose-lg',
   'prose-p:mb-7 prose-p:text-body-lg prose-p:leading-[1.75]',
-  // A cor sai pela variável do prose: `text-body-lg` e `text-foreground/85` na mesma lista
-  // o `twMerge` do `RichText` trata como conflito e apaga o tamanho.
+  // The color comes through the prose variable: `text-body-lg` and `text-foreground/85` in the same list
+  // are treated as a conflict by `RichText`'s `twMerge`, which erases the size.
   '[--tw-prose-body:color-mix(in_oklab,var(--foreground)_85%,transparent)]',
   'prose-h2:mt-16 prose-h2:mb-5 prose-h2:text-h2 prose-h2:text-balance',
   "prose-h2:before:mb-5 prose-h2:before:block prose-h2:before:size-2 prose-h2:before:rotate-45 prose-h2:before:bg-urucum prose-h2:before:content-['']",
 )
 
 /**
- * Um artigo do diário, inteiro: capa, foto de lugar com crédito e
- * o corpo numa coluna de leitura.
+ * A whole journal article: cover, photo of a place with credit and
+ * the body in a reading column.
  *
- * O corpo vem de `articles.ts` como documento Tiptap nas três línguas e sai
- * pelo `RichText` do kit, que o desenha no servidor: o texto do artigo está
- * no HTML da resposta.
+ * The body comes from `articles.ts` as a Tiptap document in the three languages and goes out
+ * through the kit's `RichText`, which draws it on the server: the article's text is
+ * in the response HTML.
  */
 export function Article(): React.JSX.Element {
   const article = route.useLoaderData()

@@ -11,12 +11,12 @@ import { PillButton } from '../pill-button'
 import { REVEAL } from '../reveal'
 
 /**
- * O convite final: a frase grande sobre o papel, as ações e a foto de Letícia,
- * do outro lado da fronteira.
+ * The final invitation: the large phrase over the paper, the actions and the photo of Leticia,
+ * across the border.
  *
- * "Agendar conversa" abre o WhatsApp, e não a página de contato: é o fim da
- * leitura, e quem chegou até aqui já decidiu falar. A página de contato
- * fica a um link embaixo, para quem prefere escrever.
+ * "Schedule a conversation" opens WhatsApp, and not the contact page: it is the end of the
+ * reading, and whoever got this far has already decided to talk. The contact page
+ * is one link below, for whoever prefers to write.
  */
 export function ClosingCta(): React.JSX.Element {
   return (

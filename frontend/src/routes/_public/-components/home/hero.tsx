@@ -9,16 +9,16 @@ import { PillButton } from '../pill-button'
 import { REVEAL } from '../reveal'
 
 /**
- * A primeira dobra: a capa tipográfica e, logo abaixo, a cidade.
+ * The first fold: the typographic cover and, right below, the city.
  *
- * O único `h1` da home. Duas linhas em serifa, a segunda na cor da mata, e a
- * barra verde fecha sob elas: é a assinatura pequena das artes de divulgação.
- * Sem ilustração: quem chega precisa ver o lugar de onde a Maiyu fala, e por
- * isso a foto da cidade, a única com `priority`, entra sangrada logo depois dos
- * botões, que cabem na primeira dobra a 1440x900.
+ * The home's only `h1`. Two lines in serif, the second in the forest color, and the green
+ * bar closes beneath them: it is the small signature of the promotional artwork.
+ * No illustration: whoever arrives needs to see the place Maiyu speaks from, and so
+ * the photo of the city, the only one with `priority`, comes in bleeding right after the
+ * buttons, which fit on the first fold at 1440x900.
  *
- * A entrada é escalonada por `delay-*`, na ordem de leitura: título, texto e
- * ações, foto.
+ * The entrance is staggered by `delay-*`, in reading order: title, text and
+ * actions, photo.
  */
 export function Hero(): React.JSX.Element {
   return (

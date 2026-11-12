@@ -20,25 +20,25 @@ import { getLocale } from '#/paraglide/runtime'
 import appCss from '../styles.css?url'
 
 /**
- * O woff2 do corpo do texto, com o endereço de hash que o build gera.
+ * The body text's woff2, with the hashed address the build generates.
  *
- * `?url` e não um caminho escrito à mão: um literal quebraria no próximo build
- * que mudasse o hash, e quebraria em silêncio - um `preload` que aponta para
- * 404 não estraga a página, só deixa de adiantar o download.
+ * `?url` and not a hand-written path: a literal would break on the next build that changed the
+ * hash, and would break silently, since a `preload` that points to a 404 does not ruin the page,
+ * it just stops speeding up the download.
  */
 
 /**
- * O que toda rota enxerga em `context`.
+ * What every route sees in `context`.
  *
- * `type` e não `interface`: é declaração local, não module augmentation.
+ * `type` and not `interface`: it is a local declaration, not a module augmentation.
  */
 type RouterContext = {
   queryClient: QueryClient
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  // O tema vem do cookie, lido no servidor: o primeiro HTML já sai com a classe certa e sem
-  // piscar (`frontend.md` §6, _doc-lib/shadcn.md#docs/dark-mode/tanstack-start).
+  // The theme comes from the cookie, read on the server: the first HTML already goes out with the
+  // right class and without flashing (`frontend.md` §6, _doc-lib/shadcn.md#docs/dark-mode/tanstack-start).
   loader: () => ({ theme: readTheme() }),
   head: () => ({
     meta: [
@@ -46,18 +46,18 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: m.site_title() },
       /*
-       * Sem `description` o buscador monta o resumo com o que achar na página,
-       * e o cartão de link em aplicativo de mensagem sai só com o título. Uma
-       * rota que queira a sua a escreve no próprio `head`: o mais fundo vence
-       * na fusão por nome.
+       * Without `description` the search engine builds the summary from whatever it finds on the
+       * page, and the link card in a messaging app comes out with the title only. A route that
+       * wants its own writes it in its own `head`: the deepest one wins in the merge by
+       * name.
        */
       { name: 'description', content: m.site_description() },
       /*
-       * Sem `og:url`, `canonical`, `og:title` nem `og:image` aqui, de propósito: a
-       * raiz do domínio responde 307 para `/pt-br` (`DECISIONS.md` #384), então um
-       * valor global declararia como canônica uma URL que redireciona e herdaria em
-       * toda rota que esquecesse o seu. Cada página os traz pelo `pageHead` do kit,
-       * já prefixados e no idioma dela.
+       * No `og:url`, `canonical`, `og:title` or `og:image` here, on purpose: the domain root
+       * answers 307 to `/pt-br` (`DECISIONS.md` #384), so a global value would declare as
+       * canonical a URL that redirects and would be inherited by every route that forgot its own.
+       * Each page brings them through the kit's `pageHead`, already prefixed and in its
+       * language.
        */
       { property: 'og:site_name', content: SITE_TITLE },
       { property: 'og:type', content: 'website' },
@@ -65,16 +65,16 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     ],
     links: [
       /*
-       * `maiyu-symbol.svg` e não `favicon.svg`. O símbolo foi redesenhado, e
-       * o `favicon.svg` fica quatro horas em cache no navegador e no
-       * Cloudflare: com o mesmo nome, quem já tinha visitado continuava vendo
-       * o ícone antigo. O `favicon.svg` segue em `public/` para quem o pede
-       * direto.
+       * `maiyu-symbol.svg` and not `favicon.svg`. The symbol was redesigned, and
+       * `favicon.svg` stays four hours in cache in the browser and in
+       * Cloudflare: with the same name, whoever had already visited kept seeing
+       * the old icon. `favicon.svg` stays in `public/` for whoever requests it
+       * directly.
        */
       /*
-       * O `.ico` vem antes do SVG: o navegador que lê vetor fica com o SVG, e o que
-       * não lê cai no `.ico`, que declara o tamanho real de 32px. O
-       * `apple-touch-icon` é o atalho do iOS. Página oficial não conferida.
+       * The `.ico` comes before the SVG: a browser that reads vectors keeps the SVG, and one that
+       * does not falls back to the `.ico`, which declares the real 32px size. The
+       * `apple-touch-icon` is the iOS shortcut. Official page not checked.
        */
       { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
       { rel: 'icon', href: '/maiyu-symbol.svg', type: 'image/svg+xml' },
@@ -88,8 +88,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       },
       { rel: 'stylesheet', href: appCss },
     ],
-    // A identidade do site em toda rota, e não só na home: quem chega por um
-    // artigo compartilhado precisa que o rastreador saiba de quem é a página.
+    // The site's identity on every route, and not only on the home: whoever arrives through a
+    // shared article needs the crawler to know whose page it is.
     scripts: [
       {
         type: 'application/ld+json',
@@ -106,13 +106,12 @@ function RootDocument({
   const { theme } = Route.useLoaderData()
 
   return (
-    // `lang` do paraglide, e não literal como nos irmãos: aqui o site fala
-    // três línguas de verdade, e o leitor de tela e o buscador precisam saber
-    // qual é a desta resposta.
+    // paraglide's `lang`, and not a literal as in the siblings: here the site speaks
+    // three languages for real, and the screen reader and the search engine need to know
+    // which one this response is in.
     //
-    //
-    // `suppressHydrationWarning` só aqui: com `system`, o script que roda antes da
-    // hidratação escreve a classe no `<html>`, um nó que diverge por natureza
+    // `suppressHydrationWarning` only here: with `system`, the script that runs before
+    // hydration writes the class on `<html>`, a node that diverges by nature
     // (`frontend.md` §3.2).
     <html
       lang={getLocale()}
@@ -121,10 +120,10 @@ function RootDocument({
     >
       <head>
         {/*
-          A cor da barra do sistema no celular, uma por tema. Aqui e não no
-          `head` da rota: a fusão de `meta` desduplica por `name`, e o par
-          claro/escuro tem o mesmo `name` - lá o segundo apagaria o primeiro.
-          Os valores são os `--background` de `styles.css`.
+          The system bar color on mobile, one per theme. Here and not in the route's
+          `head`: the `meta` merge deduplicates by `name`, and the light/dark pair has the
+          same `name`, so there the second would erase the first.
+          The values are the `--background` of `styles.css`.
         */}
         <meta
           name="theme-color"

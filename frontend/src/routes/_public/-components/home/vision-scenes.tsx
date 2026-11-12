@@ -3,40 +3,40 @@ import type * as React from 'react'
 import { cn } from '#/lib/utils'
 
 /**
- * As três ilustrações da seção "A visão", uma por passo, trocadas em fade
- * conforme a leitura desce.
+ * The three illustrations of the "The vision" section, one per step, swapped with a fade
+ * as the reading goes down.
  *
- * As cores são literais e não tokens: a cena mora sempre sobre o palco navy,
- * nos dois temas, então o `--foreground` do tema claro a apagaria.
+ * The colors are literals and not tokens: the scene always lives over the navy stage,
+ * in both themes, so the light theme's `--foreground` would erase it.
  *
- * Nada de ternário: o que muda de um ponto para outro (raio, peso, âncora do
- * rótulo) vem nos próprios dados, e a escolha de estilo do anel sai de uma
- * função com retorno antecipado.
+ * No ternary: what changes from one point to another (radius, weight, label
+ * anchor) comes in the data itself, and the ring's style choice comes from a
+ * function with an early return.
  *
- * A animação é CSS, como toda entrada do site: `tw-animate-css` para o que
- * aparece e a utilidade `vision-draw` para o traço que se desenha. O site
- * antigo usava o `motion` só para isto. Cada cena remonta pela `key` quando o
- * passo muda, e remontar é o que reinicia a animação.
+ * The animation is CSS, like every entrance on the site: `tw-animate-css` for what
+ * appears and the `vision-draw` utility for the stroke that draws itself. The old
+ * site used `motion` only for this. Each scene remounts through the `key` when the
+ * step changes, and remounting is what restarts the animation.
  *
- * `motion-reduce:animate-none` em cada peça: quem pediu menos movimento vê a
- * cena pronta, sem o traço se desenhando.
+ * `motion-reduce:animate-none` on every piece: whoever asked for less motion sees the
+ * finished scene, without the stroke drawing itself.
  */
 
-/** A entrada de uma peça da cena, com o atraso passado por `style`. */
+/** The entrance of a scene piece, with the delay passed through `style`. */
 const APPEAR =
   'animate-in fade-in-0 duration-700 [animation-fill-mode:both] motion-reduce:animate-none'
 
-/** O mesmo, subindo um pouco: o editor e o README chegam de baixo. */
+/** The same, rising a little: the editor and the README arrive from below. */
 const RISE = cn(APPEAR, 'slide-in-from-bottom-3')
 
 /**
- * O traço que se desenha. `pathLength={1}` vai junto, no elemento. Sem
- * animação o deslocamento precisa voltar a zero à mão, senão o anel some.
+ * The stroke that draws itself. `pathLength={1}` goes along, on the element. Without
+ * animation the offset has to go back to zero by hand, or the ring disappears.
  */
 const DRAW =
   'vision-draw motion-reduce:animate-none motion-reduce:[stroke-dashoffset:0]'
 
-/** O atraso de uma peça, em segundos, como o `style` o recebe. */
+/** A piece's delay, in seconds, as `style` receives it. */
 function delay(seconds: number): React.CSSProperties {
   return { animationDelay: `${seconds}s` }
 }
@@ -49,21 +49,21 @@ const CYAN = '#31E1F7'
 const BLUE = '#77EED7'
 const PURPLE = '#A480F5'
 
-/** O Solimões, de oeste (Peru) a leste, subindo para São Paulo de Olivença. */
+/** The Solimões, from west (Peru) to east, going up toward São Paulo de Olivença. */
 const RIVER =
   'M -20 168 C 50 150, 90 185, 140 172 S 220 108, 290 140 S 360 218, 396 244 S 452 300, 500 286 S 552 170, 620 46'
 
-/** O Javari, que desce de Benjamin Constant e é a fronteira Peru-Brasil. */
+/** The Javari, which comes down from Benjamin Constant and is the Peru-Brazil border. */
 const JAVARI =
   'M 384 254 C 364 284, 330 304, 296 316 S 200 336, 130 326 S 40 344, -20 352'
 
-/** As linhas secas da Colômbia: a do oeste até o rio, a de Tabatinga ao norte. */
+/** Colombia's dry lines: the west one to the river, the one from Tabatinga to the north. */
 const BORDERS = ['M 150 -10 L 104 172', 'M 398 238 L 438 -10'] as const
 
-/** O ponto onde os três países se encontram, entre Letícia, Tabatinga e Santa Rosa. */
+/** The point where the three countries meet, between Leticia, Tabatinga and Santa Rosa. */
 const TRIPOINT = { x: 392, y: 250 } as const
 
-/** Os três países, cada um com a bandeira e o nome na própria língua. */
+/** The three countries, each with its flag and the name in its own language. */
 const COUNTRIES = [
   { x: 262, y: 52, name: 'COLOMBIA', flag: 'co' },
   { x: 120, y: 254, name: 'PERÚ', flag: 'pe' },
@@ -72,8 +72,8 @@ const COUNTRIES = [
 
 type Flag = (typeof COUNTRIES)[number]['flag']
 
-/** Bandeira de 18 por 12, desenhada a partir do canto superior esquerdo. */
-const FLAGS: Record<Flag, React.JSX.Element> = {
+/** An 18 by 12 flag, drawn from the top left corner. */
+const FLAGS = {
   co: (
     <>
       <rect width="18" height="6" fill="#FCD116" />
@@ -94,11 +94,11 @@ const FLAGS: Record<Flag, React.JSX.Element> = {
       <circle cx="9" cy="6" r="2.6" fill="#002776" />
     </>
   ),
-}
+} satisfies Record<Flag, React.JSX.Element>
 
 /**
- * As cidades da fronteira, de um lado e do outro do rio; Benjamin Constant é a
- * casa. `dy` leva o rótulo para baixo onde em cima ele bateria no vizinho.
+ * The border's cities, on one side and the other of the river; Benjamin Constant is
+ * home. `dy` takes the label down where up top it would hit its neighbor.
  */
 const TOWNS = [
   {
@@ -175,7 +175,7 @@ const TOWNS = [
   },
 ] as const
 
-/** A rede sai de casa para os três países. */
+/** The network leaves home for the three countries. */
 const LINKS = [
   [0, 1],
   [0, 2],
@@ -186,13 +186,13 @@ const LINKS = [
   [2, 7],
 ] as const
 
-/** Como cada ponto se desenha, pelo `kind`. */
+/** How each point is drawn, by `kind`. */
 const TOWN_STYLE = {
   home: { r: 8, fill: GREEN, opacity: 0.95, size: 17, weight: 700 },
   town: { r: 5, fill: INK, opacity: 0.7, size: 14, weight: 500 },
 } as const
 
-/** Sinal fraco: uma barra acesa, três apagadas. */
+/** Weak signal: one bar lit, three off. */
 const SIGNAL_BARS = [
   { fill: GREEN, opacity: 1 },
   { fill: INK, opacity: 0.18 },
@@ -201,10 +201,10 @@ const SIGNAL_BARS = [
 ] as const
 
 /**
- * 1 · Pensado para a borda: a tríplice fronteira Brasil, Colômbia e Peru, com
- * as cidades dos três lados do Solimões ligadas a partir de casa, mesmo com
- * sinal ruim. O desenho segue o mapa real (Letícia ao norte do rio, Santa Rosa
- * na ilha, Benjamin Constant na boca do Javari), simplificado.
+ * 1 · Designed for the edge: the Brazil, Colombia and Peru triple border, with
+ * the cities on the three sides of the Solimões connected from home, even with a
+ * bad signal. The drawing follows the real map (Leticia north of the river, Santa Rosa
+ * on the island, Benjamin Constant at the mouth of the Javari), simplified.
  */
 function EdgeScene(): React.JSX.Element {
   return (
@@ -414,7 +414,7 @@ function EdgeScene(): React.JSX.Element {
   )
 }
 
-/** As linhas de código do editor: recuo, largura, cor e opacidade. */
+/** The editor's code lines: indent, width, color and opacity. */
 const CODE = [
   { indent: 0, width: 120, color: PURPLE, opacity: 0.75 },
   { indent: 18, width: 170, color: BLUE, opacity: 0.75 },
@@ -425,7 +425,7 @@ const CODE = [
   { indent: 0, width: 80, color: PURPLE, opacity: 0.75 },
 ] as const
 
-/** As linhas do README; a primeira é o título, mais escura. */
+/** The README's lines; the first is the title, darker. */
 const README_LINES = [
   { width: 150, opacity: 0.55 },
   { width: 120, opacity: 0.18 },
@@ -441,7 +441,7 @@ const PEOPLE = [
   { x: 380, y: 362, color: CYAN },
 ] as const
 
-/** 2 · De quem usa: código e documentação entregues à comunidade. */
+/** 2 · Of whoever uses it: code and documentation delivered to the community. */
 function OwnedScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
@@ -556,12 +556,12 @@ const RING_YEARS = [
   { ring: 8, label: '2030' },
 ] as const
 
-/** O raio-base do anel `i`, e o `x` onde ele cruza o eixo horizontal. */
+/** Ring `i`'s base radius, and the `x` where it crosses the horizontal axis. */
 function ringRadius(i: number): number {
   return 22 + i * 17
 }
 
-/** Um anel levemente torto, como madeira de verdade. */
+/** A slightly crooked ring, like real wood. */
 function ringPath(i: number): string {
   const base = ringRadius(i)
   const points = Array.from({ length: 72 }, (_, k) => {
@@ -573,7 +573,7 @@ function ringPath(i: number): string {
   return `M ${points[0]} L ${points.slice(1).join(' L ')} Z`
 }
 
-/** A cada três anéis, um verde marcado; entre eles, ciano e tinta alternados. */
+/** Every third ring, a marked green one; between them, cyan and ink alternate. */
 function ringStyle(i: number): {
   stroke: string
   opacity: number
@@ -584,7 +584,7 @@ function ringStyle(i: number): {
   return { stroke: INK, opacity: 0.35, width: 1.5 }
 }
 
-/** 3 · Feito para durar: os anéis de uma samaúma, um por ano à frente. */
+/** 3 · Made to last: the rings of a samauma tree, one per year ahead. */
 function LastScene(): React.JSX.Element {
   return (
     <svg viewBox="0 0 600 420" className="size-full">
@@ -653,12 +653,12 @@ const SCENES = [EdgeScene, OwnedScene, LastScene] as const
 export type VisionStep = 0 | 1 | 2
 
 /**
- * A cena do passo atual.
+ * The current step's scene.
  *
- * A `key` é o passo: trocar de passo remonta a cena, e a remontagem é o que
- * refaz a entrada. Sem saída animada, e é decisão: a cena anterior some no
- * mesmo quadro em que a próxima começa a aparecer, o que em 500ms de fade lê
- * como troca, e poupa manter duas cenas montadas ao mesmo tempo.
+ * The `key` is the step: changing step remounts the scene, and remounting is what
+ * redoes the entrance. No animated exit, and it is a decision: the previous scene vanishes in
+ * the same frame in which the next starts to appear, which in a 500ms fade reads
+ * as a swap, and spares keeping two scenes mounted at the same time.
  */
 export function VisionScene({ step }: { step: VisionStep }): React.JSX.Element {
   const Scene = SCENES[step]

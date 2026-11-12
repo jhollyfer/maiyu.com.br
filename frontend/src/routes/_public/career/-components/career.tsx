@@ -16,9 +16,9 @@ type Principle = {
 }
 
 /**
- * Como a Maiyu trabalha. Cada princípio é verificável no próprio site: o time
- * da região, as três línguas, os projetos no ar. Nada aqui promete benefício
- * que a empresa não possa mostrar.
+ * How Maiyu works. Each principle is verifiable on the site itself: the team
+ * from the region, the three languages, the live projects. Nothing here promises a benefit
+ * the company cannot show.
  */
 const PRINCIPLES: ReadonlyArray<Principle> = [
   {
@@ -39,16 +39,16 @@ const PRINCIPLES: ReadonlyArray<Principle> = [
   },
 ]
 
-/** O alvo das áreas: o aviso com os canais, embaixo. */
+/** The target of the areas: the notice with the channels, below. */
 const APPLY_ID = 'contato'
 
 /**
- * Carreiras: o banco de talentos.
+ * Careers: the talent pool.
  *
- * Não há vaga aberta para listar, então a página convida por área. Cada área é
- * uma âncora para os canais de contato, e não uma página de detalhe: não existe
- * descrição de cargo, e um link para lugar nenhum seria pior que levar direto
- * a quem responde. Não há formulário de candidatura (`docs/DECISIONS.md` #17).
+ * There is no open position to list, so the page invites by area. Each area is
+ * an anchor to the contact channels, and not a detail page: there is no
+ * job description, and a link to nowhere would be worse than taking people straight
+ * to whoever answers. There is no application form (`docs/DECISIONS.md` #17).
  */
 export function Career(): React.JSX.Element {
   return (

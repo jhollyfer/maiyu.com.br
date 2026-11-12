@@ -11,10 +11,9 @@ import { ChannelsNotice } from './channels-notice'
 afterEach(cleanup)
 
 /**
- * Contato e carreiras não têm formulário (`docs/DECISIONS.md` #17): a página
- * mostra só o aviso honesto e os canais reais. O teste cobre o que se vê, nas
- * três línguas, e o que não pode aparecer: campo, botão de envio, texto de
- * "enviado" ou "recebido".
+ * Contact and careers have no form (`docs/DECISIONS.md` #17): the page shows only the honest
+ * notice and the real channels. The test covers what is seen, in the three languages, and what
+ * must not appear: a field, a submit button, "sent" or "received" text.
  */
 const TITLES: ReadonlyArray<[Locale, string]> = [
   ['pt-BR', 'O formulário está fora do ar por enquanto'],

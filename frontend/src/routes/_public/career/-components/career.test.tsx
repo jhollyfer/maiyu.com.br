@@ -21,8 +21,8 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 afterEach(cleanup)
 
 /**
- * Carreiras não tem formulário de candidatura (`docs/DECISIONS.md` #17): a
- * pessoa vê o aviso e os canais reais, e nenhum campo.
+ * Careers has no application form (`docs/DECISIONS.md` #17): the
+ * person sees the notice and the real channels, and no field.
  */
 describe('Career', () => {
   it('when rendered, it shows the notice and no form', () => {

@@ -7,8 +7,8 @@ import { m } from '#/paraglide/messages'
 
 import { Route } from './layout'
 
-// O layout compõe cabeçalho, rodapé e a saída do router; só a casca interessa
-// aqui, então as três peças viram marcadores.
+// The layout composes header, footer and the router's output; only the shell matters
+// here, so the three pieces become markers.
 vi.mock('@tanstack/react-router', async (importOriginal) => ({
   ...(await importOriginal<typeof Router>()),
   Outlet: () => <p>pagina</p>,

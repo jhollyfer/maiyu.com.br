@@ -18,7 +18,7 @@ type Service = {
   description: () => string
 }
 
-/** O que a Maiyu faz, na ordem em que um projeto costuma precisar. */
+/** What Maiyu does, in the order a project usually needs it. */
 const SERVICES: ReadonlyArray<Service> = [
   {
     title: () => m.home_service_consulting(),
@@ -43,11 +43,11 @@ const SERVICES: ReadonlyArray<Service> = [
 ]
 
 /**
- * Os serviços: a frase de posicionamento e o rio à esquerda, a lista regrada
- * à direita.
+ * The services: the positioning phrase and the river on the left, the ruled list
+ * on the right.
  *
- * Sem ícone por serviço: o título já diz o que é, e seis ícones iguais eram
- * enfeite. A lista entra em cascata, um item a cada `STAGGER`.
+ * No icon per service: the title already says what it is, and six identical icons were
+ * decoration. The list enters in a cascade, one item every `STAGGER`.
  */
 export function Capabilities(): React.JSX.Element {
   return (
@@ -75,7 +75,7 @@ export function Capabilities(): React.JSX.Element {
             >
               <ItemContent className="gap-0">
                 <ItemTitle className="line-clamp-none text-h3">
-                  {/* O ItemTitle é `div`: o h3 dentro dele mantém o serviço no sumário de títulos da página. */}
+                  {/* ItemTitle is a `div`: the h3 inside it keeps the service in the page's heading outline. */}
                   <h3>{service.title()}</h3>
                 </ItemTitle>
                 <ItemDescription className="mt-2 line-clamp-none max-w-[56ch] font-serif text-body-lg text-foreground/75">

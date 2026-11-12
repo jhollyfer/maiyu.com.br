@@ -12,7 +12,7 @@ import { m } from '#/paraglide/messages'
 
 import { REVEAL, STAGGER } from '../reveal'
 
-/** Os públicos, na ordem do posicionamento: os povos originários primeiro. */
+/** The audiences, in the positioning's order: the original peoples first. */
 const AUDIENCES = [
   () => m.home_audience1(),
   () => m.home_audience2(),
@@ -24,13 +24,13 @@ const AUDIENCES = [
 ] as const
 
 /**
- * Para quem a Maiyu constrói: a lista dos setores, em tipo grande, depois dos
- * serviços.
+ * Who Maiyu builds for: the list of sectors, in large type, after the
+ * services.
  *
- * Os serviços dizem o que a Maiyu faz; sem esta seção a página não dizia para
- * quem, e a organização indígena ou a prefeitura que chega não se reconhecia
- * em lugar nenhum. É lista e não grade de cards: cada linha é um nome, e o
- * marcador em losango de urucum é o mesmo desenho do trançado.
+ * The services say what Maiyu does; without this section the page did not say for
+ * whom, and the Indigenous organization or the city hall that arrives did not recognize
+ * itself anywhere. It is a list and not a grid of cards: each line is a name, and the
+ * annatto diamond marker is the same design as the weave.
  */
 export function Audience(): React.JSX.Element {
   return (

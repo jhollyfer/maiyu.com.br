@@ -32,16 +32,16 @@ import { PillButton } from './pill-button'
 import { useScrolled } from './use-scrolled'
 
 /**
- * O cabeçalho flutuante.
+ * The floating header.
  *
- * Transparente no topo, e ganha fundo e um fio embaixo quando a página rola:
- * uma barra de jornal que acompanha a leitura sem cobrir a capa na chegada. O estado
- * vem de `useScrolled`, e o desenho de cada estado mora em classes
- * `data-[scrolled=true]:`, sem ternário.
+ * Transparent at the top, and it gains a background and a line underneath when the page scrolls:
+ * a newspaper bar that follows the reading without covering the cover on arrival. The state
+ * comes from `useScrolled`, and the drawing of each state lives in `data-[scrolled=true]:`
+ * classes, with no ternary.
  *
- * `NavigationMenu` na barra e `Sheet` no celular, como no academy: as duas
- * primitivas já trazem foco preso, `Esc`, `aria-expanded` e trava de rolagem,
- * que é o que o overlay escrito à mão do site antigo fazia pela metade.
+ * `NavigationMenu` on the bar and `Sheet` on the phone, as in academy: both primitives
+ * already bring a focus trap, `Esc`, `aria-expanded` and scroll lock, which is what the old
+ * site's hand-written overlay did by halves.
  */
 export function Header(): React.JSX.Element {
   const scrolled = useScrolled(24)
@@ -119,15 +119,15 @@ export function Header(): React.JSX.Element {
 }
 
 /**
- * O menu do celular.
+ * The phone menu.
  *
- * Painel de cima, ocupando a tela, e não o lateral do academy: é o desenho do
- * site no ar, com os destinos em títulos grandes, e o painel estreito de lado
- * os espremeria em duas linhas.
+ * A top panel, filling the screen, and not academy's side one: it is the design of the live
+ * site, with the destinations in large headings, and a narrow side panel would squeeze them
+ * into two lines.
  *
- * Cada link fecha o painel com `SheetClose render={<Link />}`, e não com um
- * `onClick` que mexe em estado: a navegação e o fechamento saem do mesmo
- * clique, e o componente continua não controlado.
+ * Each link closes the panel with `SheetClose render={<Link />}`, and not with an
+ * `onClick` that touches state: navigation and closing come from the same click, and the
+ * component stays uncontrolled.
  */
 function MobileMenu(): React.JSX.Element {
   return (
@@ -149,9 +149,9 @@ function MobileMenu(): React.JSX.Element {
         className="h-dvh bg-background/95 px-4 pt-20 pb-10 backdrop-blur-2xl"
       >
         {/*
-          Título e descrição sempre, como pede o padrão do Sheet: é o que o
-          leitor de tela anuncia ao abrir. Aqui os dois ficam só para ele, porque
-          a marca já está no cabeçalho logo acima.
+          Title and description always, as the Sheet pattern asks: it is what the screen
+          reader announces on opening. Here both are only for it, because the brand
+          is already in the header right above.
         */}
         <SheetHeader className="sr-only">
           <SheetTitle>{SITE_TITLE}</SheetTitle>

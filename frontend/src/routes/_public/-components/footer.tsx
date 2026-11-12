@@ -13,12 +13,12 @@ import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 
 /**
- * O rodapé: o trançado como topo, quatro colunas separadas por fios, o botão
- * de voltar ao topo e o "MAIYU" gigante de assinatura.
+ * The footer: the weave as the top, four columns separated by lines, the back-to-top button
+ * and the giant "MAIYU" signature.
  *
- * O botão fica em `relative z-10` e o wordmark em `pointer-events-none`: sem
- * isso o texto gigante, que sobe por cima da linha do botão pela entrelinha
- * de 0.9, engolia o clique.
+ * The button sits in `relative z-10` and the wordmark in `pointer-events-none`: without
+ * this the giant text, which rises over the button's line through the 0.9 line height,
+ * swallowed the click.
  */
 export function Footer(): React.JSX.Element {
   return (

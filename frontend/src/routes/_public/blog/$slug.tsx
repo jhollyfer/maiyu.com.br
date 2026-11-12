@@ -15,11 +15,11 @@ import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
 
 /**
- * Um artigo do diário.
+ * A journal article.
  *
- * O `loader` procura o artigo e lança `notFound()` quando o slug não existe,
- * que é o 404 de negócio do padrão: a rota desenha o seu `notFoundComponent`
- * (no `.lazy.tsx`) em vez de uma página vazia com status de sucesso.
+ * The `loader` looks for the article and throws `notFound()` when the slug does not exist,
+ * which is the pattern's business 404: the route draws its `notFoundComponent`
+ * (in the `.lazy.tsx`) instead of an empty page with a success status.
  */
 export const Route = createFileRoute('/_public/blog/$slug')({
   loader: ({ params }) => {
@@ -51,7 +51,7 @@ export const Route = createFileRoute('/_public/blog/$slug')({
             description,
             url: localizedUrl(pathname, getLocale()),
             image,
-            // A autoria é da Maiyu como organização, não de uma pessoa.
+            // Authorship belongs to Maiyu as an organization, not to a person.
             author: SITE_TITLE,
             publishedAt: loaderData.date,
           }),
@@ -65,9 +65,9 @@ export const Route = createFileRoute('/_public/blog/$slug')({
     })
 
     /*
-     * O `pageHead` do kit não conhece o tipo `article` nem a imagem da página: o
-     * cartão do artigo leva a foto dele e `og:type: article`, e os dois entram aqui,
-     * depois dele, trocando a imagem em vez de repeti-la.
+     * The kit's `pageHead` does not know the `article` type or the page image: the
+     * article card carries its own photo and `og:type: article`, and both go in here,
+     * after it, replacing the image instead of repeating it.
      */
     return {
       ...head,
