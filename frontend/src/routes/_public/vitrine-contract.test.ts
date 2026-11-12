@@ -17,6 +17,7 @@ import { REVEAL } from './-components/reveal'
  */
 const here = dirname(fileURLToPath(import.meta.url))
 const components = join(here, '-components')
+const homePieces = join(components, 'home')
 
 function read(...path: Array<string>): string {
   return readFileSync(join(...path), 'utf8')
@@ -33,7 +34,7 @@ describe('movimento respeita quem pediu menos movimento', () => {
   it('o traço das cenas volta a aparecer sem animação', () => {
     // Sem isto o anel da samaúma fica invisível para quem desligou o
     // movimento: o deslocamento do traçado é o próprio estado inicial.
-    expect(read(components, 'vision-scenes.tsx')).toContain(
+    expect(read(homePieces, 'vision-scenes.tsx')).toContain(
       'motion-reduce:[stroke-dashoffset:0]',
     )
   })
@@ -50,9 +51,11 @@ describe('movimento respeita quem pediu menos movimento', () => {
       'capabilities.tsx',
       'navy-band.tsx',
       'closing-cta.tsx',
-      'header.tsx',
     ])
-      expect(read(components, file)).not.toContain('motion/react')
+      expect(read(homePieces, file)).not.toContain('motion/react')
+
+    // O cabeçalho é da casca, e não da home: mora em `-components/` da área.
+    expect(read(components, 'header.tsx')).not.toContain('motion/react')
   })
 })
 

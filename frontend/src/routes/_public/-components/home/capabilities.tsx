@@ -10,8 +10,8 @@ import {
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { Photo } from './photo'
-import { REVEAL, STAGGER } from './reveal'
+import { Photo } from '../photo'
+import { REVEAL, STAGGER } from '../reveal'
 
 type Service = {
   title: () => string

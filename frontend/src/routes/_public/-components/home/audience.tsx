@@ -10,7 +10,7 @@ import {
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { REVEAL, STAGGER } from './reveal'
+import { REVEAL, STAGGER } from '../reveal'
 
 /** Os públicos, na ordem do posicionamento: os povos originários primeiro. */
 const AUDIENCES = [

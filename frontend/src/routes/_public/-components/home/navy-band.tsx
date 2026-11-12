@@ -15,8 +15,8 @@ import { localized } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { PillButton } from './pill-button'
-import { REVEAL, STAGGER } from './reveal'
+import { PillButton } from '../pill-button'
+import { REVEAL, STAGGER } from '../reveal'
 
 type Role = {
   title: () => string

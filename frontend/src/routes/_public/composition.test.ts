@@ -13,7 +13,7 @@ import { describe, expect, it } from 'vitest'
  * que a página defende, para que uma seção nova não reprove por existir.
  */
 const here = dirname(fileURLToPath(import.meta.url))
-const home = join(here, '-components', 'home.tsx')
+const home = join(here, '-components', 'home', 'home.tsx')
 
 /** As seções na ordem em que a composição as renderiza. */
 function sectionOrder(): Array<string> {

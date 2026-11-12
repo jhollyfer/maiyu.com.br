@@ -3,7 +3,7 @@ import type * as React from 'react'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { REVEAL, STAGGER } from './reveal'
+import { REVEAL, STAGGER } from '../reveal'
 
 type Step = {
   title: () => string

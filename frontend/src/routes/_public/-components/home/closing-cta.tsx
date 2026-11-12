@@ -6,9 +6,9 @@ import { CALL_URL } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { Photo } from './photo'
-import { PillButton } from './pill-button'
-import { REVEAL } from './reveal'
+import { Photo } from '../photo'
+import { PillButton } from '../pill-button'
+import { REVEAL } from '../reveal'
 
 /**
  * O convite final: a frase grande sobre o papel, as ações e a foto de Letícia,

@@ -4,9 +4,9 @@ import type * as React from 'react'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { Photo } from './photo'
-import { PillButton } from './pill-button'
-import { REVEAL } from './reveal'
+import { Photo } from '../photo'
+import { PillButton } from '../pill-button'
+import { REVEAL } from '../reveal'
 
 /**
  * A primeira dobra: a capa tipográfica e, logo abaixo, a cidade.

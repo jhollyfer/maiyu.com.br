@@ -9,9 +9,9 @@ import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { PillButton } from './pill-button'
-import { ProjectStatusBadge } from './project-status'
-import { REVEAL, STAGGER } from './reveal'
+import { PillButton } from '../pill-button'
+import { ProjectStatusBadge } from '../project-status'
+import { REVEAL, STAGGER } from '../reveal'
 
 type ProjectProps = {
   project: Project
