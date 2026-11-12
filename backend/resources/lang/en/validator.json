@@ -6,6 +6,7 @@
       "password": "the password",
       "passwordConfirmation": "the password confirmation",
       "currentPassword": "the current password",
+      "token": "the code",
       "role": "the role",
       "status": "the status",
       "avatarId": "the avatar",

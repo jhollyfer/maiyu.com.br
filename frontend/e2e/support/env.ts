@@ -1,11 +1,11 @@
 /**
- * O ambiente do E2E, lido num lugar só. Sem default: endereço e credencial são de
- * quem roda (`.env.example`), e a falta de uma para a execução dizendo qual é, em
- * vez de tentar entrar com um valor inventado.
+ * O ambiente do E2E, lido num lugar só. Sem default: o endereço é de quem roda
+ * (`.env.example`), e a falta de um para a execução dizendo qual é, em vez de tentar
+ * com um valor inventado. Senha não é chave: as contas por papel nascem no
+ * `auth.setup.ts` (`support/accounts.ts`, DECISIONS.md #443).
  *
  * Projeto sem backend (só frontend) não define `E2E_API_URL`: `withBackend` é falso, o
- * `playwright.config.ts` não sobe a API nem roda o `setup`, e o dono só é exigido
- * quando um spec ou o `auth.setup.ts` o lê (`ownerEmail`, `ownerPassword`).
+ * `playwright.config.ts` não sobe a API nem roda o `setup`.
  */
 export class E2eEnv {
   /** O site (frontend) sob teste. */
@@ -21,14 +21,6 @@ export class E2eEnv {
     if (!E2eEnv.withBackend) return []
 
     return [...items]
-  }
-
-  static get ownerEmail(): string {
-    return E2eEnv.read('E2E_OWNER_EMAIL')
-  }
-
-  static get ownerPassword(): string {
-    return E2eEnv.read('E2E_OWNER_PASSWORD')
   }
 
   /** A sessão do dono, gravada pelo `setup` (`playwright/.auth` está no `.gitignore`). */

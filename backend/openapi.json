@@ -37,7 +37,7 @@
     },
     {
       "name": "Conta",
-      "description": "A conta de quem está na sessão: ler o nome, o e-mail e o celular, e trocar o nome ou a senha com a senha atual."
+      "description": "A conta de quem está na sessão: ler o nome, o e-mail, o celular e a foto, e trocar o nome, a senha, o celular ou a foto com a senha atual; pedir a troca do e-mail e confirmá-la com o código que chega ao endereço novo."
     },
     {
       "name": "Plataforma",
@@ -98,7 +98,7 @@
       },
       "put": {
         "operationId": "accountProfileUpdate",
-        "summary": "Trocar nome, celular ou senha",
+        "summary": "Trocar nome, celular, senha, foto ou pedir a troca do e-mail",
         "tags": [
           "Conta"
         ],
@@ -124,11 +124,11 @@
             }
           },
           "422": {
-            "description": "Dados inválidos · Senha atual incorreta · A nova senha deve ser diferente da atual · Este celular já está em uso",
+            "description": "Dados inválidos · Senha atual incorreta · A nova senha deve ser diferente da atual · Este celular já está em uso · Este e-mail já está em uso · Foto inválida · O novo e-mail deve ser diferente do atual · A troca do e-mail por conta própria não está disponível",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error422CurrentPasswordInvalidPasswordSameAsCurrentPhoneTakenValidationError"
+                  "$ref": "#/components/schemas/Error422AvatarInvalidCurrentPasswordInvalidEmailChangeUnavailableEmailSameAsCurrentEmailTakenPasswordSameAsCurrentPhoneTakenValidationError"
                 }
               }
             }
@@ -154,7 +154,7 @@
             }
           }
         },
-        "description": "Troca o nome, o celular, a senha ou mais de um. O corpo precisa de `name`, `phone` ou `password` (esta com `passwordConfirmation`, como em todo lugar que se escolhe senha), e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`; celular que outra conta já usa responde `422` `PHONE_TAKEN` no campo `phone`.\n\nTrocar a senha ou o celular **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a credencial nova. Trocar só o nome responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O e-mail e o papel não mudam por aqui.",
+        "description": "Troca o nome, o celular, a senha, a foto ou mais de um, e pede a troca do e-mail. O corpo precisa de `name`, `phone`, `password` (esta com `passwordConfirmation`, como em todo lugar que se escolhe senha), `email` ou `avatarId`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`; celular que outra conta já usa responde `422` `PHONE_TAKEN` no campo `phone`.\n\n`avatarId` é um arquivo que a própria conta enviou, já confirmado e do tenant da sessão (`POST /storages` e `complete`); outro responde `422` `AVATAR_INVALID` no campo `avatarId`, e a resposta traz a foto em `avatar`, com a URL assinada.\n\n`email` **não troca o e-mail na hora**: com o bloco de e-mail ligado (e SMTP configurado), o servidor envia um código de uso único ao endereço novo, a resposta traz o endereço em `pendingEmail` e o e-mail só muda em `POST /account/email/confirm`. Sem o bloco ou sem SMTP, responde `422` `EMAIL_CHANGE_UNAVAILABLE` (só o administrador troca o e-mail, no CRUD de usuários); o mesmo e-mail da conta responde `422` `EMAIL_SAME_AS_CURRENT`, e o de outra conta `422` `EMAIL_TAKEN`.\n\nTrocar a senha ou o celular **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a credencial nova. Trocar só o nome ou a foto, ou só pedir o e-mail, responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O papel não muda por aqui.",
         "security": [
           {
             "cookieAuth": []
@@ -2578,6 +2578,112 @@
               "ADMINISTRATOR",
               "USER"
             ]
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "filename": {
+                    "type": "string"
+                  },
+                  "originalName": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "UPLOADED"
+                    ]
+                  },
+                  "uploadId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "partSize": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deletedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "originalName",
+                  "mimetype",
+                  "size",
+                  "path",
+                  "status",
+                  "uploadId",
+                  "partSize",
+                  "createdAt",
+                  "updatedAt",
+                  "deletedAt",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2585,7 +2691,8 @@
           "name",
           "email",
           "phone",
-          "platformRole"
+          "platformRole",
+          "avatar"
         ],
         "additionalProperties": false
       },
@@ -2620,6 +2727,18 @@
                 "pattern": "[^a-zA-Z0-9]"
               }
             ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "avatarId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "currentPassword": {
             "type": "string",
@@ -2663,6 +2782,118 @@
               "ADMINISTRATOR",
               "USER"
             ]
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "filename": {
+                    "type": "string"
+                  },
+                  "originalName": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "UPLOADED"
+                    ]
+                  },
+                  "uploadId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "partSize": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deletedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "originalName",
+                  "mimetype",
+                  "size",
+                  "path",
+                  "status",
+                  "uploadId",
+                  "partSize",
+                  "createdAt",
+                  "updatedAt",
+                  "deletedAt",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pendingEmail": {
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -2670,7 +2901,9 @@
           "name",
           "email",
           "phone",
-          "platformRole"
+          "platformRole",
+          "avatar",
+          "pendingEmail"
         ],
         "additionalProperties": false
       },
@@ -3616,7 +3849,7 @@
           "code"
         ]
       },
-      "Error422CityBoundsInvalidValidationError": {
+      "Error422AvatarInvalidCurrentPasswordInvalidEmailChangeUnavailableEmailSameAsCurrentEmailTakenPasswordSameAsCurrentPhoneTakenValidationError": {
         "type": "object",
         "properties": {
           "message": {
@@ -3633,7 +3866,13 @@
             "type": "string",
             "description": "Identificador de máquina da falha.",
             "enum": [
-              "CITY_BOUNDS_INVALID",
+              "AVATAR_INVALID",
+              "CURRENT_PASSWORD_INVALID",
+              "EMAIL_CHANGE_UNAVAILABLE",
+              "EMAIL_SAME_AS_CURRENT",
+              "EMAIL_TAKEN",
+              "PASSWORD_SAME_AS_CURRENT",
+              "PHONE_TAKEN",
               "VALIDATION_ERROR"
             ]
           },
@@ -3652,7 +3891,7 @@
           "errors"
         ]
       },
-      "Error422CurrentPasswordInvalidPasswordSameAsCurrentPhoneTakenValidationError": {
+      "Error422CityBoundsInvalidValidationError": {
         "type": "object",
         "properties": {
           "message": {
@@ -3669,9 +3908,7 @@
             "type": "string",
             "description": "Identificador de máquina da falha.",
             "enum": [
-              "CURRENT_PASSWORD_INVALID",
-              "PASSWORD_SAME_AS_CURRENT",
-              "PHONE_TAKEN",
+              "CITY_BOUNDS_INVALID",
               "VALIDATION_ERROR"
             ]
           },

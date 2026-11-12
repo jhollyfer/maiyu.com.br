@@ -115,6 +115,7 @@ export default class StoragesFileCreateUseCase {
         id: randomUUID(),
         tenantId: target.tenantId,
         customerId: target.customerId,
+        uploadedBy: TenantScope.current()?.accountId ?? null,
         key,
         originalName: payload.fileName,
         mimetype: payload.mimetype,

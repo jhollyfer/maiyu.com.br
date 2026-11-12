@@ -13,3 +13,6 @@ export type UserError =
   // The new password is the one the owner already has: nothing would change, yet every session
   // would end, so it is refused at the field instead of silently signing the owner out.
   | { readonly code: 'PASSWORD_SAME_AS_CURRENT' }
+  // Another account already signs in with this e-mail (DECISIONS.md #442). The unique index on
+  // `lower(email)` would say it too, but as a database error that writes the address in the log.
+  | { readonly code: 'USER_EMAIL_TAKEN' }

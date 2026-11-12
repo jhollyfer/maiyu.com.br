@@ -80,7 +80,10 @@ export class StorageMemoryRepository extends StorageRepository {
     })
   }
 
-  async areAttachable(ids: ReadonlyArray<string>): Promise<boolean> {
+  async areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean> {
     return [...new Set(ids)].every((id) => {
       const props = this.rows.get(id)
 
@@ -88,6 +91,7 @@ export class StorageMemoryRepository extends StorageRepository {
         props !== undefined &&
         !props.deletedAt &&
         TenantScope.writesOwned(props.tenantId, props.customerId) &&
+        props.uploadedBy === uploadedBy &&
         props.status === UPLOAD_STATUS.UPLOADED
       )
     })

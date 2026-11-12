@@ -103,6 +103,21 @@ export class ContactSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class EmailChangeSchema extends BaseModel {
+  static $columns = ['createdAt', 'expiresAt', 'newEmail', 'tokenHash', 'userId'] as const
+  $columns = EmailChangeSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column.dateTime()
+  declare expiresAt: DateTime
+  @column()
+  declare newEmail: string
+  @column()
+  declare tokenHash: string
+  @column({ isPrimary: true })
+  declare userId: string
+}
+
 export class RateLimitSchema extends BaseModel {
   static $columns = ['expire', 'key', 'points'] as const
   $columns = RateLimitSchema.$columns
@@ -115,7 +130,7 @@ export class RateLimitSchema extends BaseModel {
 }
 
 export class StorageSchema extends BaseModel {
-  static $columns = ['createdAt', 'customerId', 'deletedAt', 'filename', 'id', 'mimetype', 'originalName', 'partSize', 'path', 'size', 'status', 'tenantId', 'updatedAt', 'uploadId'] as const
+  static $columns = ['createdAt', 'customerId', 'deletedAt', 'filename', 'id', 'mimetype', 'originalName', 'partSize', 'path', 'size', 'status', 'tenantId', 'updatedAt', 'uploadId', 'uploadedBy'] as const
   $columns = StorageSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
@@ -145,6 +160,8 @@ export class StorageSchema extends BaseModel {
   declare updatedAt: DateTime | null
   @column()
   declare uploadId: string | null
+  @column()
+  declare uploadedBy: string | null
 }
 
 export class TenantMembershipSchema extends BaseModel {

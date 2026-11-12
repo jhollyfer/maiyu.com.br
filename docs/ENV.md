@@ -19,8 +19,8 @@ e `VITE_UPLOAD_MAX_SIZE` no build (`src/env.ts`) e `SITE_ENV`, `SERVER_API_URL`,
 
 Mesma ordem e mesmas chaves do `backend/.env.example` do kit (catálogo único, `_standards/DECISIONS.md`
 #417). O site não manda e-mail nem usa fila: as chaves desses blocos ficam no arquivo, vazias, e o bloco
-fica desligado pelo valor. A única chave a mais é `SEED_DEMO_PASSWORD`, mantida até a decisão aberta no
-upstream sobre as contas de demonstração (o `--check` acusa `env-diverge` nela).
+fica desligado pelo valor. As contas de teste do E2E não têm chave: saem do `node ace e2e:accounts`, que só roda
+em development e test.
 
 | Variável | App | Obrigatória | Segredo | O que é | Exemplo |
 |---|---|---|---|---|---|
@@ -48,7 +48,6 @@ upstream sobre as contas de demonstração (o `--check` acusa `env-diverge` nela
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
-| `SEED_DEMO_PASSWORD` | api | não | **sim** | senha das contas de demonstração; o projeto não tem demonstração (chave fora do catálogo, acima) | vazio |
 | `SEED_TENANT_NAME` | api | sim com o tenant | não | nome do tenant único semeado (`_standards/DECISIONS.md` #390) | `Maiyu` |
 | `SEED_TENANT_SLUG` | api | sim com o tenant | não | slug do tenant; o mesmo de `SINGLE_TENANT_SLUG` | `maiyu` |
 | `SEED_TENANT_CITY` | api | sim com o tenant | não | slug da cidade semeada do tenant | `benjamin-constant` |
@@ -85,7 +84,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 | `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
-| `E2E_*` | web | não | `E2E_*_PASSWORD` sim | só para Playwright; o site não tem E2E | ver `.env.example` |
+| `E2E_*` | web | não | não | só para Playwright: URL do site e da API e o Chromium opcional; as contas de cada papel o `e2e/auth.setup.ts` cria na hora com `node ace e2e:accounts` (#443), sem senha em chave | ver `.env.example` |
 
 Regras (detalhe em `backend.md` §6):
 

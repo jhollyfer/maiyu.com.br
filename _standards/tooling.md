@@ -825,13 +825,14 @@ Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_
 transforma teste quebrado em intermitente, _doc-lib/playwright.md#docs/test-retries; teste instável
 é bug com tarefa), `globalTimeout` sempre definido (sem ele a execução não tem teto,
 _doc-lib/playwright.md#docs/test-timeouts), `trace: 'retain-on-failure'`,
-`screenshot: 'only-on-failure'`, `baseURL` e credenciais por env sem default (`E2E_OWNER_PASSWORD`,
-como o seeder), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
+`screenshot: 'only-on-failure'`, `baseURL` por env sem default e nenhuma senha em chave de ambiente: o `e2e/auth.setup.ts` cria a conta de
+cada papel na hora, por `node ace e2e:accounts` (só em development e test, senha sorteada a cada execução,
+`DECISIONS.md` #443), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
 `[['html', { open: 'never' }]]`. Fluxo crítico roda `@axe-core/playwright` e reprova violação séria
 ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
 projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
 Projeto só frontend não define `E2E_API_URL`: o config não sobe a API, não cria os projetos `setup` e
-`cleanup` e não exige `E2E_OWNER_*` (`e2e/support/env.ts`, `withBackend`).
+`cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`).
 
 **`shared/`**: `check` *(teste)*, antes do backend.
 
@@ -902,6 +903,11 @@ que rodam sozinhos e só regravam o sha desses pontos no manifesto, sem tocar em
 reformatar o resto do manifesto; com outra flag, sem manifesto ou sem nada a confirmar, saem com erro) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
 ou mesma tabela); os dois saem com 1. Sem manifesto, o `--check` avisa `extension-baseline` e não falha, e
 o sync cria o manifesto com o modelo atual (`DECISIONS.md` #398).
+
+**`.gitignore` do kit é fusão por linha**, nunca espelho (o do projeto guarda `.env`, `node_modules` e o
+resto, e sobrescrevê-lo deixaria segredo à mostra). As linhas do modelo que o do projeto não tem entram no
+fim, com o comentário que as precede; ordem e linhas do projeto ficam, o arquivo ausente é criado, a segunda
+passada não muda nada, e o `--check` lista `gitignore-falta: <arquivo>: <linha>` e sai com 1.
 
 **ENV: catálogo único de chaves** (`DECISIONS.md` #417, `backend.md` §6.2). Todo projeto tem exatamente
 as chaves de `_templates/backend/.env.example` e `_templates/frontend/.env.example`, na mesma ordem,
@@ -1204,7 +1210,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 - **`.gitignore` na raiz**, obrigatório, cada bloco com um comentário dizendo o motivo. Ignora
   `node_modules/`, `build/`, `.output/`, `.env` (o `.env.example` e o `.env.test` são versionados,
-  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, e o que a árvore declara
+  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, `frontend/playwright/.auth/` (sessões e `accounts.json` com a senha das contas do E2E, §7; o kit leva o `frontend/.gitignore` que o cobre), e o que a árvore declara
   fora dela: `.idea/`, `.vscode/`, `.claude/worktrees/`, pastas de resultado, e
   `CLAUDE-SECURITY-*/` (relatório de varredura com cenário de exploração não vai para o histórico,
   §10.4).

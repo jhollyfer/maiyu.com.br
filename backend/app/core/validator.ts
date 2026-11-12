@@ -140,6 +140,36 @@ const notNullRule = vine.createRule(
 )
 
 /**
+ * The rules behind `Rule.atLeastOneOf()` and `Rule.requiredIfAnyOf()`. Implicit, because they must
+ * run on the field that is absent. They read the sibling fields from the parent object and count a
+ * field as present when it is not `undefined`: `null` is a value (a nullable field set to `null` is
+ * a change), and VineJS's own `requiredIfMissing` reads it as absent.
+ */
+const atLeastOneOfRule = vine.createRule(
+  (
+    _value: unknown,
+    options: { readonly keys: ReadonlyArray<string> },
+    field: FieldContext,
+  ) => {
+    if (!Rule.anyPresent(field, options.keys))
+      field.report('The {{ field }} field is required', 'required', field)
+  },
+  { implicit: true },
+)
+
+const requiredIfAnyOfRule = vine.createRule(
+  (
+    value: unknown,
+    options: { readonly keys: ReadonlyArray<string> },
+    field: FieldContext,
+  ) => {
+    if (value === undefined && Rule.anyPresent(field, options.keys))
+      field.report('The {{ field }} field is required', 'required', field)
+  },
+  { implicit: true },
+)
+
+/**
  * The rule behind `Rule.timeZone()`: the zone must be one the runtime knows, the same test as the
  * shared `Rule.isTimeZone`, so the form and the API refuse the same names.
  */
@@ -196,6 +226,24 @@ type MarkableField = SchemaTypes & {
  * would show up in the other.
  */
 export class Rule {
+  /** Whether some of the `keys` is in the object that holds `field`, `null` included. */
+  static anyPresent(field: FieldContext, keys: ReadonlyArray<string>): boolean {
+    const parent: unknown = field.parent
+    if (typeof parent !== 'object' || parent === null) return false
+
+    return keys.some((key) => Reflect.get(parent, key) !== undefined)
+  }
+
+  /** "At least one of these fields": the field it marks is required while none of `keys` is present. */
+  static atLeastOneOf(keys: ReadonlyArray<string>) {
+    return atLeastOneOfRule({ keys })
+  }
+
+  /** The field it marks is required as soon as one of `keys` is present (`null` counts). */
+  static requiredIfAnyOf(keys: ReadonlyArray<string>) {
+    return requiredIfAnyOfRule({ keys })
+  }
+
   static email() {
     // Lowercase, like the shared pair: `A@x.com` and `a@x.com` are one account, for the
     // login, the unique column and the sessions an e-mail change revokes.

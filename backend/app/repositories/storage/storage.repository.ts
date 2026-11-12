@@ -45,8 +45,15 @@ export abstract class StorageRepository {
   abstract detail(id: string): Promise<StorageFileRead | null>
   /** The same record for several ids at once; an id without a live file is left out. */
   abstract detailsOf(ids: ReadonlyArray<string>): Promise<StorageFileRead[]>
-  /** All the ids are live, confirmed (`UPLOADED`) files the request writes: a parent never attaches a child's file. */
-  abstract areAttachable(ids: ReadonlyArray<string>): Promise<boolean>
+  /**
+   * All the ids are live, confirmed (`UPLOADED`) files the request writes and that `uploadedBy`
+   * itself uploaded: a parent never attaches a child's file, and a member never wears another
+   * member's (or a customer's) file.
+   */
+  abstract areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean>
   /** Where the file is in use, in readable labels; empty means orphan. */
   abstract usedBy(id: string): Promise<string[]>
   abstract save(storage: Storage): Promise<void>

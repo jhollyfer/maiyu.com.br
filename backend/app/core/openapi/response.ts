@@ -1,5 +1,6 @@
 import {
   AccountProfileShowResponse,
+  AccountProfileUpdateResponse,
   AdministratorContactPaginateResponse,
   AdministratorContactShowResponse,
   AuthenticationTenantsResponse,
@@ -31,6 +32,7 @@ import type { FeatureResponse } from '#core/openapi/types'
  */
 export const RESPONSES: Record<string, FeatureResponse> = {
   'account/profile': AccountProfileShowResponse,
+  'account/profile/update': AccountProfileUpdateResponse,
   'administrator/contacts': AdministratorContactShowResponse,
   'administrator/contacts/paginate': AdministratorContactPaginateResponse,
   'authentication/tenants/list': AuthenticationTenantsResponse,

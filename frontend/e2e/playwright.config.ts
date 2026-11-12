@@ -5,9 +5,10 @@ import { E2eEnv } from './support/env'
 /**
  * The E2E runner (`_standards/tooling.md` §7, _doc-lib/playwright.md#docs/test-configuration).
  *
- * Credential and address come from the environment and have no default here: without `E2E_BASE_URL`
- * (and, with a backend, `E2E_API_URL`, `E2E_OWNER_EMAIL` and `E2E_OWNER_PASSWORD`), `support/env.ts`
- * stops the run saying which one is missing (`docs/ENV.md`).
+ * The address comes from the environment and has no default here: without `E2E_BASE_URL` (and, with a
+ * backend, `E2E_API_URL`), `support/env.ts` stops the run saying which one is missing (`docs/ENV.md`).
+ * No password is an environment key: `auth.setup.ts` creates the account of each role for the run
+ * (`node ace e2e:accounts`, random password, development and test only; DECISIONS.md #443).
  *
  * Frontend-only project: without `E2E_API_URL` the API server, the `setup`/`cleanup` projects and
  * the owner's `storageState` are left out, and only the app is started (`E2eEnv.withBackend`).
