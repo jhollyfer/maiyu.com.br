@@ -1,0 +1,132 @@
+import type {
+  Merge,
+  SortDirection,
+  TrashablePaginationPayload,
+  z,
+} from '@maiyu/shared'
+
+/**
+ * The filters of any dashboard listing, in the URL.
+ *
+ * In the URL, and not in `useState`, because it is what survives F5 and the shared
+ * link - the table on page 2 with a filter applied has to come back
+ * the same.
+ *
+ * Every import from `@maiyu/shared` here is `import type`. It is not an oversight:
+ * this file is imported by every route that declares `validateSearch`, so it falls into
+ * the router chunk, and a value read at module scope creates an edge to the vocabulary
+ * chunk. Rolldown does not guarantee that the chunk graph is acyclic, and in a cycle the
+ * value is `undefined` on the first SSR. `import type` vanishes in the build and the edge
+ * with it. The schema each route passes to `listValidateSearch` comes from the route's
+ * own `-search.ts`.
+ *
+ * Lives outside `routes/` so it can be tested without the tree generator
+ * treating the test file as a route.
+ */
+
+/**
+ * What the URL does not need to carry: page 1 is the page without `?page`.
+ * `stripSearchParams` removes the parameter equal to the default from the generated URL.
+ * The literal, and not `PAGINATION.PAGE`, for the chunk edge above; `list-search.test.ts`
+ * checks it against the shared record.
+ * _doc-lib/tanstack-router.md#how-to/validate-search-params.
+ */
+export const LIST_SEARCH_DEFAULTS = { page: 1 }
+
+/**
+ * The shape every dashboard listing shares, for the kit pieces that read the search
+ * without knowing the resource (`components/common/table/`). The resource's own type,
+ * with its filters as the domain enum, is `z.output` of its validator in `@maiyu/shared`
+ * and lives in the route's `-search.ts`.
+ *
+ * `sort` is `string` here because each resource closes its own column list in
+ * `Rule.sortFields()`; the resource type narrows it and stays assignable to this one.
+ */
+export type ListSearch = Merge<
+  TrashablePaginationPayload,
+  { sort?: string; direction?: SortDirection }
+>
+
+/**
+ * The public storefront's filters: `ListSearch` **without `trashed`**. `/storefront` never
+ * sees an archived record, and the `trashedField()` stays out of the validators there.
+ * Leaving the key in the typing would be promising a filter that the backend refuses with 422.
+ */
+export type StorefrontSearch = Omit<ListSearch, 'trashed'>
+
+/**
+ * The `validateSearch` of a listing, from the resource's validator in `@maiyu/shared`
+ * (the pagination fields extended with the resource's filters). The result is the schema's
+ * output, so a filter is the domain enum and not `string`, and the API client accepts it
+ * as it is.
+ *
+ * An invalid value is **dropped**, not thrown: the URL is something anyone can edit, and a
+ * `?status=lixo` falls back to the default instead of halting the screen. The schema is parsed
+ * whole, and on failure the keys the issues point at leave the input and it is parsed again,
+ * which is the per-field `.catch()` of the router doc without rewriting every field of the
+ * shared schema. An issue that points at no key of the input (an object-level refinement)
+ * cannot be fixed by dropping a field, and is thrown for the route's `errorComponent`.
+ * _doc-lib/tanstack-router.md#guide/search-params,
+ * https://tanstack.com/router/latest/docs/guide/search-params.
+ */
+export function listValidateSearch<TSchema extends z.ZodObject>(
+  schema: TSchema,
+): (search: Record<string, unknown>) => z.output<TSchema> {
+  return (search) => {
+    let input = search
+
+    for (;;) {
+      const result = schema.safeParse(input)
+      if (result.success) return result.data
+
+      const invalid = new Set(result.error.issues.map((issue) => issue.path[0]))
+      const kept = Object.entries(input).filter(([key]) => !invalid.has(key))
+
+      if (kept.length === Object.keys(input).length) throw result.error
+
+      input = Object.fromEntries(kept)
+    }
+  }
+}
+
+/**
+ * What a filter left blank looks like: `''`, `false`, `null` and `undefined`. `0` and `true`
+ * are filters of their own (a numeric filter that accepts `0`, `?pending=true`), so the test
+ * is by value and not by falsiness. `String(null)` would become the text "null" in the filter.
+ */
+function filled(value: unknown): boolean {
+  return (
+    value !== '' && value !== false && value !== null && value !== undefined
+  )
+}
+
+/**
+ * The search without the blank filters, for the API client's `query`. The Tuyau client
+ * drops only `null` and `undefined`, and `?search=` or `?pending=false` would reach the
+ * backend as a filter. Same rule as `queryString`, through `filled`.
+ */
+export function compactQuery<TParams extends Record<string, unknown>>(
+  params: TParams,
+): Partial<TParams> {
+  const result: Partial<TParams> = {}
+
+  for (const key in params) {
+    if (Object.hasOwn(params, key) && filled(params[key]))
+      result[key] = params[key]
+  }
+
+  return result
+}
+
+/** Builds the query string of a link ignoring what was not filled in (`filled`). */
+export function queryString(params: Record<string, unknown>): string {
+  const entries = Object.entries(params).filter(([, value]) => filled(value))
+
+  if (entries.length === 0) return ''
+
+  return '?'.concat(
+    new URLSearchParams(
+      entries.map(([key, value]) => [key, String(value)]),
+    ).toString(),
+  )
+}

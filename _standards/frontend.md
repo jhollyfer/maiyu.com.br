@@ -396,9 +396,22 @@ célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel e
 - **`?redirect=` só aceita caminho interno.** `validateRedirectSearch` em `lib/redirect-search.ts`
   recusa o que não começa com `/` e tudo que começa com `//` ou `/\` (open redirect), caindo na
   home *(opinião da casa; mecanismo em _doc-lib/tanstack-router.md#guide/authenticated-routes)*.
-- **Data exibida tem fuso fixo**: `DateTime` do Luxon (`tooling.md` §0.1) com `setZone` explícito
-  (o do negócio ou `'UTC'`) e `setLocale` do idioma atual, num formatador de `lib/i18n.ts`. O fuso
-  do navegador faz SSR e hidratação renderizarem strings diferentes *(opinião da casa)*.
+- **Data exibida tem o fuso da cidade**: `DateTime` do Luxon (`tooling.md` §0.1) com `setZone`
+  explícito e `setLocale` do idioma atual, num formatador de `lib/i18n.ts`. O fuso é o
+  `timeZone` da cidade da página (`useCity()`, `DECISIONS.md` #390), passado ao formatador; nunca
+  constante no código, porque cada cidade tem o seu relógio, e nunca o do navegador, que faz SSR e
+  hidratação renderizarem strings diferentes *(opinião da casa)*.
+- **A cidade é o segmento depois do idioma** (`/pt-br/<cidade>/...`, `DECISIONS.md` #390). O
+  `rewrite` do `router.tsx` tira o idioma, então para a árvore de rotas a cidade é o primeiro
+  segmento: a rota do projeto é `routes/$city/...`, o `loader` dela resolve a cidade (e o cliente,
+  pelo segundo segmento ou pela sessão) e envolve a subárvore no `TenantProvider`
+  (`integrations/tenant/tenant-context.tsx`). `CityPath` (`lib/city-path.ts`) lê e troca o
+  segmento; `CitySwitcher` e `PlatformOverview` são peças do kit comum e recebem os dados por prop.
+  Sem DNS curinga nem certificado por cliente. O slug da cidade nunca colide com prefixo de idioma:
+  o backend o recusa no cadastro, e a lista de segmentos fixos (`Rule.RESERVED_SLUGS`, `DECISIONS.md`
+  #399) vale também para o slug do cliente. Projeto de **cliente único** (`SINGLE_TENANT_SLUG` no
+  backend, `backend.md` §4.14) não monta a rota `$city` nem usa `CityPath`/`CitySwitcher`: a URL é
+  `/pt-br/agenda`, sem segmento de cidade.
 
 ---
 
@@ -587,6 +600,17 @@ _doc-lib/shadcn.md#docs/theming, #docs/components-json.
   _doc-lib/shadcn.md#docs/theming; _doc-lib/tailwindcss.md#dark-mode.
 - Tailwind v4 pelo plugin do Vite, sem `tailwind.config.js`; tema em `@theme` dentro de
   `styles.css`. _doc-lib/tailwindcss.md#installation/using-vite, #theme.
+- `styles.css` (tema do projeto) abre com `@import "tailwindcss" source("./")`, `@import
+  "tw-animate-css"` e `@import "shadcn/tailwind.css"`. O `source("./")` prende a varredura de classes
+  a `src/`: na imagem do Coolify não há `.git` nem `.gitignore`, o Tailwind varria `.output/` e o
+  build do cliente e o do SSR geravam CSS com hash diferente, e o HTML pedia um `styles-<hash>.css`
+  que não existe (página sem estilo em produção; relato do jhollyfer.com.br;
+  _doc-lib/tailwindcss.md#detecting-classes-in-source-files). O `shadcn/tailwind.css` traz as custom variants (`data-horizontal`, `data-vertical`...)
+  que os componentes de `ui/` do registry base-mira usam; sem ele Tabs e afins quebram sem erro
+  (relato do jhollyfer.com.br). `shadcn`, `tw-animate-css` e `class-variance-authority` estão no
+  `kit.deps.json`. O tema define também os tokens que as peças do kit leem (`font-display`,
+  `text-caption`, `min-h-stage-sm`, a escala `z-*` de `lib/cn.ts`); a lista fechada vem com o esqueleto
+  de `styles.css` da leva 9. _doc-lib/shadcn.md#docs/theming.
 - **Todo valor de design é token no `@theme`**, pelo namespace dele (`--color-*`, `--text-*`,
   `--font-*`, `--leading-*`, `--spacing-*`, `--radius-*`, `--shadow-*`, `--breakpoint-*`,
   `--ease-*`, `--animate-*`). Valor arbitrário em classe (`text-[13px]`, `z-[9999]`,
@@ -1092,6 +1116,12 @@ const RichEditor = lazy(async () => {
 </Suspense>
 ```
 
+- **Overlay do Base UI aberto por botão do shell** (Sheet da gaveta, Dialog, Drawer): o botão vai no
+  pacote inicial e o painel em `lazy` + `<Suspense>`, com `open` controlado, `finalFocus` no botão e o
+  `import()` aquecido em hover, foco e toque. O `Dialog` do Base UI pesa uns 59 KB brutos; no
+  jhollyfer.com.br o JS comum da primeira carga caiu de 216,1 para 168,8 KB gzip, abaixo da meta do
+  §9.10, mantendo foco preso, Escape que devolve o foco e nenhum diálogo no DOM antes do gesto.
+  A peça `SheetOnDemand` do kit (botão, `loadPanel` e `returnFocusTo` por prop) vem na leva 9.
 - `import()` dinâmico por mapa de funções literais, nunca caminho em variável:
   `const CHART_MODULES = { bar: () => import('./bar-chart') } as const`.
 - Sem `manualChunks`/`advancedChunks` por padrão: chunk manual só com medida antes/depois e
@@ -1462,8 +1492,10 @@ dentro do que a doc permite, a linha diz *(opinião da casa)*.
   typecheck não vê a ligação removida.
 - **Schema local** (o que `shared/` não cobre, em `lib/`) nasce com teste dos limites no mesmo
   commit: o tipo não vê um teto trocado.
-- `afterEach(cleanup)` em todo `.test.tsx`: sem `globals: true` no Vitest, a Testing Library não
-  limpa o DOM sozinha (_doc-lib/vitest.md#config/globals, `DECISIONS.md` #350).
+- `afterEach(cleanup)` uma vez, no `vitest.setup.ts` do kit (`setupFiles` dos dois projetos do
+  `vitest.config.ts`): sem `globals: true` no Vitest, a Testing Library não limpa o DOM sozinha, e
+  a doc manda o `afterEach` de topo num arquivo de setup (_doc-lib/testing-library-react.md,
+  _doc-lib/vitest.md#config/globals, `DECISIONS.md` #350); o `.test.tsx` não repete.
 - Tempo por `vi.useFakeTimers()` com `vi.useRealTimers()` no `afterEach`.
   _doc-lib/vitest.md#mocking/timers.
 

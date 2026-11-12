@@ -1,11 +1,8 @@
-import type * as React from 'react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { PageHero } from './-components/page-hero'
-import { PillButton } from './-components/pill-button'
-import { REVEAL, STAGGER } from './-components/reveal'
-import { ProjectStatusBadge } from './-components/project-status'
+import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
@@ -14,22 +11,17 @@ import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
+import { PageHero } from './-components/page-hero'
+import { PillButton } from './-components/pill-button'
+import { ProjectStatusBadge } from './-components/project-status'
+import { REVEAL, STAGGER } from './-components/reveal'
+
 export const Route = createLazyFileRoute('/_public/portfolio')({
   component: RouteComponent,
 })
 
 /** Os outros projetos, sem o que já está em destaque no topo. */
 const REST = projects.filter((project) => project.slug !== featuredProject.slug)
-
-/**
- * Em que lado da linha a captura fica, por posição. A alternância quebra a
- * coluna reta de imagens à esquerda e dá o ritmo de revista; escolhida por
- * lookup, sem ternário. No celular a ordem é sempre a da fonte: imagem, texto.
- */
-const SIDES = [
-  { image: 'md:col-span-7', text: 'md:col-span-5' },
-  { image: 'md:order-2 md:col-span-7', text: 'md:order-1 md:col-span-5' },
-] as const
 
 type ProjectProps = {
   project: Project
@@ -42,13 +34,12 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
       ratio={1863 / 927}
       className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
     >
-      <img
+      <Picture
         src={project.image}
         alt={project.title}
         width={1863}
         height={927}
-        loading="lazy"
-        decoding="async"
+        placement="fold"
         style={{ objectPosition: project.focus }}
         className="size-full object-cover"
       />
@@ -60,12 +51,12 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
 function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
   return (
     <dl className="grid grid-cols-[5.5rem_1fr] gap-x-6 gap-y-4 border-t border-border pt-6 text-small">
-      <dt className="text-muted-foreground">{m.portfolio_yearLabel()}</dt>
+      <dt className="text-muted-foreground">{m.portfolio_year_label()}</dt>
       <dd className="flex items-center gap-2">
         <span aria-hidden="true" className="size-2 rotate-45 bg-urucum" />
         {project.year}
       </dd>
-      <dt className="text-muted-foreground">{m.portfolio_stackLabel()}</dt>
+      <dt className="text-muted-foreground">{m.portfolio_stack_label()}</dt>
       <dd>
         <ul className="flex flex-wrap gap-1.5">
           {project.tech.map((tech) => (
@@ -91,7 +82,7 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
       className="self-start"
       render={
         <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.portfolio_visitSite()}
+          {m.portfolio_visit_site()}
           <ArrowUpRightIcon />
           <span className="sr-only">{project.title}</span>
         </a>
@@ -111,8 +102,8 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero
-        title={`${m.portfolio_heroTitle1()} ${m.portfolio_heroTitle2()} ${m.portfolio_heroTitle3()}`}
-        lead={m.portfolio_heroDescription()}
+        title={`${m.portfolio_hero_title1()} ${m.portfolio_hero_title2()} ${m.portfolio_hero_title3()}`}
+        lead={m.portfolio_hero_description()}
       />
 
       <section data-slot="portfolio-featured" className="py-16 md:py-24">
@@ -123,12 +114,12 @@ function RouteComponent(): React.JSX.Element {
                 ratio={1863 / 927}
                 className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
               >
-                <img
+                <Picture
                   src={featuredProject.image}
                   alt={featuredProject.title}
                   width={1863}
                   height={927}
-                  fetchPriority="high"
+                  placement="lcp"
                   style={{ objectPosition: featuredProject.focus }}
                   className="size-full object-cover"
                 />
@@ -166,26 +157,30 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="portfolio-list" className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="max-w-2xl border-t border-border pt-12 text-h1">
-            {m.home_selectedWorkDesc()}
+            {m.home_selected_work_desc()}
           </h2>
 
           <ul className="mt-6 divide-y divide-border">
+            {/*
+             * O lado da captura alterna por linha: a alternância quebra a coluna reta de imagens
+             * à esquerda e dá o ritmo de revista. É `group-even/row:` no CSS, e não lookup pelo
+             * índice: `SIDES[index % 2]` tipava `undefined` com `noUncheckedIndexedAccess`. No
+             * celular a ordem é sempre a da fonte: imagem, texto.
+             */}
             {REST.map((project, index) => {
-              const side = SIDES[index % SIDES.length]
-
               return (
                 <li
                   key={project.slug}
                   className={cn(
                     REVEAL,
-                    'grid grid-cols-1 items-center gap-x-12 gap-y-8 py-14 md:grid-cols-12 md:py-20',
+                    'group/row grid grid-cols-1 items-center gap-x-12 gap-y-8 py-14 md:grid-cols-12 md:py-20',
                   )}
                   style={{ animationDelay: `${index * STAGGER}ms` }}
                 >
-                  <div className={side.image}>
+                  <div className="md:col-span-7 md:group-even/row:order-2">
                     <ProjectShot project={project} />
                   </div>
-                  <div className={cn('flex flex-col gap-6', side.text)}>
+                  <div className="flex flex-col gap-6 md:col-span-5 md:group-even/row:order-1">
                     <ProjectStatusBadge
                       status={project.status}
                       className="self-start"

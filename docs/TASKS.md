@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 47 itens de migração para a régua (2 feitos, 9 bloqueados, 36 a fazer); atualizado 2026-11-09
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 48 itens de migração para a régua (32 feitos, 1 em andamento, 3 bloqueados, 12 a fazer); atualizado 2026-11-11
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -30,7 +30,7 @@ Dizer, no site, quem é a Maiyu: tríplice fronteira, equipe indígena e origin�
 |---|---|---|---|---|
 | 2.1 | Reposicionar a vitrine: copy indígena/tríplice fronteira e design mais amazônico | Alta | Feita | checklist abaixo; aguarda PR |
 | 2.2 | Decidir os workflows de `.github/workflows` com o dono ou ajustar o upstream | Média | Feita | cópia do modelo, como nos irmãos (`DECISIONS.md` #6) |
-| 2.3 | Definir o destino dos formulários de contato e candidatura | Média | A fazer | `PRD.md` §8 |
+| 2.3 | Definir o destino do formulário de contato (a candidatura ficou fora) | Média | A fazer | `PRD.md` §8; `DECISIONS.md` #17 |
 | 2.4 | Redesign editorial: fotografia do lugar, Fraunces nos títulos, cinco produtos no portfólio, diário e carreiras reescritos no contexto | Alta | Feita | `DECISIONS.md` #12 e #13 |
 
 Checklist da 2.1:
@@ -60,9 +60,9 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Bloqueada | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; bloqueado por R1.4 (a CSP recusa o VineJS no navegador) |
+| R0.1 | Cabeçalhos de segurança e `X-Robots-Tag` fora de produção no `server.ts` | P | Feita | `frontend.md` §3.3, #356; pronto na branch `fix/seguranca-cabecalhos`; merge feito; sem erro de CSP no console em `/pt-br` e num artigo |
 | R0.2 | JSON-LD serializado com `<` escapado | P | Feita | `frontend.md` §9.7; `docs/SECURITY.md` |
-| R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | A fazer | dono decide o destino (R2.10); até lá, sem coletar dado pessoal à toa |
+| R0.3 | Formulários de contato e candidatura deixam de anunciar envio que não acontece | P | Feita | `DECISIONS.md` #17: sem formulário, aviso e canais reais; contato volta com o recurso do backend (R2.10) |
 | R0.4 | `.gitignore` cobre `.env.*` e `src/paraglide/`; `.gitleaks.toml` da raiz | P | Feita | `tooling.md` §9 e §7, KIT.md §3.3 |
 | R0.5 | `.claude/settings.json` com `attribution` vazio e guarda `PreToolUse` | P | Bloqueada | dono: agente não edita `settings.json` |
 
@@ -70,17 +70,17 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | A fazer | `sync --check` |
+| R1.1 | Sync dos espelhos (`_doc-lib/`, `_standards/`, skills, `SKILLS-MAP.md`) e remoção das sobras | P | Feita | `sync --check`; espelhos no upstream de 2026-11-11 |
 | R1.2 | Monorepo da casa: `pnpm-workspace.yaml` do modelo, `shared/` mínimo (`@maiyu/shared`), nome `@maiyu/frontend` | M | Feita | `feat/backend-inicial`; workspace do modelo e `shared/` (`@maiyu/shared`) com o kit da leva 8: format, lint, tsc e 62 testes |
-| R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | A fazer | `tooling.md` §6 |
-| R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | A fazer | #241; MIGRATIONS.md |
-| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | A fazer | `tooling.md` §0.1 |
-| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | A fazer | `tooling.md` §0.1 |
-| R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | A fazer | `tooling.md` §0; MIGRATIONS.md |
-| R1.8 | `tsconfig` com as flags do piso | P | A fazer | `tooling.md` §3 |
-| R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | A fazer | `tooling.md` §4.1, §4.2 |
-| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | A fazer | `architecture.md` §4; ENV do modelo |
-| R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | A fazer | ARVORE.md |
+| R1.3 | Husky e commitlint na raiz (`prepare`, `.husky/` do kit, teto de 72) | P | Feita | `tooling.md` §6; branch `chore/raiz-husky-commitlint` |
+| R1.4 | Zod no lugar do VineJS no frontend; validators em `shared/src/validators/`, `zodResolver` | M | Feita | #241; MIGRATIONS.md; `@vinejs/vine` fora do frontend; os schemas dos formulários saíram do `shared/` com a decisão #17 (sem formulário no site) |
+| R1.5 | Libs fora da casa saem: `react-markdown`, `remark-*`, `rehype-*`, `date-fns`, `next-themes`, `motion` sem uso | M | Feita | `tooling.md` §0.1; markdown e `motion` saíram com o diário em Tiptap |
+| R1.6 | Luxon nas datas; Tiptap `static-renderer` no diário | M | Feita | `tooling.md` §0.1; Luxon feito; o corpo dos artigos é documento Tiptap em JSON (um por língua) e o `RichText` do kit o desenha no SSR |
+| R1.7 | Versões na última publicada (nitro, vitest 5, eslint 10, pnpm 12, `@tanstack/*-query` exata) | M | Feita | `tooling.md` §0; MIGRATIONS.md; fica fora só o TypeScript 7 (exceção do §0); o `@tiptap/*` do `shared/` é da outra frente |
+| R1.8 | `tsconfig` com as flags do piso | P | Feita | `tooling.md` §3; `verbatimModuleSyntax: false` (#319) |
+| R1.9 | ESLint pelo bloco comum e o do frontend, `--max-warnings 0`, #366 cobrada | M | Feita | `tooling.md` §4.1, §4.2; `eslint.config.js` do kit, que ignora `components/ui/` (#391) |
+| R1.10 | `src/env.ts`, `.env.example` canônico, `frontend/.env.production` com `VITE_SITE_URL` | P | Feita | `architecture.md` §4; ENV do modelo; `VITE_API_URL=https://api.maiyu.com.br` (decisão do dono) |
+| R1.11 | `src/start.ts` com CSRF e escopo por requisição | P | Feita | ARVORE.md |
 
 ### Régua B · Backend inicial (item G, sub-sessão)
 
@@ -90,7 +90,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RB.2 | `/health-check`, OpenAPI, i18n do backend nos três idiomas, specs do modelo | M | Feita | `/health-check`, OpenAPI (`openapi:check` e `authz:check` verdes), i18n pt-BR, en e es e as specs do kit |
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta entregue pela rota de conta (R2.10) |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
-| RB.5 | Tuyau dentro do `request()` no frontend | M | A fazer | #324; depois de RB.1 |
+| RB.5 | Tuyau dentro do `request()` no frontend | M | Feita | #324; depois de RB.1 |
 
 ### Régua 2 · Árvore e camadas
 
@@ -111,21 +111,22 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Bloqueada | aguarda o kit |
-| R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Bloqueada | #325, #366 |
-| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Bloqueada | #366 |
-| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Bloqueada | |
-| R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Bloqueada | `i18n.md` |
-| R3.6 | `components/ui/` só com o que tem consumidor; sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; revoga #11 |
+| R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Feita | kit inteiro no frontend, menos `table/` e `list-shell/` (R3.7) |
+| R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
+| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Feita | #366; `MaiyuCredit` no rodapé e `Picture` em todo `img`; `Photo` ficou só como legenda com crédito CC sobre o `Picture`; imagens em `src/assets`; `PillButton` segue local (desvio, sem variante no `ui/`) |
+| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Feita | varredura sem elemento interativo cru fora de `ui/`; `<a>` externo só como `render` do `Button`; `PillButton` local é invólucro do `Button`, desvio relatado à régua |
+| R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
+| R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
+| R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |
 
 ### Régua 4 · Testes e infra
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R4.1 | Sem `.github/workflows/`, com o Dockerfile multi-stage na mesma PR | M | A fazer | #298, #368, #369; o dono troca o Coolify antes do merge |
-| R4.2 | `Dockerfile-production` multi-stage pelo modelo do academy; `.dockerignore` na raiz | M | A fazer | `tooling.md` §8.2 |
-| R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | A fazer | `tooling.md` §9 |
-| R4.4 | E2E Playwright dos fluxos públicos | G | A fazer | `tooling.md` §7 |
+| R4.1 | Sem `.github/workflows/`, com o Dockerfile multi-stage na mesma PR | M | Feita | #298, #368, #369; sete workflows removidos; o dono liga o *Auto Deploy* no Coolify antes do merge e apaga os secrets (`ENV.md` §3) |
+| R4.2 | `Dockerfile-production` multi-stage pelo modelo do academy; `.dockerignore` na raiz | M | Feita | `tooling.md` §8.2; os dois Dockerfiles iguais ao kit e o `.dockerignore` já igual. Lacunas do kit na validação: ver `MEMORY.md` |
+| R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | Feita | já iguais ao kit; `sync --check` sem linha de dependabot ou editorconfig; `tooling.md` §9 |
+| R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | A fazer | `tooling.md` §10.6 |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | A fazer | |
 
@@ -133,14 +134,14 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| RD.1 | `AGENTS.md` pelo modelo de `_templates/AGENTS.md`, `CLAUDE.md` com `@AGENTS.md` | P | A fazer | texto vai à regente geral antes da troca |
-| RD.2 | `docs/` reescrito a partir dos modelos e do código; DECISIONS locais que eram desvio marcadas como substituídas | M | A fazer | #6, #8, #9, #10, #11, #14 |
-| RD.3 | `ARCHITECTURE.md` §9.1 com o que o painel do Coolify faz | P | A fazer | modelo do academy |
-| RD.4 | `frontend/README.md`, `frontend/AGENTS.md` e `components/common/CLAUDE.md` pela régua | P | A fazer | |
+| RD.1 | `AGENTS.md` pelo modelo de `_templates/AGENTS.md`, `CLAUDE.md` com `@AGENTS.md` | P | Feita | branch `docs/regua-agents` |
+| RD.2 | `docs/` reescrito a partir dos modelos e do código; DECISIONS locais que eram desvio marcadas como substituídas | M | Feita | seções já iguais às dos modelos; conteúdo posto em dia com o backend, o kit e a saída dos workflows; #1 a #12, #14 e #15 marcadas (#6, #8 e #14 pelas #298, #290, #368 e #369 do upstream; #9, #10 e #11 pelo modelo, #192 e #299); perguntas ao dono em `PRD.md` §8 |
+| RD.3 | `ARCHITECTURE.md` §9.1 com o que o painel do Coolify faz | P | Feita | os dois recursos (site e API) pelo quadro de `tooling.md` §8.3; branch `docs/regua-docs` |
+| RD.4 | `frontend/README.md`, `frontend/AGENTS.md` e `components/common/CLAUDE.md` pela régua | P | Feita | README em pt-BR, `AGENTS.md` com ponteiros e `CLAUDE.md` com `@AGENTS.md` (`documentation.md` §3); `common/CLAUDE.md` removido |
 
 ## Fase N · Ideias (fora do escopo atual)
 
-- Envio real dos formulários, quando houver endpoint (origem: `PRD.md` §5)
+- Formulário de contato, quando o backend tiver o recurso (origem: `PRD.md` §5)
 - Painel de edição de conteúdo (origem: `PRD.md` §5)
 
 ---

@@ -11,7 +11,9 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as PublicLayoutRouteImport } from './routes/_public/layout'
 import { Route as HealthCheckRouteImport } from './routes/health-check'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as DotwellKnownSecurityDottxtRouteImport } from './routes/[.]well-known/security[.]txt'
 import { Route as PublicIndexRouteImport } from './routes/_public/index'
 import { Route as PublicSplatRouteImport } from './routes/_public/$'
 import { Route as PublicCareerRouteImport } from './routes/_public/career'
@@ -29,11 +31,22 @@ const HealthCheckRoute = HealthCheckRouteImport.update({
   path: '/health-check',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownSecurityDottxtRoute =
+  DotwellKnownSecurityDottxtRouteImport.update({
+    id: '/.well-known/security.txt',
+    path: '/.well-known/security.txt',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PublicIndexRoute = PublicIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -83,7 +96,9 @@ const PublicBlogSlugRoute = PublicBlogSlugRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof PublicIndexRoute
   '/health-check': typeof HealthCheckRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
   '/contact': typeof PublicContactRoute
@@ -93,7 +108,9 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/health-check': typeof HealthCheckRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/$': typeof PublicSplatRoute
   '/career': typeof PublicCareerRoute
   '/contact': typeof PublicContactRoute
@@ -106,7 +123,9 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_public': typeof PublicLayoutRouteWithChildren
   '/health-check': typeof HealthCheckRoute
+  '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/.well-known/security.txt': typeof DotwellKnownSecurityDottxtRoute
   '/_public/$': typeof PublicSplatRoute
   '/_public/career': typeof PublicCareerRoute
   '/_public/contact': typeof PublicContactRoute
@@ -120,7 +139,9 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/health-check'
+    | '/robots.txt'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/$'
     | '/career'
     | '/contact'
@@ -130,7 +151,9 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/health-check'
+    | '/robots.txt'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/$'
     | '/career'
     | '/contact'
@@ -142,7 +165,9 @@ export interface FileRouteTypes {
     | '__root__'
     | '/_public'
     | '/health-check'
+    | '/robots.txt'
     | '/sitemap.xml'
+    | '/.well-known/security.txt'
     | '/_public/$'
     | '/_public/career'
     | '/_public/contact'
@@ -155,7 +180,9 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   PublicLayoutRoute: typeof PublicLayoutRouteWithChildren
   HealthCheckRoute: typeof HealthCheckRoute
+  RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DotwellKnownSecurityDottxtRoute: typeof DotwellKnownSecurityDottxtRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -174,11 +201,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HealthCheckRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/security.txt': {
+      id: '/.well-known/security.txt'
+      path: '/.well-known/security.txt'
+      fullPath: '/.well-known/security.txt'
+      preLoaderRoute: typeof DotwellKnownSecurityDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_public/': {
@@ -260,17 +301,20 @@ const PublicLayoutRouteWithChildren = PublicLayoutRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   PublicLayoutRoute: PublicLayoutRouteWithChildren,
   HealthCheckRoute: HealthCheckRoute,
+  RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DotwellKnownSecurityDottxtRoute: DotwellKnownSecurityDottxtRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }

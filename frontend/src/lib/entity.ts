@@ -1,14 +1,9 @@
 /**
- * O vocabulário do site: os valores fechados que formulário, dado e tela
- * compartilham.
+ * O vocabulário do site: os valores fechados que tela e dado compartilham.
  *
- * Mora fora de `validator.ts` pelo mesmo motivo do academy: aquele arquivo
- * configura o `vine` no topo do módulo, e o Rollup não poda módulo com efeito
- * no topo. A lista de categorias do diário importada de lá arrastaria o VineJS
- * inteiro para o bundle da home, que não valida formulário nenhum.
- *
- * Aqui não entra nada que dependa de `vine`. `validator.ts` reexporta tudo, e
- * código que só precisa do vocabulário importa **deste** arquivo.
+ * As áreas do banco de talentos (`JOB_POSITIONS`) moram aqui e não no
+ * `shared/`: sem formulário de candidatura (`docs/DECISIONS.md` #17), só a
+ * página de carreiras as lê.
  */
 
 /**
@@ -20,7 +15,7 @@ export const PROJECT_STATUSES = ['production', 'validation'] as const
 
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number]
 
-/** As áreas do banco de talentos: o que o formulário de cadastro aceita. */
+/** As áreas do banco de talentos, listadas na página de carreiras. */
 export const JOB_POSITIONS = ['development', 'design', 'data'] as const
 
 export type JobPosition = (typeof JOB_POSITIONS)[number]

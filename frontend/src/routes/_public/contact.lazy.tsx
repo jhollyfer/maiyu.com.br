@@ -1,5 +1,3 @@
-import type * as React from 'react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import {
   EnvelopeSimpleIcon,
   MapPinIcon,
@@ -7,14 +5,17 @@ import {
   WhatsappLogoIcon,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
+import { createLazyFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { ContactForm } from './-components/contact-form'
-import { PageHero } from './-components/page-hero'
-import { Photo } from './-components/photo'
-import { REVEAL, STAGGER } from './-components/reveal'
 import { CALL_URL, CONTACT } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { ChannelsNotice } from './-components/channels-notice'
+import { PageHero } from './-components/page-hero'
+import { Photo } from './-components/photo'
+import { REVEAL, STAGGER } from './-components/reveal'
 
 export const Route = createLazyFileRoute('/_public/contact')({
   component: RouteComponent,
@@ -28,18 +29,18 @@ type Channel = {
   lines: ReadonlyArray<{ text: string; href?: string }>
 }
 
-/** Os jeitos de falar com a Maiyu fora do formulário. */
+/** Os jeitos de falar com a Maiyu, já que o site não tem formulário. */
 const CHANNELS: ReadonlyArray<Channel> = [
   {
     icon: WhatsappLogoIcon,
-    title: () => m.contactPage_whatsappTitle(),
-    subtitle: () => m.contactPage_whatsappSubtitle(),
+    title: () => m.contact_page_whatsapp_title(),
+    subtitle: () => m.contact_page_whatsapp_subtitle(),
     lines: [{ text: CONTACT.phone, href: CALL_URL }],
   },
   {
     icon: EnvelopeSimpleIcon,
-    title: () => m.contactPage_emailTitle(),
-    subtitle: () => m.contactPage_emailSubtitle(),
+    title: () => m.contact_page_email_title(),
+    subtitle: () => m.contact_page_email_subtitle(),
     lines: [
       { text: CONTACT.email, href: 'mailto:'.concat(CONTACT.email) },
       {
@@ -50,8 +51,8 @@ const CHANNELS: ReadonlyArray<Channel> = [
   },
   {
     icon: PhoneIcon,
-    title: () => m.contactPage_phoneTitle(),
-    subtitle: () => m.contactPage_phoneSubtitle(),
+    title: () => m.contact_page_phone_title(),
+    subtitle: () => m.contact_page_phone_subtitle(),
     lines: [
       { text: CONTACT.phone, href: CONTACT.phoneHref },
       { text: CONTACT.secondPhone, href: CONTACT.secondPhoneHref },
@@ -59,14 +60,15 @@ const CHANNELS: ReadonlyArray<Channel> = [
   },
   {
     icon: MapPinIcon,
-    title: () => m.contactPage_locationTitle(),
-    subtitle: () => m.contactPage_locationSubtitle(),
+    title: () => m.contact_page_location_title(),
+    subtitle: () => m.contact_page_location_subtitle(),
     lines: [{ text: CONTACT.street }, { text: CONTACT.district }],
   },
 ]
 
 /**
- * Contato: os canais em lista com fios, o formulário ao lado e a cidade embaixo.
+ * Contato: os canais em lista com fios, o aviso de que o formulário está fora
+ * do ar ao lado e a cidade embaixo.
  *
  * Os canais vêm de `CONTACT`, em `lib/site.ts`, e não escritos aqui: o rodapé
  * e o JSON-LD da raiz mostram os mesmos dados, e três cópias do telefone
@@ -76,19 +78,21 @@ function RouteComponent(): React.JSX.Element {
   return (
     <>
       <PageHero
-        title={m.contactPage_title()}
-        lead={m.contactPage_description()}
+        title={m.contact_page_title()}
+        lead={m.contact_page_description()}
       >
         <ul className="flex flex-col gap-3 text-body-lg">
-          {[m.contactPage_languages(), m.contactPage_audience()].map((text) => (
-            <li key={text} className={cn(REVEAL, 'flex items-start gap-4')}>
-              <span
-                aria-hidden="true"
-                className="mt-3 size-2 shrink-0 rotate-45 bg-urucum"
-              />
-              {text}
-            </li>
-          ))}
+          {[m.contact_page_languages(), m.contact_page_audience()].map(
+            (text) => (
+              <li key={text} className={cn(REVEAL, 'flex items-start gap-4')}>
+                <span
+                  aria-hidden="true"
+                  className="mt-3 size-2 shrink-0 rotate-45 bg-urucum"
+                />
+                {text}
+              </li>
+            ),
+          )}
         </ul>
       </PageHero>
 
@@ -128,10 +132,7 @@ function RouteComponent(): React.JSX.Element {
           </ul>
 
           <div className="lg:col-span-7">
-            <h2 className="mb-6 text-h2">{m.contactPage_formTitle()}</h2>
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-10">
-              <ContactForm />
-            </div>
+            <ChannelsNotice />
           </div>
         </div>
       </section>

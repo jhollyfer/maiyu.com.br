@@ -1,4 +1,0 @@
-User-agent: *
-Allow: /
-
-Sitemap: https://maiyu.com.br/sitemap.xml

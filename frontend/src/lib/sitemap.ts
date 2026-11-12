@@ -1,73 +1,76 @@
+import { env } from '#/env'
+import { localizedUrl } from '#/lib/page-head'
+import { locales } from '#/paraglide/runtime'
+
 /**
- * O XML do sitemap, montado a partir de uma lista de caminhos.
- *
- * Função pura e separada da rota: o que quebra num sitemap é o escape e a
- * montagem da URL absoluta, e os dois são testáveis sem servidor.
+ * The pure logic of `sitemap.xml` and `robots.txt` (`frontend.md` §9.7). The
+ * server routes (`routes/sitemap[.]xml.ts`, `routes/robots[.]txt.ts`) only
+ * fetch the data and return the text assembled here. Which pages exist is the project's: its
+ * `sitemap[.]xml.ts` maps its own records to `SitemapEntry` and passes them in.
+ * _doc-lib/tanstack-start.md#guide/server-routes.
  */
 
-export type SitemapEntry = {
-  /** Caminho absoluto dentro do site, começando por `/`. */
-  path: string
-  /** Data da última alteração, `YYYY-MM-DD`. Omitida quando não se sabe. */
-  lastModified?: string
-  /** Peso relativo entre as páginas do próprio site, de 0 a 1. */
-  priority?: number
+/** An indexable page: the path without language prefix and the data's `updatedAt`. */
+export type SitemapEntry = Readonly<{
+  pathname: string
+  lastModified?: string | null
+}>
+
+const ESCAPES: Readonly<Record<string, string>> = {
+  '&': '&amp;',
+  '<': '&lt;',
+  '>': '&gt;',
+  '"': '&quot;',
+  "'": '&apos;',
 }
 
-/**
- * Escapa os cinco caracteres que o XML reserva. Um `&` cru quebra o documento
- * inteiro, e o buscador descarta o arquivo sem avisar.
- */
 function escapeXml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&apos;')
+  return value.replaceAll(/[&<>"']/g, (char) => ESCAPES[char] ?? char)
 }
 
-/**
- * Junta a origem ao caminho sem duplicar nem comer a barra: concatenar direto
- * daria `//portfolio`, que é outra URL para o rastreador.
- */
-function absolute(origin: string, path: string): string {
-  const joined = `${origin.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
-  const trimmed = joined.replace(/\/$/, '')
+/** The reciprocal `xhtml:link`s of the three versions, plus the `x-default` (pt-BR). */
+function alternates(pathname: string): string {
+  const links = locales.map(
+    (locale) =>
+      `<xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(localizedUrl(pathname, locale))}"/>`,
+  )
+  links.push(
+    `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(localizedUrl(pathname, 'pt-BR'))}"/>`,
+  )
 
-  if (!trimmed) return origin
-
-  return trimmed
+  return links.join('')
 }
 
-export function buildSitemap(
-  origin: string,
-  entries: Array<SitemapEntry>,
-): string {
-  const urls = entries.map(function (entry) {
-    const parts = [`    <loc>${escapeXml(absolute(origin, entry.path))}</loc>`]
-    if (entry.lastModified)
-      parts.push(`    <lastmod>${escapeXml(entry.lastModified)}</lastmod>`)
-    if (entry.priority !== undefined)
-      parts.push(`    <priority>${entry.priority.toFixed(1)}</priority>`)
+/** One entry per language, each with its siblings' `hreflang`. */
+function urls(entry: SitemapEntry): Array<string> {
+  return locales.map((locale) => {
+    let lastmod = ''
+    if (entry.lastModified) {
+      lastmod = `<lastmod>${escapeXml(entry.lastModified)}</lastmod>`
+    }
 
-    return `  <url>\n${parts.join('\n')}\n  </url>`
+    return `<url><loc>${escapeXml(localizedUrl(entry.pathname, locale))}</loc>${lastmod}${alternates(entry.pathname)}</url>`
   })
+}
 
+/** The `sitemap.xml`: canonical and indexable URLs only, one entry per language. */
+export function sitemapXml(entries: ReadonlyArray<SitemapEntry>): string {
   return [
     '<?xml version="1.0" encoding="UTF-8"?>',
-    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...urls,
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+    ...entries.flatMap(urls),
     '</urlset>',
-    '',
   ].join('\n')
 }
 
-/** As páginas fixas do site. Os artigos entram pela rota, a partir de `articles`. */
-export const STATIC_ENTRIES: Array<SitemapEntry> = [
-  { path: '/', priority: 1 },
-  { path: '/portfolio', priority: 0.8 },
-  { path: '/blog', priority: 0.7 },
-  { path: '/career', priority: 0.6 },
-  { path: '/contact', priority: 0.6 },
-]
+type RobotsInput = Readonly<{
+  /** Only production is indexable: the rest answers `Disallow: /`. */
+  indexable: boolean
+}>
+
+/** The `robots.txt`: the sitemap's absolute URL depends on the environment, which is why it is a route. */
+export function robotsTxt({ indexable }: RobotsInput): string {
+  if (!indexable) return 'User-agent: *\nDisallow: /\n'
+
+  return `User-agent: *\nDisallow:\n\nSitemap: ${env.VITE_SITE_URL}/sitemap.xml\n`
+}

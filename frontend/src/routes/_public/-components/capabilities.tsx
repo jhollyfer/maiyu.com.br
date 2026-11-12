@@ -1,7 +1,5 @@
 import type * as React from 'react'
 
-import { Photo } from './photo'
-import { REVEAL, STAGGER } from './reveal'
 import {
   Item,
   ItemContent,
@@ -12,6 +10,9 @@ import {
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
+import { Photo } from './photo'
+import { REVEAL, STAGGER } from './reveal'
+
 type Service = {
   title: () => string
   description: () => string
@@ -20,24 +21,24 @@ type Service = {
 /** O que a Maiyu faz, na ordem em que um projeto costuma precisar. */
 const SERVICES: ReadonlyArray<Service> = [
   {
-    title: () => m.home_serviceConsulting(),
-    description: () => m.home_serviceConsultingDesc(),
+    title: () => m.home_service_consulting(),
+    description: () => m.home_service_consulting_desc(),
   },
   {
-    title: () => m.home_serviceDesign(),
-    description: () => m.home_serviceDesignDesc(),
+    title: () => m.home_service_design(),
+    description: () => m.home_service_design_desc(),
   },
   {
-    title: () => m.home_serviceWeb(),
-    description: () => m.home_serviceWebDesc(),
+    title: () => m.home_service_web(),
+    description: () => m.home_service_web_desc(),
   },
   {
-    title: () => m.home_serviceBackend(),
-    description: () => m.home_serviceBackendDesc(),
+    title: () => m.home_service_backend(),
+    description: () => m.home_service_backend_desc(),
   },
   {
-    title: () => m.home_serviceImpact(),
-    description: () => m.home_serviceImpactDesc(),
+    title: () => m.home_service_impact(),
+    description: () => m.home_service_impact_desc(),
   },
 ]
 
@@ -53,7 +54,7 @@ export function Capabilities(): React.JSX.Element {
     <section data-slot="home-capabilities" className="py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 md:grid-cols-12 md:px-8">
         <div className={cn(REVEAL, 'flex flex-col gap-10 md:col-span-5')}>
-          <h2 className="text-h1">{m.home_servicesHeading()}</h2>
+          <h2 className="text-h1">{m.home_services_heading()}</h2>
           <Photo
             name="river"
             ratio={4 / 3}

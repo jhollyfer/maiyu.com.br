@@ -1,21 +1,22 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { Photo } from './photo'
-import { REVEAL } from './reveal'
-import { PillButton } from './pill-button'
 import { CALL_URL } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { Photo } from './photo'
+import { PillButton } from './pill-button'
+import { REVEAL } from './reveal'
 
 /**
  * O convite final: a frase grande sobre o papel, as ações e a foto de Letícia,
  * do outro lado da fronteira.
  *
  * "Agendar conversa" abre o WhatsApp, e não a página de contato: é o fim da
- * leitura, e quem chegou até aqui já decidiu falar. O formulário continua a um
- * link embaixo, para quem prefere escrever.
+ * leitura, e quem chegou até aqui já decidiu falar. A página de contato
+ * fica a um link embaixo, para quem prefere escrever.
  */
 export function ClosingCta(): React.JSX.Element {
   return (
@@ -23,18 +24,18 @@ export function ClosingCta(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className={cn(REVEAL, 'grid gap-10 md:grid-cols-12 md:gap-12')}>
           <h2 className="text-display-xl tracking-[-0.02em] text-foreground md:col-span-8">
-            {m.home_ctaTitle()}
+            {m.home_cta_title()}
           </h2>
           <div className="flex flex-col items-start md:col-span-4 md:justify-end">
             <p className="max-w-[40ch] font-serif text-lead text-foreground/80">
-              {m.home_ctaDesc()}
+              {m.home_cta_desc()}
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
               <PillButton
                 className="rounded-xl"
                 render={
                   <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
-                    {m.home_startProject()}
+                    {m.home_start_project()}
                     <ArrowUpRightIcon />
                   </a>
                 }
@@ -42,7 +43,7 @@ export function ClosingCta(): React.JSX.Element {
               <PillButton
                 tone="outline"
                 className="rounded-xl"
-                render={<Link to="/portfolio">{m.home_viewWork()}</Link>}
+                render={<Link to="/portfolio">{m.home_view_work()}</Link>}
               />
             </div>
             <Link

@@ -370,6 +370,8 @@ experiência de uso e se contorna com uma requisição direta. Toda entrada (bod
 cabeçalho que vira dado) passa pelo validator no controller antes do use-case, e o use-case confere
 de novo o que é regra de negócio (existência, unicidade, posse).
 
+**O body parser não apara strings** (`trimWhitespaces: false`, `DECISIONS.md` #402): todo `vine.string()` de texto leva `.trim()` na própria regra, e o `pattern:check` (`vine-string-trim`) reprova o que esquecer. A senha e o documento rich-text vão como digitados.
+
 O validator de request é **Zod e mora em `shared/`**, um arquivo por recurso
 (`shared/src/validators/<módulo>/<recurso>.validator.ts`), com um export por ação e o tipo ao
 lado; o schema de resposta mora em `shared/src/responses/` (`architecture.md` §9, §10). O backend
@@ -552,6 +554,7 @@ Quatro barreiras que compõem, e cada regra mora numa só:
 | Sessão | middleware de autenticação; negar por padrão (§4.10) | quem não está logado | 401 |
 | Alcance de rota | middleware no grupo, `role(ROLE.ADMINISTRATOR)` | papel errado nem entra | 403 |
 | Forma do payload | validator | campo que aquele papel não pode enviar | 422 |
+| Tenant | repositório base (`TenantScoped`, ou `CustomerScoped` na tabela de cliente) e policy base, pelo `TenantScope` da requisição (§4.14) | registro de outro cliente, linha de outro cliente final | 404 |
 | Registro | escopo de posse na consulta, ou **policy** (`app/policies/<entidade>.policy.ts`) | "só o dono vê", "editor não apaga", "ninguém rebaixa a si mesmo" | 404 ou 403 (abaixo) |
 
 O papel na rota é sempre a constante de `shared/src/enums/` (`ROLE.ADMINISTRATOR`), nunca o
@@ -1045,6 +1048,105 @@ evento ou fila, ou o fluxo é idempotente para poder repetir.
   a cada deploy, e cada `down` de criação é um `DROP TABLE`.
 - *(Fastify)* A migration é script standalone (§7), sem comando de rollback nem de refresh; trava
   equivalente à do Lucid: não coberto. O script de deploy só aplica as pendentes.
+- **Multi-tenant em projeto que já tem dado** (`DECISIONS.md` #390, #394). As migrations do kit
+  (`cities`, `tenants`, `tenant_memberships`, `tenant_id` em `storages`, `platform_role` e
+  `active_tenant_id` em `users`) só chegam a projeto novo; o projeto existente escreve as dele, de
+  alteração, nesta ordem e em dois deploys:
+  1. **Expandir** (deploy 1): cria `cities`, `tenants` e `tenant_memberships` como no kit, com
+     timestamp **depois** do da migration que cria `users` no projeto (a FK de `tenant_memberships`
+     aponta para ela; as datas `1700000000005`/`6` do kit só servem a projeto novo, relato do
+     adacaibs); em toda
+     tabela de tenant (a lista do projeto em `docs/ARCHITECTURE.md`), `tenant_id` **anulável** com FK
+     para `tenants` e `onDelete('RESTRICT')`; em `users`, `platform_role` anulável e
+     `active_tenant_id`. O código desse deploy já grava `tenant_id` em toda escrita.
+  2. **Backfill**, na ordem do *Post-deployment* `migration:run` → `db:seed` → backfill: o backfill
+     precisa do tenant que o seed cria, então não é migration que roda no mesmo `migration:run` antes
+     do seed; é um comando `ace` do projeto (`node ace tenant:backfill`, idempotente) chamado depois
+     do seed, ou uma migration de dado que entra só no deploy seguinte (relatos do curupira e do
+     adacaibs). O seeder de cidades e o de tenant rodam com `SEED_TENANT_NAME`,
+     `SEED_TENANT_SLUG`, `SEED_TENANT_CITY=benjamin-constant` e `SEED_TENANT_TYPE`, **sem default**
+     (#329: um nome escrito no código semearia o cliente errado em todo projeto); o backfill copia o id
+     desse tenant para toda linha com `tenant_id` nulo, em lote, cria um vínculo por
+     conta com o papel que a conta tinha em `users.role` e põe `OWNER` em `platform_role` só da
+     conta do dono. Lê e escreve por `this.db`, nunca por model.
+  3. **Contrair** (deploy 2): `tenant_id` e `platform_role` `NOT NULL`; `users.role` sai; todo índice
+     e toda unicidade de tabela de tenant passam a começar por `tenant_id` (`unique(['tenant_id',
+     'slug'])` no lugar de `unique('slug')`, índice parcial e trigram com `tenant_id` na frente),
+     porque toda consulta corta por ele primeiro. O índice de uma FK de coluna única segue a mesma
+     regra quando a listagem filtra por ela dentro do tenant (`index(['tenant_id', 'team_id'])`);
+     FK usada só por join e por `onDelete` fica com o índice só na coluna (relato do interclasse).
+     Arquivo já no bucket não muda de chave: o prefixo
+     do tenant (§4.14) vale para o que sobe depois do deploy 1.
+
+- **Identidade por celular em projeto que já tem dado** (`DECISIONS.md` #396). A migration do kit
+  (`email` anulável, `phone` anulável e único, os dois `check`) só chega a projeto novo; o projeto
+  existente escreve a dele, de alteração, em dois deploys:
+  1. **Expandir** (deploy 1): `users.phone` anulável e único (`varchar(14)`); `users.email` perde o
+     `NOT NULL`; os `check` `users_phone_e164` e `users_contact_required` (`email is not null or
+     phone is not null`), que já vale para toda linha existente, porque nenhuma tem e-mail nulo
+     (confira com `select count(*) from users where email is null and phone is null`). O código desse deploy já lê e grava os dois, e
+     `POST /authentication/sign-in` aceita `login` **e** o `email` antigo por um período (o
+     formulário do deploy 1 ainda pode mandar `email`), para o deploy não derrubar quem está com a
+     página aberta.
+  2. **Contrair** (deploy 2): o código deixa de aceitar o `email` antigo no sign-in.
+  Para a conta que já existe, o celular entra pelo perfil dela (ou por backfill do dono): o formato é
+  E.164 e `Rule.normalizePhone` do `shared` é a função que o produz. Quem não tem e-mail não recupera a
+  senha sozinho: a equipe redefine, e não há rota nem SMS no kit.
+
+### 4.14 Escopo de tenant *(DECISIONS.md #390, #394)*
+
+O tenant é o cliente dentro de uma cidade; a cidade é dado global (`cities`), nunca constante. A
+regra mora no kit, em três peças, e nenhum use-case escreve `where tenant_id` à mão:
+
+- **`TenantScope`** (`app/core/tenant-scope.ts`) diz o que a requisição lê e escreve: `tenantId` (onde
+  escreve) e `readable` (o que lê a mais). A rota privada tira o tenant da sessão
+  (`auth.middleware.ts`: o vínculo escolhido em `PUT /authentication/tenants/active`, ou o único);
+  a rota pública, do segmento `:city` e, quando o produto é por cliente, `:tenant`
+  (`public-tenant.middleware.ts`, 404 para cidade ou cliente que não existe). Sem tenant, a
+  requisição não lê nem escreve nada; só o dono da plataforma fora de um tenant alcança as linhas
+  da plataforma (`tenant_id` nulo), e a rota pública nunca as lê. Fora de requisição (comando,
+  job) não há escopo: processo do sistema trabalha entre tenants de propósito, e o que precisa de
+  um tenant o recebe por parâmetro.
+- **Repositório base** (`app/repositories/shared/tenant-scoped.ts`): toda consulta de tabela de
+  tenant passa por `TenantScoped.readable()` ou `TenantScoped.writable()`. Registro de outro tenant
+  não é achado, e o use-case responde o mesmo 404 de id inexistente (§4.6). Leitura e escrita são
+  métodos distintos no contrato (`findById` e `findWritable`): o tenant pai **lê** os filhos (um
+  nível, `childIds` do vínculo) e nunca escreve neles. O repositório em memória filtra pelo mesmo
+  `TenantScope.reads()`/`writes()`.
+- **Policy base** (`session-scoped-policy.base.ts`): `readsTenant`, `writesTenant` e `isStaffOf`
+  conferem o tenant do `actor` pela mesma regra. O papel dentro do tenant é do vínculo
+  (`actor.tenant.role`), e `role.middleware.ts` lê dali; acima dos tenants, `platform.middleware.ts`
+  deixa entrar só o dono da plataforma (`actor.platformRole`).
+
+**Cliente único (#399).** Produto que por natureza tem um cliente só liga `SINGLE_TENANT_SLUG`
+(`config/tenant.ts`, sem default): o `public-tenant.middleware.ts` resolve esse tenant sem segmento
+na URL, com o mesmo `TenantScope.ofPublic`, só leitura, e 404 se ele não existe ou está inativo.
+Slug de cidade e de tenant não iguala rota fixa do frontend: `Rule.RESERVED_SLUGS` do `shared`.
+
+**Cliente final e escrita pública (#397).** Conta sem vínculo é o cliente final (o morador que pede
+no Delivery): `TenantScope.ofAccess` a trata como `ofCustomer`, e ela não alcança nenhuma tabela de
+tenant. Tabela **de cliente** (pedido, comprovante, o arquivo que o cliente envia) se declara pelo
+repositório: usa `CustomerScoped.readable()`/`writable()` (`app/repositories/shared/customer-scoped.ts`)
+no lugar de `TenantScoped`, com a coluna de dono `customer_id`. Nela o dono lê e altera as próprias
+linhas em qualquer tenant; linha de cliente alcança, além do dono, só a equipe (`STAFF_USER_ROLES`) do
+próprio tenant, nunca membro comum, tenant pai ou público. Quem tem vínculo nunca é cliente: com
+vários e sem escolha, escopo nenhum. Linha nova de tabela de cliente sai de
+`TenantScope.customerTargetOf()`, a de tabela de tenant de `tenantTargetOf()`, que recusa cliente e
+escrita pública: o tenant do vínculo para a equipe, o
+tenant da URL para o cliente (rota depois de `middleware.auth()` com
+`middleware.publicTenant({ access: 'customer' })`) e para a escrita pública declarada
+(`{ access: 'insert' }`, que também entra em `PROJECT_ANONYMOUS_WRITES`); sem tenant na URL, o
+cliente não cria nada. A escrita pública só cria linha de tabela de cliente, nunca altera linha
+existente. A policy base confere com `ownsRow` e `reachesCustomerRow`. O storage é a tabela de cliente do kit
+(`POST /storages/cities/:city/tenants/:tenant`). Mudar senha, papel, vínculo, e-mail, celular ou
+status derruba as sessões da conta na mesma transação (`UserRepository.save`,
+`TenantRepository.saveMember` e `removeMember`).
+
+Usuário é global (e-mail único); o acesso é vínculo usuário x tenant x papel (`tenant_memberships`).
+A chave do arquivo no storage começa pelo id do tenant (`platform/` sem tenant). A prova é
+`app/core/tenant-scope.e2e.spec.ts`: dado de outro tenant responde 404 em toda rota que o alcança
+por id e não aparece em lista; recurso novo que passa pelo repositório base herda essa prova, e o
+projeto repete o teste no recurso dele.
 
 ---
 
@@ -1282,8 +1384,8 @@ uso é a skill `maiyu-node`. Decisões #215 a #223.
      `app/core/legacy-aware-hash-driver.ts`, que grava no algoritmo novo e devolve `needsReHash`
      verdadeiro para o legado. O rehash fica no use-case do sign-in, depois da credencial e de a
      conta poder abrir sessão, por método do repository com escrita condicional (`WHERE password =
-     <lido>`) que devolve `Either`; falha no rehash é logada e não recusa o login (exceção nomeada ao
-     §4.2: é efeito que tolera perda). O driver composto sai quando o último hash legado for refeito
+     <lido>`) que devolve `boolean`; a falha do banco sobe e o use-case a captura, loga e não recusa o login
+     (exceção nomeada ao §4.2: é efeito que tolera perda). O driver composto sai quando o último hash legado for refeito
      (`DECISIONS.md` #370).
    - Fastify: `crypto.argon2` da stdlib (Node 24.7 ou maior), variante `argon2id`, `nonce` de
      `randomBytes(16)` e os parâmetros gravados junto do hash, para poder subir o custo sem

@@ -1,9 +1,10 @@
-import type * as React from 'react'
 import { Outlet, createFileRoute } from '@tanstack/react-router'
+import type * as React from 'react'
+
+import { m } from '#/paraglide/messages'
 
 import { Footer } from './-components/footer'
 import { Header } from './-components/header'
-import { m } from '#/paraglide/messages'
 
 /**
  * O site.
@@ -31,7 +32,7 @@ function RouteComponent(): React.JSX.Element {
         href={'#'.concat(MAIN_ID)}
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[70] focus:rounded-full focus:bg-navy focus:px-4 focus:py-2 focus:text-brand-green"
       >
-        {m.a11y_skipToContent()}
+        {m.a11y_skip_to_content()}
       </a>
       <Header />
       <main id={MAIN_ID} tabIndex={-1} className="outline-none">
