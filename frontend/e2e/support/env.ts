@@ -1,15 +1,27 @@
 /**
- * O ambiente do E2E, lido num lugar só. Sem default: endereço e credencial são de
- * quem roda (`.env.example`), e a falta de uma para a execução dizendo qual é, em
- * vez de tentar entrar com um valor inventado.
+ * O ambiente do E2E, lido num lugar só. Sem default: o endereço é de quem roda
+ * (`.env.example`), e a falta de um para a execução dizendo qual é, em vez de tentar
+ * com um valor inventado. Senha não é chave: as contas por papel nascem no
+ * `auth.setup.ts` (`support/accounts.ts`, DECISIONS.md #443).
+ *
+ * Projeto sem backend (só frontend) não define `E2E_API_URL`: `withBackend` é falso, o
+ * `playwright.config.ts` não sobe a API nem roda o `setup`.
  */
 export class E2eEnv {
   /** O site (frontend) sob teste. */
   static readonly baseUrl = E2eEnv.read('E2E_BASE_URL')
-  /** A API, que o `setup` e o `teardown` chamam para entrar como dono e limpar dados. */
-  static readonly apiUrl = E2eEnv.read('E2E_API_URL')
-  static readonly ownerEmail = E2eEnv.read('E2E_OWNER_EMAIL')
-  static readonly ownerPassword = E2eEnv.read('E2E_OWNER_PASSWORD')
+  /** A API, que o `setup` e o `teardown` chamam para entrar como dono e limpar dados. Ausente: projeto sem backend. */
+  static readonly apiUrl: string | undefined =
+    process.env.E2E_API_URL || undefined
+  /** Há API para subir e sessão de dono para gravar. */
+  static readonly withBackend = E2eEnv.apiUrl !== undefined
+
+  /** `items` só com backend; sem ele, nada (servidor da API, projetos `setup` e `cleanup`). */
+  static onlyWithBackend<T>(items: ReadonlyArray<T>): Array<T> {
+    if (!E2eEnv.withBackend) return []
+
+    return [...items]
+  }
 
   /** A sessão do dono, gravada pelo `setup` (`playwright/.auth` está no `.gitignore`). */
   static readonly storageState = 'playwright/.auth/owner.json'

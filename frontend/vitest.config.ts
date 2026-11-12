@@ -31,6 +31,7 @@ export default defineConfig({
           name: 'shared',
           isolate: false,
           include: UNIT_TESTS,
+          setupFiles: ['./vitest.setup.ts'],
           exclude: STATEFUL,
         },
       },
@@ -38,6 +39,7 @@ export default defineConfig({
         test: {
           name: 'isolated',
           include: STATEFUL,
+          setupFiles: ['./vitest.setup.ts'],
         },
       },
     ],

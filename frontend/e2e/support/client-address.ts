@@ -34,6 +34,9 @@ export class ClientAddress {
    * cabeçalhos dela em `config/cors.ts`) o recusa.
    */
   static async route(context: BrowserContext, address: string): Promise<void> {
+    // Sem backend (`E2E_API_URL` ausente) não há API para receber o cabeçalho.
+    if (!E2eEnv.apiUrl) return
+
     await context.route(`${E2eEnv.apiUrl}/**`, (route) =>
       route.continue({
         headers: {

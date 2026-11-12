@@ -8,6 +8,7 @@ import {
 } from './storage.repository.ts'
 
 import MemoryRows from '#core/memory-rows'
+import { TenantScope } from '#core/tenant-scope'
 import { Storage, type StorageProps } from '#domain/storage/storage.entity'
 
 /** The sign of the comparison by sort direction. */
@@ -30,14 +31,36 @@ export class StorageMemoryRepository extends StorageRepository {
 
   async findById(id: string): Promise<Storage | null> {
     const props = this.rows.get(id)
-    if (!props || props.deletedAt) return null
+    if (
+      !props ||
+      props.deletedAt ||
+      !TenantScope.readsOwned(props.tenantId, props.customerId)
+    )
+      return null
+
+    return Storage.restore(MemoryRows.copy(props))
+  }
+
+  async findWritable(id: string): Promise<Storage | null> {
+    const props = this.rows.get(id)
+    if (
+      !props ||
+      props.deletedAt ||
+      !TenantScope.writesOwned(props.tenantId, props.customerId)
+    )
+      return null
 
     return Storage.restore(MemoryRows.copy(props))
   }
 
   async detail(id: string): Promise<StorageFileRead | null> {
     const props = this.rows.get(id)
-    if (!props || props.deletedAt) return null
+    if (
+      !props ||
+      props.deletedAt ||
+      !TenantScope.readsOwned(props.tenantId, props.customerId)
+    )
+      return null
 
     return this.toResponse(props)
   }
@@ -46,19 +69,29 @@ export class StorageMemoryRepository extends StorageRepository {
     return [...new Set(ids)].flatMap((id) => {
       const props = this.rows.get(id)
 
-      if (!props || props.deletedAt) return []
+      if (
+        !props ||
+        props.deletedAt ||
+        !TenantScope.readsOwned(props.tenantId, props.customerId)
+      )
+        return []
 
       return [this.toResponse(props)]
     })
   }
 
-  async areAttachable(ids: ReadonlyArray<string>): Promise<boolean> {
+  async areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean> {
     return [...new Set(ids)].every((id) => {
       const props = this.rows.get(id)
 
       return (
         props !== undefined &&
         !props.deletedAt &&
+        TenantScope.writesOwned(props.tenantId, props.customerId) &&
+        props.uploadedBy === uploadedBy &&
         props.status === UPLOAD_STATUS.UPLOADED
       )
     })
@@ -116,6 +149,7 @@ export class StorageMemoryRepository extends StorageRepository {
     const sign = SIGN[criteria.direction]
     const all = [...this.rows.values()]
       .filter((row) => !row.deletedAt)
+      .filter((row) => TenantScope.readsOwned(row.tenantId, row.customerId))
       .filter((row) => !criteria.status || row.status === criteria.status)
       .filter((row) => !criteria.mimetype || row.mimetype === criteria.mimetype)
       .filter(

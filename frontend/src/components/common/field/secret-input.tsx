@@ -43,6 +43,7 @@ export function SecretInput({
       <InputGroupInput {...props} disabled={disabled} type={type} />
       <InputGroupAddon align="inline-end">
         <InputGroupButton
+          size="icon-xs"
           data-testid={toggleTestId}
           disabled={disabled}
           type="button"

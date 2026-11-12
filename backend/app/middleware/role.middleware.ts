@@ -6,7 +6,8 @@ import { type UserRole } from '@maiyu/shared'
 import HTTPException from '#exceptions/http.exception'
 
 /**
- * Refuses whoever reaches a module whose role is not theirs.
+ * Refuses whoever reaches a module whose role is not theirs **in the active tenant**: the role is
+ * the membership's (DECISIONS.md #390), and an account with no active tenant has none.
  *
  * Applied on the route **group**, never on the endpoint: a new endpoint is born
  * protected by the module it was placed in, without depending on someone remembering to
@@ -24,14 +25,9 @@ export default class RoleMiddleware {
     next: NextFn,
     roles: ReadonlyArray<UserRole>,
   ) {
-    const user = context.auth.user
+    const role = context.actor.tenant?.role
 
-    // `schema.ts` is generated from the database and types `role` as `string`. Widening the list
-    // to `readonly string[]` is a safe assignment - comparing with `as UserRole`
-    // would lie to the compiler about a value that comes from the database.
-    const allowed: readonly string[] = roles
-
-    if (!user || !allowed.includes(user.role)) {
+    if (!role || !roles.includes(role)) {
       throw HTTPException.Forbidden(
         context.i18n.t('errors.access_denied'),
         'ACCESS_DENIED',

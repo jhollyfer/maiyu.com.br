@@ -63,7 +63,9 @@ export function useSessionExpiryRedirect({
       // Sem tirar a conta do cache, o guard inverso de `/sign-in` leria
       // a sessão antiga e devolveria para o painel.
       queryClient.removeQueries({ queryKey: accountKey })
-      void signIn(router.state.location.href)
+      // `publicHref` and not `href`: with the language rewrite, `href` is the internal path
+      // without `/pt-br`, and the saved destination would lose the language (relato do manganga).
+      void signIn(router.state.location.publicHref)
     }
 
     const stopQueries = queryClient.getQueryCache().subscribe((event) => {

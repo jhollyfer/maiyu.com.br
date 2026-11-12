@@ -4,6 +4,7 @@ import { ErrorEnvelope } from '@maiyu/shared'
 
 import { UPLOAD_MAX_SIZE } from '#config/drive'
 import { StorageFactory } from '#database/factories/storage.factory'
+import StorageModel from '#models/storage'
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
@@ -90,6 +91,9 @@ test.group('storages > create', (group) => {
     assert.equal(opened.storage.originalName, 'capa.png')
     assert.notInclude(opened.storage.path, 'capa')
     assert.match(opened.storage.path, /\.png$/)
+    // The row records who opened it: a profile photo is accepted only from its uploader.
+    const row = await StorageModel.findOrFail(opened.storage.id)
+    assert.isString(row.uploadedBy)
   })
 
   test('a larger file is sliced, and the number of URLs comes from the size', async ({

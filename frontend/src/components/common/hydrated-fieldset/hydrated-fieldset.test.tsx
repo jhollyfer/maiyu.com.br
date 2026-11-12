@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { m } from '#/paraglide/messages'
 
@@ -17,16 +17,14 @@ beforeEach(() => {
   hydration.hydrated = true
 })
 
-afterEach(cleanup)
-
 function renderField() {
   render(
     <HydratedFieldset>
-      <input aria-label={m.kit_filters()} />
+      <input aria-label={m.kit_save()} />
     </HydratedFieldset>,
   )
 
-  return screen.getByRole('textbox', { name: m.kit_filters() })
+  return screen.getByRole('textbox', { name: m.kit_save() })
 }
 
 describe('HydratedFieldset', () => {

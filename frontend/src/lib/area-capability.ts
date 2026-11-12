@@ -1,7 +1,21 @@
 import { redirect } from '@tanstack/react-router'
 
 import { homeOf } from '#/lib/areas'
-import type { Role } from '#/lib/areas'
+import type { Actor, PlatformRole, UserRole } from '@maiyu/shared'
+
+/**
+ * Quem entra numa área: papéis acima dos tenants (`platformRole`) e/ou papéis no tenant ativo
+ * (`tenant.role`), as duas coordenadas do `Actor` (DECISIONS.md #394, #397, #404). Entra quem
+ * está em qualquer uma das listas; a conta sem vínculo (o cliente final) só entra em área que
+ * lista o papel de plataforma dela.
+ */
+export type AreaRule = {
+  readonly platform?: ReadonlyArray<PlatformRole>
+  readonly tenant?: ReadonlyArray<UserRole>
+}
+
+/** O que a guarda lê da conta da sessão. */
+export type AreaAccount = Pick<Actor, 'platformRole' | 'tenant'>
 
 /**
  * A guarda de área do painel (`_standards/frontend.md` §3).
@@ -12,8 +26,8 @@ import type { Role } from '#/lib/areas'
  * abria a tela de categorias do administrador e só o 403 da API, tela a tela, o
  * barrava. O backend continua sendo quem autoriza; aqui só se redireciona.
  *
- * Ponto de extensão: `#/lib/areas.ts` do projeto exporta `type Role`, `AREAS` (área
- * para papéis) e `homeOf(role)`, o destino de quem não pode entrar.
+ * Ponto de extensão: `#/lib/areas.ts` do projeto exporta `AREAS` (área para `AreaRule`) e
+ * `homeOf(account)`, o destino de quem não pode entrar.
  *
  * ```ts
  * beforeLoad: ({ context }) => AreaCapability.require(context.account, AREAS.administrator)
@@ -22,12 +36,10 @@ import type { Role } from '#/lib/areas'
  * Base: `simple-hub/frontend/src/lib/area-capability.ts`.
  */
 export class AreaCapability {
-  static require(
-    account: { readonly role: Role },
-    roles: ReadonlyArray<Role>,
-  ): void {
-    if (roles.includes(account.role)) return
+  static require(account: AreaAccount, rule: AreaRule): void {
+    if (rule.platform?.includes(account.platformRole)) return
+    if (account.tenant && rule.tenant?.includes(account.tenant.role)) return
 
-    redirect({ ...homeOf(account.role), throw: true })
+    redirect({ ...homeOf(account), throw: true })
   }
 }

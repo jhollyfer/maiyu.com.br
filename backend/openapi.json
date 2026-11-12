@@ -16,12 +16,12 @@
       "description": "Entrada, saída e renovação da sessão. O par de tokens viaja em cookies `httpOnly`, então estas rotas respondem `204` sem corpo."
     },
     {
-      "name": "Conta",
-      "description": "A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um dos dois exige a senha atual e derruba todas as sessões da conta."
-    },
-    {
       "name": "Arquivos",
       "description": "Upload em três passos: o `POST` abre e assina as URLs das partes, o navegador manda os bytes direto ao bucket e o `complete` confirma."
+    },
+    {
+      "name": "Clientes da conta",
+      "description": "Os clientes (tenants) em que a conta tem papel e a escolha do cliente em que a sessão trabalha. O papel dentro de um cliente é do vínculo, conferido a cada requisição."
     },
     {
       "name": "Contato (vitrine)",
@@ -30,6 +30,18 @@
     {
       "name": "Contatos (painel)",
       "description": "A caixa de entrada do dono: lista as mensagens do site, abre uma, marca como respondida e apaga de vez. Exige sessão com papel de equipe."
+    },
+    {
+      "name": "Cidades",
+      "description": "Catálogo público das cidades e dos clientes de cada uma: os segmentos que a URL pública leva depois do idioma (`/pt-br/<cidade>/<cliente>`)."
+    },
+    {
+      "name": "Conta",
+      "description": "A conta de quem está na sessão: ler o nome, o e-mail, o celular e a foto, e trocar o nome, a senha, o celular ou a foto com a senha atual; pedir a troca do e-mail e confirmá-la com o código que chega ao endereço novo."
+    },
+    {
+      "name": "Plataforma",
+      "description": "Área do dono da plataforma: o cadastro de cidades e a contagem de clientes e membros."
     }
   ],
   "paths": {
@@ -72,7 +84,7 @@
             }
           }
         },
-        "description": "A conta de quem está na sessão, seja qual for o papel: id, nome, e-mail e papel, nunca a senha nem o hash. Não há identificador no caminho: o escopo vem sempre do cookie.",
+        "description": "Devolve a conta da sessão: nome, e-mail, celular e papel na plataforma. O `id` vem da sessão, nunca do caminho, e a senha não faz parte da resposta.",
         "security": [
           {
             "cookieAuth": []
@@ -86,7 +98,7 @@
       },
       "put": {
         "operationId": "accountProfileUpdate",
-        "summary": "Trocar nome ou senha",
+        "summary": "Trocar nome, celular, senha, foto ou pedir a troca do e-mail",
         "tags": [
           "Conta"
         ],
@@ -112,11 +124,11 @@
             }
           },
           "422": {
-            "description": "Dados inválidos · Senha atual incorreta · A nova senha deve ser diferente da atual",
+            "description": "Dados inválidos · Senha atual incorreta · A nova senha deve ser diferente da atual · Este celular já está em uso · Este e-mail já está em uso · Foto inválida · O novo e-mail deve ser diferente do atual · A troca do e-mail por conta própria não está disponível",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Error422CurrentPasswordInvalidPasswordSameAsCurrentValidationError"
+                  "$ref": "#/components/schemas/Error422AvatarInvalidCurrentPasswordInvalidEmailChangeUnavailableEmailSameAsCurrentEmailTakenPasswordSameAsCurrentPhoneTakenValidationError"
                 }
               }
             }
@@ -142,7 +154,7 @@
             }
           }
         },
-        "description": "Troca o nome, a senha ou os dois. O corpo precisa de `name` ou `password`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`.\n\nTrocar a senha **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a senha nova. Trocar só o nome responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O e-mail e o papel não mudam por aqui.",
+        "description": "Troca o nome, o celular, a senha, a foto ou mais de um, e pede a troca do e-mail. O corpo precisa de `name`, `phone`, `password` (esta com `passwordConfirmation`, como em todo lugar que se escolhe senha), `email` ou `avatarId`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`; celular que outra conta já usa responde `422` `PHONE_TAKEN` no campo `phone`.\n\n`avatarId` é um arquivo que a própria conta enviou, já confirmado e do tenant da sessão (`POST /storages` e `complete`); outro responde `422` `AVATAR_INVALID` no campo `avatarId`, e a resposta traz a foto em `avatar`, com a URL assinada.\n\n`email` **não troca o e-mail na hora**: com o bloco de e-mail ligado (e SMTP configurado), o servidor envia um código de uso único ao endereço novo, a resposta traz o endereço em `pendingEmail` e o e-mail só muda em `POST /account/email/confirm`. Sem o bloco ou sem SMTP, responde `422` `EMAIL_CHANGE_UNAVAILABLE` (só o administrador troca o e-mail, no CRUD de usuários); o mesmo e-mail da conta responde `422` `EMAIL_SAME_AS_CURRENT`, e o de outra conta `422` `EMAIL_TAKEN`.\n\nTrocar a senha ou o celular **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a credencial nova. Trocar só o nome ou a foto, ou só pedir o e-mail, responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O papel não muda por aqui.",
         "security": [
           {
             "cookieAuth": []
@@ -680,7 +692,7 @@
             }
           }
         },
-        "description": "Abre a sessão. Responde `204` **sem corpo**: o que importa é o `Set-Cookie` com o par de tokens `httpOnly`. O cliente nunca manipula o token, e nenhum dado do usuário viaja dentro dele.\n\nA falha é **indistinguível pela causa**: senha errada, conta inativa e conta arquivada devolvem o mesmo `401`. É isso que impede descobrir, pela resposta, quais e-mails existem.",
+        "description": "Abre a sessão. O campo `login` é o e-mail **ou** o celular da conta (com ou sem máscara e `+55`). Responde `204` **sem corpo**: o que importa é o `Set-Cookie` com o par de tokens `httpOnly`. O cliente nunca manipula o token, e nenhum dado do usuário viaja dentro dele.\n\nA falha é **indistinguível pela causa**: senha errada, conta inativa e conta arquivada devolvem o mesmo `401`. É isso que impede descobrir, pela resposta, quais e-mails e celulares existem.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguage"
@@ -730,7 +742,7 @@
             }
           }
         },
-        "description": "Encerra a sessão **no servidor**, não só na tela: apaga o token de acesso atual e o de refresh, depois limpa os dois cookies. Responde `204` sem corpo.\n\nRefresh ilegível não impede a saída: os cookies são limpos mesmo assim, porque o resultado que a pessoa pediu é ficar sem sessão.\n\nApaga só os tokens desta sessão. Derrubar **todos** é consequência de trocar e-mail ou senha em `PUT /account`, não desta rota.",
+        "description": "Encerra a sessão **no servidor**, não só na tela: apaga o token de acesso atual e o de refresh, depois limpa os dois cookies. Responde `204` sem corpo.\n\nRefresh ilegível não impede a saída: os cookies são limpos mesmo assim, porque o resultado que a pessoa pediu é ficar sem sessão.\n\nApaga só os tokens desta sessão. Derrubar **todos** é consequência de trocar celular ou senha em `PUT /account/profile`, não desta rota.",
         "security": [
           {
             "cookieAuth": []
@@ -741,6 +753,797 @@
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ]
+      }
+    },
+    "/authentication/tenants": {
+      "get": {
+        "operationId": "authenticationTenantsList",
+        "summary": "Listar clientes da conta",
+        "tags": [
+          "Clientes da conta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationTenantsListResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AuthenticationTenantListError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Os clientes (tenants) em que a conta tem papel, com a cidade de cada um, e o `activeId` em que a sessão trabalha. `activeId` nulo com mais de um cliente: a tela pede a escolha.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
+    "/authentication/tenants/active": {
+      "put": {
+        "operationId": "authenticationTenantsSelect",
+        "summary": "Escolher cliente",
+        "tags": [
+          "Clientes da conta"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404TenantNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AuthenticationTenantSelectError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Troca o cliente (tenant) em que a sessão trabalha. Só um em que a conta tem papel: qualquer outro responde `404 TENANT_NOT_FOUND`, igual a um que não existe. A escolha vale para as próximas requisições, e o papel é conferido em cada uma.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthenticationTenantsSelectBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/cities": {
+      "post": {
+        "operationId": "platformCitiesCreate",
+        "summary": "Cadastrar cidade",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformCitiesCreateResponse201"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409CitySlugTaken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Cidade inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422CityBoundsInvalidValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformCityCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. O `slug` é o segmento da URL depois do idioma (`/pt-br/<cidade>`): único, em minúsculas, e nunca um prefixo de idioma. O fuso é um nome IANA (`America/Eirunepe`). O centro precisa cair dentro dos limites, e o sul abaixo do norte.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformCitiesCreateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/cities/{id}": {
+      "put": {
+        "operationId": "platformCitiesUpdate",
+        "summary": "Editar cidade",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformCitiesUpdateResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cidade não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404CityNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409CitySlugTaken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Cidade inválida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422CityBoundsInvalidValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformCityUpdateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. O registro inteiro de novo, com as mesmas regras do cadastro. Trocar o `slug` muda a URL pública da cidade: link já divulgado deixa de resolver.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformCitiesUpdateBody"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "platformCitiesDelete",
+        "summary": "Remover cidade",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cidade não encontrada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404CityNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Cidade com clientes não pode ser removida",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409CityInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformCityDeleteError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma, e só cidade sem cliente: com algum tenant responde `409 CITY_IN_USE`.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/platform/members/{id}": {
+      "delete": {
+        "operationId": "platformMembersDelete",
+        "summary": "Desvincular conta do cliente",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Vínculo não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404MemberNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformMemberDeleteError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. Remove o vínculo pelo `id` dele e derruba todas as sessões da conta. A conta continua existindo.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/platform/overview": {
+      "get": {
+        "operationId": "platformOverviewShow",
+        "summary": "Visão da plataforma",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformOverviewShowResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformOverviewShowError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. Quantos clientes cada cidade tem e quantos membros cada cliente tem: contagem, nunca o dado de um cliente.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
+    "/platform/tenants": {
+      "post": {
+        "operationId": "platformTenantsCreate",
+        "summary": "Cadastrar cliente",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantsCreateResponse201"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409TenantSlugTaken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Cliente inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422TenantCityNotFoundTenantHasChildrenTenantParentElsewhereTenantParentNestedTenantParentNotFoundValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformTenantCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. O cliente (tenant) nasce ativo numa cidade existente. O `slug` é o segmento da URL depois da cidade: único na cidade, em minúsculas, e nunca um segmento que o frontend já usa. `parentId` é o contratante que agrupa outros, um nível só: o pai precisa estar no primeiro nível.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformTenantsCreateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/tenants/{id}": {
+      "put": {
+        "operationId": "platformTenantsUpdate",
+        "summary": "Editar cliente",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformTenantsUpdateResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404TenantNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Slug em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409TenantSlugTaken"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Cliente inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422TenantCityNotFoundTenantHasChildrenTenantParentElsewhereTenantParentNestedTenantParentNotFoundValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformTenantUpdateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. O registro inteiro de novo, com o status: cliente inativo some do acesso e da URL pública, e os dados ficam. Trocar o `slug` ou a cidade muda a URL pública do cliente.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformTenantsUpdateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/platform/tenants/{id}/members": {
+      "put": {
+        "operationId": "platformMembersSave",
+        "summary": "Vincular conta ao cliente",
+        "tags": [
+          "Plataforma"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformMembersSaveResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Cliente não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404TenantNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Cliente inválido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422MemberUserNotFoundValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500PlatformMemberSaveError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Só o dono da plataforma. Põe a conta no cliente com o papel, ou troca o papel que ela já tem ali. Vínculo novo ou papel novo derruba todas as sessões da conta: ela entra de novo com o acesso atual. O mesmo papel outra vez não muda nada.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformMembersSaveBody"
+              }
+            }
+          }
+        }
       }
     },
     "/storages": {
@@ -928,6 +1731,16 @@
               }
             }
           },
+          "403": {
+            "description": "Acesso negado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403TenantRequired"
+                }
+              }
+            }
+          },
           "409": {
             "description": "Arquivo em uso",
             "content": {
@@ -969,7 +1782,7 @@
             }
           }
         },
-        "description": "Abre um envio e devolve para onde mandá-lo. **Não recebe bytes**: só os metadados do arquivo.\n\nO binário vai do navegador direto ao bucket, por URL assinada, e nunca atravessa esta aplicação: arquivo grande em corpo HTTP bate no limite do proxy, ocupa a aplicação durante o envio inteiro e não retoma quando a conexão cai.\n\nAceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav, até 1073741824 bytes, recusados **antes** de qualquer assinatura: arquivo proibido não ganha URL, então nunca chega ao bucket. Que o tamanho declarado é verdadeiro é o que `POST /storages/:id/complete` confere, contra o objeto real.\n\nO arquivo é fatiado em partes de 10485760 bytes. Quando cabe numa parte só, `uploadId` é nulo e a única URL aceita um `PUT` com o arquivo inteiro. Quando não cabe, cada URL aceita a sua parte, o cliente guarda o `ETag` que cada `PUT` devolve, e `parts` pode trazer só o primeiro lote: o resto vem de `GET /storages/:id/parts`, que é o mesmo endpoint da retomada.\n\nA linha nasce `PENDING` e não pode ser anexada a nada até ser confirmada. O arquivo nasce sem dono: quem anexa guarda a referência, informando o `id` no campo do recurso (hoje, o `avatarId` do usuário).",
+        "description": "Abre um envio e devolve para onde mandá-lo. **Não recebe bytes**: só os metadados do arquivo.\n\nO binário vai do navegador direto ao bucket, por URL assinada, e nunca atravessa esta aplicação: arquivo grande em corpo HTTP bate no limite do proxy, ocupa a aplicação durante o envio inteiro e não retoma quando a conexão cai.\n\nAceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav, até 1073741824 bytes, recusados **antes** de qualquer assinatura: arquivo proibido não ganha URL, então nunca chega ao bucket. Que o tamanho declarado é verdadeiro é o que `POST /storages/:id/complete` confere, contra o objeto real.\n\nO arquivo é fatiado em partes de 10485760 bytes. Quando cabe numa parte só, `uploadId` é nulo e a única URL aceita um `PUT` com o arquivo inteiro. Quando não cabe, cada URL aceita a sua parte, o cliente guarda o `ETag` que cada `PUT` devolve, e `parts` pode trazer só o primeiro lote: o resto vem de `GET /storages/:id/parts`, que é o mesmo endpoint da retomada.\n\nA linha nasce `PENDING` e não pode ser anexada a nada até ser confirmada. O arquivo nasce sem dono: quem anexa guarda a referência, informando o `id` no campo do recurso (hoje, o `avatarId` do usuário).\n\nEm `POST /storages/cities/:city/tenants/:tenant` quem envia é o cliente final (conta sem vínculo): o arquivo vai para a loja da URL, com o prefixo dela, e é do cliente, que o lê e mais nada; a equipe da loja também o lê.",
         "security": [
           {
             "cookieAuth": []
@@ -986,6 +1799,124 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StoragesFilesCreateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/storages/cities/{city}/tenants/{tenant}": {
+      "post": {
+        "operationId": "storagesFilesCreateForTenant",
+        "summary": "Abrir o upload",
+        "tags": [
+          "Arquivos"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragesFilesCreateForTenantResponse201"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403TenantRequired"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Arquivo em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409StorageInUse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Arquivo inválido · Arquivo incompleto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StoragesFileCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Abre um envio e devolve para onde mandá-lo. **Não recebe bytes**: só os metadados do arquivo.\n\nO binário vai do navegador direto ao bucket, por URL assinada, e nunca atravessa esta aplicação: arquivo grande em corpo HTTP bate no limite do proxy, ocupa a aplicação durante o envio inteiro e não retoma quando a conexão cai.\n\nAceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav, até 1073741824 bytes, recusados **antes** de qualquer assinatura: arquivo proibido não ganha URL, então nunca chega ao bucket. Que o tamanho declarado é verdadeiro é o que `POST /storages/:id/complete` confere, contra o objeto real.\n\nO arquivo é fatiado em partes de 10485760 bytes. Quando cabe numa parte só, `uploadId` é nulo e a única URL aceita um `PUT` com o arquivo inteiro. Quando não cabe, cada URL aceita a sua parte, o cliente guarda o `ETag` que cada `PUT` devolve, e `parts` pode trazer só o primeiro lote: o resto vem de `GET /storages/:id/parts`, que é o mesmo endpoint da retomada.\n\nA linha nasce `PENDING` e não pode ser anexada a nada até ser confirmada. O arquivo nasce sem dono: quem anexa guarda a referência, informando o `id` no campo do recurso (hoje, o `avatarId` do usuário).\n\nEm `POST /storages/cities/:city/tenants/:tenant` quem envia é o cliente final (conta sem vínculo): o arquivo vai para a loja da URL, com o prefixo dela, e é do cliente, que o lê e mais nada; a equipe da loja também o lê.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "city",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tenant",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoragesFilesCreateForTenantBody"
               }
             }
           }
@@ -1431,6 +2362,88 @@
         ]
       }
     },
+    "/storefront/cities": {
+      "get": {
+        "operationId": "storefrontCitiesList",
+        "summary": "Listar cidades",
+        "tags": [
+          "Cidades"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontCitiesListResponse200"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StorefrontCityListError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Público, sem sessão. Todas as cidades, por nome: o catálogo é pequeno e o seletor mostra inteiro. O `slug` é o segmento da URL depois do idioma, e o `timeZone` é o relógio em que as datas da cidade aparecem.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      }
+    },
+    "/storefront/cities/{city}/tenants": {
+      "get": {
+        "operationId": "storefrontTenantsList",
+        "summary": "Listar clientes da cidade",
+        "tags": [
+          "Cidades"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontTenantsListResponse200"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StorefrontTenantListError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Público, sem sessão. Os clientes ativos da cidade do segmento `:city`, por nome. Cidade que não existe responde `404`, como qualquer endereço desconhecido.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "city",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
     "/storefront/contacts": {
       "post": {
         "operationId": "storefrontContactsCreate",
@@ -1445,6 +2458,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/StorefrontContactsCreateResponse201"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403TenantRequired"
                 }
               }
             }
@@ -1480,7 +2503,7 @@
             }
           }
         },
-        "description": "O formulário de contato do site. **Pública**: não exige sessão, e por isso é a única escrita anônima da vitrine.\n\nGuarda o nome, o e-mail, a mensagem e o idioma, para a equipe responder a quem escreveu. O dado pessoal é guardado por 12 meses e apagado depois.\n\nResponde `201` só com o recibo (`id` e `createdAt`), sem repetir o que o visitante digitou. O campo `website` é uma armadilha para robôs: preenchido, a resposta é a mesma `201` e nada é gravado, para o robô não aprender que foi barrado.\n\nLimite de 5 envios por hora por IP: o sexto responde `429`.",
+        "description": "O formulário de contato do site. **Pública**: não exige sessão, e por isso é a única escrita anônima da vitrine.\n\nGuarda o nome, o e-mail, a mensagem e o idioma, para a equipe responder a quem escreveu. O dado pessoal é guardado por 12 meses e apagado depois. A mensagem fica no cliente do site (o tenant de `SINGLE_TENANT_SLUG`) e só a equipe dele a lê; sem cliente resolvido, `403` `TENANT_REQUIRED`.\n\nResponde `201` só com o recibo (`id` e `createdAt`), sem repetir o que o visitante digitou. O campo `website` é uma armadilha para robôs: preenchido, a resposta é a mesma `201` e nada é gravado, para o robô não aprender que foi barrado.\n\nLimite de 5 envios por hora por IP: o sexto responde `429`.",
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguage"
@@ -1537,13 +2560,129 @@
             "type": "string"
           },
           "email": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
-          "role": {
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platformRole": {
             "type": "string",
             "enum": [
+              "OWNER",
               "ADMINISTRATOR",
-              "MEMBER"
+              "USER"
+            ]
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "filename": {
+                    "type": "string"
+                  },
+                  "originalName": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "UPLOADED"
+                    ]
+                  },
+                  "uploadId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "partSize": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deletedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "originalName",
+                  "mimetype",
+                  "size",
+                  "path",
+                  "status",
+                  "uploadId",
+                  "partSize",
+                  "createdAt",
+                  "updatedAt",
+                  "deletedAt",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         },
@@ -1551,7 +2690,9 @@
           "id",
           "name",
           "email",
-          "role"
+          "phone",
+          "platformRole",
+          "avatar"
         ],
         "additionalProperties": false
       },
@@ -1562,6 +2703,10 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 120
+          },
+          "phone": {
+            "type": "string",
+            "maxLength": 20
           },
           "password": {
             "type": "string",
@@ -1582,6 +2727,18 @@
                 "pattern": "[^a-zA-Z0-9]"
               }
             ]
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "avatarId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
           },
           "currentPassword": {
             "type": "string",
@@ -1607,13 +2764,135 @@
             "type": "string"
           },
           "email": {
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
-          "role": {
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "platformRole": {
             "type": "string",
             "enum": [
+              "OWNER",
               "ADMINISTRATOR",
-              "MEMBER"
+              "USER"
+            ]
+          },
+          "avatar": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "filename": {
+                    "type": "string"
+                  },
+                  "originalName": {
+                    "type": "string"
+                  },
+                  "mimetype": {
+                    "type": "string"
+                  },
+                  "size": {
+                    "type": "number"
+                  },
+                  "path": {
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "PENDING",
+                      "UPLOADED"
+                    ]
+                  },
+                  "uploadId": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "partSize": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  },
+                  "createdAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "updatedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "deletedAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time",
+                        "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "url": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "filename",
+                  "originalName",
+                  "mimetype",
+                  "size",
+                  "path",
+                  "status",
+                  "uploadId",
+                  "partSize",
+                  "createdAt",
+                  "updatedAt",
+                  "deletedAt",
+                  "url"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pendingEmail": {
+            "type": [
+              "string",
+              "null"
             ]
           }
         },
@@ -1621,7 +2900,10 @@
           "id",
           "name",
           "email",
-          "role"
+          "phone",
+          "platformRole",
+          "avatar",
+          "pendingEmail"
         ],
         "additionalProperties": false
       },
@@ -1908,9 +3190,9 @@
       "AuthenticationSessionsSignInBody": {
         "type": "object",
         "properties": {
-          "email": {
+          "login": {
             "type": "string",
-            "format": "email",
+            "minLength": 1,
             "maxLength": 254
           },
           "password": {
@@ -1939,9 +3221,120 @@
           }
         },
         "required": [
-          "email",
+          "login",
           "password",
           "passwordConfirmation"
+        ],
+        "additionalProperties": false
+      },
+      "AuthenticationTenantsListResponse200": {
+        "type": "object",
+        "properties": {
+          "activeId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string",
+                  "enum": [
+                    "ORGANIZATION"
+                  ]
+                },
+                "role": {
+                  "type": "string",
+                  "enum": [
+                    "ADMINISTRATOR",
+                    "MEMBER"
+                  ]
+                },
+                "parentId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "city": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name",
+                    "slug"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "type",
+                "role",
+                "parentId",
+                "city"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "activeId",
+          "data"
+        ],
+        "additionalProperties": false
+      },
+      "AuthenticationTenantsSelectBody": {
+        "type": "object",
+        "properties": {
+          "tenantId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "tenantId"
         ],
         "additionalProperties": false
       },
@@ -2047,6 +3440,74 @@
           "code"
         ]
       },
+      "Error403TenantRequired": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              403
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "TENANT_REQUIRED"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error404CityNotFound": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              404
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CITY_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error404ContactNotFound": {
         "type": "object",
         "properties": {
@@ -2081,6 +3542,40 @@
           "code"
         ]
       },
+      "Error404MemberNotFound": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              404
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "MEMBER_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error404StorageNotFound": {
         "type": "object",
         "properties": {
@@ -2099,6 +3594,108 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "STORAGE_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error404TenantNotFound": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              404
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "TENANT_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error409CityInUse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CITY_IN_USE"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error409CitySlugTaken": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CITY_SLUG_TAKEN"
             ]
           },
           "errors": {
@@ -2218,7 +3815,41 @@
           "code"
         ]
       },
-      "Error422CurrentPasswordInvalidPasswordSameAsCurrentValidationError": {
+      "Error409TenantSlugTaken": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "TENANT_SLUG_TAKEN"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error422AvatarInvalidCurrentPasswordInvalidEmailChangeUnavailableEmailSameAsCurrentEmailTakenPasswordSameAsCurrentPhoneTakenValidationError": {
         "type": "object",
         "properties": {
           "message": {
@@ -2235,8 +3866,85 @@
             "type": "string",
             "description": "Identificador de máquina da falha.",
             "enum": [
+              "AVATAR_INVALID",
               "CURRENT_PASSWORD_INVALID",
+              "EMAIL_CHANGE_UNAVAILABLE",
+              "EMAIL_SAME_AS_CURRENT",
+              "EMAIL_TAKEN",
               "PASSWORD_SAME_AS_CURRENT",
+              "PHONE_TAKEN",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
+      "Error422CityBoundsInvalidValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CITY_BOUNDS_INVALID",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
+      "Error422MemberUserNotFoundValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "MEMBER_USER_NOT_FOUND",
               "VALIDATION_ERROR"
             ]
           },
@@ -2276,6 +3984,46 @@
               "STORAGE_SIZE_INVALID",
               "STORAGE_SIZE_MISMATCH",
               "STORAGE_TYPE_UNSUPPORTED",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
+      "Error422TenantCityNotFoundTenantHasChildrenTenantParentElsewhereTenantParentNestedTenantParentNotFoundValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "TENANT_CITY_NOT_FOUND",
+              "TENANT_HAS_CHILDREN",
+              "TENANT_PARENT_ELSEWHERE",
+              "TENANT_PARENT_NESTED",
+              "TENANT_PARENT_NOT_FOUND",
               "VALIDATION_ERROR"
             ]
           },
@@ -2669,6 +4417,346 @@
           "code"
         ]
       },
+      "Error500AuthenticationTenantListError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_TENANT_LIST_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AuthenticationTenantSelectError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "AUTHENTICATION_TENANT_SELECT_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformCityCreateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_CITY_CREATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformCityDeleteError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_CITY_DELETE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformCityUpdateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_CITY_UPDATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformMemberDeleteError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_MEMBER_DELETE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformMemberSaveError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_MEMBER_SAVE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformOverviewShowError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_OVERVIEW_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformTenantCreateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_TENANT_CREATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500PlatformTenantUpdateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "PLATFORM_TENANT_UPDATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error500StoragesFileCompleteError": {
         "type": "object",
         "properties": {
@@ -2907,6 +4995,40 @@
           "code"
         ]
       },
+      "Error500StorefrontCityListError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STOREFRONT_CITY_LIST_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error500StorefrontContactCreateError": {
         "type": "object",
         "properties": {
@@ -2925,6 +5047,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "STOREFRONT_CONTACT_CREATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StorefrontTenantListError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STOREFRONT_TENANT_LIST_ERROR"
             ]
           },
           "errors": {
@@ -2990,6 +5146,592 @@
           "nextPageUrl",
           "previousPageUrl"
         ]
+      },
+      "PlatformCitiesCreateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "south": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "west": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "north": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "east": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "slug",
+          "timeZone",
+          "latitude",
+          "longitude",
+          "south",
+          "west",
+          "north",
+          "east"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformCitiesCreateResponse201": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "south": {
+            "type": "number"
+          },
+          "west": {
+            "type": "number"
+          },
+          "north": {
+            "type": "number"
+          },
+          "east": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "slug",
+          "timeZone",
+          "latitude",
+          "longitude",
+          "south",
+          "west",
+          "north",
+          "east"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformCitiesUpdateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2,
+            "pattern": "^[A-Z]{2}$"
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "timeZone": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "south": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "west": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "north": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "east": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          }
+        },
+        "required": [
+          "name",
+          "state",
+          "slug",
+          "timeZone",
+          "latitude",
+          "longitude",
+          "south",
+          "west",
+          "north",
+          "east"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformCitiesUpdateResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "timeZone": {
+            "type": "string"
+          },
+          "latitude": {
+            "type": "number"
+          },
+          "longitude": {
+            "type": "number"
+          },
+          "south": {
+            "type": "number"
+          },
+          "west": {
+            "type": "number"
+          },
+          "north": {
+            "type": "number"
+          },
+          "east": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "state",
+          "slug",
+          "timeZone",
+          "latitude",
+          "longitude",
+          "south",
+          "west",
+          "north",
+          "east"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformMembersSaveBody": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "role": {
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "userId",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformMembersSaveResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "tenantId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "tenantId",
+          "userId",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformOverviewShowResponse200": {
+        "type": "object",
+        "properties": {
+          "cities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "tenants": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "tenants"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "tenants": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "slug": {
+                  "type": "string"
+                },
+                "cityId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "parentId": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "uuid",
+                      "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "members": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "slug",
+                "cityId",
+                "parentId",
+                "members"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "cities",
+          "tenants"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformTenantsCreateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "type": {
+            "enum": [
+              "ORGANIZATION"
+            ]
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "name",
+          "slug",
+          "type",
+          "cityId"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformTenantsCreateResponse201": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "ORGANIZATION"
+            ]
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "type",
+          "cityId",
+          "parentId",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformTenantsUpdateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "slug": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 80,
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "type": {
+            "enum": [
+              "ORGANIZATION"
+            ]
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "parentId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "slug",
+          "type",
+          "cityId",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "PlatformTenantsUpdateResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "ORGANIZATION"
+            ]
+          },
+          "cityId": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVE",
+              "INACTIVE"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "slug",
+          "type",
+          "cityId",
+          "parentId",
+          "status"
+        ],
+        "additionalProperties": false
       },
       "StoragesFilesCompleteBody": {
         "type": "object",
@@ -3151,6 +5893,206 @@
           "fileName",
           "mimetype",
           "size"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesFilesCreateForTenantBody": {
+        "type": "object",
+        "properties": {
+          "fileName": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255
+          },
+          "mimetype": {
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "image/gif",
+              "application/pdf",
+              "audio/mpeg",
+              "audio/mp4",
+              "audio/ogg",
+              "audio/wav"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1073741824
+          }
+        },
+        "required": [
+          "fileName",
+          "mimetype",
+          "size"
+        ],
+        "additionalProperties": false
+      },
+      "StoragesFilesCreateForTenantResponse201": {
+        "type": "object",
+        "properties": {
+          "storage": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+              },
+              "filename": {
+                "type": "string"
+              },
+              "originalName": {
+                "type": "string"
+              },
+              "mimetype": {
+                "type": "string"
+              },
+              "size": {
+                "type": "number"
+              },
+              "path": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDING",
+                  "UPLOADED"
+                ]
+              },
+              "uploadId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "partSize": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "createdAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "updatedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "deletedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "filename",
+              "originalName",
+              "mimetype",
+              "size",
+              "path",
+              "status",
+              "uploadId",
+              "partSize",
+              "createdAt",
+              "updatedAt",
+              "deletedAt"
+            ],
+            "additionalProperties": false
+          },
+          "uploadId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "partSize": {
+            "type": "number"
+          },
+          "totalParts": {
+            "type": "number"
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "url"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "uploaded": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "partNumber": {
+                  "type": "number"
+                },
+                "size": {
+                  "type": "number"
+                },
+                "etag": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "partNumber",
+                "size",
+                "etag"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "storage",
+          "uploadId",
+          "partSize",
+          "totalParts",
+          "parts",
+          "uploaded"
         ],
         "additionalProperties": false
       },
@@ -3684,6 +6626,63 @@
         ],
         "additionalProperties": false
       },
+      "StorefrontCitiesListResponse200": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "name": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "slug": {
+              "type": "string"
+            },
+            "timeZone": {
+              "type": "string"
+            },
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            },
+            "south": {
+              "type": "number"
+            },
+            "west": {
+              "type": "number"
+            },
+            "north": {
+              "type": "number"
+            },
+            "east": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "state",
+            "slug",
+            "timeZone",
+            "latitude",
+            "longitude",
+            "south",
+            "west",
+            "north",
+            "east"
+          ],
+          "additionalProperties": false
+        }
+      },
       "StorefrontContactsCreateBody": {
         "type": "object",
         "properties": {
@@ -3710,7 +6709,10 @@
             ]
           },
           "website": {
-            "type": "string",
+            "type": [
+              "string",
+              "null"
+            ],
             "maxLength": 2048
           }
         },
@@ -3741,6 +6743,51 @@
           "createdAt"
         ],
         "additionalProperties": false
+      },
+      "StorefrontTenantsListResponse200": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+            },
+            "name": {
+              "type": "string"
+            },
+            "slug": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "ORGANIZATION"
+              ]
+            },
+            "parentId": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "name",
+            "slug",
+            "type",
+            "parentId"
+          ],
+          "additionalProperties": false
+        }
       }
     }
   }

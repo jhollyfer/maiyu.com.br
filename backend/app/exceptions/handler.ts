@@ -5,8 +5,7 @@ import app from '@adonisjs/core/services/app'
 import i18nManager from '@adonisjs/i18n/services/main'
 import { errors as limiterErrors } from '@adonisjs/limiter'
 
-import { BASE_LOCALE } from '@maiyu/shared'
-
+import { RequestLocale } from '#core/request-locale'
 import { errors as vineErrors } from '#core/validator'
 import HTTPException from '#exceptions/http.exception'
 import type { HTTPExceptionPayload } from '#exceptions/http.exception'
@@ -255,8 +254,6 @@ export default class HttpExceptionHandler extends ExceptionHandler {
    * middleware failure) falls here without `ctx.i18n`.
    */
   private translate(ctx: HttpContext, key: string): string {
-    const language = i18nManager.getSupportedLocaleFor(ctx.request.languages())
-
-    return i18nManager.locale(language ?? BASE_LOCALE).t(key)
+    return i18nManager.locale(RequestLocale.of(ctx)).t(key)
   }
 }

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import {
   EmptyState,
@@ -12,8 +12,6 @@ import {
   EmptyStateTitle,
 } from '#/components/common/empty-state/empty-state'
 import type { EmptyStateReason } from '#/components/common/empty-state/empty-state'
-
-afterEach(cleanup)
 
 function renderState(reason: EmptyStateReason): void {
   render(

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
 import { toast } from 'sonner'
@@ -24,7 +24,6 @@ const discard = vi.fn(async () => undefined)
 vi.mock('sonner', () => ({ toast: { error: vi.fn() } }))
 
 afterEach(() => {
-  cleanup()
   vi.clearAllMocks()
 })
 

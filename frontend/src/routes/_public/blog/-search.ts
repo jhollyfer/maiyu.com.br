@@ -1,6 +1,5 @@
-import { ARTICLE_CATEGORIES } from '#/lib/articles'
 import { listValidateSearch } from '#/lib/list-search'
-import { z } from '@maiyu/shared'
+import { ARTICLE_CATEGORIES, z } from '@maiyu/shared'
 
 /**
  * The journal filter, in the URL (`?category=design`).

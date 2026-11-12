@@ -1,0 +1,8 @@
+{
+  "not_found": "City not found",
+  "invalid": "Invalid city",
+  "bounds_invalid_field": "The limits need south below north, west before east and the center inside them.",
+  "slug_taken": "Slug in use",
+  "slug_taken_field": "Another city already uses this slug.",
+  "in_use": "A city with clients cannot be removed"
+}

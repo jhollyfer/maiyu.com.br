@@ -1,12 +1,10 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { BrandMark } from '#/components/common/brand-mark/brand-mark'
 import { m } from '#/paraglide/messages'
-
-afterEach(cleanup)
 
 describe('BrandMark', () => {
   it('shows the brand name in the current language', () => {

@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest'
 
-import { cn } from './utils'
+import { cn } from './cn'
 
-describe('cn', () => {
+describe('cn with the project scale', () => {
   it('keeps the color when it comes with a size from the site scale', () => {
     // It was the primary button's defect: `text-small` was read as a color and
     // erased `text-primary-foreground`, and the text vanished into the background.

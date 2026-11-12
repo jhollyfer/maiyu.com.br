@@ -17,16 +17,29 @@ test.group('services > storage (unit)', () => {
 
     for (const mimetype of STORAGE_MIMETYPES) {
       assert.match(
-        storage.key(mimetype),
-        new RegExp(`^[0-9a-f-]{36}\\.${STORAGE_EXTENSIONS[mimetype]}$`),
+        storage.key(mimetype, null),
+        new RegExp(
+          `^platform/[0-9a-f-]{36}\\.${STORAGE_EXTENSIONS[mimetype]}$`,
+        ),
       )
     }
+  })
+
+  test('the key starts with the owner tenant, so no key crosses tenants', async ({
+    assert,
+  }) => {
+    const storage = await service()
+
+    assert.isTrue(storage.key('image/png', 'tenant-a').startsWith('tenant-a/'))
   })
 
   test('two keys of the same type never coincide', async ({ assert }) => {
     const storage = await service()
 
-    assert.notEqual(storage.key('image/png'), storage.key('image/png'))
+    assert.notEqual(
+      storage.key('image/png', null),
+      storage.key('image/png', null),
+    )
   })
 
   test('Content-Disposition carries the ASCII name and the encoded UTF-8 one', async ({

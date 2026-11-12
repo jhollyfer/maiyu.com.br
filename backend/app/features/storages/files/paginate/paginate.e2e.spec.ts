@@ -150,7 +150,7 @@ test.group('storages > listagem', (group) => {
 
   // The cost of the listing is locked (#382): two rows or twenty, the count is the same, and a
   // refused query stops before the page is read.
-  test('the listing costs 5 queries, whatever the number of rows', async ({
+  test('the listing costs 6 queries, whatever the number of rows', async ({
     client,
     assert,
   }) => {
@@ -162,11 +162,11 @@ test.group('storages > listagem', (group) => {
       assert,
       emitter,
       () => client.get('/storages').cookies(session),
-      5,
+      6,
     )
   })
 
-  test('a refused ?sort costs 3 queries, before any select', async ({
+  test('a refused ?sort costs 4 queries, before any select', async ({
     client,
     assert,
   }) => {
@@ -176,7 +176,7 @@ test.group('storages > listagem', (group) => {
       assert,
       emitter,
       () => client.get('/storages?sort=path').cookies(session),
-      3,
+      4,
     )
   })
 

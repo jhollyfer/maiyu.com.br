@@ -2,7 +2,7 @@ import * as z from 'zod'
 
 import { ACTIVE_STATUSES } from './enums/active-status.js'
 import type { ActiveStatus } from './enums/active-status.js'
-import { LOCALE } from './enums/locale.js'
+import { LOCALE, LOCALES } from './enums/locale.js'
 import type { Locale } from './enums/locale.js'
 import { SORT_DIRECTIONS } from './enums/sort-direction.js'
 import type { SortDirection } from './enums/sort-direction.js'
@@ -44,7 +44,7 @@ const PT_BR_MESSAGES = {
   enum: 'Selecione {{ field }}',
   email: 'Informe um e-mail válido',
   number: 'Informe um número válido',
-  boolean: 'Informe verdadeiro ou falso',
+  boolean: 'Marque se {{ field }} vale ou não',
   array: 'Informe uma lista',
   object: 'Informe um objeto',
   richText: 'Informe um texto formatado válido',
@@ -56,6 +56,7 @@ const PT_BR_MESSAGES = {
   max: 'Informe um valor menor ou igual a {{ max }}',
   positive: 'Informe um valor maior que zero',
   withoutDecimals: 'Informe um número inteiro',
+  'array.minLength': 'Informe ao menos {{ min }} itens',
   'array.maxLength': 'Informe no máximo {{ max }} itens',
   // The four `.regex()`es of `Rule.password()` stop at the first that fails on the
   // same key, so the message lists the four requirements at once.
@@ -68,6 +69,16 @@ const PT_BR_MESSAGES = {
   'passwordConfirmation.confirmed': 'As senhas não são iguais',
   // The label must not carry C0, DEL or C1 characters (CWE-150).
   'fileName.regex': 'O nome do arquivo não pode ter caracteres de controle',
+  // A pattern the project gives without a message of its own.
+  regex: 'Informe {{ field }} no formato válido',
+  // A slug is a URL segment: lowercase, digits and hyphen, and never a word the router already
+  // reads there (a language prefix, DECISIONS.md #390).
+  'slug.regex': 'Use só letras minúsculas, números e hífen no slug',
+  'slug.notIn': 'Este slug é reservado, escolha outro',
+  'state.regex': 'Informe a UF com duas letras maiúsculas',
+  timeZone: 'Selecione um fuso horário válido',
+  phone: 'Informe um celular válido, com DDD',
+  anyPhone: 'Informe um telefone válido, com DDD',
 } as const
 
 type RuleMessages = Record<keyof typeof PT_BR_MESSAGES, string>
@@ -84,7 +95,7 @@ const KIT_RULE_MESSAGES = {
     enum: 'Seleccione {{ field }}',
     email: 'Ingrese un correo electrónico válido',
     number: 'Ingrese un número válido',
-    boolean: 'Ingrese verdadero o falso',
+    boolean: 'Indica si {{ field }} aplica o no',
     array: 'Ingrese una lista',
     object: 'Ingrese un objeto',
     richText: 'Ingrese un texto con formato válido',
@@ -96,6 +107,7 @@ const KIT_RULE_MESSAGES = {
     max: 'Ingrese un valor menor o igual a {{ max }}',
     positive: 'Ingrese un valor mayor que cero',
     withoutDecimals: 'Ingrese un número entero',
+    'array.minLength': 'Ingrese al menos {{ min }} elementos',
     'array.maxLength': 'Ingrese como máximo {{ max }} elementos',
     'password.regex':
       'La contraseña necesita minúscula, mayúscula, número y carácter especial',
@@ -106,6 +118,13 @@ const KIT_RULE_MESSAGES = {
     'passwordConfirmation.confirmed': 'Las contraseñas no coinciden',
     'fileName.regex':
       'El nombre del archivo no puede tener caracteres de control',
+    regex: 'Ingrese {{ field }} en un formato válido',
+    'slug.regex': 'Use solo minúsculas, números y guion en el slug',
+    'slug.notIn': 'Este slug está reservado, elija otro',
+    'state.regex': 'Ingrese la UF con dos letras mayúsculas',
+    timeZone: 'Seleccione una zona horaria válida',
+    phone: 'Ingrese un celular válido, con código de área',
+    anyPhone: 'Ingrese un teléfono válido, con código de área',
   },
   en: {
     required: 'Enter {{ field }}',
@@ -113,7 +132,7 @@ const KIT_RULE_MESSAGES = {
     enum: 'Select {{ field }}',
     email: 'Enter a valid email',
     number: 'Enter a valid number',
-    boolean: 'Enter true or false',
+    boolean: 'Choose whether {{ field }} applies',
     array: 'Enter a list',
     object: 'Enter an object',
     richText: 'Enter valid formatted text',
@@ -125,6 +144,7 @@ const KIT_RULE_MESSAGES = {
     max: 'Enter a value less than or equal to {{ max }}',
     positive: 'Enter a value greater than zero',
     withoutDecimals: 'Enter a whole number',
+    'array.minLength': 'Enter at least {{ min }} items',
     'array.maxLength': 'Enter at most {{ max }} items',
     'password.regex':
       'The password needs a lowercase letter, an uppercase letter, a number and a special character',
@@ -133,6 +153,13 @@ const KIT_RULE_MESSAGES = {
     'password.maxLength': 'The password must have at most {{ max }} characters',
     'passwordConfirmation.confirmed': 'The passwords do not match',
     'fileName.regex': 'The file name cannot have control characters',
+    regex: 'Enter {{ field }} in a valid format',
+    'slug.regex': 'Use only lowercase letters, numbers and hyphens in the slug',
+    'slug.notIn': 'This slug is reserved, choose another',
+    'state.regex': 'Enter the state as two uppercase letters',
+    timeZone: 'Select a valid time zone',
+    phone: 'Enter a valid mobile number, with area code',
+    anyPhone: 'Enter a valid phone number, with area code',
   },
 } as const satisfies Record<Locale, RuleMessages>
 
@@ -170,9 +197,12 @@ const PT_BR_LABELS = {
   // Identity and account
   name: 'o nome',
   email: 'o e-mail',
+  phone: 'o celular',
+  login: 'o e-mail ou o celular',
   password: 'a senha',
   passwordConfirmation: 'a confirmação da senha',
   currentPassword: 'a senha atual',
+  token: 'o código',
   role: 'o papel',
   status: 'o status',
   avatarId: 'o avatar',
@@ -194,6 +224,26 @@ const PT_BR_LABELS = {
   sort: 'a ordenação',
   direction: 'a direção da ordenação',
   trashed: 'o filtro de arquivados',
+
+  // City and tenant (DECISIONS.md #390)
+  state: 'a UF',
+  timeZone: 'o fuso horário',
+  latitude: 'a latitude',
+  longitude: 'a longitude',
+  south: 'o limite sul',
+  west: 'o limite oeste',
+  north: 'o limite norte',
+  east: 'o limite leste',
+  tenantId: 'o cliente',
+  type: 'o tipo',
+  cityId: 'a cidade',
+  parentId: 'o cliente pai',
+  userId: 'a conta',
+
+  // Receipt and its review (labels the kit's upload and review fields share)
+  storageId: 'o comprovante',
+  receiptId: 'o comprovante conferido',
+  reason: 'o motivo',
 } as const
 
 type FieldLabels = Record<keyof typeof PT_BR_LABELS, string>
@@ -204,9 +254,12 @@ export const KIT_FIELD_LABELS = {
   es: {
     name: 'el nombre',
     email: 'el correo electrónico',
+    phone: 'el celular',
+    login: 'el correo electrónico o el celular',
     password: 'la contraseña',
     passwordConfirmation: 'la confirmación de la contraseña',
     currentPassword: 'la contraseña actual',
+    token: 'el código',
     role: 'el rol',
     status: 'el estado',
     avatarId: 'el avatar',
@@ -224,13 +277,32 @@ export const KIT_FIELD_LABELS = {
     sort: 'el orden',
     direction: 'la dirección del orden',
     trashed: 'el filtro de archivados',
+    state: 'la UF',
+    timeZone: 'la zona horaria',
+    latitude: 'la latitud',
+    longitude: 'la longitud',
+    south: 'el límite sur',
+    west: 'el límite oeste',
+    north: 'el límite norte',
+    east: 'el límite este',
+    tenantId: 'el cliente',
+    type: 'el tipo',
+    cityId: 'la ciudad',
+    parentId: 'el cliente padre',
+    userId: 'la cuenta',
+    storageId: 'el comprobante',
+    receiptId: 'el comprobante verificado',
+    reason: 'el motivo',
   },
   en: {
     name: 'the name',
     email: 'the email',
+    phone: 'the mobile number',
+    login: 'the email or the mobile number',
     password: 'the password',
     passwordConfirmation: 'the password confirmation',
     currentPassword: 'the current password',
+    token: 'the code',
     role: 'the role',
     status: 'the status',
     avatarId: 'the avatar',
@@ -248,6 +320,22 @@ export const KIT_FIELD_LABELS = {
     sort: 'the sort order',
     direction: 'the sort direction',
     trashed: 'the archived filter',
+    state: 'the state',
+    timeZone: 'the time zone',
+    latitude: 'the latitude',
+    longitude: 'the longitude',
+    south: 'the south limit',
+    west: 'the west limit',
+    north: 'the north limit',
+    east: 'the east limit',
+    tenantId: 'the client',
+    type: 'the type',
+    cityId: 'the city',
+    parentId: 'the parent client',
+    userId: 'the account',
+    storageId: 'the receipt',
+    receiptId: 'the checked receipt',
+    reason: 'the reason',
   },
 } as const satisfies Record<Locale, FieldLabels>
 
@@ -389,6 +477,9 @@ export class ValidationMessage {
   }
 }
 
+// No `new Function`: Zod probes eval once to speed up objects, and the kit's CSP has no
+// `unsafe-eval`, so every page would report a violation (_doc-lib/zod.md, `jitless`).
+z.config({ jitless: true })
 z.config(ZOD_LOCALES[LOCALE.PT_BR]())
 z.config({ customError: (issue) => ValidationMessage.resolve(issue) })
 
@@ -532,6 +623,15 @@ export class Rule {
   }
 
   /**
+   * Optional free text (DECISIONS.md #402): absent stays absent, and blank or only spaces is an
+   * explicit `null`, never `''`. The pair of `Rule.optionalText()` in the backend's `#core/validator`,
+   * so a project does not repeat `trim`, the ceiling and the blank-to-null by field.
+   */
+  static optionalText(maxLength: number): NullableField<z.ZodString> {
+    return Rule.nullable(z.string().trim().max(maxLength))
+  }
+
+  /**
    * A field of an update that may be missing (do not touch) but never `null` nor `''`: on the API
    * the bodyparser turns `''` into `null`, and `Rule.notNull()` refuses it with the `required`
    * message, so `{ title: null }` does not erase a required column (`_standards/backend.md` §4.4).
@@ -615,6 +715,134 @@ export class Rule {
   }
 
   /**
+   * A Brazilian mobile in E.164, the account's identity (DECISIONS.md #396): `+55`, the area code
+   * (11 to 99), the leading 9 and eight digits. The only form stored, so the unique column and the
+   * sign-in lookup compare one text.
+   */
+  static readonly PHONE = /^\+55[1-9][1-9]9\d{8}$/
+
+  /**
+   * A Brazilian landline or mobile in E.164 (`+55`, area code 11 to 99, then 9 and eight digits for
+   * a mobile or 2 to 5 and seven digits for a landline), for the form that accepts either, such
+   * as a registration where the contact may be a landline. The identity stays `PHONE`.
+   */
+  static readonly ANY_PHONE = /^\+55[1-9][1-9](?:9\d{8}|[2-5]\d{7})$/
+
+  /**
+   * The ceiling of what is typed, before the normalization: the longest mask (`+55 (97) 99123-4567`,
+   * 19 characters) fits and a pasted text does not reach the pattern (CWE-400).
+   */
+  static readonly PHONE_INPUT_MAX_LENGTH = 20
+
+  /**
+   * Whatever the person typed, as E.164: the digits alone, with `+55` added when it is missing.
+   * The length tells the shapes apart (10 or 11 national, 12 or 13 with the country), so an area
+   * code 55 is not read as the country. What fits no shape (or has letters) returns as it came, and the pattern
+   * (`PHONE` or `ANY_PHONE`) refuses it.
+   */
+  static normalizePhone(raw: string): string {
+    // Only what a mask holds: digits, spaces, parentheses, hyphen and `+`. Letters around the
+    // digits ("ligue 97991234567") are not a phone, and stripping them would accept the text.
+    if (!/^[\d\s()+-]+$/.test(raw)) return raw
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length === 10 || digits.length === 11) return `+55${digits}`
+    if (
+      (digits.length === 12 || digits.length === 13) &&
+      digits.startsWith('55')
+    )
+      return `+${digits}`
+
+    return raw
+  }
+
+  /** The Brazilian mobile as E.164; the backend pair is `Rule.phone()`. */
+  static phone(): z.ZodPipe<z.ZodString, z.ZodTransform<string, string>> {
+    return z
+      .string()
+      .trim()
+      .max(Rule.PHONE_INPUT_MAX_LENGTH)
+      .transform((value) => Rule.normalizePhone(value))
+      .refine((value) => Rule.PHONE.test(value), {
+        params: { rule: 'phone' },
+      })
+  }
+
+  /** A Brazilian landline or mobile as E.164; the backend pair is `Rule.anyPhone()`. */
+  static anyPhone(): z.ZodPipe<z.ZodString, z.ZodTransform<string, string>> {
+    return z
+      .string()
+      .trim()
+      .max(Rule.PHONE_INPUT_MAX_LENGTH)
+      .transform((value) => Rule.normalizePhone(value))
+      .refine((value) => Rule.ANY_PHONE.test(value), {
+        params: { rule: 'anyPhone' },
+      })
+  }
+
+  /** What a URL segment may hold: lowercase words joined by a hyphen. */
+  static readonly SLUG = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+  /**
+   * The first segment after the language that the frontend already owns (DECISIONS.md #399): a
+   * city or tenant slug equal to one would be swallowed by the fixed route (`/pt-br/dashboard`
+   * is the panel, never the city `dashboard`). The language prefixes are the lowercase locales of
+   * the paraglide `urlPatterns`; the rest are the fixed routes of the kit (authentication,
+   * account, panel, platform area) and the machine ones. The dotted names (`sitemap.xml`,
+   * `robots.txt`, `.well-known`) already fail `Rule.SLUG`, and stay listed so the list is the whole
+   * set of fixed segments. One list for both sides: `Rule.slug()` here and the VineJS pair.
+   */
+  static readonly RESERVED_SLUGS: ReadonlyArray<string> = [
+    ...LOCALES.map((locale) => locale.toLowerCase()),
+    'administrator',
+    'sign-in',
+    'sign-up',
+    'dashboard',
+    'platform',
+    'account',
+    'health-check',
+    'sitemap.xml',
+    'robots.txt',
+    '.well-known',
+  ]
+
+  /** A slug that is a URL segment after the language. The backend pair is `Rule.slug()`. */
+  static slug(): z.ZodString {
+    return z
+      .string()
+      .trim()
+      .min(1)
+      .max(80)
+      .regex(Rule.SLUG)
+      .refine((value) => !Rule.RESERVED_SLUGS.includes(value), {
+        params: { rule: 'notIn' },
+      })
+  }
+
+  /** A name of the IANA database the runtime knows (`America/Eirunepe`), never an offset. */
+  static timeZone(): z.ZodString {
+    return z
+      .string()
+      .trim()
+      .min(1)
+      .max(64)
+      .refine((value) => Rule.isTimeZone(value), {
+        params: { rule: 'timeZone' },
+      })
+  }
+
+  /** Whether `Intl` accepts the zone: `supportedValuesOf` leaves out aliases the runtime still reads. */
+  static isTimeZone(value: string): boolean {
+    try {
+      return (
+        Intl.DateTimeFormat('en', { timeZone: value }).resolvedOptions()
+          .timeZone !== ''
+      )
+    } catch {
+      return false
+    }
+  }
+
+  /**
    * The label of an uploaded file: no control characters (Unicode `Cc`: C0, DEL and C1).
    * The name is client input that later reaches terminals and logs, where an escape
    * sequence is obeyed instead of shown (CWE-150). The backend pair is `fileName()`.
@@ -695,7 +923,7 @@ export class Rule {
   } {
     return {
       ...Rule.pageFields(),
-      search: Rule.optional(z.string().max(100)),
+      search: Rule.optional(z.string().trim().max(100)),
     }
   }
 
@@ -743,7 +971,9 @@ export class Rule {
     value: TValue,
     blank: TBlank,
   ): TValue | TBlank {
-    if (value === '') return blank
+    // Only spaces counts as blank too: the API trims the field (`vine.string().trim()`, DECISIONS.md
+    // #402) and the form must read the same text the API does.
+    if (typeof value === 'string' && value.trim() === '') return blank
     return value
   }
 }

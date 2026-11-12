@@ -2,5 +2,15 @@
   "current_password_invalid": "Incorrect current password",
   "current_password_invalid_field": "The current password does not match",
   "password_same_as_current": "The new password must be different from the current one",
-  "password_same_as_current_field": "The new password must be different from the current one"
+  "password_same_as_current_field": "The new password must be different from the current one",
+  "phone_taken": "This phone is already in use",
+  "phone_taken_field": "This phone is already used by another account",
+  "avatar_invalid": "Invalid photo",
+  "avatar_invalid_field": "Choose a file of your own, already uploaded and confirmed",
+  "email_taken": "This email is already in use",
+  "email_taken_field": "This email is already used by another account",
+  "email_same_as_current": "The new email must be different from the current one",
+  "email_same_as_current_field": "The new email must be different from the current one",
+  "email_change_unavailable": "Changing the email by yourself is not available",
+  "email_change_unavailable_field": "Ask the administrator to change the email"
 }

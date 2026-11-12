@@ -14,6 +14,7 @@ import {
 import { TransactionContext } from '#core/transaction-context'
 import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
+import CustomerScoped from '#repositories/shared/customer-scoped'
 import LucidMapping from '#repositories/shared/lucid-mapping'
 
 /**
@@ -29,7 +30,21 @@ export class StorageLucidRepository extends StorageRepository {
   }
 
   async findById(id: string): Promise<Storage | null> {
-    const row = await StorageModel.query({ client: this.transaction.client() })
+    const row = await CustomerScoped.readable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
+      .where('id', id)
+      .withScopes((scopes) => scopes.notDeleted())
+      .first()
+    if (!row) return null
+
+    return this.toEntity(row)
+  }
+
+  async findWritable(id: string): Promise<Storage | null> {
+    const row = await CustomerScoped.writable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
       .where('id', id)
       .withScopes((scopes) => scopes.notDeleted())
       .first()
@@ -39,7 +54,9 @@ export class StorageLucidRepository extends StorageRepository {
   }
 
   async detail(id: string): Promise<StorageFileRead | null> {
-    const row = await StorageModel.query({ client: this.transaction.client() })
+    const row = await CustomerScoped.readable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
       .where('id', id)
       .withScopes((scopes) => scopes.notDeleted())
       .first()
@@ -51,19 +68,27 @@ export class StorageLucidRepository extends StorageRepository {
   async detailsOf(ids: ReadonlyArray<string>): Promise<StorageFileRead[]> {
     if (ids.length === 0) return []
 
-    const rows = await StorageModel.query({ client: this.transaction.client() })
+    const rows = await CustomerScoped.readable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
       .whereIn('id', [...new Set(ids)])
       .withScopes((scopes) => scopes.notDeleted())
 
     return rows.map((row) => this.toResponse(row))
   }
 
-  async areAttachable(ids: ReadonlyArray<string>): Promise<boolean> {
+  async areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean> {
     const unique = [...new Set(ids)]
     if (unique.length === 0) return true
 
-    const rows = await StorageModel.query({ client: this.transaction.client() })
+    const rows = await CustomerScoped.writable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
       .whereIn('id', unique)
+      .where('uploadedBy', uploadedBy)
       .where('status', UPLOAD_STATUS.UPLOADED)
       .withScopes((scopes) => scopes.notDeleted())
 
@@ -204,9 +229,9 @@ export class StorageLucidRepository extends StorageRepository {
   async paginate(
     criteria: StorageListCriteria,
   ): Promise<Paginated<StorageFileRead>> {
-    const query = StorageModel.query({
-      client: this.transaction.client(),
-    }).withScopes((scopes) => scopes.notDeleted())
+    const query = CustomerScoped.readable(
+      StorageModel.query({ client: this.transaction.client() }),
+    ).withScopes((scopes) => scopes.notDeleted())
 
     if (criteria.status) query.where('status', criteria.status)
     if (criteria.mimetype) query.where('mimetype', criteria.mimetype)
@@ -230,6 +255,9 @@ export class StorageLucidRepository extends StorageRepository {
   private toEntity(row: StorageModel): Storage {
     return Storage.restore({
       id: row.id,
+      tenantId: row.tenantId,
+      customerId: row.customerId,
+      uploadedBy: row.uploadedBy,
       filename: row.filename,
       originalName: row.originalName,
       mimetype: row.mimetype,

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import type * as React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { MultiFileUpload } from '#/components/common/multi-file-upload/multi-file-upload'
 import {
@@ -14,8 +14,6 @@ import {
 } from '#/components/common/multi-file-upload/multi-file-upload-header'
 import { MultiFileUploadList } from '#/components/common/multi-file-upload/multi-file-upload-list'
 import { m } from '#/paraglide/messages'
-
-afterEach(cleanup)
 
 type Uploaded = { readonly name: string }
 

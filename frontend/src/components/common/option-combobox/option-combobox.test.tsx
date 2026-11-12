@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   OptionCombobox,
@@ -11,8 +11,6 @@ import {
   toOptions,
 } from '#/components/common/option-combobox/option-combobox'
 import { m } from '#/paraglide/messages'
-
-afterEach(cleanup)
 
 const OPTIONS = [
   { value: 'draft', label: 'Rascunho', dot: 'bg-amber-500' },

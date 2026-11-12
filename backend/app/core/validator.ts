@@ -139,6 +139,78 @@ const notNullRule = vine.createRule(
   { implicit: true },
 )
 
+/**
+ * The rules behind `Rule.atLeastOneOf()` and `Rule.requiredIfAnyOf()`. Implicit, because they must
+ * run on the field that is absent. They read the sibling fields from the parent object and count a
+ * field as present when it is not `undefined`: `null` is a value (a nullable field set to `null` is
+ * a change), and VineJS's own `requiredIfMissing` reads it as absent.
+ */
+const atLeastOneOfRule = vine.createRule(
+  (
+    _value: unknown,
+    options: { readonly keys: ReadonlyArray<string> },
+    field: FieldContext,
+  ) => {
+    if (!Rule.anyPresent(field, options.keys))
+      field.report('The {{ field }} field is required', 'required', field)
+  },
+  { implicit: true },
+)
+
+const requiredIfAnyOfRule = vine.createRule(
+  (
+    value: unknown,
+    options: { readonly keys: ReadonlyArray<string> },
+    field: FieldContext,
+  ) => {
+    if (value === undefined && Rule.anyPresent(field, options.keys))
+      field.report('The {{ field }} field is required', 'required', field)
+  },
+  { implicit: true },
+)
+
+/**
+ * The rule behind `Rule.timeZone()`: the zone must be one the runtime knows, the same test as the
+ * shared `Rule.isTimeZone`, so the form and the API refuse the same names.
+ */
+const timeZoneRule = vine.createRule(
+  (value: unknown, _options: undefined, field: FieldContext) => {
+    if (typeof value !== 'string') return
+    if (!SharedRule.isTimeZone(value))
+      field.report(
+        'The {{ field }} field must be a time zone',
+        'timeZone',
+        field,
+      )
+  },
+)
+
+/** The rule behind `Rule.phone()`: the E.164 pattern is the shared one, so form and API agree. */
+const phoneRule = vine.createRule(
+  (value: unknown, _options: undefined, field: FieldContext) => {
+    if (typeof value !== 'string') return
+    if (!SharedRule.PHONE.test(value))
+      field.report(
+        'The {{ field }} field must be a Brazilian mobile number',
+        'phone',
+        field,
+      )
+  },
+)
+
+/** The rule behind `Rule.anyPhone()`: a landline or a mobile, by the shared pattern. */
+const anyPhoneRule = vine.createRule(
+  (value: unknown, _options: undefined, field: FieldContext) => {
+    if (typeof value !== 'string') return
+    if (!SharedRule.ANY_PHONE.test(value))
+      field.report(
+        'The {{ field }} field must be a Brazilian phone number',
+        'anyPhone',
+        field,
+      )
+  },
+)
+
 /** A field that `Rule.partial()` can mark with `Rule.notNull()`: the types that carry `use()`. */
 type MarkableField = SchemaTypes & {
   use(validation: ReturnType<typeof notNullRule>): unknown
@@ -154,10 +226,47 @@ type MarkableField = SchemaTypes & {
  * would show up in the other.
  */
 export class Rule {
+  /** Whether some of the `keys` is in the object that holds `field`, `null` included. */
+  static anyPresent(field: FieldContext, keys: ReadonlyArray<string>): boolean {
+    const parent: unknown = field.parent
+    if (typeof parent !== 'object' || parent === null) return false
+
+    return keys.some((key) => Reflect.get(parent, key) !== undefined)
+  }
+
+  /** "At least one of these fields": the field it marks is required while none of `keys` is present. */
+  static atLeastOneOf(keys: ReadonlyArray<string>) {
+    return atLeastOneOfRule({ keys })
+  }
+
+  /** The field it marks is required as soon as one of `keys` is present (`null` counts). */
+  static requiredIfAnyOf(keys: ReadonlyArray<string>) {
+    return requiredIfAnyOfRule({ keys })
+  }
+
   static email() {
     // Lowercase, like the shared pair: `A@x.com` and `a@x.com` are one account, for the
     // login, the unique column and the sessions an e-mail change revokes.
     return vine.string().trim().toLowerCase().email().maxLength(254)
+  }
+
+  /**
+   * A slug that is a URL segment after the language (DECISIONS.md #390): the pair of `Rule.slug()`
+   * in `@maiyu/shared`, which holds the pattern and the reserved words.
+   */
+  static slug() {
+    return vine
+      .string()
+      .trim()
+      .minLength(1)
+      .maxLength(80)
+      .regex(SharedRule.SLUG)
+      .notIn([...SharedRule.RESERVED_SLUGS])
+  }
+
+  /** An IANA zone name the runtime knows, the pair of the shared `Rule.timeZone()`. */
+  static timeZone() {
+    return vine.string().trim().minLength(1).maxLength(64).use(timeZoneRule())
   }
 
   /**
@@ -175,10 +284,10 @@ export class Rule {
   }
 
   /**
-   * The Brazilian phone: it arrives with the field mask (`(97) 99123-4567`, the `phone-br` mask of
-   * `frontend/src/lib/mask.ts`) and goes out with only the digits, which are 10 (landline) or
-   * 11 (mobile) with the area code. The shared package has no pair: the form keeps the masked
-   * text, and the digits are the API's. `parse` runs before the rules and receives `unknown`
+   * The Brazilian mobile, the account's identity (DECISIONS.md #396): it arrives however the
+   * person typed it (mask, spaces, with or without `+55`) and is stored as E.164. The pair of
+   * `Rule.phone()` in `@maiyu/shared`, which holds the pattern and the normalization.
+   * `parse` runs before the rules and receives `unknown`
    * (_doc-lib/vinejs.md#schema_101, https://vinejs.dev/docs/schema_101), so anything that is
    * not text goes through untouched and the `string` rule refuses it.
    */
@@ -187,10 +296,25 @@ export class Rule {
       .string()
       .parse((value: unknown) => {
         if (typeof value !== 'string') return value
-        return value.replace(/\D/g, '')
+        return SharedRule.normalizePhone(value.trim())
       })
-      .minLength(10)
-      .maxLength(11)
+      .maxLength(SharedRule.PHONE_INPUT_MAX_LENGTH)
+      .use(phoneRule())
+  }
+
+  /**
+   * The Brazilian landline or mobile in E.164, for the form that accepts either. The pair of
+   * `Rule.anyPhone()` in `@maiyu/shared`; it reads the input like `Rule.phone()`.
+   */
+  static anyPhone() {
+    return vine
+      .string()
+      .parse((value: unknown) => {
+        if (typeof value !== 'string') return value
+        return SharedRule.normalizePhone(value.trim())
+      })
+      .maxLength(SharedRule.PHONE_INPUT_MAX_LENGTH)
+      .use(anyPhoneRule())
   }
 
   /**
@@ -231,7 +355,7 @@ export class Rule {
   static paginationFields() {
     return {
       ...Rule.pageFields(),
-      search: vine.string().maxLength(100).optional(),
+      search: vine.string().trim().maxLength(100).optional(),
     }
   }
 
@@ -246,6 +370,26 @@ export class Rule {
       page: vine.number().withoutDecimals().min(1).max(10_000).optional(),
       perPage: vine.number().withoutDecimals().min(1).max(100).optional(),
     }
+  }
+
+  /**
+   * Optional free text (DECISIONS.md #402): trimmed, with a ceiling; absent stays absent, and blank,
+   * only spaces or an explicit `null` (what the frontend sends for a blank field) is `null`, never
+   * `''` (the bodyparser no longer trims, and the `trim()` of the field leaves `''` behind). Vine's
+   * `optional()` alone drops `null`, so `nullable()` comes first. The pair of `Rule.optionalText()`
+   * in `@maiyu/shared`.
+   */
+  static optionalText(maxLength: number) {
+    return vine
+      .string()
+      .trim()
+      .maxLength(maxLength)
+      .nullable()
+      .optional()
+      .transform((value): string | null | undefined => {
+        if (value === '') return null
+        return value
+      })
   }
 
   /**

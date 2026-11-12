@@ -14,7 +14,7 @@ export const StorefrontContactCreateValidator = z.object({
   email: Rule.email(),
   message: z.string().trim().min(10).max(5000),
   locale: z.enum(LOCALES),
-  website: Rule.optional(z.string().max(2048)),
+  website: Rule.optionalText(2048),
 })
 
 export type StorefrontContactCreatePayload = z.infer<

@@ -1,14 +1,8 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import type { Resolver, ResolverResult } from 'react-hook-form'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -61,8 +55,6 @@ function Form({
     </form>
   )
 }
-
-afterEach(cleanup)
 
 describe('FieldCombobox', () => {
   it('when an option is picked, the form submits its value, not its label', async () => {

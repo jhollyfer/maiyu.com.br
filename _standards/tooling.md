@@ -575,6 +575,12 @@ em `pnpm exec`, falha em 20 ms e não diz o motivo (`DECISIONS.md` #284).
 `"prepare": "node .husky/install.mjs"`, que não falha quando o install não traz as devDependencies;
 na imagem, `HUSKY=0` no `install` (§8.2; _doc-lib/husky.md#how-to.html, `DECISIONS.md` #337).
 Nunca `backend/.husky` com `prepare: cd ..`: o hook da raiz cobre os três pacotes e o `commit-msg`.
+O `--check` cobra o `prepare` da raiz igual a `node .husky/install.mjs` (`prepare-diverge:`): os
+Dockerfiles do kit copiam esse arquivo, e `husky` puro derruba o install filtrado da imagem.
+O `install.mjs` decide o que pular pelo que falta, não por `NODE_ENV`: sem `.git` (a imagem), com
+`HUSKY=0` ou sem o `husky` instalado, sai calado; com `NODE_ENV=production` no shell, num clone
+novo ou numa worktree (`.git` é arquivo), instala o hook. O `pre-commit` já roda por app tocado
+(`touches`); achado do `pattern:check` de outro app não barra o commit.
 
 **`commit-msg`** chama `pnpm exec commitlint --edit "$1"`. `.commitlintrc.json` estende
 `@commitlint/config-conventional`: tipo em inglês (`feat`, `fix`, `refactor`), descrição em pt-BR,
@@ -767,6 +773,22 @@ frontend = build:deps + i18n:compile + i18n:check + lint + typecheck + format:ch
 shared   = lint + typecheck + test:unit
 ```
 
+O build de um app roda sempre com o filtro de dependências, `pnpm --filter "{./frontend}..." build`
+(ou `./backend`), como o `Dockerfile-production` já faz: o `shared/` resolve pelo `dist/` (`exports`),
+e num clone ou worktree novo `pnpm --filter ./frontend build` falha sem ele compilado. O script
+`build` do app não chama `build:deps`, para o Dockerfile não compilar o `shared/` duas vezes. Achado
+no jhollyfer.com.br.
+
+**`.adonisjs/` em dia** (Adonis): `scripts/adonisjs-check.mjs` do upstream roda o gerador do projeto
+e reprova se `routes.d.ts` ou `client/` mudaram, como o `openapi:check` faz com o `openapi.json`:
+`node <maiyu-pattern>/scripts/adonisjs-check.mjs backend --cmd "node ace build"`. O comando do
+gerador é o que o `hooks.init` do `adonisrc.ts` dispara (`indexEntities`, `generateRegistry`;
+_doc-lib/adonisjs.md, _doc-lib/tuyau.md); página oficial não conferida para um comando que gere sem
+compilar. `openapi:generate` e `authz:check --write` bootam o app, e o `start/env.ts` do kit exige
+`NODE_ENV` (enum sem default): o valor vem do `.env` ou do shell, e o carregador de ambiente do
+Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_ENV=test` na frente
+(`NODE_ENV=test node ace openapi:generate`); o kit não força o valor nesses comandos.
+
 **Backend**, na ordem:
 
 1. `pnpm --filter ./backend check`: a fórmula acima
@@ -803,11 +825,16 @@ shared   = lint + typecheck + test:unit
 transforma teste quebrado em intermitente, _doc-lib/playwright.md#docs/test-retries; teste instável
 é bug com tarefa), `globalTimeout` sempre definido (sem ele a execução não tem teto,
 _doc-lib/playwright.md#docs/test-timeouts), `trace: 'retain-on-failure'`,
-`screenshot: 'only-on-failure'`, `baseURL` e credenciais por env sem default (`E2E_OWNER_PASSWORD`,
-como o seeder), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
+`screenshot: 'only-on-failure'`, `baseURL` por env sem default e nenhuma senha em chave de ambiente: o `e2e/auth.setup.ts` cria a conta de
+cada papel na hora, por `node ace e2e:accounts` (só em development e test, senha sorteada a cada execução,
+`DECISIONS.md` #443), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
 `[['html', { open: 'never' }]]`. Fluxo crítico roda `@axe-core/playwright` e reprova violação séria
 ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
 projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
+Projeto só frontend não define `E2E_API_URL`: o config não sobe a API, não cria os projetos `setup` e
+`cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`). O modo vem do valor da
+chave (vazia ou ausente é sem backend; liga-se por valor, nunca por chave, `AGENTS.md`), e as specs
+públicas rodam sem API e sem banco; `scripts/e2e-config.test.ts` cobre os dois modos (`DECISIONS.md` #501).
 
 **`shared/`**: `check` *(teste)*, antes do backend.
 
@@ -851,10 +878,18 @@ interativo, e validado rodando lint num arquivo e um teste.
 hook e na sessão (§6, §7); quem constrói e publica é o Coolify, que puxa o commit da `main` pelo
 GitHub App dele e constrói cada app pelo `Dockerfile-production` (§8.2, §8.3). Enquanto o projeto
 tiver `.github/workflows/`, o `--check` acusa `workflow-pendente:`; a pasta só sai com
-`sync-to-project.mjs <dir> --remover-workflows` (ou `--so-workflows`, que tira só a pasta, sem sincronizar o resto, para a PR que só tira o CI/CD), rodado depois que o `Dockerfile-production` de cada
+`sync-to-project.mjs <dir> --remover-workflows` (ou `--so-workflows`, o mesmo modo: tira só a pasta e o bloco `github-actions` do `dependabot.yml` e sai, sem sincronizar o resto, para a PR que só tira o CI/CD), rodado depois que o `Dockerfile-production` de cada
 app constrói dentro e o dono trocou o recurso do Coolify para GitHub App (§8.3, "Troca de recurso"):
 tirar antes derruba a publicação (`DECISIONS.md` #371). Depois, tirar o check do Actions da proteção
 de branch (§9) e apagar os secrets do Actions.
+
+**O sync também cobra e limpa:** `tsconfig-diverge:` (o `tsconfig.json` e o `tsconfig.build.json` do
+`shared/`, que é esqueleto, contra o kit, comparados como JSON e sem contar comentário), arquivo que o
+kit removeu ou renomeou (`REMOVED_CODE` em `scripts/kit-manifest.mjs`: aparece como `sobra:` e sai no
+sync, mesmo fora das pastas espelhadas) e `--com-backend`, que cria `backend/` num projeto só
+frontend que ganhou API (sem a flag ele continua sem). O `kit-check` ainda prova o build do
+frontend numa árvore só com os `COPY` do `Dockerfile-production`, sem `.git`, e reprova se o
+`styles-*.css` que o SSR referencia não existe em `.output/public` (`--sem-build` pula, `--so-build` roda só ela). Achado da prova: sem `.git` (como no Docker) o Tailwind v4 perde as fontes no ambiente SSR e o CSS referenciado não é o emitido (404); o `styles.css` precisa de `@import 'tailwindcss' source('./')`.
 
 **Código que tem de ser igual em todo projeto da stack** mora em `_templates/code/<caminho>`: o sync
 grava em `<caminho>` no projeto e o `--check` reprova divergência (`code-diverge:`). Só o arquivo que
@@ -866,9 +901,23 @@ models, `env.ts`, migrations) o sync cria se faltar e nunca reescreve. Para o mo
 em silêncio, o sync grava em `.maiyu/kit-extension-points.json` (versionado no projeto) o sha256 do modelo
 que o projeto recebeu. O `--check` lista `extension-stale: <arquivo>` quando o modelo atual difere do
 registrado (o projeto faz o merge à mão e confirma com `--ack-extension=<arquivo>` ou `--ack-extensions`,
-que regravam o sha) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
+que rodam sozinhos e só regravam o sha desses pontos no manifesto, sem tocar em mais nenhum arquivo nem
+reformatar o resto do manifesto; com outra flag, sem manifesto ou sem nada a confirmar, saem com erro) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
 ou mesma tabela); os dois saem com 1. Sem manifesto, o `--check` avisa `extension-baseline` e não falha, e
 o sync cria o manifesto com o modelo atual (`DECISIONS.md` #398).
+
+**`.gitignore` do kit é fusão por linha**, nunca espelho (o do projeto guarda `.env`, `node_modules` e o
+resto, e sobrescrevê-lo deixaria segredo à mostra). As linhas do modelo que o do projeto não tem entram no
+fim, com o comentário que as precede; ordem e linhas do projeto ficam, o arquivo ausente é criado, a segunda
+passada não muda nada, e o `--check` lista `gitignore-falta: <arquivo>: <linha>` e sai com 1.
+
+**ENV: catálogo único de chaves** (`DECISIONS.md` #417, `backend.md` §6.2). Todo projeto tem exatamente
+as chaves de `_templates/backend/.env.example` e `_templates/frontend/.env.example`, na mesma ordem,
+com o mesmo número (hoje backend e frontend, contagem impressa pelo `--check`): nenhum bloco sai, e o recurso que o projeto não usa fica com valor vazio; só entra chave que o kit lê. O
+`--check` lista `env-diverge: <arquivo>: <chave> a mais | a menos | fora de ordem` (a chave comentada não conta onde o modelo a tem ativa) e acusa o `backend/start/env.ts` que perdeu o `EnvBlocks.assert` ou afrouxou chave obrigatória, também para o
+`.env.test`, o `.env.production` e o `.env.e2e.example` (`fora do catálogo`), e imprime
+`env: <arquivo> N chaves (modelo M)`: N igual a M em todo projeto em dia. Chave nova entra no modelo
+do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave.
 
 - **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
 - **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,
@@ -1163,7 +1212,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 - **`.gitignore` na raiz**, obrigatório, cada bloco com um comentário dizendo o motivo. Ignora
   `node_modules/`, `build/`, `.output/`, `.env` (o `.env.example` e o `.env.test` são versionados,
-  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, e o que a árvore declara
+  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, `frontend/playwright/.auth/` (sessões e `accounts.json` com a senha das contas do E2E, §7; o kit leva o `frontend/.gitignore` que o cobre), e o que a árvore declara
   fora dela: `.idea/`, `.vscode/`, `.claude/worktrees/`, pastas de resultado, e
   `CLAUDE-SECURITY-*/` (relatório de varredura com cenário de exploração não vai para o histórico,
   §10.4).
@@ -1387,19 +1436,30 @@ Camadas, cada uma com a sua ferramenta:
 |---|---|---|
 | Regente geral (entre projetos e upstream) | a sessão em que o dono conversa | `send_message` para as regentes de projeto, quadro em `_standards/_map/<rodada>/QUADRO.md` |
 | Regente do projeto | uma sessão por projeto (`create_session` com o repositório dele) | quebra cada fase do plano em itens, despacha, revisa, abre a PR; não executa item |
+| Sub-sessões shared, backend e frontend | uma sessão por pasta do projeto, abertas pela regente (`create_session`, mesmo repositório); projeto sem uma das pastas não tem a sub-sessão dela | executam todo item de resolução, correção e melhoria do seu lado, com seus subagentes; reportam à regente do projeto |
 | Item G (fase 2 ou 3 do plano, feature) | subagentes do projeto | `tlc-plan` (plano aprovado pelo dono) e `tlc-implement` (lotes, verificador independente, provas por script) |
 | Item P ou M | um subagente por item | `superpowers:subagent-driven-development`, worktree e branch próprias (#311) |
 | Mapeamento ou auditoria em massa | fan-out de leitura | `Workflow` (fatia por projeto e lado, cético que tenta refutar cada achado grave, consolidação) |
 
 Regras:
 
-- **Um item por agente, escopo fechado.** Item G vira vários. A regente do projeto pode abrir
-  sub-sessões (`create_session`, com o mesmo repositório) para uma frente inteira (backend, frontend,
-  uma migração G) quando isso divide melhor o trabalho; a sub-sessão reporta à regente do projeto, que
-  continua sendo a única a falar com a regente geral. Agente que edita usa worktree e branch
+- **Regente e uma sub-sessão por pasta, sempre (`DECISIONS.md` #425).** Todo projeto trabalha com a
+  regente do projeto e uma sub-sessão fixa para cada pasta que ele tem: `shared/` (contrato: schema Zod,
+  resposta, enum, código de erro, Money), `backend/` e `frontend/`. Toda resolução, correção e melhoria
+  passa por elas. A regente não codifica: planeja, distribui, integra, manda verificar e cuida das PRs, e
+  é a única que fala com a regente geral. Mudança de contrato nasce na sub-sessão shared, que a anuncia
+  às outras antes do commit; backend e frontend confirmam e só então consomem. As três conversam direto
+  (`send_message` com o `session_id` umas das outras) e copiam a regente em decisão de contrato,
+  bloqueio e fim de item. Item fechado: push, PR em rascunho até o verificador, `docs/TASKS.md` e
+  `docs/MEMORY.md` ("Parou em"), aviso às outras sub-sessões e à regente.
+- **Um item por agente, escopo fechado.** Item G vira vários. Agente que edita usa worktree e branch
   próprias; ninguém faz commit do trabalho de outro.
 - **Autor nunca verifica o próprio trabalho.** Todo item fecha com um verificador novo (o do
   `tlc-implement`, o revisor da `subagent-driven-development` ou o cético do `Workflow`).
+  O brief do verificador manda rodar os scripts de Python com `PYTHONDONTWRITEBYTECODE=1` (o das skills,
+  como o do `tlc-plan`, grava `__pycache__/` ao lado do script): o cache nasce no worktree de quem
+  verifica e, sem isso, vira arquivo não rastreado que alguém commita por engano. A raiz do kit ignora
+  `__pycache__/` e `*.pyc`, e o sync não os espelha (`DECISIONS.md` #439).
 - **As sessões conversam.** A regente do projeto reporta à regente geral cada item fechado, bloqueio e
   pergunta para o dono por `send_message`; onde a sessão não consegue responder, a regente geral lê o
   transcrito (`list_events`). O estado de cada projeto fica no `docs/TASKS.md` dele, o geral no
@@ -1414,8 +1474,12 @@ Regras:
   reescrever histórico, hook de guarda) nunca se contorna.
 - **Lacuna de régua ou de kit nunca se corrige no projeto.** A regente do projeto manda para a regente
   geral; a correção sai no `maiyu-pattern` e volta pelo sync (#226).
-- **O que um projeto resolve vira roteiro do próximo.** A regente geral repassa o diff e a lição na
-  ordem do plano (gêmeos primeiro), para nenhuma sessão resolver de novo o mesmo problema.
+- **O que um projeto resolve vira roteiro do próximo (`DECISIONS.md` #430).** Problema achado num
+  projeto que pode estar em outro, e decisão que serve a mais de um, vão na hora para as regentes dos
+  projetos afetados (`send_message`), com a causa, como se resolveu (commit ou PR) e como conferir lá;
+  cópia para a regente geral, que repassa aos que a regente do projeto não alcançar e leva ao upstream
+  o que for de régua ou de kit. Nenhuma sessão resolve de novo, de outro jeito, o que outro projeto já
+  resolveu.
 - **Segurança em paralelo, o resto em ordem.** A fase 0 de todos os projetos corre junta; as fases 1 a
   4 seguem a ordem do plano, uma regra de passagem por passo (`--check` limpo, `check` verde, suítes
   pesadas antes da PR).

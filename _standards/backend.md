@@ -210,7 +210,7 @@ que nasce o segundo módulo, e as tags e códigos sem prefixo colidem (administr
 | classe base de template method | `abstract class` com o algoritmo, subclasse preenche o passo, **um nível** de herança. Em `services/` e `policies/`, `<nome>.base.ts`; entre recursos de um módulo, `_shared.<tema>.base.ts` (`architecture.md` §3). Não é contrato: o contrato é fronteira de I/O trocável em teste, a base não se troca |
 | comando de CLI | `commands/<recurso>-<verbo>.command.ts`, invocado como `<recurso>:<verbo>`; mutante aceita `--dry-run` (§4.12). _doc-lib/adonisjs.md#guides/ace/creating-commands |
 | evento | `<recurso>:<particípio>` (`post:archived`), como a doc (`_doc-lib/adonisjs.md#guides/digging-deeper/emitter`) |
-| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono liga pela chave e não restringe ambiente (§6); só a demonstração declara `static environment = ['development', 'test']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
+| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono liga pela chave e não restringe ambiente (§6); só o conteúdo de exemplo de `dev/` declara `static environment = ['development']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
 | factory | `database/factories/<entidade>.factory.ts`, uma por entidade viva, usada só por spec; espelha o model, sem regra de negócio, nasce com o papel menos privilegiado (§7). _doc-lib/lucid.md#model-factories |
 | provider | um por contrato, `providers/<contrato>.provider.ts`, mais `repository.provider.ts` e `i18n.provider.ts`, com import estático (`DECISIONS.md` #340): `register()` liga contrato → implementação, `shutdown()` libera pool/conexão; `singleton` quando o cliente guarda conexão, `bind` quando é sem estado, comentário do porquê. _doc-lib/adonisjs.md#guides/concepts/service-providers |
 | socket | por feature, no contrato do service do socket: `<FEATURE>_NAMESPACE` (constante) e `<feature>Room(scopeId)` (única função que monta o nome da sala): quem entra e quem emite montam a mesma string. _doc-lib/socket-io.md#namespaces, #rooms |
@@ -506,6 +506,12 @@ pelo presenter a partir da entidade, ou devolvido direto pela consulta de leitur
 (`domain.md` §5.1). Entidade, model Lucid ou documento Mongo cru na resposta é acoplamento ao
 modelo interno: renomear coluna quebra o frontend. Projeção é por allowlist (o presenter escolhe
 cada campo), nunca "tudo menos a senha".
+
+**`deletedAt` na resposta.** `ResponseRule.timestamps()` declara `createdAt`, `updatedAt` e `deletedAt`, e a
+lixeira do painel precisa da data em que a linha foi arquivada. O `response-leak.e2e.spec.ts` proíbe
+`deletedAt` na leitura sem sessão (a vitrine pública nunca mostra linha apagada, então vê-la ali é o
+registro arquivado chegando à rua) e o aceita na leitura de uma sessão, onde é o contrato do painel; os
+segredos (`password`, `token`, `hash`...) continuam proibidos para todos (`DECISIONS.md` #438).
 
 **Paginação devolve `Paginated<T>`**, montado pela implementação do repository a partir do
 paginator do ORM:
@@ -1142,6 +1148,19 @@ existente. A policy base confere com `ownsRow` e `reachesCustomerRow`. O storage
 status derruba as sessões da conta na mesma transação (`UserRepository.save`,
 `TenantRepository.saveMember` e `removeMember`).
 
+**Equipe da plataforma e recorte de status em tabela de cliente (#511).** `CustomerScoped.readable(query, options)`
+tem duas opções tipadas, ambas opcionais. `platform: true` é a tabela declarando que a equipe da
+plataforma (`TenantScope.platformStaff`: `OWNER` e `ADMINISTRATOR`, a única regra de quem é equipe)
+lê toda linha dela em todo tenant, como a fila de conferência do Pix (#404); sem a declaração nada
+alarga, e `USER`, cliente, tenant pai e público continuam sem ler. `tenantStatuses: { column, allowed }`
+limita os status que a equipe do próprio tenant lê nas linhas dos clientes (a loja só vê o pedido a
+partir de `CONFIRMED`) e recorta só esse ramo. O `writable` não tem ramo de plataforma: a equipe da
+plataforma escreve em linha de cliente só por use case de plataforma com policy de `PLATFORM_ROLE`
+(rota sob `/platform/...`), por método explícito e nomeado do repositório (ex.: buscar por `number` em
+`AWAITING_REVIEW`), nunca por escopo "sem filtro", e a transição leva guarda de status no `WHERE`
+(só sai do status de origem), como o `claim` da cobrança. O use case é dono da autorização; o
+repositório só aplica o `WHERE`.
+
 Usuário é global (e-mail único); o acesso é vínculo usuário x tenant x papel (`tenant_memberships`).
 A chave do arquivo no storage começa pelo id do tenant (`platform/` sem tenant). A prova é
 `app/core/tenant-scope.e2e.spec.ts`: dado de outro tenant responde 404 em toda rota que o alcança
@@ -1149,6 +1168,43 @@ por id e não aparece em lista; recurso novo que passa pelo repositório base he
 projeto repete o teste no recurso dele.
 
 ---
+
+### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
+
+- **Foto.** `PUT /account/profile` aceita `avatarId`, o id de um arquivo `UPLOADED` e vivo que a
+  própria conta enviou, no tenant da requisição (`StorageRepository.areAttachable(ids, uploadedBy)`:
+  `uploaded_by` é a conta e o escopo é o do tenant da sessão). Arquivo de outra conta, da própria conta
+  em outro tenant, ainda não confirmado, apagado, ou id que não existe, é `422 AVATAR_INVALID` no
+  campo `avatarId`. `GET` e `PUT` devolvem
+  `avatar` com a URL assinada (`StorageContract.withOptionalUrl`), `null` sem foto; `users.avatar_id` já
+  estava em `STORAGE_REFERENCES`, então o `storages:prune` não apaga a foto em uso. `avatarId: null` remove a foto: o VineJS lê `null` como
+  campo ausente, então o "ao menos um campo" e o `currentPassword` obrigatório são regras implícitas
+  (`Rule.atLeastOneOf`, `Rule.requiredIfAnyOf`) que contam `null` como presente.
+- **E-mail.** `email` no corpo é um pedido, não uma troca, e exige a senha atual. O núcleo depende de
+  `EmailChangeContract` (`services/email-change/`): `isAvailable()` é o portão único, e `deliver()` manda o
+  token. Sem o bloco `mail`, ou com o bloco e `SMTP_HOST` vazio, o contrato é `EmailChangeUnavailable` ou
+  o serviço do bloco com `isConfigured()` falso, e a resposta é `422 EMAIL_CHANGE_UNAVAILABLE` no campo
+  `email`: só o administrador troca o e-mail de outra pessoa, no CRUD de usuários, e ninguém troca o
+  próprio. Disponível, o caso de uso grava o pedido pendente (`EmailChangeRepository`, tabela
+  `email_changes`, uma linha por conta, só o sha256 do token) e o serviço do bloco manda o token de 256
+  bits, de uso único e 60 minutos, ao **endereço novo**. A resposta traz `pendingEmail`; o `email` do perfil
+  continua o antigo. O mesmo e-mail da conta é `422 EMAIL_SAME_AS_CURRENT` e o de outra conta
+  `422 EMAIL_TAKEN`.
+- **Confirmação.** `POST /account/email/confirm` (sessão, `accountThrottle`, parte do bloco `mail`) lê o
+  token e o consome com um único `DELETE ... RETURNING` da linha da própria conta
+  (_doc-lib/lucid.md#update-and-delete-queries, https://lucid.adonisjs.com/docs/update-and-delete-queries):
+  token de outra conta, usado, vencido ou inventado é o mesmo `422 EMAIL_TOKEN_INVALID` em `token`, e de
+  duas confirmações simultâneas uma vence. A claim, a troca do e-mail e a sessão nova são uma unidade de
+  trabalho: `UserRepository.save` derruba todas as sessões da conta (o e-mail é campo de sessão, §4.2), e o
+  caso de uso emite um par novo para a sessão que confirmou, então as outras caem e esta segue.
+  Endereço que outra conta tomou no meio-tempo é `422 EMAIL_TAKEN` e a claim é desfeita.
+- **Onde mora.** Do núcleo: `EmailChangeContract`, `EmailChangeUnavailable`, `EmailChangeFake`,
+  `EmailToken`, `EmailChangeRepository` (contrato, Lucid, memória) e a migration. Do bloco `mail`
+  (`kit-manifest.mjs`): `services/email-confirmation/` (o serviço que manda o e-mail), `features/account/email/`,
+  o validator da confirmação, as mensagens `email.json` e, dentro de arquivos comuns, os trechos
+  `optional: mail` (rota, provider do contrato, providers de e-mail e fila no `adonisrc.ts`). O `shared/`
+  tem `AccountProfileUpdateResponse` e `AccountEmailConfirmValidator`. O kit não tem peça de perfil no
+  frontend: só o contrato e a API; a página de perfil é do projeto até o kit ganhar a peça.
 
 ## 5. Módulos de infraestrutura
 
@@ -1307,6 +1363,37 @@ export abstract class PaymentGatewayContract {
   fora da assinatura 403 (com `signableHeaders`); leitura assinada com `attachment`; usuário da app
   com 403 em outro bucket e ao criar bucket; `ETag` exposto. O tamanho real do multipart sai no
   `HeadObject` do `complete`.
+
+### 5.4.1 Bloco opcional que o projeto liga por escolha: o Pix
+
+- O Pix sem gateway (cobrança, comprovante, conferência; `DECISIONS.md` #400, #404) é peça opcional
+  do kit sem dependência própria, então liga por escolha do projeto: `node <upstream>/scripts/sync-to-project.mjs . --com=pix`
+  grava `pix` em `blocos` de `.maiyu/kit-extension-points.json`, e `--sem=pix` tira. Sem a escolha, o
+  sync não leva o serviço, as rotas, a migration, os specs, as peças do `shared/` nem a peça de
+  frontend do Pix, e o `--check` não acusa `migration-missing` nem `extension-stale` por causa dele
+  (`DECISIONS.md` #418).
+- **Desligar de volta limpa.** `--sem=pix` com os arquivos do bloco no projeto os trata como `sobra:` e o
+  sync os remove, com o mesmo guard de importador do resto (`extra-in-use:` em vez de apagar); a migration
+  nunca se apaga (a tabela pode existir em produção): vira `migration-orphan:` até o projeto escrever a
+  que a remove ou rodar `--ack-extension=<migration>` (`DECISIONS.md` #431).
+- **A tabela e a lista do painel** (`components/common/table/` e `list-shell/`) ligam sozinhas pelas quatro
+  dependências, e `--sem=table` as desliga mesmo com elas (`desligados` no manifesto; `--com=table` volta):
+  sai a pasta e saem as chaves `kit_table_*`, `kit_list_shell_*`, `kit_filters` e `kit_help` (`DECISIONS.md` #432).
+- **Colisão de caminho.** O manifesto guarda em `arquivos` o que o kit já levou ao projeto. Caminho que o kit
+  passa a ocupar, que o projeto já tinha com outro conteúdo e que não está na lista, vira `collision:` e não é
+  sobrescrito. Para o kit tomar o caminho, o projeto move ou renomeia o arquivo dele e roda o sync;
+  `--ack-extension` não resolve colisão, só confirma ponto de extensão (`DECISIONS.md` #433, #471).
+- **Costura mínima.** O que o Pix toca fora dos próprios arquivos é pouco, e cada ponto é um trecho entre
+  `// --- optional: pix ---` e `// --- end optional ---`: o provider no `adonisrc.ts`, o `bind` e os imports
+  do `repository.provider.ts`, o grupo `payments/charges` do `start/routes.ts`, a entrada do
+  `core/openapi/response.ts`, a tag do `config/openapi.ts`, `charges.receipt_id` do
+  `storage.references.ts`, a classe do `database/schema.ts` e os exports do `shared/src/index.ts`. O trecho sai do
+  esqueleto criado e do arquivo comum quando o bloco está desligado; ligado, o ponto de extensão do
+  projeto recebe a linha pelo `extension-stale`, que lista as linhas do modelo que o projeto não tem.
+- **Fica no núcleo, não é Pix:** o cliente final e `storages.customer_id` (#397), `PLATFORM_ROLE.ADMINISTRATOR`
+  e `TenantScope.platformStaff` (#404), os rótulos de campo do `shared/src/validator.ts`.
+- O sha de um ponto de extensão é o do modelo sem os trechos de bloco desligado: mudar só o trecho do
+  Pix não deixa o projeto sem Pix `extension-stale`.
 
 ### 5.5 Log
 
@@ -1498,6 +1585,27 @@ stack e que as seções acima não fechavam. Cada item completa a seção citada
 
 17. Credencial guardada em banco no Adonis segue a cifra de `backend-fastify.md` §10 (HKDF, AAD,
     `enc:vN`). *(CLOUD-AND-DEPLOYMENT.md, Secret exposure.)*
+18. **Unique de dado pessoal não vaza no log do banco** *(DECISIONS.md #408)*. Violação de `UNIQUE`
+    faz o Postgres gravar o valor no `DETAIL` do log (`Key (cpf)=(...) already exists`), e o log
+    vive mais que a linha. Em tabela com CPF, telefone, e-mail ou outro dado pessoal sob `UNIQUE`,
+    o insert de um valor que o cliente escolhe passa por `LucidMapping.insertUnlessUnique`
+    (`ON CONFLICT DO NOTHING RETURNING id`): zero linhas é o fato `UNIQUE_CONFLICT`, e o banco não
+    registra erro nenhum. O `unlessUnique` continua para o que não é dado pessoal. Como segunda
+    trava, o Postgres de produção sobe com `log_error_verbosity=terse`, que tira o `DETAIL` do
+    log. O e-mail é único sobre `lower(email)` (índice de expressão), atrás do `Rule.email()` que
+    o grava em minúsculas, e o `findByEmail` compara `lower(email) = lower(?)`, que usa o índice.
+    Conta antiga ganha o índice em migration PRÓPRIA do projeto (a do kit só vale para projeto
+    novo, #401; o `--check` acusa `migration-changed:`, #415): primeiro detecta duplicata por caixa
+    (`select lower(email), count(*) from users group by 1 having count(*) > 1`) e falha com
+    mensagem clara se houver, depois `update users set email = lower(email)`, cria o índice
+    `users_email_lower_key` e derruba o `unique` antigo. `insertUnlessUnique` leva o alvo do
+    conflito, uma entrada fechada de `UNIQUE_TARGET` (`(lower(email))`, `(phone)`): sem ele o `DO NOTHING` engolia a colisão de chave
+    primária. Os alvos do projeto (`(tenant_id, document)` de um membro) entram no ponto de extensão
+    `repositories/shared/unique-targets.ts` (`PROJECT_UNIQUE_TARGET`, `as const`), que o kit funde em `UNIQUE_TARGET`;
+    o tipo continua fechado. O update tem o par `LucidMapping.findUnderUniqueLock(trx, alvo, valor, busca)`:
+    `pg_advisory_xact_lock` por alvo e valor, então a busca "o valor está livre?" antes do `update` roda
+    serializada e a segunda requisição concorrente a vê ocupada em vez de estourar o `UNIQUE` (o tipo pede uma
+    transação: fora dela o lock soltaria na hora) (`DECISIONS.md` #435).
 
 ---
 
@@ -1505,18 +1613,29 @@ stack e que as seções acima não fechavam. Cada item completa a seção citada
 
 Um só leitor, `start/env.ts` (`Env.create` no Adonis; leitor síncrono no Fastify,
 `architecture.md` §5), com blocos nesta ordem: `# Node` · `# App` · `# Session` · `# CORS` ·
-`# Database` · `# Storage` · `# Seeding` · `# Mail` · `# Queue` · `# JWT`. Chave da casa tem o mesmo
+`# Database` · `# Storage` · `# Seeding` · `# Mail` · `# Queue`. Chave da casa tem o mesmo
 nome, validador e comentário em todo projeto. **Nome de bloco e comentário do `.env.example` e do `.env.test` são em inglês**
 (`typescript.md` §12, `DECISIONS.md` #260); o texto em português é o `docs/ENV.md`.
 
 **O modelo é a fonte.** `_templates/backend/.env.example` e `_templates/frontend/.env.example` são o
 mesmo arquivo em todo projeto: mesmas chaves, mesma ordem, mesmos blocos e comentários. Só o valor de
-exemplo é do projeto (porta, banco, bucket). Só recurso que o projeto pode não ter (e-mail, Redis,
-JWT) vem num bloco `# --- optional: <nome> ---` que o projeto inclui inteiro ou não inclui (`mail`,
-`queue`, `jwt`); o resto é obrigatório em todo projeto, e a chave que ele ainda não usa fica
-comentada no lugar (`DECISIONS.md` #276). O
-`sync-to-project.mjs --check` compara a lista de chaves e reprova chave a mais, a menos ou fora de ordem
-(`env-diverge:`), também no perfil `--perfil=codigo`. Chave que o modelo não tem não existe: entra
+exemplo é do projeto (porta, banco, bucket). **Nenhum bloco sai** (`DECISIONS.md` #417): e-mail e fila
+ficam em todo projeto, com valor vazio onde o recurso não existe. O bloco liga pelo valor da
+chave gatilho (`SMTP_HOST`; valor só de espaços é desligado, no `EnvBlocks` e no `config/mail.ts`), nunca por flag à parte e nunca pela ausência da chave; ligado, o
+resto do bloco é obrigatório e `EnvBlocks.assert` (`app/core/env-blocks.ts`, chamado no fim do
+`start/env.ts`) derruba o boot dizendo qual chave está vazia. No schema, a chave de bloco é
+`Env.schema.string.optional()` (_doc-lib/adonisjs.md#configuration, https://docs.adonisjs.com/configuration).
+O
+`sync-to-project.mjs --check` compara a lista de chaves e reprova chave a mais, a menos (a comentada
+`# CHAVE=` não conta onde o modelo a tem ativa) ou fora de ordem (`env-diverge:`), também no perfil
+`--perfil=codigo`, e reprova o `start/env.ts` do projeto que tira o `EnvBlocks.assert` ou afrouxa para
+opcional uma chave que o modelo declara obrigatória.
+
+**Só entra no catálogo a chave que o kit lê** (código, `config/`, script, compose ou E2E de
+`_templates/code/`, `DECISIONS.md` #417): chave declarada sem leitor no kit é chave inventada e sai do
+modelo. O modelo Fastify (`_templates/code/backend.fastify`) ainda não tem leitor de ENV no kit nem
+catálogo próprio; a leva 10 o define (`DECISIONS.md` #417).
+ Chave que o modelo não tem não existe: entra
 primeiro no catálogo abaixo e no modelo, depois no projeto (`DECISIONS.md` #271).
 
 Regras:
@@ -1565,7 +1684,7 @@ as regras abaixo são *(opinião da casa)*: nenhuma dessas páginas fixa nome de
 - **`VITE_` só para o que pode ir ao navegador** (`frontend.md` §3.3). O que o servidor do frontend lê
   em tempo de execução e não pode ir ao bundle não leva o prefixo (`SERVER_API_URL`).
 - **Mesma coisa, mesmo nome.** O teto de upload é `UPLOAD_MAX_SIZE` na API e `VITE_UPLOAD_MAX_SIZE` no
-  web (espelho); a conta do semeador é `SEED_OWNER_*` e o E2E a reusa como `E2E_OWNER_*`. Sinônimo
+  web (espelho); a conta do semeador é `SEED_OWNER_*`; o E2E não a reusa, cria as dele (#443). Sinônimo
   (`CORS_ORIGIN`, `VITE_API_BASE_URL`, `TRUST_PROXY`) é desvio.
 - **Chave removida sai do `.env.example`, do `.env.test`, do `env.ts` e do `docs/ENV.md` no mesmo
   commit.**
@@ -1653,14 +1772,13 @@ unitário, `DRIVE_DISK` escolhe o disco, `supportsACL: false` no R2; `DECISIONS.
 |---|---|---|---|---|
 | `SEED_OWNER_EMAIL` | api | junto com a senha | não | e-mail do primeiro administrador criado pelo seeder; senha sem e-mail para o seeder |
 | `SEED_OWNER_PASSWORD` | api | não | sim | **liga** o seed do dono; vazia, o seed do dono é pulado com uma linha de log |
-| `SEED_DEMO_PASSWORD` | api | não | sim | **liga** a demonstração: senha comum das contas de demonstração (uma por papel, `<papel>@example.com`) e o conteúdo de exemplo; vazia, a demonstração é pulada e o resto do seed segue |
 
 **Seed ligado pela chave.** Cada seed liga pela presença do valor da sua chave, em qualquer ambiente,
 nunca por flag à parte (`SEED_ENABLED`, `SEED_DEMO=true`) nem pelo `NODE_ENV`: o `static environment`
-do seeder não restringe o seed do dono, e o da demonstração só o exclui de produção (abaixo). Dado de referência que o app precisa
+do seeder não restringe o seed do dono, e o de conteúdo de exemplo só o exclui de produção (abaixo). Dado de referência que o app precisa
 para funcionar (bairros, categorias) não tem chave e roda sempre. Conteúdo de exemplo (anúncio, notícia,
-partida de mentira) é parte da demonstração e liga com `SEED_DEMO_PASSWORD`; conta extra de exemplo
-não reusa `SEED_OWNER_PASSWORD`. O mesmo vale para todo recurso do catálogo: valor presente liga,
+partida de mentira) é dado de desenvolvimento (abaixo); conta extra de exemplo
+não existe. O mesmo vale para todo recurso do catálogo: valor presente liga,
 ausente desliga (`DECISIONS.md` #276).
 
 **O seed roda a cada deploy** (o *Post-deployment* do Coolify, `tooling.md` §8.3), então todo seeder
@@ -1674,31 +1792,23 @@ porque a variável só é necessária no primeiro deploy e o erro reprovaria o d
 referência segue com `updateOrCreate`/`updateOrCreateMany` pela chave natural
 (https://lucid.adonisjs.com/docs/seeders, "Idempotent seeders").
 
-**A demonstração nunca roda em produção.** Além de ligar pela chave, o seeder de demonstração
-declara `static environment = ['development', 'test']`, que é o uso que a página dá à flag: manter
-fixture de desenvolvimento e de teste fora da execução de produção
-(_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders, "Environment-specific seeders").
-`SEED_DEMO_PASSWORD` não existe no recurso de produção, e nenhuma senha de seed mora no código: sem
-a chave, o seed pula. Se as contas de demonstração já chegaram a
-produção, elas saem por migration de alteração (§4.13), nunca por edição de seeder: a migration
-arquiva as contas (soft delete, para matrícula e nota presas a elas manterem a referência) e apaga
-os tokens, para a sessão aberta morrer agora. O `down` dela não reativa conta.
-
-**Forma da demonstração.** Um seeder só, `database/seeders/dev/demo.ts`, idempotente (`updateOrCreate`
-pela chave natural), que roda no `node ace db:seed` e pelo atalho `pnpm db:seed:demo`. Uma conta por
-papel do `USER_ROLE` do `shared/`, fora o dono, com e-mail `<papel em minúsculo>@example.com`
-(`advisor@example.com`); segunda conta do mesmo papel `<papel>-2@example.com`. Quando o seed dispara e-mail real
-(convite, confirmação), o domínio é um próprio do projeto em vez de `@example.com` (`DECISIONS.md` #354). A lista de e-mails mora
-em `shared/src/records/demo-accounts.ts` (`DEMO_ACCOUNTS`), lida pelo seeder e pelo
-`frontend/e2e/support/env.ts`; não se repete. O conteúdo de exemplo cobre toda tela de todo papel
-(cada status de cada recurso) e é reconhecível como exemplo.
+**Não há demonstração com conta e senha.** Nenhum projeto tem seeder de contas de demonstração,
+`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem `shared/src/records/demo-accounts.ts` (`DEMO_ACCOUNTS`):
+o E2E cria a própria conta por papel na hora (`e2e:accounts`, abaixo, `DECISIONS.md` #443). Conteúdo
+de exemplo sem conta (anúncio, notícia, partida de mentira) é dado de desenvolvimento: seeder em
+`database/seeders/dev/`, com `static environment = ['development']`, para nunca rodar em produção nem
+na suíte funcional, que semeia o banco a cada teste e espera as tabelas do domínio vazias; o E2E sobe o
+backend em `development` e vê o conteúdo (_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders,
+"Environment-specific seeders"). Achado no aporta.
+Projeto que ainda tem conta de demonstração a apaga junto da chave; se ela chegou a produção, sai por
+migration de alteração (§4.13), nunca por edição de seeder: a migration arquiva as contas (soft delete,
+para registro preso a elas manter a referência) e apaga os tokens, para a sessão aberta morrer agora, e
+o `down` dela não reativa conta.
 
 `OWNER` aqui é "dono da instalação", o primeiro administrador, e o nome não muda com o papel que o
-projeto der a ele. As contas de demonstração (um usuário por papel, para testar e mostrar cada perfil)
-dividem uma senha só, `SEED_DEMO_PASSWORD`; o e-mail de cada uma sai do próprio seeder, determinístico,
-e não ganha chave. Outra semente de perfil entra primeiro aqui (`DECISIONS.md` #275).
+projeto der a ele.
 
-**`# Mail`**, **`# Queue`** e **`# JWT`** (opcionais, por recurso: só onde o recurso existe)
+**`# Mail`** e **`# Queue`** (em todo projeto; vazios onde o recurso não existe, e ligados pelo valor da chave gatilho)
 
 | Nome | App | Obrigatória | Segredo | Significado |
 |---|---|---|---|---|
@@ -1708,7 +1818,6 @@ e não ganha chave. Outra semente de perfil entra primeiro aqui (`DECISIONS.md` 
 | `SMTP_USERNAME` | api | onde o relay pede login | não | usuário do relay autenticado (Resend, SES, Postmark); vazio onde o relay não pede, como o Mailpit local |
 | `SMTP_PASSWORD` | api | onde o relay pede login | sim | senha ou chave de API do relay; nunca no repositório |
 | `REDIS_URL` | api | não | sim | cache, fila e store do rate limit; ausente usa o banco |
-| `JWT_PRIVATE_KEY` | api | no Fastify com RS256 | sim | chave privada de assinatura (`backend-fastify.md`, sessão); nunca no repositório, só no recurso do Coolify |
 
 **Web** (`frontend/src/env.ts`, `frontend.md` §3.3)
 
@@ -1727,26 +1836,31 @@ e não ganha chave. Outra semente de perfil entra primeiro aqui (`DECISIONS.md` 
 |---|---|---|---|---|
 | `E2E_BASE_URL` | e2e | ao rodar o E2E | não | origem do web sob teste |
 | `E2E_API_URL` | e2e | ao rodar o E2E | não | raiz da API, para as fixtures |
-| `E2E_OWNER_EMAIL` | e2e | ao rodar o E2E | não | conta do `auth.setup.ts`; a do seeder |
-| `E2E_OWNER_PASSWORD` | e2e | ao rodar o E2E | sim | senha dela; na rodada antes do PR, gerada a cada execução |
-| `E2E_DEMO_PASSWORD` | e2e | ao rodar spec de papel que não é o dono | sim | a `SEED_DEMO_PASSWORD` do backend sob teste; o e-mail de cada papel vem do seeder de demonstração, lido em `e2e/support/env.ts` |
-| `E2E_SHOTS_DIR` | e2e | não | não | pasta fora do repositório para capturas de tela; ausente, não grava |
 | `E2E_CHROMIUM_PATH` | e2e | não | não | binário do Chromium para o Playwright onde o baixado não roda (container da nuvem); ausente, o Playwright usa o dele. Script do projeto que precise de navegador (gerar ícone) lê a mesma chave |
 
-O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`): o dono é `E2E_OWNER_*` e os outros
-papéis entram com `E2E_DEMO_PASSWORD` e o e-mail do seeder de demonstração. Nem porta solta
+O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`) **nem de senha**: as contas por papel
+nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.command.ts`), que o
+`e2e/auth.setup.ts` chama. Ele cria uma conta para o dono da plataforma, o administrador da plataforma, o
+`staff`, o `nonStaff` (quando o projeto tem papel fora do staff) e o cliente final, lendo os papéis de
+`tests/role-fixtures.ts` e sem literal de enum; sorteia a senha a cada execução, a imprime só na saída do
+comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. Nada disso é chave de ambiente: não há
+`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
+com 35 chaves no backend e 10 no frontend (`DECISIONS.md` #443). O spec de papel pede a sessão com
+`test.use({ storageState: E2eAccountsStore.stateOf('staff') })`. Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no
 `playwright.config.ts` e no comando da rodada (`tooling.md` §7), não em chave.
 
 **Mesmo número de chaves, mesmos nomes.** Todo projeto da casa tem o mesmo `.env.example` chave por
-chave e na mesma ordem (backend e frontend); o que muda entre eles é só o valor de exemplo. Os únicos
-blocos `optional` do modelo são de recurso que o projeto pode não ter (`mail`, `queue`, `jwt`), e saem
-inteiros. Chave que o projeto não usa ainda fica comentada no lugar dela, nunca apagada. O `.env.test`, o `.env.e2e.example` e o `.env.production` usam só chaves do catálogo, e o
+chave e na mesma ordem (backend e frontend); o que muda entre eles é só o valor de exemplo. Não há bloco
+opcional: chave que o projeto não usa fica no lugar dela, com valor vazio, nunca apagada (`DECISIONS.md`
+#417, que fecha a exceção de `mail`, `queue` e `jwt` do #276). Chave de uso pontual de um projeto (importação
+única, flag de funcionalidade só dele) não entra no catálogo: sai do projeto. O `.env.test`, o `.env.e2e.example` e o `.env.production` usam só chaves do catálogo, e o
 `sync-to-project.mjs --check` cobra (`DECISIONS.md` #276).
 
-**Só do `docker-compose.yml`** (não passam pelo leitor de ENV): `DB_PORT`, `STORAGE_PORT`,
-`STORAGE_CONSOLE_PORT`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`. O CORS do MinIO local sai de
-`CORS_ORIGINS`. Estão no modelo de todo projeto, como as demais. **Não existe chave de domínio do projeto**: o que o catálogo não cobre entra primeiro
+**Fora do leitor de ENV**: `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`, lidas por `infra/minio/minio-setup.sh`
+(o leitor delas está no kit). As portas do `docker-compose.yml` (`DB_PORT`, `STORAGE_PORT`,
+`STORAGE_CONSOLE_PORT`) não são chave do catálogo: o kit não tem compose, e o número da porta é o da
+tabela de `tooling.md` §8.1, escrito no compose do projeto. O CORS do MinIO local sai de `CORS_ORIGINS`. **Não existe chave de domínio do projeto**: o que o catálogo não cobre entra primeiro
 aqui e no modelo (§6, `DECISIONS.md` #271).
 
 ### 6.3 Migração dos nomes antigos
@@ -1763,13 +1877,21 @@ Cada linha vira item em `_findings/<projeto>.md` (seção "Chaves de ambiente") 
 | `APP_URL` | `APP_SERVER_URL` | a API é o servidor; o web é `APP_CLIENT_URL` | modelo antigo de `_templates/docs/ENV.md` (corrigido) |
 | `SEED_OWNER_*` renomeado pelo papel do projeto | `SEED_OWNER_*` | `OWNER` é a conta da instalação, não um papel | interclasse (I5 deixa de valer) |
 | `SEED_ADMINISTRATOR_EMAIL`, `SEED_ADMINISTRATOR_PASSWORD` | `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD` | mesmo motivo da linha acima | interclasse |
-| `E2E_ADMIN_*`, `E2E_<PAPEL>_*` | `E2E_OWNER_*` + `E2E_DEMO_PASSWORD` | o dono reusa a conta do seeder; os papéis, a demonstração (#275) | interclasse |
+| `E2E_ADMIN_*`, `E2E_<PAPEL>_*` | (sai) | sem leitor: as contas por papel nascem no `auth.setup.ts`, pelo `e2e:accounts` (#443) | interclasse |
 | `E2E_PORT` | `E2E_BASE_URL` | a origem inteira, não só a porta | interclasse |
 | `VITE_STORAGE_URL` (build) | `STORAGE_PUBLIC_URL` (runtime) | lida por requisição, a mesma imagem serve qualquer ambiente | interclasse, curupira |
 | `CHROMIUM_PATH` | `E2E_CHROMIUM_PATH` | um nome para o mesmo binário | aporta, curupira |
-| `VITE_DATA_SOURCE` (`mock`/`api`) | (sai) | o frontend fala só com a API; dado de exemplo é o seeder de demonstração | curupira |
+| `VITE_DATA_SOURCE` (`mock`/`api`) | (sai) | o frontend fala só com a API; dado de exemplo é o seeder de desenvolvimento em `database/seeders/dev/` | curupira |
 | `E2E_WORKERS`, `E2E_FULL_MATRIX` | (sai) | execução é do `playwright.config.ts` e do comando da rodada | curupira |
 | `API_URL`, `APP_URL`, `URL_API`, `UUID_API`, `COOLIFY_*`, `DOCKERHUB_*` no workflow de deploy | (sai) | não há workflow de deploy: o Coolify constrói da `main` (`tooling.md` §8.3, #290) | adacaibs, aporta, interclasse, curupira |
+| `CLIENT_URL`, `SERVER_URL` | `APP_CLIENT_URL`, `APP_SERVER_URL` | prefixo `APP_` da origem pública (#417) | matiscraft |
+| `ADMINISTRATOR_EMAIL`, `ADMINISTRATOR_PASSWORD`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD` | a conta do semeador é uma só (#417) | matiscraft, manganga.api |
+| `EMAIL_PROVIDER_HOST`, `_PORT`, `_USER`, `_PASSWORD` | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | protocolo, não fornecedor (#417) | matiscraft |
+| `COOKIE_SECRET` | `APP_KEY` | uma só chave de cifra (#417) | matiscraft, manganga.api |
+| `JWT_PUBLIC_KEY`, `JWT_PRIVATE_KEY` (Fastify) | pendente | o catálogo Fastify é próprio e fica para a leva 10 (#417); no Adonis não há JWT | matiscraft, manganga.api |
+| `DB_HOST`, `DB_USER`, `DB_PASSWORD`, `DB_DATABASE` | `DATABASE_URL` | uma URL só (#417) | manganga.api |
+| `SITE_INDEXABLE` | `SITE_ENV` | só `production` indexa (#417) | simple-hub |
+| `CHECKOUT_ENABLED`, `LEGACY_DATABASE_URL` | (sai) | uso pontual de um projeto não entra no catálogo (#417) | simple-hub, manganga |
 
 ---
 
@@ -1825,7 +1947,7 @@ HTTP.
 | `core/validator.unit.spec.ts` | as quatro checagens de §4.4 |
 | `core/openapi/openapi.e2e.spec.ts` | rota fora do documento, operação sem resposta, id duplicado |
 | `middleware/<nome>.middleware.e2e.spec.ts` | matriz de papéis, cookie, CORS, origem (CSRF), idioma |
-| vazamento por allowlist | resposta que contém chave proibida (`password`, hash de token) em qualquer nível da árvore |
+| `core/response-leak.e2e.spec.ts` | resposta de `GET` que contém chave proibida (`password`, hash de token) ou valor com cara de hash, em qualquer nível da árvore, para cada papel e sem sessão |
 | coluna qualificada | join com coluna ambígua |
 | SDK só no adaptador | import de SDK de fornecedor fora de `services/<nome>/<nome>.service.ts` |
 | vitrine só leitura | rota pública que não é `GET` sem estar na lista declarada |

@@ -85,6 +85,104 @@ export class PatternRules {
     return out
   }
 
+  /**
+   * Lines where a `Button` is given a router `Link` (or a plain `<a>`) in its `render` prop, which
+   * is how a link gets the look of a button: `<Button render={<Link to="/x" />}>`. Base UI's `Button`
+   * forces `role="button"` on what it renders and erases the link, or warns about `nativeButton`
+   * (_doc-lib/shadcn.md#button). A link that looks like a button is the `Link` itself with
+   * `buttonVariants`. Only the exact `Button`: another component may take a `Link` in `render` on
+   * purpose (`SheetClose nativeButton={false} render={<Link />}`, `SidebarMenuButton`).
+   *
+   * The owner of the `render` is the nearest `<Tag` before it that is not inside a `{...}` (an
+   * attribute such as `icon={<X />}` holds JSX of its own). Comments are blanked first (line count
+   * kept), because the kit's JSDoc names the pattern it forbids; the line after an
+   * `eslint-disable-next-line no-restricted-syntax` is skipped, the same exception the other rules take.
+   * shortcut: a backward brace scan, not the TSX AST; a `render` string holding `{` escapes, upgrade
+   * to the AST when one does.
+   */
+  static linkAsButton(text: string): ReadonlyArray<number> {
+    const blank = (comment: string) => comment.replace(/[^\n]/g, ' ')
+    const code = text
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/\/\/[^\n]*/g, blank)
+    const lines = text.split('\n')
+    const out: number[] = []
+    for (const match of code.matchAll(/\brender=\{\s*<(Link|a)(?=[\s/>])/g)) {
+      if (PatternRules.openingTag(code, match.index) !== 'Button') continue
+      const line = code.slice(0, match.index).split('\n').length
+      if (
+        /eslint-disable-next-line no-restricted-syntax/.test(
+          lines[line - 2] ?? '',
+        )
+      )
+        continue
+      out.push(line)
+    }
+    return out
+  }
+
+  /** The name of the JSX tag whose attribute list holds `index`, or `''`. */
+  private static openingTag(code: string, index: number): string {
+    let depth = 0
+    for (let at = index - 1; at >= 0; at -= 1) {
+      const char = code.charAt(at)
+      if (char === '}') depth += 1
+      else if (char === '{' && depth > 0) depth -= 1
+      else if (
+        char === '<' &&
+        depth === 0 &&
+        /[A-Za-z]/.test(code.charAt(at + 1))
+      )
+        return /^[\w.]+/.exec(code.slice(at + 1))?.[0] ?? ''
+    }
+    return ''
+  }
+
+  /**
+   * Lines with a `vine.string()` whose chain has no `.trim()`. The body parser does not trim
+   * (DECISIONS.md #402), so the text field trims in its own rule. Exempt by design: the password
+   * (key or method named `password`, `passwordConfirmation`, `currentPassword`), which reaches the
+   * hash as typed, and a `.uuid()` field, whose format already refuses an edge space. The rich text
+   * document has no `vine.string()` (`Rule.richText()` is an object rule) and its text nodes must
+   * keep their spaces. The chain is read through its balanced `.call(...)` segments, across lines.
+   * shortcut: regex plus a paren scan, not AST; a chain built by a variable escapes, upgrade to the
+   * TypeScript AST when one does.
+   */
+  static untrimmedStrings(source: string): ReadonlyArray<number> {
+    // Comments blanked, line count kept: the kit's JSDoc quotes `vine.string()` in prose.
+    const blank = (comment: string) => comment.replace(/[^\n]/g, ' ')
+    const text = source
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/\/\/[^\n]*/g, blank)
+    const out: number[] = []
+    for (const match of text.matchAll(/\bvine\s*\.\s*string\s*\(\)/g)) {
+      const start = match.index
+      const before = text.slice(0, start)
+      const key = /(\w+):\s*$/.exec(before.split('\n').slice(-1)[0] ?? '')?.[1]
+      const method = [...before.matchAll(/static\s+(\w+)\s*\(/g)].pop()?.[1]
+      if (
+        /^(password|passwordConfirmation|currentPassword)$/i.test(
+          key ?? method ?? '',
+        )
+      )
+        continue
+      let index = start + match[0].length
+      for (;;) {
+        const next = /^\s*\.\s*\w+\s*\(/.exec(text.slice(index))
+        if (!next) break
+        index += next[0].length
+        for (let depth = 1; depth > 0 && index < text.length; index += 1) {
+          if (text[index] === '(') depth += 1
+          if (text[index] === ')') depth -= 1
+        }
+      }
+      const chain = text.slice(start, index)
+      if (chain.includes('.trim()') || chain.includes('.uuid()')) continue
+      out.push(before.split('\n').length)
+    }
+    return out
+  }
+
   static readonly CATALOG: ReadonlyArray<Rule> = [
     {
       id: 'index-barrel',
@@ -268,6 +366,24 @@ export class PatternRules {
       scope: /^frontend\/src\/(routes|components\/common)\/.+\.tsx$/,
       exclude: SPEC,
       lines: (file) => PatternRules.rawInteractive(file.text),
+    },
+    {
+      id: 'link-as-button',
+      section: 'frontend.md §6 (DECISIONS.md #440)',
+      message:
+        'a link that looks like a button is a `Link` with `buttonVariants`, never `render={<Link />}` on a `Button`: Base UI forces `role="button"` and erases the link',
+      scope: /^frontend\/src\/(routes|components\/common)\/.+\.tsx$/,
+      exclude: SPEC,
+      lines: (file) => PatternRules.linkAsButton(file.text),
+    },
+    {
+      id: 'vine-string-trim',
+      section: 'backend.md §4.4 (DECISIONS.md #402)',
+      message:
+        'a `vine.string()` text field needs `.trim()`: the body parser no longer trims; only the password and the rich text document go as typed',
+      scope: /^backend\/app\/(validators\/.+|core\/validator)\.ts$/,
+      exclude: SPEC,
+      lines: (file) => PatternRules.untrimmedStrings(file.text),
     },
   ]
 }

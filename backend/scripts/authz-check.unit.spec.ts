@@ -2,6 +2,8 @@ import { test } from '@japa/runner'
 
 import { AuthzCheck } from './authz-check.ts'
 
+import { ROLE_FIXTURES } from '#tests/role-fixtures'
+
 test.group('authz:check > comparison with the baseline', () => {
   const check = new AuthzCheck()
 
@@ -17,18 +19,16 @@ test.group('authz:check > comparison with the baseline', () => {
   test('when a role changes, is a §4.6 finding, in the baseline file', ({
     assert,
   }) => {
+    const { staff } = ROLE_FIXTURES
     const [finding] = check.compare(
-      { 'DELETE /administrator/notices/{id}': 'ADMINISTRATOR' },
-      { 'DELETE /administrator/notices/{id}': 'ADMINISTRATOR, EDITOR' },
+      { 'DELETE /administrator/notices/{id}': staff },
+      { 'DELETE /administrator/notices/{id}': `${staff}, EDITOR` },
     )
 
     assert.equal(finding?.file, 'app/core/openapi/authz-baseline.json')
     assert.equal(finding?.rule, 'authorization-chain-changed')
     assert.equal(finding?.section, '4.6')
-    assert.include(
-      finding?.message ?? '',
-      'ADMINISTRATOR -> ADMINISTRATOR, EDITOR',
-    )
+    assert.include(finding?.message ?? '', `${staff} -> ${staff}, EDITOR`)
   })
 
   test('when a route is new or removed, both are findings', ({ assert }) => {

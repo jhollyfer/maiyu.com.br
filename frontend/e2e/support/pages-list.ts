@@ -23,6 +23,12 @@ export class PagesList {
         routes.push(line.slice(2).trim())
     }
 
+    // An empty `## 200` would make every page spec run zero tests and pass: stop instead.
+    if (title === '200' && routes.length === 0)
+      throw new Error(
+        'e2e/support/pages.md has no route under "## 200": list the public pages (- /about) so the specs have something to open',
+      )
+
     return routes
   }
 }

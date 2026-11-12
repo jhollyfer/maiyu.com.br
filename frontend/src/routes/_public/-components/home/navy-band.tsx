@@ -11,8 +11,8 @@ import {
   ItemTitle,
 } from '#/components/ui/item'
 import { articles } from '#/lib/articles'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { PillButton } from '../pill-button'
@@ -125,16 +125,10 @@ export function NavyBand(): React.JSX.Element {
         </div>
 
         <div className="mt-10 flex">
-          <PillButton
-            tone="neon"
-            className="rounded-xl"
-            render={
-              <Link to="/career">
-                {m.nav_career()}
-                <ArrowUpRightIcon />
-              </Link>
-            }
-          />
+          <PillButton tone="neon" className="rounded-xl" to="/career">
+            {m.nav_career()}
+            <ArrowUpRightIcon />
+          </PillButton>
         </div>
 
         <div className="mt-28 md:mt-36">

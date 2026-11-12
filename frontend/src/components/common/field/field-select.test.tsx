@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -35,8 +35,6 @@ function Form({
     </AppField>
   )
 }
-
-afterEach(cleanup)
 
 describe('FieldSelect', () => {
   it('prints the item label in the trigger, not the raw value', () => {

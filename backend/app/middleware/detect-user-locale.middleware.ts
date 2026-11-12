@@ -3,7 +3,7 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { I18n } from '@adonisjs/i18n'
 import i18nManager from '@adonisjs/i18n/services/main'
 
-import { BASE_LOCALE } from '@maiyu/shared'
+import { RequestLocale } from '#core/request-locale'
 
 /**
  * The request language, read from `Accept-Language` and restricted to pt-BR, es and en,
@@ -18,9 +18,7 @@ import { BASE_LOCALE } from '@maiyu/shared'
  */
 export default class DetectUserLocaleMiddleware {
   async handle(ctx: HttpContext, next: NextFn) {
-    const language = i18nManager.getSupportedLocaleFor(ctx.request.languages())
-
-    ctx.i18n = i18nManager.locale(language ?? BASE_LOCALE)
+    ctx.i18n = i18nManager.locale(RequestLocale.of(ctx))
     // Whoever injects `I18n` through the container receives the request's.
     ctx.containerResolver.bindValue(I18n, ctx.i18n)
 

@@ -1,3 +1,7 @@
+import type {
+  QueryClientContract,
+  TransactionClientContract,
+} from '@adonisjs/lucid/types/database'
 import { DateTime } from 'luxon'
 
 import {
@@ -11,9 +15,23 @@ import {
 } from '@maiyu/shared'
 
 import type { PageCriteria } from '#core/page-criteria'
-import RepositoryFailure from '#core/repository-failure'
 import { UNIQUE_CONFLICT, type UniqueConflict } from '#core/unique-conflict'
 import type Storage from '#models/storage'
+import { PROJECT_UNIQUE_TARGET } from '#repositories/shared/unique-targets'
+
+/**
+ * The unique indexes `insertUnlessUnique` tolerates, as the SQL `ON CONFLICT` takes them. A closed
+ * list, not a free string: a target typed by hand in a repository is how a clash on the wrong
+ * index gets read as "the value is taken". The kit's own indexes are here; the project's (a
+ * member's `(tenant_id, document)`) go in `unique-targets.ts`, its extension point.
+ */
+export const UNIQUE_TARGET = {
+  USER_EMAIL: '(lower(email))',
+  USER_PHONE: '(phone)',
+  ...PROJECT_UNIQUE_TARGET,
+} as const
+
+export type UniqueTarget = (typeof UNIQUE_TARGET)[keyof typeof UNIQUE_TARGET]
 
 /** The file without the signed `url`, which only the presenter derives. */
 type StorageFileShowResponse = Omit<StoragesFileShowResponse, 'url'>
@@ -118,19 +136,77 @@ export default class LucidMapping {
 
   /**
    * The write, or the `UniqueConflict` fact when the `UNIQUE` index blocked it.
-   * Any other database failure becomes the `RepositoryFailure` fact, with the
-   * cause: it is infrastructure, and the use-case logs it and answers `500`.
+   * Any other database failure is rethrown: it is infrastructure, not a domain fact, and
+   * rises to the use-case's `catch`, which logs it and answers `500` (`DECISIONS.md` #352).
    */
   static async unlessUnique<Value>(
     work: Promise<Value>,
-  ): Promise<Either<UniqueConflict | RepositoryFailure, Value>> {
+  ): Promise<Either<UniqueConflict, Value>> {
     try {
       return right(await work)
     } catch (error) {
       if (LucidMapping.isUniqueViolation(error)) return left(UNIQUE_CONFLICT)
 
-      return left(RepositoryFailure.of(error))
+      throw error
     }
+  }
+
+  /**
+   * The insert of a table that holds personal data (DECISIONS.md #408). A `UNIQUE` violation makes
+   * Postgres write the offending value in the `DETAIL` of its log (`Key (cpf)=(123...) already
+   * exists`), and the log outlives the row. `ON CONFLICT DO NOTHING RETURNING id` raises no error:
+   * zero rows back is the unique fact, and nothing reaches the log. The row is the table's
+   * columns as the database names them, already prepared (a password hashed), because the
+   * model hooks do not run on this path.
+   *
+   * `target` names the unique index the insert tolerates, one of `UNIQUE_TARGET`: `(phone)` for
+   * a column, `(lower(email))` for an expression index. Without a target the
+   * `DO NOTHING` would also swallow a primary-key clash, a bug dressed as "the value is taken";
+   * with it, a conflict on any other constraint raises as usual.
+   */
+  static async insertUnlessUnique(
+    client: QueryClientContract,
+    table: string,
+    row: Record<string, unknown>,
+    target: UniqueTarget,
+  ): Promise<Either<UniqueConflict, null>> {
+    const inserted: ReadonlyArray<unknown> = await client
+      .knexQuery()
+      .table(table)
+      .insert(row)
+      .onConflict(client.knexRawQuery(target))
+      .ignore()
+      .returning('id')
+
+    if (inserted.length === 0) return left(UNIQUE_CONFLICT)
+
+    return right(null)
+  }
+
+  /**
+   * The update side of `insertUnlessUnique`: the "is the value free?" lookup that runs before an
+   * `update`, serialized per value. Without the lock, two requests that change two rows to the
+   * same value both look, both find it free, and the second `update` raises the unique violation
+   * (and the value reaches the Postgres log, DECISIONS.md #408). `pg_advisory_xact_lock` takes a
+   * lock keyed by `target` and `value` that lives until the transaction ends, so the second
+   * request waits, looks after the first committed, and finds the value taken. The type asks for a
+   * transaction on purpose: outside one the lock would be released at once and protect nothing.
+   * `value` goes in already normalized the way the index compares it (`lower(email)` is the
+   * lowercase text).
+   * (https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS)
+   */
+  static async findUnderUniqueLock<Row>(
+    client: TransactionClientContract,
+    target: UniqueTarget,
+    value: string,
+    find: () => Promise<Row | null>,
+  ): Promise<Row | null> {
+    await client.rawQuery(
+      'select pg_advisory_xact_lock(hashtextextended(?, 0))',
+      [`${target}=${value}`],
+    )
+
+    return find()
   }
 
   static fromCalendarDate(value: string): DateTime {

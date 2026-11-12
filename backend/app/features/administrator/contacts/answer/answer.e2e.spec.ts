@@ -4,16 +4,18 @@ import { DateTime } from 'luxon'
 
 import { AdministratorContactShowResponse, ErrorEnvelope } from '@maiyu/shared'
 
-import { ContactFactory } from '#database/factories/contact.factory'
 import { ClockContract } from '#services/clock/clock.contract'
 import { ClockFake } from '#services/clock/clock.fake'
+import { contactRow } from '#tests/contacts-fixtures'
 import {
   authenticateAsAdministrator,
   authenticateAsNonStaff,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 const UNKNOWN = '0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f'
 const NOW = DateTime.fromISO('2026-11-05T15:00:00Z', { zone: 'utc' })
@@ -35,7 +37,7 @@ test.group('administrator/contacts > answer', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const response = await client
       .post(`/administrator/contacts/${contact.id}/answer`)
@@ -56,7 +58,7 @@ test.group('administrator/contacts > answer', (group) => {
   }) => {
     const session = await authenticateAsAdministrator(client)
     const first = DateTime.fromISO('2026-11-02T09:30:00Z', { zone: 'utc' })
-    const contact = await ContactFactory.merge({ answeredAt: first }).create()
+    const contact = await contactRow({ answeredAt: first })
 
     const response = await client
       .post(`/administrator/contacts/${contact.id}/answer`)
@@ -73,7 +75,7 @@ test.group('administrator/contacts > answer', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const responses = await Promise.all([
       client
@@ -103,11 +105,28 @@ test.group('administrator/contacts > answer', (group) => {
     assert.equal(body(response, ErrorEnvelope).code, 'CONTACT_NOT_FOUND')
   })
 
+  test('an administrator of another tenant answers 404 and does not answer', async ({
+    client,
+    assert,
+  }) => {
+    const contact = await contactRow()
+    const other = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', other)
+
+    const response = await client
+      .post(`/administrator/contacts/${contact.id}/answer`)
+      .cookies(session)
+
+    response.assertStatus(404)
+    assert.equal(body(response, ErrorEnvelope).code, 'CONTACT_NOT_FOUND')
+    assert.isNull((await Stored.contact(contact.id))?.answeredAt)
+  })
+
   test('without a session answers 401 and does not answer', async ({
     client,
     assert,
   }) => {
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const response = await client.post(
       `/administrator/contacts/${contact.id}/answer`,
@@ -122,7 +141,7 @@ test.group('administrator/contacts > answer', (group) => {
     assert,
   }) => {
     const session = await authenticateAsNonStaff(client)
-    const contact = await ContactFactory.create()
+    const contact = await contactRow()
 
     const response = await client
       .post(`/administrator/contacts/${contact.id}/answer`)

@@ -42,6 +42,14 @@ export const controllers = {
         SignOut: () => import('#features/authentication/sessions/sign-out/sign-out.controller'),
       },
     },
+    tenants: {
+      list: {
+        List: () => import('#features/authentication/tenants/list/list.controller'),
+      },
+      select: {
+        Select: () => import('#features/authentication/tenants/select/select.controller'),
+      },
+    },
   },
   documentation: {
     openapi: {
@@ -56,6 +64,40 @@ export const controllers = {
     },
   },
   HealthCheck: () => import('#features/health-check.controller'),
+  platform: {
+    cities: {
+      create: {
+        Create: () => import('#features/platform/cities/create/create.controller'),
+      },
+      delete: {
+        Delete: () => import('#features/platform/cities/delete/delete.controller'),
+      },
+      update: {
+        Update: () => import('#features/platform/cities/update/update.controller'),
+      },
+    },
+    members: {
+      delete: {
+        Delete: () => import('#features/platform/members/delete/delete.controller'),
+      },
+      save: {
+        Save: () => import('#features/platform/members/save/save.controller'),
+      },
+    },
+    overview: {
+      show: {
+        Show: () => import('#features/platform/overview/show/show.controller'),
+      },
+    },
+    tenants: {
+      create: {
+        Create: () => import('#features/platform/tenants/create/create.controller'),
+      },
+      update: {
+        Update: () => import('#features/platform/tenants/update/update.controller'),
+      },
+    },
+  },
   storages: {
     files: {
       complete: {
@@ -82,9 +124,19 @@ export const controllers = {
     },
   },
   storefront: {
+    cities: {
+      list: {
+        List: () => import('#features/storefront/cities/list/list.controller'),
+      },
+    },
     contacts: {
       create: {
         Create: () => import('#features/storefront/contacts/create/create.controller'),
+      },
+    },
+    tenants: {
+      list: {
+        List: () => import('#features/storefront/tenants/list/list.controller'),
       },
     },
   },
