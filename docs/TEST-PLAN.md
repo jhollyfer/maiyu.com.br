@@ -26,7 +26,7 @@
 | Três idiomas | toda chave nos três | chave faltando, mensagem vazia, chave sem uso | `lib/messages.test.ts` |
 | Idioma na URL | prefixo e `localized()` | idioma desconhecido | `lib/i18n.test.ts` |
 | Contato e carreiras sem formulário | aviso e canais (e-mail, WhatsApp) nas três línguas | campo, botão de envio ou texto de "enviado" na página | `routes/_public/-components/channels-notice.test.tsx` |
-| Filtro do diário | `?category=` válido | valor fora da lista cai para "tudo" | `lib/blog-search.test.ts` |
+| Filtro do diário | `?category=` válido | valor fora da lista cai para "tudo" | `routes/_public/blog/-search.test.ts` |
 | SEO | JSON-LD com `areaServed`, sitemap bem formado | escape de XML | `lib/structured-data.test.ts`, `lib/sitemap.test.ts` |
 
 ## 3. Matriz requisito × teste
@@ -46,9 +46,9 @@ Os requisitos do `PRD.md` §4 ainda não têm id EARS; a linha usa o número da 
 
 | Conjunto | Membro | Teste |
 |---|---|---|
-| `ARTICLE_CATEGORIES` | `tech` | `blog-search.test.ts` |
-| | `design` | `blog-search.test.ts` |
-| | `marketing` | `blog-search.test.ts` |
+| `ARTICLE_CATEGORIES` | `tech` | `-search.test.ts` |
+| | `design` | `-search.test.ts` |
+| | `marketing` | `-search.test.ts` |
 | Idiomas | `pt-BR`, `en`, `es` | `messages.test.ts`, `i18n.test.ts` |
 | Rotas de `_public` | `/`, `/portfolio`, `/blog`, `/career`, `/contact` | lacuna: sem teste de rota; entra com o E2E |
 

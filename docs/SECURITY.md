@@ -61,7 +61,7 @@ flowchart LR
 | Superfície | Como chega | Fronteira | Evidência |
 |---|---|---|---|
 | páginas SSR | `GET` em `/`, `/portfolio`, `/blog`, `/career`, `/contact` | internet para o SSR | `frontend/src/routes/_public/` |
-| filtro do diário | `?category=` | internet para o SSR | `frontend/src/lib/blog-search.ts` |
+| filtro do diário | `?category=` | internet para o SSR | `frontend/src/routes/_public/blog/-search.ts` |
 | aviso de contato | sem formulário e sem envio (`DECISIONS.md` #17); só links `mailto:` e WhatsApp | cliente | `frontend/src/routes/_public/-components/channels-notice.tsx` |
 | `/health-check`, `/sitemap.xml` | `GET` | internet para o SSR | `frontend/src/routes/health-check.ts` |
 | sessão do dono | `POST /authentication/{sign-in,sign-out,refresh}` | internet para a API | `backend/app/features/authentication/sessions` |
@@ -72,7 +72,7 @@ flowchart LR
 
 | Id | Abuso | Probabilidade | Impacto | Prioridade | Mitigação | Evidência |
 |---|---|---|---|---|---|---|
-| TM-001 | valor arbitrário em `?category=` | alta | baixo | baixa | valor fora da lista cai para "tudo" | `frontend/src/lib/blog-search.test.ts` |
+| TM-001 | valor arbitrário em `?category=` | alta | baixo | baixa | valor fora da lista cai para "tudo" | `frontend/src/routes/_public/blog/-search.test.ts` |
 | TM-002 | injeção por texto de registro no JSON-LD | baixa | médio | média | JSON-LD montado por objeto e serializado em um ponto, com `<` escapado como `\u003c` | `frontend/src/lib/structured-data.test.ts` |
 | TM-003 | força bruta ou reuso de token na sessão do dono | média | alto | alta | limite de taxa nomeado no Postgres (`rate_limits`), Argon2, refresh rotativo com detecção de reuso (`consumed_refresh_tokens`) | `backend/start/limiter.ts` |
 | TM-004 | dependência com CVE | média | médio | média | versões recentes; lockfile; `pnpm install --frozen-lockfile` no build do Docker | `pnpm-lock.yaml` |
@@ -106,7 +106,7 @@ Perfis: `ADMINISTRATOR` (o dono) e `MEMBER`, que nenhuma rota cria hoje (`shared
 
 ## 5. Entrada e saída
 
-- O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada à mão em `lib/blog-search.ts`. A API valida a requisição com VineJS (`shared/` e validators do backend).
+- O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada pelo schema Zod de `routes/_public/blog/-search.ts`. A API valida a requisição com VineJS (`shared/` e validators do backend).
 - `POST /storefront/contacts` valida na API (nome 1 a 120, e-mail até 254, mensagem 10 a 5000, idioma `pt-BR`, `en` ou `es`), tem o honeypot `website` (preenchido, responde 201 igual ao sucesso e não grava) e limite de 5 envios por hora por IP (429 no sexto). Escrita de outra origem fora de `CORS_ORIGINS` é 403. O log nunca leva nome, e-mail nem mensagem.
 - Upload só na API, multipart assinado e com sessão; o site não envia arquivo.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLd` do kit escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.

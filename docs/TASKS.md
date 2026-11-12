@@ -102,7 +102,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R2.4 | Conteúdo editorial (artigos, projetos, vagas, fotos) fora de `lib/` | G | A fazer | forma depende de R2.10 |
 | R2.5 | Head e SEO num lugar só; sitemap com hreflang; `robots` por ambiente | M | A fazer | |
 | R2.6 | `src/assets/`, `public/` só com o que a árvore pede | M | A fazer | |
-| R2.7 | Busca do diário pela forma canônica do `validateSearch` | P | A fazer | |
+| R2.7 | Busca do diário pela forma canônica do `validateSearch` | P | Feita | `lib/blog-search.ts` virou `routes/_public/blog/-search.ts` (uma rota lê), schema Zod do `z` do `shared/` e `listValidateSearch` do kit, sem editar o kit |
 | R2.8 | Código em inglês: comentários, JSDoc, `Merge` no lugar de `&`, `satisfies` | G | A fazer | `typescript.md` |
 | R2.9 | Código morto do registry fora de `hooks/` e `lib/`; arquivos que a árvore manda tirar | P | A fazer | |
 | R2.10 | Proposta ao dono: o que vira recurso do backend (contato, candidatura, conteúdo) | P | Em revisão | aprovada pelo dono: contato e conta do dono; spec em `.specs/features/{contato,conta}/`, branch `feat/backend-contato-conta`. Contato feito no backend (T1 a T10: envio público, caixa de entrada, resposta, exclusão e `contacts:prune`) e conta do dono feita no backend (`GET` e `PUT /account/profile`, troca de nome e de senha, com revogação das sessões na mesma transação quando a senha troca); troca de e-mail da conta Bloqueada: e-mail fora desta entrega (decisão do dono), volta com o bloco de e-mail e o link de confirmação; falta, no frontend, ligar o formulário e a tela da conta (RB.5 e R3), e a verificação do contrato da conta |
