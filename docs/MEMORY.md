@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
+| 2026-11-12 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -18,7 +18,7 @@
 
 ## Parou em
 
-RB.6 (multi-tenant do backend, `chore/backend-multi-tenant` sobre a `chore/regua-sync-10a`): o `backend/.env.example` segue o catálogo único do kit (#417) com `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*` da Maiyu, e o `docs/ENV.md` traz `TRUSTED_PROXIES=uniquelocal` obrigatória na API do Coolify. Próximo: contato como tabela de cliente do tenant único (migration nova com `tenant_id` e `customer_id`, `publicTenant({ access: 'insert' })`, painel com o escopo do tenant).
+RB.6 (multi-tenant do backend, `chore/backend-multi-tenant` sobre a `chore/regua-sync-10a`): o `backend/.env.example` segue o catálogo único do kit (#417) com `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*` da Maiyu, e o `docs/ENV.md` traz `TRUSTED_PROXIES=uniquelocal` obrigatória na API do Coolify. O contato virou tabela de cliente do tenant único: migration `1700000000110` (`tenant_id` obrigatório e `customer_id` nulo), `POST /storefront/contacts` com `publicTenant({ access: 'insert' })` gravando no tenant do `SINGLE_TENANT_SLUG`, painel `/administrator/contacts` só com o tenant da sessão (contato de outro tenant é 404) e `contacts:prune` sem escopo; o `.env.test` tem `SINGLE_TENANT_SLUG` e `SEED_TENANT_*`, e os specs do contato trocam o `TenantConfig` para o modo cliente único. O contrato do `shared/` não mudou. Próximo: `TRUSTED_PROXIES` no Coolify e a rodada final antes de tirar a PR do rascunho.
 
 R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
 

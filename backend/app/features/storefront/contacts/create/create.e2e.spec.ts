@@ -1,7 +1,13 @@
+import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
-import { ErrorEnvelope, StorefrontContactCreateResponse } from '@maiyu/shared'
+import {
+  CityTenantsResponse,
+  ErrorEnvelope,
+  StorefrontContactCreateResponse,
+} from '@maiyu/shared'
 
+import { TenantConfig } from '#config/tenant'
 import { body, resetDatabase } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
 
@@ -12,6 +18,9 @@ const VALID = {
   locale: 'pt-BR',
 } as const
 
+/** The tenant of `SINGLE_TENANT_SLUG` (`.env.test`), seeded with the owner as its administrator. */
+const SINGLE_SLUG = 'maiyu'
+
 /**
  * The public contact form. It has no session, so what is asserted is what it stores, what it
  * refuses without storing and the two barriers a robot meets: the honeypot and the limit by
@@ -19,6 +28,13 @@ const VALID = {
  */
 test.group('storefront/contacts > create', (group) => {
   group.each.setup(() => resetDatabase())
+  // The kit's `resetDatabase` runs in the multi-tenant mode; the form is a single-client route
+  // (DECISIONS.md #399), so the spec swaps the configured tenant back in.
+  group.each.setup(() => {
+    app.container.swap(TenantConfig, () => new TenantConfig(SINGLE_SLUG))
+
+    return () => app.container.restore(TenantConfig)
+  })
 
   test('a valid message is saved pending', async ({ client, assert }) => {
     const response = await client.post('/storefront/contacts').json(VALID)
@@ -36,6 +52,34 @@ test.group('storefront/contacts > create', (group) => {
       locale: 'pt-BR',
       answeredAt: null,
     })
+  })
+
+  test('the message is stored in the single-client tenant, owned by nobody', async ({
+    client,
+    assert,
+  }) => {
+    const tenants = await client.get('/storefront/cities/any/tenants')
+    const [tenant, ...others] = body(tenants, CityTenantsResponse)
+    assert.lengthOf(others, 0)
+
+    const response = await client.post('/storefront/contacts').json(VALID)
+
+    response.assertStatus(201)
+    const [saved] = await Stored.contacts()
+    assert.equal(saved?.tenantId, tenant?.id)
+    assert.isNull(saved?.customerId)
+  })
+
+  test('answers 404 and saves nothing when the configured tenant does not exist', async ({
+    client,
+    assert,
+  }) => {
+    app.container.swap(TenantConfig, () => new TenantConfig('ghost'))
+
+    const response = await client.post('/storefront/contacts').json(VALID)
+
+    response.assertStatus(404)
+    assert.lengthOf(await Stored.contacts(), 0)
   })
 
   test('an invalid field answers 422 and saves nothing', async ({
