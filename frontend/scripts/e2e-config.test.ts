@@ -33,6 +33,9 @@ describe('e2e/playwright.config.ts', () => {
       expect(project.dependencies ?? []).toEqual([])
     expect(JSON.stringify(projects)).not.toContain('storageState')
     expect(config.webServer).toHaveLength(1)
+    // The panel specs need a session from the API: left out of every viewport.
+    for (const project of projects)
+      expect(String(project.testIgnore)).toMatch(/session.*panel-shell/)
   })
 
   it('with a backend, setup and cleanup exist and the viewports depend on setup', async () => {
@@ -49,5 +52,7 @@ describe('e2e/playwright.config.ts', () => {
     ))
       expect(project.dependencies).toEqual(['setup'])
     expect(config.webServer).toHaveLength(2)
+    for (const project of projects)
+      expect(String(project.testIgnore)).not.toMatch(/panel-shell/)
   })
 })

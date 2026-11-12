@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 48 itens de migração para a régua (38 feitos, 1 em andamento, 4 bloqueados, 4 a fazer); atualizado 2026-11-12
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 49 itens de migração para a régua (38 feitos, 2 em andamento, 4 bloqueados, 4 a fazer); atualizado 2026-11-12
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -119,6 +119,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
 | R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |
+| R3.9 | Bloco `painel` do kit (`--com=painel`, régua 9cb5ffd, #491): `PanelShell`, `AuthShell`, `/sign-in`, `/profile`, `SessionGuard` | G | Em andamento | `lib/areas.ts` no formato `homeOf` -> `{ to }` (todo papel em `/profile` até haver rota de área), `AREAS.administrator` com `STAFF_USER_ROLES`; `@utility rail` no `styles.css`; `/sign-in` na lista do E2E; `PANEL_MENU` só com o perfil (contatos é de outra PR) |
 
 ### Régua 4 · Testes e infra
 

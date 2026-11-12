@@ -5,13 +5,17 @@ import { StorageLucidRepository } from './storage.lucid.repository.ts'
 import { StorageMemoryRepository } from './storage.memory.repository.ts'
 import type { StorageRepository } from './storage.repository.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { UserFactory } from '#database/factories/user.factory'
 import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
 import UserModel from '#models/user'
+import { scopedHttpContext } from '#tests/http-context-fixtures'
 import { resetDatabase } from '#tests/http-fixtures'
+import { ROLE_FIXTURES } from '#tests/role-fixtures'
 import { storageRow } from '#tests/storages-fixtures'
 import { PNG_HEAD } from '#tests/storages-unit-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
  * The same contract in both implementations (`_standards/domain.md` §5.4): it is what
@@ -30,6 +34,10 @@ function file(
   originalName: string,
   confirmed = true,
   uploadedBy: string | null = null,
+  owner: { tenantId: string | null; customerId: string | null } = {
+    tenantId: null,
+    customerId: null,
+  },
 ): Storage {
   const opened = Storage.open({
     id,
@@ -39,8 +47,8 @@ function file(
     size: 1024,
     uploadId: null,
     partSize: 10,
-    tenantId: null,
-    customerId: null,
+    tenantId: owner.tenantId,
+    customerId: owner.customerId,
     uploadedBy,
     now: NOW,
   })
@@ -55,6 +63,7 @@ function file(
 for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
   test.group(`StorageRepository (${name})`, (group) => {
     group.each.setup(() => resetDatabase())
+    const within = scopedHttpContext(group)
 
     test('save and findById return the same file', async ({ assert }) => {
       const repository = await make()
@@ -170,6 +179,83 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
           owner.id,
         ),
       )
+    })
+
+    test('areAttachableByTenant only accepts a live confirmed file of the session tenant, never a customer row', async ({
+      assert,
+    }) => {
+      const repository = await make()
+      const store = await Tenants.create()
+      const rival = await Tenants.create()
+      const staff = await UserFactory.create()
+      const buyer = await UserFactory.create()
+      const of = (tenantId: string, customerId: string | null) => ({
+        tenantId,
+        customerId,
+      })
+      const photo = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c21',
+        'foto.png',
+        true,
+        staff.id,
+        of(store.id, null),
+      )
+      const proof = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c22',
+        'comprovante.png',
+        true,
+        buyer.id,
+        of(store.id, buyer.id),
+      )
+      const foreign = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c23',
+        'outra.png',
+        true,
+        null,
+        of(rival.id, null),
+      )
+      const pending = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c24',
+        'pendente.png',
+        false,
+        staff.id,
+        of(store.id, null),
+      )
+      const gone = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c25',
+        'apagado.png',
+        true,
+        staff.id,
+        of(store.id, null),
+      )
+      const trashed = Storage.restore({ ...gone.snapshot(), deletedAt: NOW })
+      for (const each of [photo, proof, foreign, pending, trashed])
+        await repository.save(each)
+
+      await within(
+        TenantScope.ofAccess({
+          id: staff.id,
+          platformRole: 'USER',
+          tenant: {
+            id: store.id,
+            cityId: store.cityId,
+            role: ROLE_FIXTURES.staff,
+            childIds: [],
+          },
+        }),
+      )
+
+      assert.isTrue(
+        await repository.areAttachableByTenant([photo.id, photo.id]),
+      )
+      assert.isTrue(await repository.areAttachableByTenant([]))
+      assert.isFalse(await repository.areAttachableByTenant([proof.id]))
+      assert.isFalse(
+        await repository.areAttachableByTenant([photo.id, proof.id]),
+      )
+      assert.isFalse(await repository.areAttachableByTenant([foreign.id]))
+      assert.isFalse(await repository.areAttachableByTenant([pending.id]))
+      assert.isFalse(await repository.areAttachableByTenant([gone.id]))
     })
 
     test('paginate searches, filters by status and sorts', async ({

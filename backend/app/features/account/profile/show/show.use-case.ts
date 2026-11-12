@@ -55,7 +55,11 @@ export default class AccountProfileShowUseCase {
       )
 
       return right(
-        ProfilePresenter.show(user, await this.bucket.withOptionalUrl(file)),
+        ProfilePresenter.show(
+          user,
+          await this.bucket.withOptionalUrl(file),
+          actor.tenant,
+        ),
       )
     } catch (error) {
       HttpContext.getOrFail().logger.error(

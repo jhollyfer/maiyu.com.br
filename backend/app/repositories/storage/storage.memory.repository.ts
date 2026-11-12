@@ -53,6 +53,21 @@ export class StorageMemoryRepository extends StorageRepository {
     return Storage.restore(MemoryRows.copy(props))
   }
 
+  async findPublic(id: string): Promise<Storage | null> {
+    const props = this.rows.get(id)
+    if (
+      !props ||
+      props.deletedAt ||
+      props.status !== UPLOAD_STATUS.UPLOADED ||
+      props.tenantId === null ||
+      props.customerId !== null ||
+      !TenantScope.readsOwned(props.tenantId, props.customerId)
+    )
+      return null
+
+    return Storage.restore(MemoryRows.copy(props))
+  }
+
   async detail(id: string): Promise<StorageFileRead | null> {
     const props = this.rows.get(id)
     if (
@@ -92,6 +107,20 @@ export class StorageMemoryRepository extends StorageRepository {
         !props.deletedAt &&
         TenantScope.writesOwned(props.tenantId, props.customerId) &&
         props.uploadedBy === uploadedBy &&
+        props.status === UPLOAD_STATUS.UPLOADED
+      )
+    })
+  }
+
+  async areAttachableByTenant(ids: ReadonlyArray<string>): Promise<boolean> {
+    return [...new Set(ids)].every((id) => {
+      const props = this.rows.get(id)
+
+      return (
+        props !== undefined &&
+        !props.deletedAt &&
+        TenantScope.writes(props.tenantId) &&
+        props.customerId === null &&
         props.status === UPLOAD_STATUS.UPLOADED
       )
     })

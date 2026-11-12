@@ -814,6 +814,18 @@ responder 409 por um registro que o usuário não vê.
 lugar só** (grupo público no registro de rotas do Adonis; marca pública no decorator do Fastify).
 O `authz:check` reprova rota nova que não está em nenhum dos dois.
 
+**Sessão opcional é uma terceira classe.** Rota que responde a qualquer um e personaliza para quem
+tem sessão (carrinho, vitrine com "meu pedido") leva `middleware.silentAuth()` e **não** leva
+`auth()`. O `silent-auth.middleware.ts` já roda global (a checagem acontece em toda requisição);
+o nome `silentAuth` no `router.named` é a marca declarativa que o gerador lê. No `openapi.json` a
+rota sai com `security: [{ cookieAuth: [] }, {}]` (a alternativa vazia é o jeito do OpenAPI de dizer
+"sessão opcional"), e o `authz:check` a classifica como `optional`, distinta de `anonymous` e de
+`authenticated`. Precedência quando a cadeia tem mais de um: papéis, depois `auth()` (`authenticated`,
+em qualquer ordem dos dois middlewares), depois `silentAuth()` (`optional`), depois nada (`anonymous`).
+Rota que **exige** sessão nunca usa `silentAuth()`: o 401 é do `auth()`.
+Fonte: `_doc-lib/adonisjs.md#guides/auth/session-guard` (página aberta: "Silent authentication", o
+`silent_auth` não lança exceção e deixa `auth.user` disponível quando há sessão).
+
 **Sessão por cookie.** *(Adonis)* Par de access tokens opacos (acesso curto, refresh longo) em
 cookie `httpOnly`, emitidos pelo guard `cookie-access-tokens`; o refresh é **rotativo**: usar um
 refresh apaga-o e emite outro, e o `DELETE` do token antigo é a seção crítica (dois refresh
@@ -1129,6 +1141,27 @@ regra mora no kit, em três peças, e nenhum use-case escreve `where tenant_id` 
 na URL, com o mesmo `TenantScope.ofPublic`, só leitura, e 404 se ele não existe ou está inativo.
 Slug de cidade e de tenant não iguala rota fixa do frontend: `Rule.RESERVED_SLUGS` do `shared`.
 
+**Credencial pública que acha o tenant (#583).** O código da turma que o aluno digita, o código da sala ao
+vivo, o token de convite e o protocolo da matrícula chegam sem cidade nem tenant na URL: o
+`credential-tenant.middleware.ts` resolve o tenant e o alvo só pela credencial e dá à rota o mesmo
+escopo público de leitura (ou a escrita declarada, `{ access: 'insert' }`). O projeto declara cada tipo
+como uma classe que estende `CredentialSource` (`core/credential.ts`, só `find(locator)` sobre a tabela
+dele) e a nomeia na rota: `middleware.credentialTenant({ source: ClassCodeSource, from: 'code' })`, com
+`secret: true` para o token (`<localizador>.<segredo>`, guardado só como SHA-256 e comparado em tempo
+constante, `CredentialSecret`). Credencial inexistente, expirada, com segredo errado ou de tenant
+inativo ou apagado é **uma resposta só**, o 404 de endereço desconhecido, com o mesmo `code` e a mesma
+mensagem, e **um custo só**: todo caminho busca a credencial, compara o segredo (contra um valor de
+reserva se não há o que comparar) e busca o tenant antes de decidir. Código curto digitado é
+adivinhável, então há dois tetos. O **por IP** (`credentialThrottle`, `start/limiter.base.ts`) a rota
+põe antes do middleware e conta todo pedido. O **por credencial** conta só a **falha**: o projeto
+declara `new CredentialAttempts('classCode')` e o passa à rota em `attempts`; o middleware roda a busca
+dentro do `penalize` do limiter (o 404 conta um, o acerto zera, o teto cheio responde o 429 sem
+buscar), porque um código dividido por trinta alunos não pode travar no décimo primeiro acerto nem
+ser bloqueado por quem erra. A chave é o localizador, nunca o segredo do token, e vai em hash. Fonte
+(página aberta, "Preventing brute-force login attacks": `penalize` consome só quando o callback
+falha): `_doc-lib/adonisjs.md#guides/security/rate-limiting`,
+https://docs.adonisjs.com/guides/security/rate-limiting.
+
 **Cliente final e escrita pública (#397).** Conta sem vínculo é o cliente final (o morador que pede
 no Delivery): `TenantScope.ofAccess` a trata como `ofCustomer`, e ela não alcança nenhuma tabela de
 tenant. Tabela **de cliente** (pedido, comprovante, o arquivo que o cliente envia) se declara pelo
@@ -1144,9 +1177,16 @@ tenant da URL para o cliente (rota depois de `middleware.auth()` com
 (`{ access: 'insert' }`, que também entra em `PROJECT_ANONYMOUS_WRITES`); sem tenant na URL, o
 cliente não cria nada. A escrita pública só cria linha de tabela de cliente, nunca altera linha
 existente. A policy base confere com `ownsRow` e `reachesCustomerRow`. O storage é a tabela de cliente do kit
-(`POST /storages/cities/:city/tenants/:tenant`). Mudar senha, papel, vínculo, e-mail, celular ou
-status derruba as sessões da conta na mesma transação (`UserRepository.save`,
-`TenantRepository.saveMember` e `removeMember`).
+(`POST /storages/cities/:city/tenants/:tenant`). O arquivo que uma rota pública serve sai só de
+`StorageRepository.findPublic` (confirmado, de tenant, sem dono): a linha de `tenant_id` nulo é da
+plataforma, a rota pública nunca a lê, e a capa do catálogo global não é servida ao visitante por
+id (`DECISIONS.md` #582). Mudar senha, e-mail, celular ou status, e tirar
+acesso de um vínculo (papel menor, vínculo removido, vínculo desativado), derruba as sessões da conta
+na mesma transação (`UserRepository.save`, `TenantRepository.saveMember` e `removeMember`); criar o
+vínculo ou subir o papel não derruba, porque quem acabou de entrar (o aluno que usa o código da turma)
+estaria logado e sairia na hora. Quem decide é `MembershipAccess.reduces` (`core/membership-access.ts`),
+com a ordem de acesso que o kit conhece, a equipe (`STAFF_USER_ROLES`); mudança que ele não sabe
+ordenar (dois papéis do mesmo lado) conta como redução (`DECISIONS.md` #581).
 
 **Equipe da plataforma e recorte de status em tabela de cliente (#511).** `CustomerScoped.readable(query, options)`
 tem duas opções tipadas, ambas opcionais. `platform: true` é a tabela declarando que a equipe da
@@ -1168,6 +1208,16 @@ por id e não aparece em lista; recurso novo que passa pelo repositório base he
 projeto repete o teste no recurso dele.
 
 ---
+
+**Anexo: da conta ou do tenant (#721).** O `StorageRepository` tem dois portões, e a escolha é de
+quem é o dono do que se anexa. `areAttachable(ids, uploadedBy)`: o arquivo é da **conta** (foto do
+perfil, #442), só o que ela mesma enviou. `areAttachableByTenant(ids)`: o arquivo é do **tenant**, de
+quem a loja é dona e não quem subiu (foto de produto, logo): `UPLOADED`, vivo, do tenant que a sessão
+escreve (nunca de filho) e com `customer_id` nulo. Linha de cliente (o comprovante Pix que o morador
+enviou) nunca passa, mesmo no mesmo tenant: compor `findWritable` com `isUploaded` aceitava esse
+arquivo e o tornava foto pública do produto. Use caso novo de anexo chama um dos dois, nunca monta a
+regra à mão; o `customer_id` nulo tem o teste que o derruba em Lucid e em memória
+(`storage.repository.e2e.spec.ts`).
 
 ### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
 
@@ -1379,6 +1429,14 @@ export abstract class PaymentGatewayContract {
 - **A tabela e a lista do painel** (`components/common/table/` e `list-shell/`) ligam sozinhas pelas quatro
   dependências, e `--sem=table` as desliga mesmo com elas (`desligados` no manifesto; `--com=table` volta):
   sai a pasta e saem as chaves `kit_table_*`, `kit_list_shell_*`, `kit_filters` e `kit_help` (`DECISIONS.md` #432).
+- **O painel do frontend** (`painel`: entrada, portão do `_private`, sidebar, cabeçalho, menu de conta,
+  perfil e troca de vínculo; `DECISIONS.md` #491) é bloco de flag só de frontend: liga sozinho quando o
+  projeto já tem algum caminho dele (todo projeto com painel tem `lib/areas.ts`) e `--sem=painel` o
+  desliga, para o site público sem painel (jhollyfer.com.br). Desligado, o que o projeto tiver dele vira
+  `sobra:`, saem as chaves `kit_sign_in_*`, `kit_panel_*`, `kit_profile_*` e `kit_tenant_switcher_*`, e o
+  `auth.setup.ts` e as contas do E2E continuam no núcleo. O backend da sessão e do perfil é do núcleo nos
+  dois casos: `GET /account/profile` devolve o vínculo ativo como `tenant: { id, role } | null`, e é com
+  `platformRole` o que a guarda de área lê.
 - **Colisão de caminho.** O manifesto guarda em `arquivos` o que o kit já levou ao projeto. Caminho que o kit
   passa a ocupar, que o projeto já tinha com outro conteúdo e que não está na lista, vira `collision:` e não é
   sobrescrito. Para o kit tomar o caminho, o projeto move ou renomeia o arquivo dele e roda o sync;
@@ -1842,13 +1900,27 @@ O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`) **nem de senha**
 nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.command.ts`), que o
 `e2e/auth.setup.ts` chama. Ele cria uma conta para o dono da plataforma, o administrador da plataforma, o
 `staff`, o `nonStaff` (quando o projeto tem papel fora do staff) e o cliente final, lendo os papéis de
-`tests/role-fixtures.ts` e sem literal de enum; sorteia a senha a cada execução, a imprime só na saída do
-comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. Nada disso é chave de ambiente: não há
+`tests/role-fixtures.ts` e sem literal de enum, e põe `staff` e `nonStaff` no tenant que `SINGLE_TENANT_SLUG` nomeia no modo cliente único (onde a escrita anônima pública grava) e no `cliente-de-teste` no multi-tenant (`DECISIONS.md` #711); sorteia a senha a cada execução, a imprime só na saída do
+comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. As contas de domínio com vínculo (o conselheiro de uma turma, outro da mesma categoria, o representante) são o ponto de extensão `tests/e2e-project-accounts.ts`, que o sync cria vazio e nunca reescreve: `ProjectE2eAccounts.accounts` declara nome e papel de cada conta extra, e `ProjectE2eAccounts.link` recebe as contas criadas (`userOf('<nome>')`) e monta o dado de domínio pelos use cases e repositories do projeto, idempotente. O `link` roda depois de todas as contas e antes da impressão, então falha nele não imprime conta nenhuma, e nome que repete papel do kit (`staff`, `platformOwner`...) é recusado em tipo e em runtime, sem criar conta; `platformRole: OWNER` numa extra é aceito; a saída leva as extras em `project` no mesmo `E2E_ACCOUNTS=` (`DECISIONS.md` #611). Nada disso é chave de ambiente: não há
 `SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
 com 35 chaves no backend e 10 no frontend (`DECISIONS.md` #443). O spec de papel pede a sessão com
-`test.use({ storageState: E2eAccountsStore.stateOf('staff') })`. Nem porta solta
+`test.use({ storageState: E2eAccountsStore.stateOf('staff') })`, e o de uma conta de domínio pelo nome que o projeto declarou em `frontend/e2e/support/project-accounts.ts` (`stateOf('councilorA')`). Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no
 `playwright.config.ts` e no comando da rodada (`tooling.md` §7), não em chave.
+
+**O que o E2E cria, o E2E apaga** (`node ace e2e:cleanup`, `commands/e2e-cleanup.command.ts`, `DECISIONS.md` #713). O
+`teardown` do projeto `setup` do Playwright (`e2e/cleanup.teardown.ts`, projeto `cleanup`) chama o comando, que apaga
+as contas que o `e2e:accounts` criou (e-mail `e2e-<papel>-<8 hex>@example.com` **e** nome `E2E <papel>`, os dois) e,
+nas tabelas do projeto, as linhas cuja coluna de marcador começa com `E2E-`, com o hífen (`E2eEnv.marker`; título real que só começa com as letras `E2E` não é marcador): o spec escreve `E2eEnv.marker` no começo
+do título ou do nome do que cria, e o projeto declara tabela e coluna em `tests/e2e-project-cleanup.ts`
+(`ProjectE2eCleanup.markers`, ponto de extensão que o sync cria vazio e nunca reescreve; filhos antes dos pais quando
+a chave estrangeira é `RESTRICT`). Linha sem o marcador nunca se apaga e tabela não declarada nunca se toca. Duas travas, nos dois
+comandos (`e2e:accounts` e `e2e:cleanup`, `tests/e2e-guard.ts`, `DECISIONS.md` #732): `NODE_ENV` só `development` ou `test` **e** o host do
+`DATABASE_URL` só loopback (`DatabaseGuard.assertLoopback`), porque um contêiner de produção iniciado com
+`NODE_ENV=development` passaria só pela primeira; ambas recusam antes de abrir o banco. A lista do projeto recusa tabela do kit
+(`users`, `tenants`, `tenant_memberships`, sessões...: as contas só saem pela regra de e-mail e nome juntos) e
+nome de tabela ou coluna fora de `a-z0-9_` (`public.x`, `x as y`; código `E2E_CLEANUP_INVALID_MARKER`, sem apagar nada), uma transação (a chave estrangeira que
+recusa desfaz tudo) e idempotente (a segunda rodada diz zero). Sem chave de ambiente nova.
 
 **Mesmo número de chaves, mesmos nomes.** Todo projeto da casa tem o mesmo `.env.example` chave por
 chave e na mesma ordem (backend e frontend); o que muda entre eles é só o valor de exemplo. Não há bloco
@@ -2014,7 +2086,7 @@ abaixo diz o que cada script do backend reprova.
 | `typecheck` | `tsc --noEmit` |
 | `openapi:check` | `openapi:generate --check --strict`: documento desatualizado, ou operação sem resposta descrita |
 | `pattern:check` | o que o ESLint não alcança porque depende de *onde* o arquivo está: a árvore inteira de `architecture.md` §6; nomes derivados do caminho (§3); camada que importa outra (§1.3); `@vinejs/vine` e subpaths fora do `vine` configurado do Adonis; validator do Adonis sem par no `shared/`; spread de corpo cru em controller (§4.1); `throw` e `*OrFail()` em use-case e repository; `actor` com outro nome; policy fora do mecanismo do framework e `BOUNCER_REQUIRED` (§4.6); filtro de `deletedAt` fora do model, inclusive qualificado (§4.8); `_shared` com I/O (§4.9); diretórios obrigatórios; as checagens de ENV (§6) |
-| `authz:check` | mudança na cadeia de autorização de qualquer rota, e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json`; a proteção sai como `anonymous`, `authenticated` ou os papéis, e o `public-routes.unit.spec.ts` lê o mesmo rótulo contra a lista do projeto em `app/core/openapi/public-routes.ts` (escrita anônima por desenho e prefixo público só de leitura) |
+| `authz:check` | mudança na cadeia de autorização de qualquer rota, e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json`; a proteção sai como `anonymous`, `optional` (sessão opcional, `silentAuth()`), `authenticated` ou os papéis, e o `public-routes.unit.spec.ts` lê o mesmo rótulo contra a lista do projeto em `app/core/openapi/public-routes.ts` (escrita anônima por desenho e prefixo público só de leitura) |
 | `test:unit` | a suíte `unit`, sem banco |
 | `di:check` | constrói todo service, repository e policy pelo container e reprova o que não sobe; **reprova também se encontrar zero alvos** (varredura vazia é guard que não guarda) |
 

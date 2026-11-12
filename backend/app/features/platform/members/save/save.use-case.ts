@@ -20,9 +20,10 @@ type Response = Either<HTTPException, PlatformMemberResponse>
 
 /**
  * Puts an account in a tenant with a role, or changes the role it has there (DECISIONS.md #397), by
- * the platform owner. A new membership or a new role ends every session of the account in the same
- * transaction (`TenantRepository.saveMember`, `_standards/backend.md` §4.2): the session signed in
- * under the old access does not keep it. Saving the same role again changes nothing and ends nothing.
+ * the platform owner. A role that takes access away ends every session of the account in the same
+ * transaction (`TenantRepository.saveMember`, `MembershipAccess`, DECISIONS.md #581): the session
+ * signed in under the old access does not keep it. A new membership or a bigger role keeps them, and
+ * saving the same role again changes nothing and ends nothing.
  */
 @inject()
 export default class PlatformMemberSaveUseCase {

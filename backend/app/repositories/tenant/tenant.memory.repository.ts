@@ -19,6 +19,7 @@ import {
   type TenantPublicRead,
 } from './tenant.repository.ts'
 
+import MembershipAccess from '#core/membership-access'
 import { TenantScope } from '#core/tenant-scope'
 import {
   Tenant,
@@ -281,7 +282,8 @@ export class TenantMemoryRepository extends TenantRepository {
       ...this.memberships.filter((row) => row.id !== member.id),
       member,
     ]
-    await this.sessions.revokeAll(userId)
+    if (MembershipAccess.reduces(existing && { role: existing.role }, { role }))
+      await this.sessions.revokeAll(userId)
 
     return { member, changed: true }
   }

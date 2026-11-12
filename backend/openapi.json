@@ -84,7 +84,7 @@
             }
           }
         },
-        "description": "Devolve a conta da sessão: nome, e-mail, celular e papel na plataforma. O `id` vem da sessão, nunca do caminho, e a senha não faz parte da resposta.",
+        "description": "Devolve a conta da sessão: nome, e-mail, celular, foto, papel na plataforma e o vínculo ativo (`tenant`, ou `null`). O `id` vem da sessão, nunca do caminho, e a senha não faz parte da resposta.",
         "security": [
           {
             "cookieAuth": []
@@ -2684,6 +2684,35 @@
                 "type": "null"
               }
             ]
+          },
+          "tenant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "ADMINISTRATOR",
+                      "MEMBER"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "role"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -2692,7 +2721,8 @@
           "email",
           "phone",
           "platformRole",
-          "avatar"
+          "avatar",
+          "tenant"
         ],
         "additionalProperties": false
       },
@@ -2889,6 +2919,35 @@
               }
             ]
           },
+          "tenant": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                  },
+                  "role": {
+                    "type": "string",
+                    "enum": [
+                      "ADMINISTRATOR",
+                      "MEMBER"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "role"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "pendingEmail": {
             "type": [
               "string",
@@ -2903,6 +2962,7 @@
           "phone",
           "platformRole",
           "avatar",
+          "tenant",
           "pendingEmail"
         ],
         "additionalProperties": false

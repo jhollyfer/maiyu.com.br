@@ -90,7 +90,10 @@ export class HTTPError extends Error {
 
   constructor(body: HTTPErrorBody) {
     super(body.message)
-    this.name = 'HTTPError'
+    // O status vai no `name`, e não no `message` (que a tela lê): o `console.error` do router no
+    // erro de um `loader` imprime `<name>: <message>`, e é por esse prefixo que o E2E casa o log com
+    // o 5xx que o spec declarou (`e2e/support/expected-api-errors.ts`), sem corpo nem dado do usuário.
+    this.name = `HTTPError ${body.status}`
     this.status = body.status
     this.code = body.code
     this.errors = body.errors

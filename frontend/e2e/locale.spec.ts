@@ -1,6 +1,8 @@
 import { LocalizedPath, PagesList } from './support/pages-list'
 import { expect, test } from './support/test'
 
+test.use({ storageState: PagesList.anonymous })
+
 /**
  * Each public page answers in every language with the head that search engines read: `html lang`,
  * `og:locale` and the reciprocal `hreflang` set with the `x-default` (`_standards/i18n.md`,

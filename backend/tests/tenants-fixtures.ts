@@ -39,6 +39,28 @@ export class Tenants {
     )
   }
 
+  /**
+   * The tenant of an E2E run (DECISIONS.md #711): in the single-client mode the one `SINGLE_TENANT_SLUG`
+   * names, because that is where the public anonymous writes land and the staff of the run must
+   * see them; otherwise the default one. An existing tenant of that slug is reused as it is.
+   */
+  static async forE2e(singleSlug: string | null): Promise<Tenant> {
+    if (singleSlug === null) return Tenants.fallback()
+
+    const existing = await Tenant.query().where('slug', singleSlug).first()
+    if (existing) return existing
+
+    const city = await Tenants.city()
+
+    return Tenant.create({
+      name: 'Cliente único',
+      slug: singleSlug,
+      type: TENANT_TYPE_FIXTURE,
+      cityId: city.id,
+      status: ACTIVE_STATUS.ACTIVE,
+    })
+  }
+
   /** Another tenant, optionally under a parent. */
   static async create(
     attributes: {

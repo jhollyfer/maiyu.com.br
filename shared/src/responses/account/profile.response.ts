@@ -1,4 +1,5 @@
 import { PLATFORM_ROLES } from '../../enums/platform-role.js'
+import { USER_ROLES } from '../../enums/user-role.js'
 import { z } from '../../validator.js'
 import { StoragesFileShowResponse } from '../storages/files.response.js'
 
@@ -6,6 +7,11 @@ import { StoragesFileShowResponse } from '../storages/files.response.js'
  * The account of the session as the API returns it (DECISIONS.md #413): an allowlist, so the
  * password and its hash are not a field here. `GET` and `PUT /account/profile` answer with it.
  * `avatar` is the profile photo with its signed read URL, `null` when the account has none.
+ *
+ * `tenant` is the session's active membership, the same `{ id, role }` the `actor` carries and
+ * `null` when the account has none or has several and picked none: with `platformRole` it is the
+ * whole `AreaAccount` that the panel's route guard reads, so the guard needs one query and not
+ * the profile plus the tenants list (DECISIONS.md #491).
  */
 export const AccountProfileShowResponse = z.object({
   id: z.uuid(),
@@ -14,6 +20,7 @@ export const AccountProfileShowResponse = z.object({
   phone: z.string().nullable(),
   platformRole: z.enum(PLATFORM_ROLES),
   avatar: StoragesFileShowResponse.nullable(),
+  tenant: z.object({ id: z.uuid(), role: z.enum(USER_ROLES) }).nullable(),
 })
 
 /**

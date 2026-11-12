@@ -41,6 +41,13 @@ export abstract class StorageRepository {
    * parent reads. Deleting and confirming go through here.
    */
   abstract findWritable(id: string): Promise<Storage | null>
+  /**
+   * The file a public route may serve (DECISIONS.md #582): live, confirmed (`UPLOADED`), a row of a
+   * tenant (`tenant_id` never null) owned by nobody (`customer_id` null), among the ones the
+   * request reads. The global catalog's files are the platform's rows and read as absent here
+   * for every caller, the platform owner and a system process included: the 404 of a missing file.
+   */
+  abstract findPublic(id: string): Promise<Storage | null>
   /** Lightweight read: the record in the response shape, without the URL. */
   abstract detail(id: string): Promise<StorageFileRead | null>
   /** The same record for several ids at once; an id without a live file is left out. */
@@ -54,6 +61,14 @@ export abstract class StorageRepository {
     ids: ReadonlyArray<string>,
     uploadedBy: string,
   ): Promise<boolean>
+  /**
+   * All the ids are live, confirmed (`UPLOADED`) files that belong to the TENANT of the session
+   * itself: the tenant writes them (never a child's) and `customer_id` is null, so a file an end
+   * customer sent (a Pix proof) is never one of them, even in the same tenant. For what the store
+   * owns, not what an account owns: a product photo. A file of one's own account is
+   * `areAttachable`.
+   */
+  abstract areAttachableByTenant(ids: ReadonlyArray<string>): Promise<boolean>
   /** Where the file is in use, in readable labels; empty means orphan. */
   abstract usedBy(id: string): Promise<string[]>
   abstract save(storage: Storage): Promise<void>

@@ -23,6 +23,7 @@ test.group('account/profile > show', (group) => {
     const profile = body(response, AccountProfileShowResponse)
     assert.isString(profile.name)
     assert.notProperty(response.body(), 'password')
+    assert.property(response.body(), 'tenant')
   })
 
   test('without a session is 401', async ({ client }) => {

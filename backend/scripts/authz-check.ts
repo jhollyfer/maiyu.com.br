@@ -38,7 +38,7 @@ type Finding = {
 }
 
 type Operation = {
-  readonly security?: ReadonlyArray<unknown>
+  readonly security?: ReadonlyArray<Readonly<Record<string, unknown>>>
   readonly 'x-roles'?: ReadonlyArray<string>
 }
 
@@ -57,6 +57,11 @@ export class AuthzCheck {
   static readonly ANONYMOUS = 'anonymous'
   /** Protection of a route that asks for a session and no role. */
   static readonly AUTHENTICATED = 'authenticated'
+  /**
+   * Protection of a route that answers anyone and personalizes for whoever has a session
+   * (`silentAuth`, no `auth`): in OpenAPI, `security` with an empty alternative.
+   */
+  static readonly OPTIONAL = 'optional'
 
   async run(flags: ReadonlySet<string>): Promise<void> {
     const current = await this.#readCurrent()
@@ -78,15 +83,27 @@ export class AuthzCheck {
     if (findings.length > 0) process.exitCode = 1
   }
 
-  /** `anonymous`, `authenticated`, or the roles in order. */
-  #protectionOf(operation: Operation): string {
+  /**
+   * `anonymous`, `optional`, `authenticated`, or the roles in order. Precedence: roles, then
+   * a session that is required, then a session that is optional, then none. `security` lists
+   * alternatives, so one empty alternative (`{}`) makes the session optional; the emitter
+   * already drops it when `auth` is also on the route.
+   */
+  protectionOf(operation: Operation): string {
     const roles = operation['x-roles'] ?? []
     if (roles.length > 0) return [...roles].sort().join(', ')
 
-    if (operation.security && operation.security.length > 0)
-      return AuthzCheck.AUTHENTICATED
+    const security = operation.security ?? []
+    if (security.length === 0) return AuthzCheck.ANONYMOUS
 
-    return AuthzCheck.ANONYMOUS
+    const optional = security.some((alternative) => this.#isEmpty(alternative))
+    if (optional) return AuthzCheck.OPTIONAL
+
+    return AuthzCheck.AUTHENTICATED
+  }
+
+  #isEmpty(alternative: Readonly<Record<string, unknown>>): boolean {
+    return Object.keys(alternative).length === 0
   }
 
   async #readCurrent(): Promise<Protection> {
@@ -103,7 +120,7 @@ export class AuthzCheck {
       for (const [method, operation] of Object.entries(methods)) {
         if (!this.#isOperation(operation)) continue
 
-        byKey[`${method.toUpperCase()} ${path}`] = this.#protectionOf(operation)
+        byKey[`${method.toUpperCase()} ${path}`] = this.protectionOf(operation)
       }
     }
 
@@ -212,7 +229,11 @@ export class AuthzCheck {
     )
       return false
 
-    return security === undefined || Array.isArray(security)
+    return (
+      security === undefined ||
+      (Array.isArray(security) &&
+        security.every((entry) => this.#isRecord(entry)))
+    )
   }
 
   #isProtection(value: unknown): value is Protection {

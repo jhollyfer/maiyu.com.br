@@ -1,6 +1,7 @@
 import type {
   AccountProfileShowResponse,
   AccountProfileUpdateResponse,
+  Actor,
 } from '@maiyu/shared'
 
 import type { User } from '#domain/user/user.entity'
@@ -11,6 +12,9 @@ import type { User } from '#domain/user/user.entity'
  * never leave, because they are not in this list. `GET` and `PUT /account/profile` answer
  * with the same shape, the second one with the e-mail that waits for its confirmation.
  *
+ * `tenant` is the active membership of the `actor`, cut down to `{ id, role }`: with
+ * `platformRole` it is what the panel's route guard reads (DECISIONS.md #491).
+ *
  * The photo arrives already signed (`StorageContract.withOptionalUrl`): signing is the use
  * case's, the presenter only places it.
  */
@@ -18,6 +22,7 @@ export class ProfilePresenter {
   static show(
     user: User,
     avatar: AccountProfileShowResponse['avatar'],
+    tenant: Actor['tenant'],
   ): AccountProfileShowResponse {
     const props = user.snapshot()
 
@@ -28,14 +33,16 @@ export class ProfilePresenter {
       phone: props.phone,
       platformRole: props.platformRole,
       avatar,
+      tenant: tenant && { id: tenant.id, role: tenant.role },
     }
   }
 
   static update(
     user: User,
     avatar: AccountProfileShowResponse['avatar'],
+    tenant: Actor['tenant'],
     pendingEmail: string | null,
   ): AccountProfileUpdateResponse {
-    return { ...ProfilePresenter.show(user, avatar), pendingEmail }
+    return { ...ProfilePresenter.show(user, avatar, tenant), pendingEmail }
   }
 }
