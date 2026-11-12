@@ -34,7 +34,10 @@ export default class StoragesFileCreateController {
       'é o mesmo endpoint da retomada.\n\n' +
       'A linha nasce `PENDING` e não pode ser anexada a nada até ser confirmada. O arquivo ' +
       'nasce sem dono: quem anexa guarda a referência, informando o `id` no ' +
-      'campo do recurso (hoje, o `avatarId` do usuário).',
+      'campo do recurso (hoje, o `avatarId` do usuário).\n\n' +
+      'Em `POST /storages/cities/:city/tenants/:tenant` quem envia é o cliente final (conta sem ' +
+      'vínculo): o arquivo vai para a loja da URL, com o prefixo dela, e é do cliente, que o lê e ' +
+      'mais nada; a equipe da loja também o lê.',
   })
 
   constructor(private readonly useCase: StoragesFileCreateUseCase) {}

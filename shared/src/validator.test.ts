@@ -22,12 +22,25 @@ import {
  * without anyone registering it here. `Client*Validator` is left out: it proves data the client
  * keeps in `localStorage`, which never shows a message to anyone.
  */
-const validators = Object.entries(shared)
-  .filter(([name]) => name.endsWith('Validator') && !name.startsWith('Client'))
-  .flatMap(([name, schema]) => {
-    if (!(schema instanceof z.ZodType)) return []
-    return [{ name, schema }]
-  })
+const schemas = Object.entries(shared).flatMap(([name, schema]) => {
+  if (!(schema instanceof z.ZodType)) return []
+  return [{ name, schema }]
+})
+
+const validators = schemas.filter(
+  ({ name }) => name.endsWith('Validator') && !name.startsWith('Client'),
+)
+
+/**
+ * The schemas whose fields a label may name: the validators above plus the ones that never show a
+ * message but still name a field the interface labels. `Client*Validator` (what the client keeps
+ * in `localStorage`) and `*Params` (the segments of a route, `city` and `store`, which the
+ * backend validates and the frontend reads from the URL). A label is an orphan only when none of
+ * them has the field.
+ */
+const labelOwners = schemas.filter(
+  ({ name }) => name.endsWith('Validator') || name.endsWith('Params'),
+)
 
 /**
  * The JSON Schema of a validator, on the output side: a preprocess (`Rule.optional`) is read by
@@ -74,6 +87,10 @@ function fieldsOf(schema: unknown, prefix = ''): Array<[string, unknown]> {
 
 const fields = validators.flatMap(({ name, schema }) =>
   fieldsOf(jsonSchemaOf(schema)).map(([path, node]) => ({ name, path, node })),
+)
+
+const labelFields = labelOwners.flatMap(({ schema }) =>
+  fieldsOf(jsonSchemaOf(schema)).map(([path]) => path),
 )
 
 /** The last segment of a path: `parts.etag` is `etag`. */
@@ -195,6 +212,49 @@ describe('validators > text ceilings', () => {
   })
 })
 
+/**
+ * The message network (`_standards/i18n.md` §4): what the label and message tables say must match
+ * what the validators ask for, in both directions. Each mistake breaks nothing and is therefore
+ * never noticed: a label left behind by a removed field, a message for a rule nobody calls, a
+ * rule that fails and falls to Zod's generic English text.
+ */
+describe('validators > message network', () => {
+  it('a label may name a field of a Client validator or of a *Params schema', () => {
+    const owners = labelOwners.map(({ name }) => name)
+
+    expect(owners).toContain('ClientTableLayoutValidator')
+    expect(owners).not.toContain('Rule')
+    expect(validators.some(({ name }) => name.startsWith('Client'))).toBe(false)
+  })
+
+  it('when a label exists, some validator has the field', () => {
+    const known = new Set(labelFields.flatMap((path) => [path, leaf(path)]))
+
+    for (const locale of LOCALES) {
+      const orphans = Object.keys(PROJECT_FIELD_LABELS[locale]).filter(
+        (key) => !known.has(key),
+      )
+
+      expect(orphans, locale).toEqual([])
+    }
+  })
+
+  it('when a project message names a field, some validator has the field', () => {
+    // The rule half of the key is checked in the backend's `lang.unit.spec.ts`, which can read
+    // the source: `shared/` has no Node types on purpose.
+    const known = new Set(fields.map(({ path }) => leaf(path)))
+
+    for (const locale of LOCALES) {
+      const orphans = Object.keys(PROJECT_RULE_MESSAGES[locale]).filter(
+        (key) =>
+          key.includes('.') && !known.has(key.slice(0, key.indexOf('.'))),
+      )
+
+      expect(orphans, locale).toEqual([])
+    }
+  })
+})
+
 describe('Rule.optional', () => {
   it("when the field is left blank, '' counts as absent, as on the API", () => {
     const schema = z.object({ email: Rule.optional(Rule.email()) })
@@ -214,9 +274,118 @@ describe('Rule.optional', () => {
   })
 })
 
+describe('Rule.optionalText', () => {
+  const schema = z.object({ note: Rule.optionalText(10) })
+
+  it('when the text is blank or only spaces, it is null; absent stays absent', () => {
+    expect(schema.parse({ note: '' })).toEqual({ note: null })
+    expect(schema.parse({ note: '   ' })).toEqual({ note: null })
+    expect(schema.parse({ note: null })).toEqual({ note: null })
+    expect(schema.parse({})).toEqual({})
+  })
+
+  it('when the text has a value, it is trimmed and keeps the ceiling', () => {
+    expect(schema.parse({ note: ' oi ' })).toEqual({ note: 'oi' })
+    expect(schema.safeParse({ note: 'x'.repeat(11) }).success).toBe(false)
+  })
+})
+
 describe('Rule.email', () => {
   it('when the address comes in capitals, it is stored in lowercase', () => {
     expect(Rule.email().parse('Ana@Maiyu.COM.br')).toBe('ana@maiyu.com.br')
+  })
+})
+
+describe('Rule.anyPhone', () => {
+  const MOBILE = '+5597991234567'
+  const LANDLINE = '+559734123456'
+
+  it('when it is a mobile or a landline, in any mask, it gives the same E.164', () => {
+    for (const raw of ['(97) 99123-4567', '+55 97 99123-4567', '97991234567'])
+      expect(Rule.anyPhone().parse(raw)).toBe(MOBILE)
+    for (const raw of ['(97) 3412-3456', '9734123456', '+55 97 3412-3456'])
+      expect(Rule.anyPhone().parse(raw)).toBe(LANDLINE)
+  })
+
+  it('when it is neither, refuses it with the anyPhone message', () => {
+    const Schema = z.object({ phone: Rule.anyPhone() })
+
+    for (const raw of [
+      'abc',
+      '979912345',
+      '(97) 1234-5678',
+      '+1 202 555 0100',
+      'ligue 97991234567',
+      '(97) 3412-3456 ramal',
+    ]) {
+      expect(
+        ValidationFixture.messages(Schema.safeParse({ phone: raw })),
+      ).toEqual([
+        { field: 'phone', message: 'Informe um telefone válido, com DDD' },
+      ])
+    }
+  })
+})
+
+describe('Rule.phone', () => {
+  const MOBILE = '+5597991234567'
+
+  it('when the text is longer than a formatted number, refuses it by the ceiling', () => {
+    for (const rule of [Rule.phone(), Rule.anyPhone()])
+      expect(
+        ValidationFixture.messages(
+          z.object({ phone: rule }).safeParse({ phone: '9'.repeat(30) }),
+        ),
+      ).toEqual([
+        { field: 'phone', message: 'Informe no máximo 20 caracteres' },
+      ])
+  })
+
+  it('when the number has a mask, spaces or the +55, it gives the same E.164', () => {
+    for (const raw of [
+      '(97) 99123-4567',
+      '97991234567',
+      '+55 97 99123-4567',
+      '55 (97) 99123-4567',
+      ' +5597991234567 ',
+    ])
+      expect(Rule.phone().parse(raw)).toBe(MOBILE)
+  })
+
+  it('when the area code is 55, the country code is not read twice', () => {
+    expect(Rule.phone().parse('55991234567')).toBe('+5555991234567')
+  })
+
+  it('when it is not a Brazilian mobile, refuses it with the phone message', () => {
+    const Schema = z.object({ phone: Rule.phone() })
+
+    for (const raw of [
+      'abc',
+      '9799123456',
+      '(97) 3412-3456',
+      '+1 202 555 0100',
+      'ligue 97991234567',
+      '97991234567x',
+    ])
+      expect(
+        ValidationFixture.messages(Schema.safeParse({ phone: raw })),
+      ).toEqual([
+        { field: 'phone', message: 'Informe um celular válido, com DDD' },
+      ])
+  })
+
+  it('when the phone is blank, it is the required message, like every field', () => {
+    const Schema = z.object({ phone: Rule.phone() })
+
+    expect(ValidationFixture.messages(Schema.safeParse({ phone: '' }))).toEqual(
+      [{ field: 'phone', message: 'Informe o celular' }],
+    )
+  })
+
+  it('when read by Rule.normalizePhone, it leaves the invalid text as it came', () => {
+    expect(Rule.normalizePhone('abc')).toBe('abc')
+    expect(Rule.normalizePhone('tel 97991234567')).toBe('tel 97991234567')
+    expect(Rule.normalizePhone('(97) 99123-4567')).toBe(MOBILE)
   })
 })
 
@@ -309,6 +478,25 @@ describe('ValidationMessage', () => {
       { field: 'name', message: 'Ingrese el nombre' },
     ])
   })
+
+  it.each([
+    [LOCALE.PT_BR, 'Informe ao menos 1 itens'],
+    [LOCALE.EN, 'Enter at least 1 items'],
+    [LOCALE.ES, 'Ingrese al menos 1 elementos'],
+  ])(
+    'when a list has fewer items than the minimum, %s says so (array.minLength)',
+    (locale, message) => {
+      ValidationMessage.setLocale(locale)
+
+      expect(
+        ValidationFixture.messages(
+          z
+            .object({ tags: z.array(z.string()).min(1) })
+            .safeParse({ tags: [] }),
+        ).map((each) => each.message),
+      ).toEqual([message])
+    },
+  )
 
   it("when the rule has no house message, Zod's locale answers in the active language", () => {
     // An unknown key has no line in `RULE_MESSAGES`: `ValidationMessage.resolve` returns

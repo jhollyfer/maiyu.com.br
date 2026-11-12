@@ -1,8 +1,12 @@
 import { createHash } from 'node:crypto'
 
+import type { HttpContext } from '@adonisjs/core/http'
 import limiter from '@adonisjs/limiter/services/main'
 
+import { LoginIdentity } from '@maiyu/shared'
+
 import { SESSION_TOKEN } from '#config/session-token'
+import { UserRepository } from '#repositories/user/user.repository'
 
 /**
  * The house rate limits (DECISIONS.md #130, backend.md §4.10), the same in every project.
@@ -23,18 +27,47 @@ import { SESSION_TOKEN } from '#config/session-token'
  */
 export class LimiterKey {
   /**
-   * The sign-in account, by the normalized e-mail, so case and spacing do not open new
-   * buckets. `null` without a usable e-mail: inventing a key would put every malformed
-   * request in one bucket, and twenty of them would lock the sign-in of someone else.
+   * The sign-in account, by the normalized login (e-mail or phone, DECISIONS.md #396), so case,
+   * spacing and the phone mask do not open new buckets. `null` without a usable login: inventing
+   * a key would put every malformed request in one bucket, and twenty of them would lock the
+   * sign-in of someone else.
    */
-  static account(email: unknown): string | null {
-    if (typeof email !== 'string') return null
+  static account(login: unknown): string | null {
+    if (typeof login !== 'string') return null
 
-    const normalized = email.trim().toLowerCase()
+    const normalized = LoginIdentity.of(login).value
 
     if (normalized.length === 0) return null
 
     return `signin:${LimiterKey.digest(normalized)}`
+  }
+
+  /**
+   * The sign-in account by the account's own id, once the login names one: an account with an
+   * e-mail and a phone is one bucket, not one per identity (DECISIONS.md #409).
+   */
+  static accountOf(userId: string): string {
+    return `signin-user:${userId}`
+  }
+
+  /**
+   * The second level of key: when the login names an account, the bucket is the account's id, so
+   * its e-mail and its phone share it. A login that names nobody keeps the digest of the text.
+   */
+  static async accountBucket(
+    context: HttpContext,
+    login: string,
+    fallback: string,
+  ): Promise<string> {
+    const identity = LoginIdentity.of(login)
+    const users = await context.containerResolver.make(UserRepository)
+    const finders = {
+      email: (value: string) => users.findByEmail(value),
+      phone: (value: string) => users.findByPhone(value),
+    }
+    const user = await finders[identity.kind](identity.value)
+
+    return (user && LimiterKey.accountOf(user.id)) || fallback
   }
 
   /**
@@ -70,24 +103,31 @@ export const signInThrottle = limiter.define('signIn', function () {
   return limiter.allowRequests(5).every('1 minute').blockFor('10 mins')
 })
 
+/** What `limiter.define` accepts back, named because the builder may not be `async` and return `null`. */
+type AccountPolicy = ReturnType<typeof limiter.allowRequests>
+
 /**
- * The same door, by account. A second policy and not an `ip:email` key: the joint key
- * would give each IP five attempts per e-mail, making enumeration cheaper. Looser than
+ * The same door, by account. A second policy and not an `ip:login` key: the joint key
+ * would give each IP five attempts per account, making enumeration cheaper. Looser than
  * the IP one because this is the ceiling a person who forgot the password runs into.
  */
 export const signInAccountThrottle = limiter.define(
   'signInAccount',
-  function (context) {
+  function (context): Promise<AccountPolicy> | null {
     // Read before the validator runs, hence the normalization inside the key.
-    const key = LimiterKey.account(context.request.input('email'))
+    const login: unknown = context.request.input('login')
+    const key = LimiterKey.account(login)
 
     if (!key) return null
 
-    return limiter
-      .allowRequests(20)
-      .every('1 hour')
-      .blockFor('10 mins')
-      .usingKey(key)
+    return LimiterKey.accountBucket(context, String(login), key).then(
+      (bucket) =>
+        limiter
+          .allowRequests(20)
+          .every('1 hour')
+          .blockFor('10 mins')
+          .usingKey(bucket),
+    )
   },
 )
 

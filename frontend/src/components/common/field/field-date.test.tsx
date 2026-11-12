@@ -1,14 +1,8 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import type { Resolver, ResolverResult } from 'react-hook-form'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -54,8 +48,6 @@ function Form({
     </form>
   )
 }
-
-afterEach(cleanup)
 
 describe('FieldDate', () => {
   it('when the submit is invalid, it focuses the calendar trigger and shows the error', async () => {

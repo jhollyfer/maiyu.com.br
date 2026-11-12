@@ -1,9 +1,9 @@
-import { readdir } from 'node:fs/promises'
+import { readdir, readFile } from 'node:fs/promises'
 
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
-import { FIELD_LABELS, LOCALE, LOCALES } from '@maiyu/shared'
+import { FIELD_LABELS, LOCALE, LOCALES, RULE_MESSAGES } from '@maiyu/shared'
 
 import {
   icuVariables,
@@ -147,6 +147,117 @@ test.group('lang > validator.json matches shared', () => {
       )
 
       assert.deepEqual(missing, [], locale)
+    }
+  })
+
+  test('when shared has a rule message, the backend has the same key', async ({
+    assert,
+  }) => {
+    // The same trap as the labels, for the project's rules: a message added to
+    // `PROJECT_RULE_MESSAGES` and forgotten in `validator.json` leaves the 422 in the VineJS
+    // default text, in English.
+    for (const locale of LOCALES) {
+      const entries = await readValidatorLang(locale)
+      const missing = Object.keys(RULE_MESSAGES[locale]).filter(
+        (rule) => !entries.has(`shared.messages.${rule}`),
+      )
+
+      assert.deepEqual(missing, [], locale)
+    }
+  })
+
+  test('when the backend has a shared label or message, shared still has it', async ({
+    assert,
+  }) => {
+    // The orphans, the other way round: a key left in the lang files after the field or the
+    // rule left `shared/` is text nobody reads. `params` is the backend's own: the label of the
+    // route-parameters block of a VineJS validator, which no Zod schema has.
+    for (const locale of LOCALES) {
+      const entries = await readValidatorLang(locale)
+      const orphans = [...entries.keys()].filter(
+        (key) =>
+          key !== 'shared.fields.params' &&
+          key.startsWith('shared.') &&
+          sharedMessage(locale, key) === undefined,
+      )
+
+      assert.deepEqual(orphans, [], locale)
+    }
+  })
+
+  /** The rules Zod itself raises, which `ValidationMessage.rule` maps to a key. */
+  const BUILT_IN_RULES = new Set([
+    'required',
+    'string',
+    'number',
+    'boolean',
+    'array',
+    'object',
+    'enum',
+    'minLength',
+    'maxLength',
+    'min',
+    'max',
+    'positive',
+    'withoutDecimals',
+    'array.minLength',
+    'array.maxLength',
+    'email',
+    'uuid',
+    'url',
+    'regex',
+  ])
+
+  /** The rules the house refinements name (`params: { rule: '...' }`) in `shared/src`. */
+  async function customRules(): Promise<Set<string>> {
+    const files = await readdir(app.makePath('../shared/src'), {
+      recursive: true,
+    })
+    const found = new Set<string>()
+
+    for (const file of files.filter((name) => /(?<!\.test)\.ts$/.test(name))) {
+      const source = await readFile(app.makePath('../shared/src', file), 'utf8')
+
+      for (const match of source.matchAll(/rule:\s*'(\w+)'/g)) {
+        if (match[1] !== undefined) found.add(match[1])
+      }
+    }
+
+    return found
+  }
+
+  test('when shared has a message, some validator can raise its rule', async ({
+    assert,
+  }) => {
+    const custom = await customRules()
+
+    for (const locale of LOCALES) {
+      const orphans = Object.keys(RULE_MESSAGES[locale]).filter((key) => {
+        const rule = key.slice(key.lastIndexOf('.') + 1)
+
+        return (
+          !BUILT_IN_RULES.has(key) &&
+          !BUILT_IN_RULES.has(rule) &&
+          !custom.has(rule)
+        )
+      })
+
+      assert.deepEqual(orphans, [], locale)
+    }
+  })
+
+  test('when a house rule is named in shared, it has a message in the three languages', async ({
+    assert,
+  }) => {
+    const custom = await customRules()
+
+    for (const locale of LOCALES) {
+      const keys = Object.keys(RULE_MESSAGES[locale])
+      const silent = [...custom].filter(
+        (rule) => !keys.some((key) => key === rule || key.endsWith(`.${rule}`)),
+      )
+
+      assert.deepEqual(silent, [], locale)
     }
   })
 })

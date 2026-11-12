@@ -7,7 +7,8 @@ import type { SessionTokens } from '#repositories/session/session.repository'
  * The session transport: the token pair in an `httpOnly` cookie, with the attributes of
  * `config/session-token.ts` (`_standards/backend.md` §4.10, `DECISIONS.md` #339). It is HTTP
  * edge mechanics, not a service: it talks to nothing outside and has no dependency; it lives
- * in the module because sign-in, refresh and sign-out use it.
+ * in the root of `features/` because `authentication` (sign-in, refresh, sign-out) and
+ * `account` (password change) use it, and a feature does not import another.
  *
  * Token never in the response body: the cookie travels on its own.
  */

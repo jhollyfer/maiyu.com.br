@@ -23,7 +23,25 @@
       "search": "the search",
       "sort": "the sort order",
       "direction": "the sort direction",
-      "trashed": "the archived filter"
+      "trashed": "the archived filter",
+      "state": "the state",
+      "timeZone": "the time zone",
+      "phone": "the mobile number",
+      "login": "the email or the mobile number",
+      "latitude": "the latitude",
+      "longitude": "the longitude",
+      "south": "the south limit",
+      "west": "the west limit",
+      "north": "the north limit",
+      "east": "the east limit",
+      "tenantId": "the client",
+      "type": "the type",
+      "cityId": "the city",
+      "parentId": "the parent client",
+      "userId": "the account",
+      "storageId": "the receipt",
+      "reason": "the reason",
+      "receiptId": "the checked receipt"
     },
     "messages": {
       "required": "Enter { field }",
@@ -31,7 +49,7 @@
       "enum": "Select { field }",
       "email": "Enter a valid email",
       "number": "Enter a valid number",
-      "boolean": "Enter true or false",
+      "boolean": "Choose whether { field } applies",
       "array": "Enter a list",
       "object": "Enter an object",
       "richText": "Enter valid formatted text",
@@ -43,12 +61,20 @@
       "max": "Enter a value less than or equal to { max }",
       "positive": "Enter a value greater than zero",
       "withoutDecimals": "Enter a whole number",
+      "array.minLength": "Enter at least { min } items",
       "array.maxLength": "Enter at most { max } items",
       "password.regex": "The password needs a lowercase letter, an uppercase letter, a number and a special character",
       "password.minLength": "The password must have at least { min } characters",
       "password.maxLength": "The password must have at most { max } characters",
       "passwordConfirmation.confirmed": "The passwords do not match",
-      "fileName.regex": "The file name cannot have control characters"
+      "fileName.regex": "The file name cannot have control characters",
+      "slug.regex": "Use only lowercase letters, numbers and hyphens in the slug",
+      "slug.notIn": "This slug is reserved, choose another",
+      "state.regex": "Enter the state as two uppercase letters",
+      "timeZone": "Select a valid time zone",
+      "phone": "Enter a valid mobile number, with area code",
+      "anyPhone": "Enter a valid phone number, with area code",
+      "regex": "Enter { field } in a valid format"
     }
   }
 }

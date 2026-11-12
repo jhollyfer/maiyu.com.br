@@ -1,8 +1,5 @@
 import { m } from '#/paraglide/messages'
-
-import type { ArticleCategory } from './articles'
-import type { JobPosition } from './jobs'
-import type { ProjectStatus } from './projects'
+import type { ArticleCategory, JobPosition, ProjectStatus } from '@maiyu/shared'
 
 /**
  * The labels of each vocabulary value, in the request's language.

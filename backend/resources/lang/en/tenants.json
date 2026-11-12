@@ -1,0 +1,13 @@
+{
+  "not_found": "Client not found",
+  "invalid": "Invalid client",
+  "parent_nested_field": "The parent client must be top-level, and a client with children gets no parent.",
+  "parent_not_found_field": "No client with this identifier.",
+  "city_not_found_field": "No city with this identifier.",
+  "slug_taken": "Slug in use",
+  "slug_taken_field": "Another client of the city already uses this slug.",
+  "member_not_found": "Membership not found",
+  "user_not_found_field": "No account with this identifier.",
+  "parent_elsewhere_field": "The parent client must be an active client of the same city.",
+  "has_children_field": "A tenant with children does not move to another city: move the children first."
+}

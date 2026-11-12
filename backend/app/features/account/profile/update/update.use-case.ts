@@ -16,7 +16,6 @@ import { ProfilePresenter } from '../profile.presenter.ts'
 
 import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import HTTPException from '#exceptions/http.exception'
-import { UnitOfWork } from '#repositories/unit-of-work/unit-of-work'
 import { UserRepository } from '#repositories/user/user.repository'
 import { ClockContract } from '#services/clock/clock.contract'
 import type { AccountProfileUpdatePayload } from '#validators/account/profile.validator'
@@ -33,13 +32,14 @@ type Result = {
 type Response = Either<HTTPException, Result>
 
 /**
- * Changes the owner's name or password. The current password comes first: the cookie
+ * Changes the owner's name, password or phone. The current password comes first: the cookie
  * proves the session, not the person, and a stolen cookie must not be able to lock the owner
- * out. Changing the password ends every session of the account, the one that made this request
- * included: the entity asks for it, and the repository writes the row and the revocation on
- * the same unit of work, so a failed save keeps the old password and its sessions.
+ * out. Changing the password or the phone (what the account signs in with) ends every session of
+ * the account, the one that made this request included: `UserRepository.save` writes the row and
+ * the revocation in one transaction, so a failed save keeps the old credentials and its sessions.
  *
- * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`.
+ * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`; a phone
+ * another account holds is `422 PHONE_TAKEN` on `phone`.
  *
  * A name alone is not a credential: `200` and the sessions stay. The e-mail does not change here.
  */
@@ -47,7 +47,6 @@ type Response = Either<HTTPException, Result>
 export default class AccountProfileUpdateUseCase {
   constructor(
     private readonly users: UserRepository,
-    private readonly unitOfWork: UnitOfWork,
     private readonly clock: ClockContract,
     private readonly i18n: I18n,
   ) {}
@@ -70,54 +69,48 @@ export default class AccountProfileUpdateUseCase {
           ),
         )
 
+      const hasher = LegacyAwareHashDriver.hasher()
+      const stored = user.snapshot().password
       const proven =
         currentPassword !== undefined &&
-        (await LegacyAwareHashDriver.hasher().verify(
-          user.snapshot().password,
-          currentPassword,
-        ))
+        (await hasher.verify(stored, currentPassword))
       if (!proven) return left(this.wrongCurrentPassword())
 
       // Same password is not a change, yet it would end every session: refused before the entity
       // is touched. The entity only holds the hash, so the comparison is a verify against it.
-      if (await this.isSamePassword(user.snapshot().password, patch.password))
+      if (
+        patch.password !== undefined &&
+        (await hasher.verify(stored, patch.password))
+      )
         return left(
           ProfileRefusal.http({ code: 'PASSWORD_SAME_AS_CURRENT' }, this.i18n),
         )
 
+      const phoneChanged =
+        patch.phone !== undefined && patch.phone !== user.snapshot().phone
+
       user.update(patch, this.clock.now().toJSDate())
-
-      const saved = await this.unitOfWork.run(() => this.users.save(user))
-
-      if (saved.isLeft()) {
-        // The e-mail does not change here, so the `UNIQUE` index has nothing to refuse: a
-        // conflict would be a defect, and the other left is the database.
-        if (saved.value.code === 'UNIQUE_CONFLICT')
-          return left(
-            this.failure(
-              new Error('unexpected unique conflict on the profile'),
-            ),
-          )
-
-        return left(this.failure(saved.value.cause))
-      }
+      const saved = await this.users.save(user)
+      if (saved.isLeft())
+        return left(ProfileRefusal.http(saved.value, this.i18n))
 
       return right({
         profile: ProfilePresenter.show(user),
-        sessionsRevoked: user.credentials().revokeSessions,
+        sessionsRevoked: patch.password !== undefined || phoneChanged,
       })
     } catch (error) {
-      return left(this.failure(error))
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[account/profile > update][error]',
+      )
+
+      return left(
+        HTTPException.InternalServerError(
+          this.i18n.t('errors.internal'),
+          'ACCOUNT_PROFILE_UPDATE_ERROR',
+        ),
+      )
     }
-  }
-
-  private async isSamePassword(
-    stored: string,
-    candidate: string | undefined,
-  ): Promise<boolean> {
-    if (candidate === undefined) return false
-
-    return LegacyAwareHashDriver.hasher().verify(stored, candidate)
   }
 
   private wrongCurrentPassword(): HTTPException {
@@ -127,18 +120,6 @@ export default class AccountProfileUpdateUseCase {
       {
         currentPassword: this.i18n.t('account.current_password_invalid_field'),
       },
-    )
-  }
-
-  private failure(cause: unknown): HTTPException {
-    HttpContext.getOrFail().logger.error(
-      { err: cause },
-      '[account/profile > update][error]',
-    )
-
-    return HTTPException.InternalServerError(
-      this.i18n.t('errors.internal'),
-      'ACCOUNT_PROFILE_UPDATE_ERROR',
     )
   }
 }

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import * as React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   ConfirmDialogDescription,
@@ -17,8 +17,6 @@ import {
 import { DropdownMenuItem } from '#/components/ui/dropdown-menu'
 import { createConfirmHandle } from '#/lib/dialog-handle'
 import { m } from '#/paraglide/messages'
-
-afterEach(cleanup)
 
 function Row({ onConfirm }: Readonly<{ onConfirm: () => void }>) {
   const [handle] = React.useState(() => createConfirmHandle())

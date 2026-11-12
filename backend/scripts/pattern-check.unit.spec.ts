@@ -252,6 +252,131 @@ test.group('pattern:check > catalog', () => {
     )
   })
 
+  test('a vine.string() without trim is refused; password, uuid and a trimmed chain are not', ({
+    assert,
+  }) => {
+    const file = (text: string): SourceFile => ({
+      path: 'backend/app/validators/posts/posts.validator.ts',
+      text,
+    })
+    assert.deepEqual(
+      rules([
+        file(
+          'export const V = vine.create({\n  title: vine.string().maxLength(100),\n})',
+        ),
+      ]),
+      ['vine-string-trim'],
+    )
+    assert.deepEqual(
+      rules([
+        file(
+          'export const V = vine.create({\n  title: vine\n    .string()\n    .minLength(1)\n    .maxLength(100),\n})',
+        ),
+      ]),
+      ['vine-string-trim'],
+    )
+    assert.deepEqual(
+      rules([
+        file(
+          'export const V = vine.create({\n  title: vine\n    .string()\n    .trim()\n    .maxLength(100),\n  id: vine.string().uuid(),\n  password: vine.string().minLength(8).maxLength(32),\n  currentPassword: vine.string().minLength(1),\n  passwordConfirmation: vine.string(),\n})',
+        ),
+      ]),
+      [],
+    )
+    assert.deepEqual(
+      rules([
+        {
+          path: 'backend/app/core/validator.ts',
+          text: 'class Rule {\n  static password() {\n    return vine.string().minLength(8)\n  }\n  static search() {\n    return vine.string().maxLength(100)\n  }\n}',
+        },
+      ]),
+      ['vine-string-trim'],
+    )
+    assert.deepEqual(
+      PatternRules.untrimmedStrings(
+        'class Rule {\n  static password() {\n    return vine.string().minLength(8)\n  }\n  static search() {\n    return vine.string().maxLength(100)\n  }\n}',
+      ),
+      [6],
+    )
+  })
+
+  test('a link given to a render prop to look like a button is refused: Link plus buttonVariants', ({
+    assert,
+  }) => {
+    const lines = (path: string, text: string) =>
+      run([{ path, text }])
+        .filter((f) => f.rule === 'link-as-button')
+        .map((f) => f.line)
+    const screen = 'frontend/src/routes/_private/posts/index.lazy.tsx'
+
+    assert.deepEqual(
+      lines(screen, '<Button render={<Link to="/x" />}>Novo</Button>\n'),
+      [1],
+    )
+    // The element on the line after `render={`, the form Prettier writes.
+    assert.deepEqual(
+      lines(
+        'frontend/src/components/common/table/table-header.tsx',
+        '<Button\n  render={\n    <Link to={to}>\n      <PlusIcon />\n    </Link>\n  }\n/>\n',
+      ),
+      [2],
+    )
+    assert.deepEqual(
+      lines(screen, '<Button render={<a href="/x" />}>x</Button>\n'),
+      [1],
+    )
+    // The right way, a comment that names the forbidden form, a spec, and a Link with a reason.
+    assert.deepEqual(
+      lines(screen, '<Link to="/x" className={buttonVariants()}>Novo</Link>\n'),
+      [],
+    )
+    assert.deepEqual(
+      lines(
+        screen,
+        '// never `<Button render={<Link />}>`\n/* render={<Link /> */\n',
+      ),
+      [],
+    )
+    assert.deepEqual(
+      lines(
+        'frontend/src/routes/x.test.tsx',
+        '<Button render={<Link to="/x" />} />\n',
+      ),
+      [],
+    )
+    assert.deepEqual(
+      lines(
+        screen,
+        '// eslint-disable-next-line no-restricted-syntax -- a menu item that navigates\n<MenuItem render={<Link to="/x" />} />\n',
+      ),
+      [],
+    )
+    // The owner is the exact `Button`, found past the JSX an attribute holds.
+    assert.deepEqual(
+      lines(screen, '<Button icon={<X />} render={<Link to="/x" />} />\n'),
+      [1],
+    )
+    assert.deepEqual(
+      lines(
+        screen,
+        '<SheetClose nativeButton={false} render={<Link to="/x" />} />\n',
+      ),
+      [],
+    )
+    assert.deepEqual(
+      lines(
+        screen,
+        '<SidebarMenuButton render={<Link to="/x" />}>x</SidebarMenuButton>\n',
+      ),
+      [],
+    )
+    // A `render` of another element is not a link as a button.
+    assert.deepEqual(
+      lines(screen, '<Switch render={<button type="button" />} />\n'),
+      [],
+    )
+  })
+
   test('a native interactive element outside components/ui/ is refused', ({
     assert,
   }) => {

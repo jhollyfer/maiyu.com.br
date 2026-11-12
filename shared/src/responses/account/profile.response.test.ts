@@ -8,7 +8,8 @@ describe('AccountProfileShowResponse', () => {
       id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
       name: 'Ana',
       email: 'ana@exemplo.com',
-      role: 'ADMINISTRATOR',
+      phone: null,
+      platformRole: 'USER',
       password: '$argon2id$segredo',
     })
 
@@ -16,7 +17,8 @@ describe('AccountProfileShowResponse', () => {
       id: '1a2b3c4d-5e6f-4a7b-8c9d-0e1f2a3b4c5d',
       name: 'Ana',
       email: 'ana@exemplo.com',
-      role: 'ADMINISTRATOR',
+      phone: null,
+      platformRole: 'USER',
     })
   })
 })

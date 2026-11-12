@@ -9,7 +9,7 @@ import {
 } from '#/components/common/page-shell/page-header'
 import { PageShellHeader } from '#/components/common/page-shell/page-shell'
 import { SubmitButton } from '#/components/common/submit-button/submit-button'
-import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
@@ -85,22 +85,22 @@ export function FormShellActions({
  */
 export function FormShellDiscard({
   children = m.kit_discard(),
-  ...rest
-}: React.ComponentProps<typeof Button>): React.JSX.Element {
+  className,
+}: Readonly<{
+  children?: React.ReactNode
+  className?: string
+}>): React.JSX.Element {
   const { backTo, backParams } = useFormShellContext('FormShellDiscard')
 
   return (
-    <Button
+    <Link
+      to={backTo}
+      params={backParams}
       data-slot="form-shell-discard"
-      variant="outline"
-      type="button"
-      {...rest}
-      render={
-        <Link to={backTo} params={backParams}>
-          {children}
-        </Link>
-      }
-    />
+      className={cn(buttonVariants({ variant: 'outline' }), className)}
+    >
+      {children}
+    </Link>
   )
 }
 

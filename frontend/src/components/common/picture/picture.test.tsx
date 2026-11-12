@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { Picture } from '#/components/common/picture/picture'
-
-afterEach(cleanup)
 
 describe('Picture', () => {
   it('loads an LCP image eagerly and with high priority', () => {

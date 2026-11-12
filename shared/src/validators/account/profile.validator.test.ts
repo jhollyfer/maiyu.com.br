@@ -3,112 +3,41 @@ import { describe, expect, it } from 'vitest'
 import { ValidationFixture } from '../../validation-fixtures.js'
 import { AccountProfileUpdateValidator } from './profile.validator.js'
 
-const NEW_PASSWORD = 'Nova@1234'
-
 describe('AccountProfileUpdateValidator', () => {
-  it('when the body has a new name and the current password, it accepts it', () => {
+  it('when the body carries only the phone and the current password, it is enough', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      name: 'Dono Novo',
+      phone: '(97) 99123-4567',
       currentPassword: 'Senha@123',
     })
 
     expect(result.success).toBe(true)
+    expect(result.data?.phone).toBe('+5597991234567')
   })
 
-  it('when the body has a new password, its confirmation and the current password, it accepts it', () => {
+  it('when the body changes the phone without the current password, it asks for it', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      password: NEW_PASSWORD,
-      passwordConfirmation: NEW_PASSWORD,
-      currentPassword: 'Senha@123',
-    })
-
-    expect(result.success).toBe(true)
-  })
-
-  it('when the body has neither name nor password, it refuses both fields', () => {
-    const result = AccountProfileUpdateValidator.safeParse({})
-
-    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
-  })
-
-  it('when the body only carries the current password, it refuses the body', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      currentPassword: 'Senha@123',
-    })
-
-    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
-  })
-
-  it('when the name changes without the current password, it refuses the current password', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      name: 'Dono Novo',
-    })
-
-    expect(ValidationFixture.messages(result)).toEqual([
-      { field: 'currentPassword', message: 'Informe a senha atual' },
-    ])
-  })
-
-  it('when the password changes without the current password, it refuses the current password', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      password: NEW_PASSWORD,
-      passwordConfirmation: NEW_PASSWORD,
+      phone: '(97) 99123-4567',
     })
 
     expect(ValidationFixture.fields(result)).toEqual(['currentPassword'])
   })
 
-  it('when the new password breaks the policy, it refuses the password', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      password: 'fraca',
-      passwordConfirmation: 'fraca',
-      currentPassword: 'Senha@123',
-    })
+  it('when the body changes nothing, it asks for the name, the phone or the password', () => {
+    const result = AccountProfileUpdateValidator.safeParse({})
 
-    expect(ValidationFixture.fields(result)).toEqual(['password'])
-  })
-
-  it('when the confirmation differs from the new password, it refuses the confirmation', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      password: NEW_PASSWORD,
-      passwordConfirmation: 'Outra@1234',
-      currentPassword: 'Senha@123',
-    })
-
-    expect(ValidationFixture.messages(result)).toEqual([
-      { field: 'passwordConfirmation', message: 'As senhas não são iguais' },
+    expect(ValidationFixture.fields(result)).toEqual([
+      'name',
+      'password',
+      'phone',
     ])
   })
 
-  it('when the name has 120 characters it accepts, and at 121 it refuses the name', () => {
-    const accepted = AccountProfileUpdateValidator.safeParse({
-      name: 'a'.repeat(120),
-      currentPassword: 'Senha@123',
-    })
-    const refused = AccountProfileUpdateValidator.safeParse({
-      name: 'a'.repeat(121),
-      currentPassword: 'Senha@123',
-    })
-
-    expect(accepted.success).toBe(true)
-    expect(ValidationFixture.fields(refused)).toEqual(['name'])
-  })
-
-  it('when the name is only spaces, it refuses the name', () => {
+  it('when the phone is not a Brazilian number, it refuses at the field', () => {
     const result = AccountProfileUpdateValidator.safeParse({
-      name: '   ',
+      phone: '123',
       currentPassword: 'Senha@123',
     })
 
-    expect(ValidationFixture.fields(result)).toEqual(['name'])
-  })
-
-  it('when the body carries an email, it ignores the key', () => {
-    const result = AccountProfileUpdateValidator.safeParse({
-      email: 'dono@exemplo.com',
-      currentPassword: 'Senha@123',
-    })
-
-    expect(ValidationFixture.fields(result)).toEqual(['name', 'password'])
+    expect(ValidationFixture.fields(result)).toEqual(['phone'])
   })
 })

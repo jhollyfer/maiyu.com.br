@@ -123,7 +123,7 @@ const readStorages = () => request(ANY, (api) => api.get('/storages', {}))
 const signIn = () =>
   send((api) =>
     api.post('/authentication/sign-in', {
-      body: { email: 'ana@escola.br', password: 'segredo' },
+      body: { login: 'ana@escola.br', password: 'segredo' },
     }),
   )
 
@@ -463,7 +463,7 @@ test('Content-Type only with a body', async () => {
   const sent = requests[1]
   if (!sent) throw new Error('expected the POST to reach fetch')
   expect(JSON.parse(bodies.get(sent) ?? 'null')).toEqual({
-    email: 'ana@escola.br',
+    login: 'ana@escola.br',
     password: 'segredo',
   })
 })

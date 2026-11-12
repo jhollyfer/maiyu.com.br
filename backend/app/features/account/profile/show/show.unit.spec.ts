@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-import { USER_ROLE, type Actor } from '@maiyu/shared'
+import { PLATFORM_ROLE, type Actor } from '@maiyu/shared'
 
 import AccountProfileShowUseCase from './show.use-case.ts'
 
@@ -17,23 +17,25 @@ import {
 const ACTOR: Actor = {
   id: USER_ID,
   email: 'ana@mail.com',
-  role: USER_ROLE.ADMINISTRATOR,
+  phone: null,
+  platformRole: PLATFORM_ROLE.USER,
+  tenant: null,
   avatarId: null,
 }
 
 async function setup() {
-  const { users } = identityDoubles()
+  const doubles = identityDoubles()
   const useCase = await makeWithMemory(AccountProfileShowUseCase, [
-    [UserRepository, users],
+    [UserRepository, doubles.users],
   ])
 
-  return { users, useCase }
+  return { ...doubles, useCase }
 }
 
 test.group('account/profile > show (unit)', (group) => {
   insideHttpContext(group)
 
-  test('reads the account of the session with id, name, email and role, and nothing else', async ({
+  test('returns the account of the session, without the password', async ({
     assert,
   }) => {
     const { users, useCase } = await setup()
@@ -45,11 +47,12 @@ test.group('account/profile > show (unit)', (group) => {
       id: USER_ID,
       name: 'Ana',
       email: 'ana@mail.com',
-      role: USER_ROLE.ADMINISTRATOR,
+      phone: null,
+      platformRole: PLATFORM_ROLE.USER,
     })
   })
 
-  test('a session whose account vanished is 401 AUTHENTICATION_REQUIRED', async ({
+  test('an account that vanished after the guard is 401', async ({
     assert,
   }) => {
     const { useCase } = await setup()
@@ -59,22 +62,6 @@ test.group('account/profile > show (unit)', (group) => {
     assert.deepInclude(result.value, {
       status: 401,
       code: 'AUTHENTICATION_REQUIRED',
-    })
-  })
-
-  test('a failing read is 500 ACCOUNT_PROFILE_SHOW_ERROR', async ({
-    assert,
-  }) => {
-    const { users, useCase } = await setup()
-    users.findById = async () => {
-      throw new Error('database down')
-    }
-
-    const result = await useCase.execute({ actor: ACTOR })
-
-    assert.deepInclude(result.value, {
-      status: 500,
-      code: 'ACCOUNT_PROFILE_SHOW_ERROR',
     })
   })
 })

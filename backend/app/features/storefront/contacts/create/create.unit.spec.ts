@@ -56,7 +56,7 @@ test.group('storefront/contacts > create (unit)', (group) => {
     const contacts = new ContactMemoryRepository()
     const { clock, useCase } = await setup(contacts)
 
-    const result = await useCase.execute(PAYLOAD)
+    const result = await useCase.execute({ ...PAYLOAD, website: null })
 
     assert.deepEqual(result.value, {
       id: '00000000-0000-4000-8000-000000000001',
@@ -91,7 +91,7 @@ test.group('storefront/contacts > create (unit)', (group) => {
   }) => {
     const { useCase } = await setup(new BrokenContactRepository())
 
-    const result = await useCase.execute(PAYLOAD)
+    const result = await useCase.execute({ ...PAYLOAD, website: null })
 
     assert.deepInclude(result.value, {
       status: 500,

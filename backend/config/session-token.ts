@@ -64,6 +64,6 @@ if (domain) attributes = { ...base, domain }
  * The attributes of the session cookie, without the lifetime (DECISIONS.md #339). Issuing adds
  * the `maxAge` of each token; clearing reads exactly these, because deleting a cookie means
  * matching `name` + `domain` + `path`. Written only by
- * `features/authentication/_shared.session-cookie.ts`.
+ * `features/_shared.session-cookie.ts`.
  */
 export const SESSION_COOKIE: CookieAttributes = attributes

@@ -16,7 +16,8 @@ export class ProfilePresenter {
       id: props.id,
       name: props.name,
       email: props.email,
-      role: props.role,
+      phone: props.phone,
+      platformRole: props.platformRole,
     }
   }
 }

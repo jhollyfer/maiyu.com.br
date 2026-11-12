@@ -13,6 +13,7 @@
     "scripts/**/*.mjs",
     "vite.config.ts",
     "vitest.config.ts",
+    "vitest.setup.ts",
     // Paraglide's project config, present in every project with i18n.
     "project.inlang/**/*.ts",
     // The Tuyau registry types the client from the backend's routes and controllers, so the backend

@@ -19,6 +19,11 @@
  */
 import * as z from 'zod'
 
+// No `new Function` before the first schema: this module builds `z.object` at load, ahead of
+// `shared/src/validator.ts`, so its `jitless` came too late and every page reported a CSP
+// `script-src eval` violation (relato do manganga; _doc-lib/zod.md, `jitless`).
+z.config({ jitless: true })
+
 /**
  * A public origin without the trailing slash: `http.ts` and `lib/sitemap.ts` join it with paths
  * that start with `/`, and the slash would become `//` in every URL. Exported because

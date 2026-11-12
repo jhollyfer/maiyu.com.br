@@ -14,6 +14,7 @@ import {
 import { FileRefusal } from '../_shared.file-refusal.ts'
 import { FilePresenter } from '../files.presenter.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { Storage } from '#domain/storage/storage.entity'
 import HTTPException from '#exceptions/http.exception'
 import { UploadParts } from '#features/storages/_shared.parts'
@@ -48,7 +49,8 @@ type Response = Either<HTTPException, StoragesFileUploadResponse>
  * and a direct `PUT`. `UploadId`, `ETag` collection and two-step
  * confirmation for a 40 KB avatar would be ceremony with no function.
  *
- * The file is born without an owner: whoever attaches keeps the id.
+ * The file is born without an owner among the members: whoever attaches keeps the id. Uploaded by an
+ * end customer, it is the customer's (`customer_id`), under the store's tenant prefix.
  */
 @inject()
 export default class StoragesFileCreateUseCase {
@@ -60,7 +62,19 @@ export default class StoragesFileCreateUseCase {
   ) {}
 
   async execute(payload: Payload): Promise<Response> {
-    const key = this.bucket.key(payload.mimetype)
+    // The file belongs to the tenant the request writes in (DECISIONS.md #390), and an end customer's
+    // to the store the URL names, owned by the customer (DECISIONS.md #397). An account with no
+    // membership and no tenant in the URL opens no upload (only the platform owner writes tenant-less).
+    const target = TenantScope.customerTargetOf()
+    if (!target)
+      return left(
+        HTTPException.Forbidden(
+          this.i18n.t('errors.access_denied'),
+          'TENANT_REQUIRED',
+        ),
+      )
+
+    const key = this.bucket.key(payload.mimetype, target.tenantId)
     const totalParts = UploadParts.count(payload.size, PART_SIZE)
 
     let uploadId: string | null = null
@@ -99,6 +113,8 @@ export default class StoragesFileCreateUseCase {
 
       const opened = Storage.open({
         id: randomUUID(),
+        tenantId: target.tenantId,
+        customerId: target.customerId,
         key,
         originalName: payload.fileName,
         mimetype: payload.mimetype,

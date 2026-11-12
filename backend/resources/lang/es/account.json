@@ -1,6 +1,8 @@
 {
   "current_password_invalid": "Contraseña actual incorrecta",
   "current_password_invalid_field": "La contraseña actual no coincide",
-  "password_same_as_current": "La nueva contraseña debe ser diferente de la actual",
-  "password_same_as_current_field": "La nueva contraseña debe ser distinta de la actual"
+  "password_same_as_current": "La nueva contraseña debe ser distinta de la actual",
+  "password_same_as_current_field": "La nueva contraseña debe ser distinta de la actual",
+  "phone_taken": "Este celular ya está en uso",
+  "phone_taken_field": "Este celular ya está en uso por otra cuenta"
 }

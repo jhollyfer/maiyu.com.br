@@ -16,6 +16,8 @@ const OPENING = {
   size: 1024,
   uploadId: 'upload',
   partSize: 10,
+  tenantId: null,
+  customerId: null,
   now: NOW,
 }
 

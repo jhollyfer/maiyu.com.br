@@ -89,7 +89,7 @@ test.group('storages > delete', (group) => {
     client,
     assert,
   }) => {
-    const { user, session } = await signInWithFactory(client, 'administrator')
+    const { user, session } = await signInWithFactory(client, 'staff')
     const storage = await uploadFile(client, session)
 
     // The avatar is the reference the kit itself has (`STORAGE_REFERENCES`); the screen that
@@ -113,7 +113,7 @@ test.group('storages > delete', (group) => {
     client,
     assert,
   }) => {
-    const { user, session } = await signInWithFactory(client, 'administrator')
+    const { user, session } = await signInWithFactory(client, 'staff')
     const storage = await uploadFile(client, session)
 
     user.avatarId = storage.id

@@ -2,12 +2,14 @@ import { test } from '@japa/runner'
 
 import { ErrorEnvelope, z } from '@maiyu/shared'
 
+import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
 import {
-  authenticateAsAdministrator,
-  authenticateAsNonStaff,
+  authenticateAsPlatformOwner,
+  authenticate,
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { loginOf } from '#tests/users-fixtures'
 
 /** Only what the specs read of the document; `app/core/openapi/openapi.e2e.spec.ts` checks the rest. */
 const OpenApiDocument = z.object({
@@ -27,7 +29,7 @@ test.group('openapi > show', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const session = await authenticateAsPlatformOwner(client)
     const response = await client.get('/openapi.json').cookies(session)
 
     response.assertStatus(200)
@@ -39,7 +41,7 @@ test.group('openapi > show', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const session = await authenticateAsPlatformOwner(client)
     const response = await client.get('/openapi.json').cookies(session)
 
     response.assertStatus(200)
@@ -61,11 +63,16 @@ test.group('openapi > show', (group) => {
     response.assertStatus(404)
   })
 
-  test('whoever does not operate the installation also gets 404', async ({
+  test('a signed-in account that does not operate the installation also gets 404', async ({
     client,
     assert,
   }) => {
-    const session = await authenticateAsNonStaff(client)
+    const account = await UserFactory.create()
+    const session = await authenticate(
+      client,
+      loginOf(account),
+      FACTORY_PASSWORD,
+    )
     const response = await client.get('/openapi.json').cookies(session)
 
     response.assertStatus(404)

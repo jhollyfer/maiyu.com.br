@@ -1,24 +1,7 @@
 import { m } from '#/paraglide/messages'
+import type { JobPosition } from '@maiyu/shared'
 
 import { JOB_POSITION_LABELS } from './labels'
-
-/**
- * The talent pool's areas, listed on the careers page.
- *
- * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
- * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
- * and the `shared/` session is the one that moves it. After that this file imports the triplet from
- * `@maiyu/shared`.
- */
-export const JOB_POSITION = {
-  DEVELOPMENT: 'development',
-  DESIGN: 'design',
-  DATA: 'data',
-} as const
-
-export type JobPosition = (typeof JOB_POSITION)[keyof typeof JOB_POSITION]
-
-export const JOB_POSITIONS = Object.values(JOB_POSITION)
 
 /**
  * The talent pool's areas, on the careers page.

@@ -62,7 +62,7 @@ export const test = base.extend<Fixtures>({
         seen.push(`console: ${message.text()}`)
       })
       page.on('response', (response) => {
-        if (!response.url().startsWith(E2eEnv.apiUrl)) return
+        if (!E2eEnv.apiUrl || !response.url().startsWith(E2eEnv.apiUrl)) return
         if (response.status() < 500) return
 
         seen.push(

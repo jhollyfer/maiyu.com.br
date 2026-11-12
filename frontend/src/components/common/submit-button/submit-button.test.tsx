@@ -1,15 +1,13 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { SubmitButton } from '#/components/common/submit-button/submit-button'
 import {
   UploadingProvider,
   useRegisterUpload,
 } from '#/components/common/uploading-context/uploading-context'
-
-afterEach(cleanup)
 
 function Uploading(): null {
   useRegisterUpload(true)

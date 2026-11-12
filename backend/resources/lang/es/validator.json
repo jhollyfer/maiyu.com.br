@@ -23,7 +23,25 @@
       "search": "la búsqueda",
       "sort": "el orden",
       "direction": "la dirección del orden",
-      "trashed": "el filtro de archivados"
+      "trashed": "el filtro de archivados",
+      "state": "la UF",
+      "timeZone": "la zona horaria",
+      "phone": "el celular",
+      "login": "el correo electrónico o el celular",
+      "latitude": "la latitud",
+      "longitude": "la longitud",
+      "south": "el límite sur",
+      "west": "el límite oeste",
+      "north": "el límite norte",
+      "east": "el límite este",
+      "tenantId": "el cliente",
+      "type": "el tipo",
+      "cityId": "la ciudad",
+      "parentId": "el cliente padre",
+      "userId": "la cuenta",
+      "storageId": "el comprobante",
+      "reason": "el motivo",
+      "receiptId": "el comprobante verificado"
     },
     "messages": {
       "required": "Ingrese { field }",
@@ -31,7 +49,7 @@
       "enum": "Seleccione { field }",
       "email": "Ingrese un correo electrónico válido",
       "number": "Ingrese un número válido",
-      "boolean": "Ingrese verdadero o falso",
+      "boolean": "Indica si { field } aplica o no",
       "array": "Ingrese una lista",
       "object": "Ingrese un objeto",
       "richText": "Ingrese un texto con formato válido",
@@ -43,12 +61,20 @@
       "max": "Ingrese un valor menor o igual a { max }",
       "positive": "Ingrese un valor mayor que cero",
       "withoutDecimals": "Ingrese un número entero",
+      "array.minLength": "Ingrese al menos { min } elementos",
       "array.maxLength": "Ingrese como máximo { max } elementos",
       "password.regex": "La contraseña necesita minúscula, mayúscula, número y carácter especial",
       "password.minLength": "La contraseña debe tener al menos { min } caracteres",
       "password.maxLength": "La contraseña debe tener como máximo { max } caracteres",
       "passwordConfirmation.confirmed": "Las contraseñas no coinciden",
-      "fileName.regex": "El nombre del archivo no puede tener caracteres de control"
+      "fileName.regex": "El nombre del archivo no puede tener caracteres de control",
+      "slug.regex": "Use solo minúsculas, números y guion en el slug",
+      "slug.notIn": "Este slug está reservado, elija otro",
+      "state.regex": "Ingrese la UF con dos letras mayúsculas",
+      "timeZone": "Seleccione una zona horaria válida",
+      "phone": "Ingrese un celular válido, con código de área",
+      "anyPhone": "Ingrese un teléfono válido, con código de área",
+      "regex": "Ingrese { field } en un formato válido"
     }
   }
 }

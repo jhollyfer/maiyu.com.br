@@ -2,5 +2,7 @@
   "current_password_invalid": "Senha atual incorreta",
   "current_password_invalid_field": "A senha atual não confere",
   "password_same_as_current": "A nova senha deve ser diferente da atual",
-  "password_same_as_current_field": "A nova senha deve ser diferente da atual"
+  "password_same_as_current_field": "A nova senha deve ser diferente da atual",
+  "phone_taken": "Este celular já está em uso",
+  "phone_taken_field": "Este celular já está em uso por outra conta"
 }

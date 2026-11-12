@@ -38,15 +38,6 @@ const tags: TagRule[] = [
     plural: 'sessões',
   },
   {
-    prefix: '/account',
-    name: 'Conta',
-    description:
-      'A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um ' +
-      'dos dois exige a senha atual e derruba todas as sessões da conta.',
-    singular: 'perfil',
-    plural: 'perfis',
-  },
-  {
     prefix: '/storages',
     name: 'Arquivos',
     description:
@@ -54,6 +45,15 @@ const tags: TagRule[] = [
       'manda os bytes direto ao bucket e o `complete` confirma.',
     singular: 'arquivo',
     plural: 'arquivos',
+  },
+  {
+    prefix: '/authentication/tenants',
+    name: 'Clientes da conta',
+    description:
+      'Os clientes (tenants) em que a conta tem papel e a escolha do cliente em que a ' +
+      'sessão trabalha. O papel dentro de um cliente é do vínculo, conferido a cada requisição.',
+    singular: 'cliente',
+    plural: 'clientes',
   },
   {
     prefix: '/storefront/contacts',
@@ -72,6 +72,32 @@ const tags: TagRule[] = [
       'e apaga de vez. Exige sessão com papel de equipe.',
     singular: 'contato',
     plural: 'contatos',
+  },
+  {
+    prefix: '/storefront',
+    name: 'Cidades',
+    description:
+      'Catálogo público das cidades e dos clientes de cada uma: os segmentos que a URL pública ' +
+      'leva depois do idioma (`/pt-br/<cidade>/<cliente>`).',
+    singular: 'cidade',
+    plural: 'cidades',
+  },
+  {
+    prefix: '/account/profile',
+    name: 'Conta',
+    description:
+      'A conta de quem está na sessão: ler o nome, o e-mail e o celular, e trocar o nome ou a ' +
+      'senha com a senha atual.',
+    singular: 'conta',
+    plural: 'contas',
+  },
+  {
+    prefix: '/platform',
+    name: 'Plataforma',
+    description:
+      'Área do dono da plataforma: o cadastro de cidades e a contagem de clientes e membros.',
+    singular: 'cidade',
+    plural: 'cidades',
   },
 ]
 

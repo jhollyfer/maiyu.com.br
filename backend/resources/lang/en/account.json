@@ -2,5 +2,7 @@
   "current_password_invalid": "Incorrect current password",
   "current_password_invalid_field": "The current password does not match",
   "password_same_as_current": "The new password must be different from the current one",
-  "password_same_as_current_field": "The new password must be different from the current one"
+  "password_same_as_current_field": "The new password must be different from the current one",
+  "phone_taken": "This phone is already in use",
+  "phone_taken_field": "This phone is already used by another account"
 }

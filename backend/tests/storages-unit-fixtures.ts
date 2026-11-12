@@ -12,6 +12,8 @@ export function pendingFile(
 ): Storage {
   const opened = Storage.open({
     id: overrides.id ?? FILE_ID,
+    tenantId: null,
+    customerId: null,
     key: 'capa.png',
     originalName: 'capa.png',
     mimetype: 'image/png',

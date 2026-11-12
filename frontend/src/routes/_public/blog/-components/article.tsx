@@ -21,10 +21,10 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { articles } from '#/lib/articles'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { localizedDate } from '#/lib/site-i18n'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../../-components/photo'
@@ -202,14 +202,10 @@ export function Article(): React.JSX.Element {
               {m.blog_article_cta_description()}
             </p>
           </div>
-          <PillButton
-            render={
-              <Link to="/contact">
-                {m.nav_get_in_touch()}
-                <ArrowUpRightIcon />
-              </Link>
-            }
-          />
+          <PillButton to="/contact">
+            {m.nav_get_in_touch()}
+            <ArrowUpRightIcon />
+          </PillButton>
         </div>
       </section>
     </>

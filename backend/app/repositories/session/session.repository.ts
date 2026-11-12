@@ -19,7 +19,7 @@ export type RefreshGrant = {
  * The persistence of the session tokens, by intent (`_standards/domain.md` §5.1): issue,
  * read the refresh one, consume it and revoke. It is the single writer of
  * `auth_access_tokens` and `consumed_refresh_tokens`. Whoever writes the HTTP response is
- * `features/authentication/_shared.session-cookie.ts`; whoever decides when to issue or
+ * `features/_shared.session-cookie.ts`; whoever decides when to issue or
  * revoke is the use case.
  *
  * Every write runs on the client of the transaction in progress when there is one, so the

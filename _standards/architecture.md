@@ -128,10 +128,10 @@ backend/
 │       ├── _shared.refusal.base.ts  # base dos tradutores de fato de domínio em HTTPException (DECISIONS #341)
 │       ├── _shared.<tema>-refusal.ts       # refusal usado por 2+ módulos
 │       ├── _shared.<entidade>.presenter.ts # presenter usado por 2+ módulos
+│       ├── _shared.session-cookie.ts       # cookie da sessão (authentication e account), sem I/O (DECISIONS #414)
 │       ├── authentication/{sessions,registrations,invitations,passwords,tenants}/<ação>/   # DECISIONS #339; tenants: vínculos e escolha (#390)
 │       ├── platform/{cities,overview}/<ação>/   # área do dono da plataforma (backend.md §4.14)
 │       ├── storefront/{cities,tenants}/list/    # catálogo público de cidades e clientes da cidade
-│       ├── authentication/_shared.session-cookie.ts
 │       └── <módulo>/                # público ou contexto: administrator, storefront, authentication, account
 │           ├── _shared.<tema>.ts    # só função pura, usada por 2+ recursos do módulo
 │           ├── _shared.<tema>.base.ts   # abstract class de template method de 2+ recursos (backend.md §3)

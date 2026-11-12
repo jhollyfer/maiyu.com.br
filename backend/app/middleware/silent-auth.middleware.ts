@@ -3,6 +3,8 @@ import type { NextFn } from '@adonisjs/core/types/http'
 
 import type { Actor } from '@maiyu/shared'
 
+import type { TenantScope } from '#core/tenant-scope'
+
 /**
  * Silent auth middleware can be used as a global middleware to silent check
  * if the user is logged-in or not.
@@ -28,5 +30,10 @@ declare module '@adonisjs/core/http' {
   // eslint-disable-next-line @typescript-eslint/consistent-type-definitions -- module augmentation: TypeScript only merges an `interface`
   export interface HttpContext {
     actor: Actor
+    /**
+     * What the request reads and writes among the tenants (DECISIONS.md #390), set by
+     * `auth.middleware.ts` or `public-tenant.middleware.ts`; absent reads as no tenant.
+     */
+    tenantScope?: TenantScope
   }
 }

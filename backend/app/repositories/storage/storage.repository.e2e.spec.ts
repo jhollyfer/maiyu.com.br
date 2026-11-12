@@ -32,6 +32,8 @@ function file(id: string, originalName: string, confirmed = true): Storage {
     size: 1024,
     uploadId: null,
     partSize: 10,
+    tenantId: null,
+    customerId: null,
     now: NOW,
   })
   if (opened.isLeft()) throw new Error(`open refused: ${opened.value.code}`)

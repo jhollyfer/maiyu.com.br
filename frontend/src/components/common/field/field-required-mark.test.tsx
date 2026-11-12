@@ -1,12 +1,10 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { m } from '#/paraglide/messages'
 
 import { FieldRequiredMark } from './field-required-mark'
-
-afterEach(cleanup)
 
 describe('FieldRequiredMark', () => {
   it('hides the asterisk from the screen reader and says the word instead', () => {

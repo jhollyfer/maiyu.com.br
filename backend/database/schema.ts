@@ -32,6 +32,37 @@ export class AuthAccessTokenSchema extends BaseModel {
   declare updatedAt: DateTime | null
 }
 
+export class CitySchema extends BaseModel {
+  static $columns = ['createdAt', 'east', 'id', 'latitude', 'longitude', 'name', 'north', 'slug', 'south', 'state', 'timeZone', 'updatedAt', 'west'] as const
+  $columns = CitySchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column()
+  declare east: number
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare latitude: number
+  @column()
+  declare longitude: number
+  @column()
+  declare name: string
+  @column()
+  declare north: number
+  @column()
+  declare slug: string
+  @column()
+  declare south: number
+  @column()
+  declare state: string
+  @column()
+  declare timeZone: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare west: number
+}
+
 export class ConsumedRefreshTokenSchema extends BaseModel {
   static $columns = ['createdAt', 'expiresAt', 'hash', 'id', 'tokenableId'] as const
   $columns = ConsumedRefreshTokenSchema.$columns
@@ -80,10 +111,12 @@ export class RateLimitSchema extends BaseModel {
 }
 
 export class StorageSchema extends BaseModel {
-  static $columns = ['createdAt', 'deletedAt', 'filename', 'id', 'mimetype', 'originalName', 'partSize', 'path', 'size', 'status', 'updatedAt', 'uploadId'] as const
+  static $columns = ['createdAt', 'customerId', 'deletedAt', 'filename', 'id', 'mimetype', 'originalName', 'partSize', 'path', 'size', 'status', 'tenantId', 'updatedAt', 'uploadId'] as const
   $columns = StorageSchema.$columns
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare customerId: string | null
   @column.dateTime()
   declare deletedAt: DateTime | null
   @column()
@@ -102,15 +135,59 @@ export class StorageSchema extends BaseModel {
   declare size: bigint | number
   @column()
   declare status: string
+  @column()
+  declare tenantId: string | null
   @column.dateTime({ autoCreate: true, autoUpdate: true })
   declare updatedAt: DateTime | null
   @column()
   declare uploadId: string | null
 }
 
+export class TenantMembershipSchema extends BaseModel {
+  static $columns = ['createdAt', 'id', 'role', 'tenantId', 'updatedAt', 'userId'] as const
+  $columns = TenantMembershipSchema.$columns
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare role: string
+  @column()
+  declare tenantId: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+  @column()
+  declare userId: string
+}
+
+export class TenantSchema extends BaseModel {
+  static $columns = ['cityId', 'createdAt', 'id', 'name', 'parentId', 'slug', 'status', 'type', 'updatedAt'] as const
+  $columns = TenantSchema.$columns
+  @column()
+  declare cityId: string
+  @column.dateTime({ autoCreate: true })
+  declare createdAt: DateTime
+  @column({ isPrimary: true })
+  declare id: string
+  @column()
+  declare name: string
+  @column()
+  declare parentId: string | null
+  @column()
+  declare slug: string
+  @column()
+  declare status: string
+  @column()
+  declare type: string
+  @column.dateTime({ autoCreate: true, autoUpdate: true })
+  declare updatedAt: DateTime | null
+}
+
 export class UserSchema extends BaseModel {
-  static $columns = ['avatarId', 'createdAt', 'deletedAt', 'email', 'id', 'name', 'password', 'role', 'status', 'updatedAt'] as const
+  static $columns = ['activeTenantId', 'avatarId', 'createdAt', 'deletedAt', 'email', 'id', 'name', 'password', 'phone', 'platformRole', 'status', 'updatedAt'] as const
   $columns = UserSchema.$columns
+  @column()
+  declare activeTenantId: string | null
   @column()
   declare avatarId: string | null
   @column.dateTime({ autoCreate: true })
@@ -118,7 +195,7 @@ export class UserSchema extends BaseModel {
   @column.dateTime()
   declare deletedAt: DateTime | null
   @column()
-  declare email: string
+  declare email: string | null
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -126,7 +203,9 @@ export class UserSchema extends BaseModel {
   @column({ serializeAs: null })
   declare password: string
   @column()
-  declare role: string
+  declare phone: string | null
+  @column()
+  declare platformRole: string
   @column()
   declare status: string
   @column.dateTime({ autoCreate: true, autoUpdate: true })

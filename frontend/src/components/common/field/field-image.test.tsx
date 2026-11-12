@@ -1,15 +1,9 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import type { Resolver, ResolverResult } from 'react-hook-form'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -67,8 +61,6 @@ function fileInput(container: HTMLElement): HTMLInputElement {
   if (!(input instanceof HTMLInputElement)) throw new Error('no file input')
   return input
 }
-
-afterEach(cleanup)
 
 describe('FieldImage', () => {
   it('an invalid submit focuses the upload button: the Controller ref reaches it', async () => {

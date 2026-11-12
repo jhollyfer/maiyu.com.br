@@ -1,16 +1,16 @@
-import { USER_ROLES } from '../../enums/user-role.js'
+import { PLATFORM_ROLES } from '../../enums/platform-role.js'
 import { z } from '../../validator.js'
 
 /**
- * The owner's own account, as `GET` and `PUT /account/profile` return it: who it is and
- * what role it holds. Never the password or its hash, and no status: an inactive account
- * does not reach the route.
+ * The account of the session as the API returns it (DECISIONS.md #413): an allowlist, so the
+ * password and its hash are not a field here. `GET` and `PUT /account/profile` answer with it.
  */
 export const AccountProfileShowResponse = z.object({
   id: z.uuid(),
   name: z.string(),
-  email: z.string(),
-  role: z.enum(USER_ROLES),
+  email: z.string().nullable(),
+  phone: z.string().nullable(),
+  platformRole: z.enum(PLATFORM_ROLES),
 })
 
 export type AccountProfileShowResponse = z.infer<

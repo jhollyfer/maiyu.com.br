@@ -58,6 +58,13 @@ const SIGNATURES: Readonly<
 
 export type StorageProps = {
   readonly id: string
+  /** The owner tenant (DECISIONS.md #390); `null` is the platform's. */
+  readonly tenantId: string | null
+  /**
+   * The end customer who uploaded it (DECISIONS.md #397): a payment proof is the customer's and
+   * the store's; `null` is a file of the tenant, shared by its members.
+   */
+  readonly customerId: string | null
   readonly filename: string
   readonly originalName: string
   readonly mimetype: string
@@ -91,6 +98,8 @@ export class Storage {
    */
   static open(input: {
     readonly id: string
+    readonly tenantId: string | null
+    readonly customerId: string | null
     readonly key: string
     readonly originalName: string
     readonly mimetype: string
@@ -111,6 +120,8 @@ export class Storage {
     return right(
       new Storage({
         id: input.id,
+        tenantId: input.tenantId,
+        customerId: input.customerId,
         filename: input.key,
         originalName: input.originalName,
         mimetype: input.mimetype,

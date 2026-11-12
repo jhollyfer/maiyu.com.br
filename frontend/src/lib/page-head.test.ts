@@ -6,30 +6,11 @@ import { m } from '#/paraglide/messages'
 import {
   breadcrumbJsonLd,
   jsonLd,
-  localizedUrl,
   noindexMeta,
   organizationJsonLd,
   pageHead,
   sportsEventJsonLd,
 } from './page-head'
-
-describe('localizedUrl', () => {
-  it('prefixes every language, pt-BR included (DECISIONS.md #384)', () => {
-    expect(localizedUrl('/matches', 'pt-BR')).toBe(
-      `${env.VITE_SITE_URL}/pt-br/matches`,
-    )
-    expect(localizedUrl('/matches', 'es')).toBe(
-      `${env.VITE_SITE_URL}/es/matches`,
-    )
-    expect(localizedUrl('/matches', 'en')).toBe(
-      `${env.VITE_SITE_URL}/en/matches`,
-    )
-  })
-
-  it('strips the trailing slash, except at the root', () => {
-    expect(localizedUrl('/', 'es')).toBe(`${env.VITE_SITE_URL}/es`)
-  })
-})
 
 describe('pageHead', () => {
   const head = pageHead({ title: 'Jogos', pathname: '/matches' })
@@ -79,6 +60,46 @@ describe('pageHead', () => {
         'og:locale',
       ]),
     )
+  })
+
+  it('defaults og:type to website and twitter:card to summary with the logo', () => {
+    expect(head.meta).toContainEqual({
+      property: 'og:type',
+      content: 'website',
+    })
+    expect(head.meta).toContainEqual({
+      name: 'twitter:card',
+      content: 'summary',
+    })
+    expect(head.meta).toContainEqual({
+      name: 'twitter:title',
+      content: `Jogos | ${m.site_title()}`,
+    })
+  })
+
+  it('takes the page image and type, absolute against the site URL', () => {
+    const article = pageHead({
+      pathname: '/news/a',
+      type: 'article',
+      image: '/files/cover.jpg',
+    })
+
+    expect(article.meta).toContainEqual({
+      property: 'og:type',
+      content: 'article',
+    })
+    expect(article.meta).toContainEqual({
+      property: 'og:image',
+      content: `${env.VITE_SITE_URL}/files/cover.jpg`,
+    })
+    expect(article.meta).toContainEqual({
+      name: 'twitter:image',
+      content: `${env.VITE_SITE_URL}/files/cover.jpg`,
+    })
+    expect(article.meta).toContainEqual({
+      name: 'twitter:card',
+      content: 'summary_large_image',
+    })
   })
 
   it('turns structuredData into an application/ld+json script', () => {
@@ -159,6 +180,7 @@ describe('sportsEventJsonLd', () => {
     description: 'Chave de futsal',
     sport: 'Futsal',
     pathname: '/standings/1',
+    timeZone: 'America/Eirunepe',
   }
 
   it('uses the earliest match as startDate', () => {

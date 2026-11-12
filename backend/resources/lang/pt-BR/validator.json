@@ -23,7 +23,25 @@
       "search": "a busca",
       "sort": "a ordenação",
       "direction": "a direção da ordenação",
-      "trashed": "o filtro de arquivados"
+      "trashed": "o filtro de arquivados",
+      "state": "a UF",
+      "timeZone": "o fuso horário",
+      "phone": "o celular",
+      "login": "o e-mail ou o celular",
+      "latitude": "a latitude",
+      "longitude": "a longitude",
+      "south": "o limite sul",
+      "west": "o limite oeste",
+      "north": "o limite norte",
+      "east": "o limite leste",
+      "tenantId": "o cliente",
+      "type": "o tipo",
+      "cityId": "a cidade",
+      "parentId": "o cliente pai",
+      "userId": "a conta",
+      "storageId": "o comprovante",
+      "reason": "o motivo",
+      "receiptId": "o comprovante conferido"
     },
     "messages": {
       "required": "Informe { field }",
@@ -31,7 +49,7 @@
       "enum": "Selecione { field }",
       "email": "Informe um e-mail válido",
       "number": "Informe um número válido",
-      "boolean": "Informe verdadeiro ou falso",
+      "boolean": "Marque se { field } vale ou não",
       "array": "Informe uma lista",
       "object": "Informe um objeto",
       "richText": "Informe um texto formatado válido",
@@ -43,12 +61,20 @@
       "max": "Informe um valor menor ou igual a { max }",
       "positive": "Informe um valor maior que zero",
       "withoutDecimals": "Informe um número inteiro",
+      "array.minLength": "Informe ao menos { min } itens",
       "array.maxLength": "Informe no máximo { max } itens",
       "password.regex": "A senha precisa de letra minúscula, maiúscula, número e caractere especial",
       "password.minLength": "A senha deve ter ao menos { min } caracteres",
       "password.maxLength": "A senha deve ter no máximo { max } caracteres",
       "passwordConfirmation.confirmed": "As senhas não são iguais",
-      "fileName.regex": "O nome do arquivo não pode ter caracteres de controle"
+      "fileName.regex": "O nome do arquivo não pode ter caracteres de controle",
+      "slug.regex": "Use só letras minúsculas, números e hífen no slug",
+      "slug.notIn": "Este slug é reservado, escolha outro",
+      "state.regex": "Informe a UF com duas letras maiúsculas",
+      "timeZone": "Selecione um fuso horário válido",
+      "phone": "Informe um celular válido, com DDD",
+      "anyPhone": "Informe um telefone válido, com DDD",
+      "regex": "Informe { field } no formato válido"
     }
   }
 }

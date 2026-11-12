@@ -72,6 +72,7 @@ o container e a convenção de controller que o Adonis traz de fábrica.
 | **Base UI**         | [`_doc-lib/base-ui.md`](_doc-lib/base-ui.md)                 | A primitiva headless por baixo do shadcn: comportamento, teclado, acessibilidade, posicionamento |  53   |
 | **React Hook Form** | [`_doc-lib/react-hook-form.md`](_doc-lib/react-hook-form.md) | Formulário sem re-render a cada tecla: campo, validação por resolver, erro do servidor           |  48   |
 | **use-mask-input**  | [`_doc-lib/use-mask-input.md`](_doc-lib/use-mask-input.md)   | Máscara de digitação no campo, sobre o motor Inputmask                                           |  11   |
+| **uqr**             | [`_doc-lib/uqr.md`](_doc-lib/uqr.md)                         | QR Code em SVG sem dependência, no SSR e no navegador (o QR do Pix)                              |   1   |
 | **TanStack Query**  | [`_doc-lib/tanstack-query.md`](_doc-lib/tanstack-query.md)   | Estado de servidor: cache, revalidação, mutações, invalidação                                    |  60   |
 | **TanStack Router** | [`_doc-lib/tanstack-router.md`](_doc-lib/tanstack-router.md) | Roteamento com tipagem de ponta a ponta, incluindo search params                                 |  61   |
 | **TanStack Start**  | [`_doc-lib/tanstack-start.md`](_doc-lib/tanstack-start.md)   | Camada full-stack sobre o Router: SSR, server functions, deploy                                  |  46   |

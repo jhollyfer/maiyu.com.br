@@ -68,6 +68,87 @@ router
   .prefix('authentication')
 
 /**
+ * The owner's own account (DECISIONS.md #413): who is signed in reads and edits it, and no other.
+ * The edit checks the current password, hence the ceiling per user.
+ */
+router
+  .group(() => {
+    router
+      .get('/', [controllers.account.profile.show.Show])
+      .as('account.profile.show')
+    router
+      .put('/', [controllers.account.profile.update.Update])
+      .as('account.profile.update')
+      .use(accountThrottle)
+  })
+  .prefix('account/profile')
+  .use(middleware.auth())
+
+/**
+ * The tenant the session works in (DECISIONS.md #390): the account's memberships and the pick
+ * among them. The role inside a tenant is the membership's, read on every request.
+ */
+router
+  .group(() => {
+    router
+      .get('/', [controllers.authentication.tenants.list.List])
+      .as('authentication.tenants.list')
+    router
+      .put('active', [controllers.authentication.tenants.select.Select])
+      .as('authentication.tenants.select')
+  })
+  .prefix('authentication/tenants')
+  .use(middleware.auth())
+
+/**
+ * The public catalog of cities and of the clients of each one, the segments the frontend puts
+ * after the language (`/pt-br/<city>/<tenant>`). The city segment resolves the tenant scope.
+ */
+router
+  .group(() => {
+    router
+      .get('cities', [controllers.storefront.cities.list.List])
+      .as('storefront.cities.list')
+    router
+      .get('cities/:city/tenants', [controllers.storefront.tenants.list.List])
+      .as('storefront.tenants.list')
+      .use(middleware.publicTenant())
+  })
+  .prefix('storefront')
+
+/** The platform owner's area: the city catalog, the tenants and their members, and the counts. */
+router
+  .group(() => {
+    router
+      .post('cities', [controllers.platform.cities.create.Create])
+      .as('platform.cities.create')
+    router
+      .put('cities/:id', [controllers.platform.cities.update.Update])
+      .as('platform.cities.update')
+    router
+      .delete('cities/:id', [controllers.platform.cities.delete.Delete])
+      .as('platform.cities.delete')
+    router
+      .get('overview', [controllers.platform.overview.show.Show])
+      .as('platform.overview.show')
+    // The tenants and who works in each (DECISIONS.md #397): the seeder is not the only door.
+    router
+      .post('tenants', [controllers.platform.tenants.create.Create])
+      .as('platform.tenants.create')
+    router
+      .put('tenants/:id', [controllers.platform.tenants.update.Update])
+      .as('platform.tenants.update')
+    router
+      .put('tenants/:id/members', [controllers.platform.members.save.Save])
+      .as('platform.members.save')
+    router
+      .delete('members/:id', [controllers.platform.members.delete.Delete])
+      .as('platform.members.delete')
+  })
+  .prefix('platform')
+  .use([middleware.auth(), middleware.platform()])
+
+/**
  * Attachments, for every signed-in role. The binary never passes through the API: `POST`
  * returns signed part URLs, the browser uploads to the bucket and `complete` confirms.
  */
@@ -80,6 +161,14 @@ router
       .post('/', [controllers.storages.files.create.Create])
       .as('storages.files.create')
       .use(uploadThrottle)
+    // The end customer's upload (a payment proof, DECISIONS.md #397): the file goes to the store
+    // the URL names, owned by the customer; the rest of the flow is the routes below, by id.
+    router
+      .post('cities/:city/tenants/:tenant', [
+        controllers.storages.files.create.Create,
+      ])
+      .as('storages.files.create-for-tenant')
+      .use([middleware.publicTenant({ access: 'customer' }), uploadThrottle])
     router
       .post(':id/complete', [controllers.storages.files.complete.Complete])
       .as('storages.files.complete')
@@ -101,28 +190,6 @@ router
       .as('storages.files.download')
   })
   .prefix('storages')
-  .use(middleware.auth())
-
-/**
- * The owner's own account, for any signed-in role: the group carries `auth` and no `role`,
- * because the scope is the session's account and never an identifier in the path.
- */
-router
-  .group(() => {
-    router
-      .group(() => {
-        router
-          .get('/', [controllers.account.profile.show.Show])
-          .as('account.profile.show')
-        // Changing e-mail or password checks the current password, so it carries its own ceiling.
-        router
-          .put('/', [controllers.account.profile.update.Update])
-          .as('account.profile.update')
-          .use(accountThrottle)
-      })
-      .prefix('profile')
-  })
-  .prefix('account')
   .use(middleware.auth())
 
 /**
