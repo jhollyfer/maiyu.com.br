@@ -2,6 +2,7 @@ import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import logo from '#/assets/brand/logo.svg'
 import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
 import { Picture } from '#/components/common/picture/picture'
 import { ThemeToggle } from '#/components/common/theme/theme-toggle'
@@ -58,7 +59,7 @@ export function Header(): React.JSX.Element {
           className="flex items-center gap-2 justify-self-start py-2"
         >
           <Picture
-            src="/maiyu-symbol.svg"
+            src={logo}
             alt=""
             width={28}
             height={28}

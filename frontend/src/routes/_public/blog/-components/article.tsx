@@ -2,6 +2,7 @@ import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link, getRouteApi } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import logo from '#/assets/brand/logo.svg'
 import { RichText } from '#/components/common/rich-text/rich-text'
 import {
   NotFoundPage,
@@ -122,11 +123,7 @@ export function Article(): React.JSX.Element {
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border pt-6">
             <Avatar className="size-10 bg-secondary">
-              <AvatarImage
-                src="/maiyu-symbol.svg"
-                alt=""
-                className="object-contain p-2"
-              />
+              <AvatarImage src={logo} alt="" className="object-contain p-2" />
             </Avatar>
             <p className="text-small text-muted-foreground">
               <span className="block text-body font-medium text-foreground">

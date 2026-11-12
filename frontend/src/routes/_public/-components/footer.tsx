@@ -2,6 +2,7 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import logo from '#/assets/brand/logo.svg'
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
 import { Picture } from '#/components/common/picture/picture'
 import { Button } from '#/components/ui/button'
@@ -31,7 +32,7 @@ export function Footer(): React.JSX.Element {
         <div className="grid grid-cols-1 border-y border-border md:grid-cols-4 md:divide-x md:divide-border">
           <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
             <Picture
-              src="/maiyu-symbol.svg"
+              src={logo}
               alt=""
               width={36}
               height={36}

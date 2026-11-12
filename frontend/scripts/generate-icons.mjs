@@ -1,13 +1,13 @@
 /**
  * Gera os ícones de `public/` a partir de `public/favicon.svg`.
  *
- * Um script e não uma linha de comentário como a do `og.png`: são quatro
+ * Um script e não uma linha de comentário: são quatro
  * arquivos, e um deles é `.ico`, que o sharp não escreve - o formato precisa ser
  * montado à mão. Quando o logo mudar, o comando é um só:
  *
  *   node scripts/generate-icons.mjs
  *
- * Os binários ficam versionados, como o `og.png` já fica: eles são servidos
+ * Os binários ficam versionados: eles são servidos
  * estaticamente e o build não os gera.
  */
 

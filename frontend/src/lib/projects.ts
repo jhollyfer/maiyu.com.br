@@ -1,8 +1,8 @@
-import academyShot from '#/assets/academy.webp'
-import adacaibsShot from '#/assets/adacaibs.webp'
-import aportaShot from '#/assets/aporta.webp'
-import curupiraShot from '#/assets/curupira.webp'
-import interclasseShot from '#/assets/interclasse.webp'
+import academyShot from '#/assets/projects/academy.webp'
+import adacaibsShot from '#/assets/projects/adacaibs.webp'
+import aportaShot from '#/assets/projects/aporta.webp'
+import curupiraShot from '#/assets/projects/curupira.webp'
+import interclasseShot from '#/assets/projects/interclasse.webp'
 import type { LocalizedText } from '@maiyu/shared'
 
 /**
