@@ -3,8 +3,8 @@ import type { VariantProps } from 'class-variance-authority'
 import type * as React from 'react'
 
 import { Button } from '#/components/ui/button'
-import type { Merge } from '#/lib/interfaces'
 import { cn } from '#/lib/utils'
+import type { Merge } from '@maiyu/shared'
 
 /**
  * A pílula do site: o botão redondo do hero, do fim da home e das páginas

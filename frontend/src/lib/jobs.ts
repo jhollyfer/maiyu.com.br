@@ -1,7 +1,21 @@
 import { m } from '#/paraglide/messages'
 
-import type { JobPosition } from './entity'
 import { JOB_POSITION_LABELS } from './labels'
+
+/**
+ * As áreas do banco de talentos, listadas na página de carreiras. Sem
+ * formulário de candidatura (`docs/DECISIONS.md` #17), só a página lê o
+ * valor, então a trinca fica aqui e não em `shared/src/enums/`.
+ */
+export const JOB_POSITION = {
+  DEVELOPMENT: 'development',
+  DESIGN: 'design',
+  DATA: 'data',
+} as const
+
+export type JobPosition = (typeof JOB_POSITION)[keyof typeof JOB_POSITION]
+
+export const JOB_POSITIONS = Object.values(JOB_POSITION)
 
 /**
  * As áreas do banco de talentos, na página de carreiras.

@@ -5,7 +5,22 @@ import curupiraShot from '#/assets/curupira.webp'
 import interclasseShot from '#/assets/interclasse.webp'
 import type { LocalizedText } from '@maiyu/shared'
 
-import type { ProjectStatus } from './entity'
+/**
+ * Onde cada projeto está: no ar para o público, ou ainda em validação com quem
+ * vai usar. O portfólio diz isso na tela para não vender como pronto o que a
+ * prefeitura, a escola ou o morador ainda estão testando.
+ *
+ * A trinca mora aqui e não em `shared/src/enums/` porque só o site lê o valor:
+ * não há API nem banco por trás (`docs/DECISIONS.md` #17).
+ */
+export const PROJECT_STATUS = {
+  PRODUCTION: 'production',
+  VALIDATION: 'validation',
+} as const
+
+export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS]
+
+export const PROJECT_STATUSES = Object.values(PROJECT_STATUS)
 
 /**
  * Os projetos da Maiyu no ar, na ordem em que aparecem na home e no
@@ -24,7 +39,7 @@ export type Project = {
   tech: string[]
   url: string
   year: string
-  /** No ar ou ainda em validação com quem vai usar (`PROJECT_STATUSES`). */
+  /** No ar ou ainda em validação com quem vai usar (`PROJECT_STATUS`). */
   status: ProjectStatus
   featured?: boolean
 }

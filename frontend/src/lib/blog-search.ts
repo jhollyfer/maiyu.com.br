@@ -1,5 +1,5 @@
-import { ARTICLE_CATEGORIES } from './entity'
-import type { ArticleCategory } from './entity'
+import { ARTICLE_CATEGORIES } from './articles'
+import type { ArticleCategory } from './articles'
 
 /**
  * O filtro do diário, na URL.

@@ -1,7 +1,22 @@
 import type { LocalizedText } from '@maiyu/shared'
 
-import type { ArticleCategory } from './entity'
 import type { PhotoKey } from './photos'
+
+/**
+ * As editorias do diário. "Tudo" não é categoria: é a ausência de filtro.
+ * Só o site lê o valor (a URL do filtro e o rótulo), então a trinca fica aqui
+ * e não em `shared/src/enums/`.
+ */
+export const ARTICLE_CATEGORY = {
+  TECH: 'tech',
+  DESIGN: 'design',
+  MARKETING: 'marketing',
+} as const
+
+export type ArticleCategory =
+  (typeof ARTICLE_CATEGORY)[keyof typeof ARTICLE_CATEGORY]
+
+export const ARTICLE_CATEGORIES = Object.values(ARTICLE_CATEGORY)
 
 /**
  * Os artigos do diário.

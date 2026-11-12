@@ -18,7 +18,7 @@
 
 ## Parou em
 
-R2.1 feita: as telas de career, contact, portfolio e blog moram em `-components/` da rota e os `.lazy.tsx` são stubs; os testes de contrato leem os caminhos novos. R2.2 feita: as peças só da home desceram para `_public/-components/home/`.
+R2.1 feita: as telas de career, contact, portfolio e blog moram em `-components/` da rota e os `.lazy.tsx` são stubs; os testes de contrato leem os caminhos novos. R2.2 feita: as peças só da home desceram para `_public/-components/home/`. R2.3 feita: `lib/entity.ts` e `lib/interfaces.ts` saíram e as enums viraram trinca nos arquivos de `lib/` que as leem.
 
 RD.3 feita: `ARCHITECTURE.md` §9.1 descreve os dois recursos do Coolify (site e API) pelo quadro da régua, sem workflows de entrega. RD.2 feita: `docs/` posto em dia (SECURITY, TEST-PLAN, ENV, ARCHITECTURE, RULES, PRD) e as decisões locais substituídas marcadas em `DECISIONS.md`. RD.4 feita: `frontend/README.md` e `frontend/AGENTS.md` pela régua, `frontend/CLAUDE.md` com `@AGENTS.md`, `components/common/CLAUDE.md` removido. Régua D fechada na branch `docs/regua-docs`.
 

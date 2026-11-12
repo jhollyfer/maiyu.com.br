@@ -1,8 +1,8 @@
 import type * as React from 'react'
 
 import { Badge } from '#/components/ui/badge'
-import type { ProjectStatus } from '#/lib/entity'
 import { PROJECT_STATUS_LABELS } from '#/lib/labels'
+import type { ProjectStatus } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 
 /**
