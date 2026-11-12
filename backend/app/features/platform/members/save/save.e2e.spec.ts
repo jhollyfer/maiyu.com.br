@@ -22,7 +22,7 @@ import { Tenants } from '#tests/tenants-fixtures'
 test.group('platform/members > save', (group) => {
   group.each.setup(() => resetDatabase())
 
-  test("a new role ends the account's sessions; the same role again keeps them", async ({
+  test("a role that takes access away ends the account's sessions; the same role again keeps them", async ({
     client,
     assert,
   }) => {

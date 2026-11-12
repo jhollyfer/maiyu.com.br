@@ -1,12 +1,17 @@
 import { createHash } from 'node:crypto'
 
 import type { HttpContext } from '@adonisjs/core/http'
+import type { errors } from '@adonisjs/limiter'
 import limiter from '@adonisjs/limiter/services/main'
 
 import { LoginIdentity } from '@maiyu/shared'
 
 import { SESSION_TOKEN } from '#config/session-token'
+import { Credential } from '#core/credential'
 import { UserRepository } from '#repositories/user/user.repository'
+
+/** What the limiter answers when the ceiling is reached: the 429 the framework renders. */
+type Throttled = InstanceType<typeof errors.E_TOO_MANY_REQUESTS>
 
 /**
  * The house rate limits (DECISIONS.md #130, backend.md §4.10), the same in every project.
@@ -88,6 +93,23 @@ export class LimiterKey {
     if (!user) return null
 
     return `${scope}:${user.id}`
+  }
+
+  /**
+   * A public credential (a class code, an invite token, a protocol), by the hash of its locator (the
+   * code, or the first half of a token: never the secret), with the kind in front so a code and a
+   * token never share a bucket (DECISIONS.md #583). Normalized like the middleware reads it, so case
+   * and spacing open no new bucket. `null` without a usable value: inventing a key would put every
+   * malformed request in one bucket.
+   */
+  static credential(kind: string, locator: unknown): string | null {
+    if (typeof locator !== 'string') return null
+
+    const normalized = Credential.normalize(locator)
+
+    if (normalized.length === 0) return null
+
+    return `credential:${kind}:${LimiterKey.digest(normalized)}`
   }
 
   private static digest(value: string): string {
@@ -183,3 +205,67 @@ export const uploadThrottle = limiter.define('upload', function (context) {
 
   return throttle.usingKey(key)
 })
+
+/**
+ * The doors that resolve a tenant from a public credential, by IP (DECISIONS.md #583). A short code
+ * a person types is guessable, so the ceiling is what makes it safe: few tries a minute, and
+ * `blockFor` turns the ceiling into a cost. The tries on one credential are counted apart
+ * (`CredentialAttempts`), so many addresses cannot hammer one code either.
+ */
+export const credentialThrottle = limiter.define('credential', function () {
+  return limiter.allowRequests(10).every('1 minute').blockFor('15 mins')
+})
+
+/**
+ * The same doors, by credential, and counting only the miss (DECISIONS.md #583): the room code of a
+ * class is shared by thirty students and every right one is a request, so a ceiling that counted
+ * them all would lock the eleventh student out, and anyone in the class could lock the code for the
+ * rest. The ceiling is the `penalize` of the limiter
+ * (_doc-lib/adonisjs.md#guides/security/rate-limiting, https://docs.adonisjs.com/guides/security/rate-limiting,
+ * "Preventing brute-force login attacks"): the callback runs while requests are left, a failure
+ * consumes one, and the key blocks when they are gone. The middleware runs it, because only it knows
+ * whether the credential resolved; the IP policy above still counts every request.
+ *
+ * The project names one per kind and gives it to the route (`attempts`):
+ *
+ * ```ts
+ * export const classCodeAttempts = new CredentialAttempts('classCode')
+ * ```
+ *
+ * The key is the locator only, never the secret of a token (`<locator>.<secret>`): guesses at the
+ * secret of one locator are one bucket, however many secrets were tried, and the secret is not in
+ * the store.
+ */
+export class CredentialAttempts {
+  static readonly REQUESTS = 10
+  static readonly DURATION = '10 minutes'
+  static readonly BLOCK = '10 mins'
+
+  /** `manager` is the house limiter; a spec hands one with the memory store. */
+  constructor(
+    readonly name: string,
+    private readonly manager: Pick<typeof limiter, 'use'> = limiter,
+  ) {}
+
+  /**
+   * Runs `lookup`: a throw from it (the 404) counts one failure, a return resets the count, and
+   * with the ceiling reached it answers the limiter's 429 without running it. A locator that is
+   * not usable has no key, so it is not counted (it names nothing, and the IP policy holds it).
+   */
+  async penalize<T>(
+    locator: string,
+    lookup: () => Promise<T>,
+  ): Promise<[null, T] | [Throttled, null]> {
+    const key = LimiterKey.credential(this.name, locator)
+
+    if (!key) return [null, await lookup()]
+
+    return this.manager
+      .use({
+        requests: CredentialAttempts.REQUESTS,
+        duration: CredentialAttempts.DURATION,
+        blockDuration: CredentialAttempts.BLOCK,
+      })
+      .penalize(key, lookup)
+  }
+}

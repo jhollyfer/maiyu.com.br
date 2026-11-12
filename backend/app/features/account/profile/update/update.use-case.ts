@@ -142,6 +142,7 @@ export default class AccountProfileUpdateUseCase {
         profile: ProfilePresenter.update(
           user,
           await this.bucket.withOptionalUrl(file),
+          actor.tenant,
           email ?? null,
         ),
         sessionsRevoked: patch.password !== undefined || phoneChanged,

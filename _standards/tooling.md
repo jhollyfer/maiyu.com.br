@@ -827,7 +827,7 @@ transforma teste quebrado em intermitente, _doc-lib/playwright.md#docs/test-retr
 _doc-lib/playwright.md#docs/test-timeouts), `trace: 'retain-on-failure'`,
 `screenshot: 'only-on-failure'`, `baseURL` por env sem default e nenhuma senha em chave de ambiente: o `e2e/auth.setup.ts` cria a conta de
 cada papel na hora, por `node ace e2e:accounts` (só em development e test, senha sorteada a cada execução,
-`DECISIONS.md` #443), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
+`DECISIONS.md` #443; as contas de domínio do projeto, com o vínculo delas, vêm do ponto de extensão `tests/e2e-project-accounts.ts` e dos nomes em `e2e/support/project-accounts.ts`, `DECISIONS.md` #611), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
 `[['html', { open: 'never' }]]`. Fluxo crítico roda `@axe-core/playwright` e reprova violação séria
 ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
 projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
@@ -835,6 +835,32 @@ Projeto só frontend não define `E2E_API_URL`: o config não sobe a API, não c
 `cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`). O modo vem do valor da
 chave (vazia ou ausente é sem backend; liga-se por valor, nunca por chave, `AGENTS.md`), e as specs
 públicas rodam sem API e sem banco; `scripts/e2e-config.test.ts` cobre os dois modos (`DECISIONS.md` #501).
+A fixture `watch` (`e2e/support/test.ts`) reprova `pageerror`, `console.error` e todo 5xx da API; o spec
+do erro de servidor esperado o declara pela opção `expectedApiErrors` (status e padrão do endereço, só
+naquele teste) e o erro declarado que não acontece reprova (`e2e/support/expected-api-errors.ts`,
+`scripts/e2e-expected-api-errors.test.ts`, `frontend.md` §11.2, `DECISIONS.md` #731).
+
+**O projeto `cleanup` do `playwright.config.ts` apaga o que a rodada criou.** Ele é o `teardown` do `setup` e roda
+`e2e/cleanup.teardown.ts`, que chama `node ace e2e:cleanup` (contas do `e2e:accounts` e linhas marcadas com
+`E2eEnv.marker`, só em development e test; `backend.md` §6.2, `DECISIONS.md` #713). Spec que cria dado no backend
+escreve `E2eEnv.marker` (`E2E-`, com o hífen) no começo do título ou do nome, e o projeto declara a tabela e a coluna em
+`backend/tests/e2e-project-cleanup.ts`; sem o marcador, o dado fica.
+
+**Cada conta entra uma vez por rodada** (`DECISIONS.md` #712). O `signInAccountThrottle` deixa 20 entradas por hora
+por conta e os três projetos de viewport rodam os mesmos specs: spec que entra sozinho gasta o balde três vezes
+por rodada, e duas rodadas na mesma hora trancam a conta. O `auth.setup.ts` entra uma vez por conta (conta nova
+a cada rodada, balde novo) e os projetos reaproveitam o `storageState` dela, o caminho que a biblioteca manda para
+teste que não depende de estado do servidor (_doc-lib/playwright.md#docs/auth, https://playwright.dev/docs/auth,
+"Basic: shared account in all tests"). O spec de papel pede `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`
+e nunca chama `/authentication/sign-in`; só o setup e o spec da própria tela de entrada o fazem, e
+`scripts/e2e-sign-in-once.test.ts` reprova o resto. O limiter de produção não se afrouxa para o E2E.
+
+**O setup entra de um endereço por conta e respeita o 429** (`DECISIONS.md` #742). O `signInThrottle` conta 5 por
+minuto por IP, e as contas do kit mais as do projeto saíam todas de `127.0.0.1`: a sexta tomava 429 e o bloqueio de
+10 minutos derrubava as rodadas seguintes. Cada entrada do `auth.setup.ts` leva um `X-Forwarded-For` próprio
+(`ClientAddress.random()`, o mesmo caminho dos testes) e passa por `SignInRetry` (`e2e/support/sign-in-retry.ts`):
+no 429 espera o `Retry-After` que o handler já emite (e o CORS já expõe), tenta de novo até 3 vezes e, estourado o
+teto (tentativas ou 660 s de espera), reprova dizendo qual conta. Nenhuma rota perde o limiter e nenhuma config muda.
 
 **`shared/`**: `check` *(teste)*, antes do backend.
 

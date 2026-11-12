@@ -21,7 +21,7 @@ vi.mock('#/lib/areas', () => ({
 
 const member = (platformRole: PlatformRole): AreaAccount => ({
   platformRole,
-  tenant: { id: 't', cityId: 'c', role: staff, childIds: [] },
+  tenant: { role: staff },
 })
 const customer = (platformRole: PlatformRole): AreaAccount => ({
   platformRole,
@@ -69,4 +69,17 @@ test('o cliente final, sem vínculo, não entra em área só de papel de tenant'
       ),
     ),
   ).toBe(true)
+})
+
+test('allows lê a mesma tabela que a guarda, sem redirecionar', () => {
+  expect(AreaCapability.allows(member(platform), { tenant: [staff] })).toBe(
+    true,
+  )
+  expect(
+    AreaCapability.allows(customer(platform), { platform: [platform] }),
+  ).toBe(true)
+  expect(AreaCapability.allows(customer(platform), { tenant: [staff] })).toBe(
+    false,
+  )
+  expect(AreaCapability.allows(member(platform), {})).toBe(false)
 })

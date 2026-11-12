@@ -18,6 +18,7 @@ import {
   type TenantPublicRead,
 } from './tenant.repository.ts'
 
+import MembershipAccess from '#core/membership-access'
 import { TenantScope } from '#core/tenant-scope'
 import { TransactionContext } from '#core/transaction-context'
 import { Tenant, type TenantHierarchy } from '#domain/tenant/tenant.entity'
@@ -374,7 +375,10 @@ export class TenantLucidRepository extends TenantRepository {
           ),
         )
       }
-      await this.sessions.revokeAll(userId)
+      if (
+        MembershipAccess.reduces(existing && { role: existing.role }, { role })
+      )
+        await this.sessions.revokeAll(userId)
 
       return { member, changed: true }
     })

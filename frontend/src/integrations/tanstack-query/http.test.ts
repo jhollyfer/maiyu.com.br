@@ -223,6 +223,20 @@ test('an unreadable error body keeps the real status', async () => {
   expect(error.isServerError).toBe(true)
 })
 
+test('the status goes in the name, the message stays clean', async () => {
+  vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+    new Response('<html>503</html>', {
+      status: 503,
+      headers: { 'Content-Type': 'text/html' },
+    }),
+  )
+
+  const error = await rejection(readStorages())
+
+  expect(String(error)).toBe(`HTTPError 503: ${error.message}`)
+  expect(error.message).not.toContain('503')
+})
+
 test('a network failure becomes status 0 NETWORK_ERROR', async () => {
   vi.spyOn(globalThis, 'fetch').mockRejectedValue(
     new TypeError('Failed to fetch'),
@@ -315,7 +329,7 @@ test.each([
 
   expect(fromRequest.status).toBe(reply.status)
   expect(fromSend.status).toBe(reply.status)
-  expect(fromRequest.name).toBe('HTTPError')
+  expect(fromRequest.name).toBe(`HTTPError ${reply.status}`)
 })
 
 test('every failure leaves as HTTPError (network)', async () => {

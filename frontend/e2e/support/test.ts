@@ -4,9 +4,20 @@ import type { Locator, Page } from '@playwright/test'
 
 import { ClientAddress } from './client-address'
 import { E2eEnv } from './env'
+import { ExpectedApiErrors } from './expected-api-errors'
+import type { ExpectedApiError } from './expected-api-errors'
 import { ResponsiveAudit } from './responsive-audit'
 
 type Fixtures = {
+  /**
+   * Opção do teste: o erro de servidor que o spec espera e não reprova (status e endereço da
+   * resposta), com o `console.error` que o navegador loga por ela. Só para o que o backend não
+   * produz sob demanda (`frontend.md` §11.2); o resto continua reprovando, e declarar sem a
+   * resposta vir reprova também. Valor de lista leva o escopo, como a doc manda
+   * (_doc-lib/playwright.md#docs/test-fixtures, "Array as an option value"):
+   * `test.use({ expectedApiErrors: [[{ status: 503, url: /\/members/ }], { scope: 'test' }] })`.
+   */
+  expectedApiErrors: readonly ExpectedApiError[]
   /** O IP deste teste no `X-Forwarded-For` (`client-address.ts`). */
   clientAddress: string
   /**
@@ -31,6 +42,8 @@ type Fixtures = {
  * ninguém os vê sem esta rede.
  */
 export const test = base.extend<Fixtures>({
+  expectedApiErrors: [[], { option: true }],
+
   clientAddress: async ({}, provide) => {
     await provide(ClientAddress.random())
   },
@@ -40,8 +53,9 @@ export const test = base.extend<Fixtures>({
     await provide(context)
   },
 
-  watch: async ({ baseURL }, provide) => {
+  watch: async ({ baseURL, expectedApiErrors }, provide) => {
     const seen: string[] = []
+    const expected = new ExpectedApiErrors(expectedApiErrors)
 
     await provide((page) => {
       page.on('pageerror', (error) => seen.push(`pageerror: ${error.message}`))
@@ -55,6 +69,8 @@ export const test = base.extend<Fixtures>({
         // (o 401 de quem não entrou, o 422 do código errado) loga o
         // "Failed to load resource" com o endereço dela.
         if (url && baseURL && !url.startsWith(baseURL)) return
+        // O "Failed to load resource" do 5xx que o spec declarou.
+        if (expected.acceptsConsole(message.text(), url)) return
         // O próprio documento respondendo 404: é o que o spec da página que não
         // existe pede, e ele confere o status pela resposta do `goto`.
         if (url === page.url() && message.text().includes('status of 404'))
@@ -65,6 +81,7 @@ export const test = base.extend<Fixtures>({
       page.on('response', (response) => {
         if (!E2eEnv.apiUrl || !response.url().startsWith(E2eEnv.apiUrl)) return
         if (response.status() < 500) return
+        if (expected.acceptsResponse(response.status(), response.url())) return
 
         seen.push(
           `api ${response.status()}: ${response.request().method()} ${response.url()}`,
@@ -72,7 +89,7 @@ export const test = base.extend<Fixtures>({
       })
     })
 
-    expect(seen).toEqual([])
+    expect([...seen, ...expected.unmet()]).toEqual([])
   },
 
   page: async ({ page, watch }, provide) => {

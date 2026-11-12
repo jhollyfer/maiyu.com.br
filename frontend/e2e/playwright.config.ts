@@ -27,6 +27,11 @@ const MIGRATION_BASELINE = /baseline\//
 /** Owner's session and the `setup` it depends on exist only with a backend. */
 const SESSION = E2eEnv.withBackend && { storageState: E2eEnv.storageState }
 const AFTER_SETUP = E2eEnv.onlyWithBackend(['setup'])
+// The `painel` block's specs open a session against the API: without a backend they are left out,
+// like the setup, and the run covers only the public pages.
+const BACKEND_ONLY = [/session\.spec\.ts/, /panel-shell\.spec\.ts/].filter(
+  () => !E2eEnv.withBackend,
+)
 
 export default defineConfig({
   // The config lives in `e2e/` (`_standards/architecture.md` §4): the specs'
@@ -69,7 +74,7 @@ export default defineConfig({
     {
       name: 'mobile',
       testMatch: /.*\.spec\.ts/,
-      testIgnore: MIGRATION_BASELINE,
+      testIgnore: [MIGRATION_BASELINE, ...BACKEND_ONLY],
       dependencies: AFTER_SETUP,
       use: {
         ...devices['Pixel 5'],
@@ -81,7 +86,11 @@ export default defineConfig({
       name: 'tablet',
       testMatch: /.*\.spec\.ts/,
       // The phone-only charge (`touch-targets.spec.ts`).
-      testIgnore: [/touch-targets\.spec\.ts/, MIGRATION_BASELINE],
+      testIgnore: [
+        /touch-targets\.spec\.ts/,
+        MIGRATION_BASELINE,
+        ...BACKEND_ONLY,
+      ],
       dependencies: AFTER_SETUP,
       use: {
         ...devices['Desktop Chrome'],
@@ -94,7 +103,11 @@ export default defineConfig({
       name: 'desktop',
       testMatch: /.*\.spec\.ts/,
       // The phone-only charge (`touch-targets.spec.ts`).
-      testIgnore: [/touch-targets\.spec\.ts/, MIGRATION_BASELINE],
+      testIgnore: [
+        /touch-targets\.spec\.ts/,
+        MIGRATION_BASELINE,
+        ...BACKEND_ONLY,
+      ],
       dependencies: AFTER_SETUP,
       use: {
         ...devices['Desktop Chrome'],

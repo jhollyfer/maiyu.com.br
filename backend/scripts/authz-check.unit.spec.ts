@@ -42,3 +42,49 @@ test.group('authz:check > comparison with the baseline', () => {
     assert.include(findings[1]?.message ?? '', 'new route')
   })
 })
+
+test.group('authz:check > protection class of an operation', () => {
+  const check = new AuthzCheck()
+  const session = { cookieAuth: [] }
+
+  test('without security and roles is anonymous', ({ assert }) => {
+    assert.equal(check.protectionOf({}), AuthzCheck.ANONYMOUS)
+    assert.equal(check.protectionOf({ security: [] }), AuthzCheck.ANONYMOUS)
+  })
+
+  test('with a required session and no role is authenticated', ({ assert }) => {
+    assert.equal(
+      check.protectionOf({ security: [session] }),
+      AuthzCheck.AUTHENTICATED,
+    )
+  })
+
+  test('with an empty alternative beside the session is optional, not authenticated', ({
+    assert,
+  }) => {
+    assert.equal(
+      check.protectionOf({ security: [session, {}] }),
+      AuthzCheck.OPTIONAL,
+    )
+  })
+
+  test('roles win over security, optional or not', ({ assert }) => {
+    const { staff } = ROLE_FIXTURES
+
+    assert.equal(
+      check.protectionOf({ security: [session, {}], 'x-roles': [staff] }),
+      staff,
+    )
+  })
+
+  test('moving a route from authenticated to optional is a finding', ({
+    assert,
+  }) => {
+    const [finding] = check.compare(
+      { 'GET /storefront/cart': AuthzCheck.AUTHENTICATED },
+      { 'GET /storefront/cart': AuthzCheck.OPTIONAL },
+    )
+
+    assert.include(finding?.message ?? '', 'authenticated -> optional')
+  })
+})

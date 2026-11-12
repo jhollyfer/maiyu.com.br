@@ -73,4 +73,31 @@ test.group('start/limiter.base > LimiterKey (unit)', () => {
   test('without a session there is no per-user key', ({ assert }) => {
     assert.isNull(LimiterKey.user('upload', undefined))
   })
+
+  test('the credential key is the same for any case and spacing of the code', ({
+    assert,
+  }) => {
+    assert.equal(
+      LimiterKey.credential('turma', '  ab12cd '),
+      LimiterKey.credential('turma', 'AB12CD'),
+    )
+  })
+
+  test('the credential key never holds the credential in clear text, and carries the kind', ({
+    assert,
+  }) => {
+    const key = LimiterKey.credential('convite', 'abc123.s3cr3t')
+
+    assert.match(key ?? '', /^credential:convite:[0-9a-f]{64}$/)
+    assert.notInclude(key ?? '', 's3cr3t')
+    assert.notEqual(key, LimiterKey.credential('turma', 'abc123.s3cr3t'))
+  })
+
+  test('without a usable credential there is no per-credential key', ({
+    assert,
+  }) => {
+    assert.isNull(LimiterKey.credential('turma', undefined))
+    assert.isNull(LimiterKey.credential('turma', 42))
+    assert.isNull(LimiterKey.credential('turma', '   '))
+  })
 })

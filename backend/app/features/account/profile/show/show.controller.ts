@@ -10,7 +10,7 @@ export default class AccountProfileShowController {
   static docs = OpenApiDocs.defineDocs({
     summary: 'Ver a própria conta',
     description:
-      'Devolve a conta da sessão: nome, e-mail, celular e papel na plataforma. O `id` vem da ' +
+      'Devolve a conta da sessão: nome, e-mail, celular, foto, papel na plataforma e o vínculo ativo (`tenant`, ou `null`). O `id` vem da ' +
       'sessão, nunca do caminho, e a senha não faz parte da resposta.',
   })
 

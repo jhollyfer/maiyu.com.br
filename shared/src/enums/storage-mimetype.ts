@@ -34,6 +34,15 @@ export const STORAGE_MIMETYPES = [
 ] as const satisfies ReadonlyArray<StorageMimetype>
 
 /**
+ * What a Pix receipt can be: what a bank app exports, a screenshot or the PDF. It is cut from
+ * `STORAGE_MIMETYPES` (never typed twice), so a type the upload stops accepting leaves the receipt
+ * with it. The payer's picker (`accept`) and the receipt route both read this one list.
+ */
+export const RECEIPT_MIMETYPES = STORAGE_MIMETYPES.filter(
+  (mimetype) => mimetype.startsWith('image/') || mimetype === 'application/pdf',
+)
+
+/**
  * How many bytes at the start of the object are enough to check the type: the
  * longest signature (WebP and WAV, `RIFF....WEBP`) ends at byte 12.
  */

@@ -84,8 +84,10 @@ export abstract class TenantRepository {
   ): Promise<boolean>
   abstract save(tenant: Tenant): Promise<void>
   /**
-   * Adds the account to the tenant with `role`, or changes the role it has there, and ends every
-   * session of the account in the same transaction (`_standards/backend.md` §4.2). `changed` is
+   * Adds the account to the tenant with `role`, or changes the role it has there. It ends every
+   * session of the account in the same transaction only when the write takes access away
+   * (`MembershipAccess.reduces`, DECISIONS.md #581, `_standards/backend.md` §4.2): a new membership
+   * or a bigger role keeps them, because the account that just joined is signed in. `changed` is
    * `false` when the membership already had that role: then nothing is written and no session ends.
    */
   abstract saveMember(

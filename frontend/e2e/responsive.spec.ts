@@ -1,6 +1,8 @@
 import { LocalizedPath, PagesList } from './support/pages-list'
 import { expect, test } from './support/test'
 
+test.use({ storageState: PagesList.anonymous })
+
 /**
  * Every public page fits the window at the narrowest phone still in use (320 px) and keeps the
  * shell (header and footer) on screen. The three project widths are in `playwright.config.ts`;

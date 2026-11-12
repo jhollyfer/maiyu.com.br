@@ -371,6 +371,25 @@
   }
 }
 
+/* `rail`: a list that scrolls sideways on a phone, one item snapped at a time, with no visible bar.
+   Native scroll and not a library: the finger already knows it, and a screen reader reads the list as
+   a list. The `Rail` piece adds the name and the focus; a grid from a breakpoint takes `overflow-visible`. */
+@utility rail {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  & > * {
+    scroll-snap-align: start;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

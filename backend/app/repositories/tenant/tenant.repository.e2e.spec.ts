@@ -7,7 +7,12 @@ import { UserFactory } from '#database/factories/user.factory'
 import { SessionRepository } from '#repositories/session/session.repository'
 import { TenantLucidRepository } from '#repositories/tenant/tenant.lucid.repository'
 import { resetDatabase } from '#tests/http-fixtures'
-import { NO_ROLE_CHANGE, ROLE_CHANGE } from '#tests/role-fixtures'
+import {
+  NO_NON_STAFF_ROLE,
+  NO_ROLE_CHANGE,
+  ROLE_CHANGE,
+  ROLE_FIXTURES,
+} from '#tests/role-fixtures'
 import { Tenants } from '#tests/tenants-fixtures'
 
 /**
@@ -40,6 +45,40 @@ test.group('TenantRepository (lucid) > membership ends sessions', (group) => {
     await tenants.removeMember(first.member.id)
     assert.isNull(await sessions.readRefresh(again?.refreshToken ?? ''))
   }).skip(ROLE_CHANGE === undefined, NO_ROLE_CHANGE)
+
+  test('a new membership keeps the sessions: whoever just joined stays signed in', async ({
+    assert,
+  }) => {
+    const tenants = await app.container.make(TenantLucidRepository)
+    const sessions = await app.container.make(SessionRepository)
+    const tenant = await Tenants.create()
+    const user = await UserFactory.create()
+    const signedIn = await sessions.issue(user.id)
+
+    const saved = await tenants.saveMember(
+      tenant.id,
+      user.id,
+      ROLE_FIXTURES.nonStaff ?? ROLE_FIXTURES.staff,
+    )
+
+    assert.isTrue(saved.changed)
+    assert.isNotNull(await sessions.readRefresh(signedIn?.refreshToken ?? ''))
+  })
+
+  test('a bigger role keeps the sessions', async ({ assert }) => {
+    const { nonStaff, staff } = ROLE_FIXTURES
+    if (nonStaff === null) return assert.fail(NO_NON_STAFF_ROLE)
+    const tenants = await app.container.make(TenantLucidRepository)
+    const sessions = await app.container.make(SessionRepository)
+    const tenant = await Tenants.create()
+    const user = await UserFactory.create()
+    await tenants.saveMember(tenant.id, user.id, nonStaff)
+    const signedIn = await sessions.issue(user.id)
+
+    await tenants.saveMember(tenant.id, user.id, staff)
+
+    assert.isNotNull(await sessions.readRefresh(signedIn?.refreshToken ?? ''))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
 })
 
 /**

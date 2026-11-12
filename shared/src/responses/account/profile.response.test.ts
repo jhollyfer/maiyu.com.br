@@ -11,6 +11,7 @@ describe('AccountProfileShowResponse', () => {
       phone: null,
       platformRole: 'USER',
       avatar: null,
+      tenant: null,
       password: '$argon2id$segredo',
     })
 
@@ -21,6 +22,7 @@ describe('AccountProfileShowResponse', () => {
       phone: null,
       platformRole: 'USER',
       avatar: null,
+      tenant: null,
     })
   })
 })

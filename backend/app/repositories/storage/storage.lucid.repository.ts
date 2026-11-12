@@ -16,6 +16,7 @@ import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
 import CustomerScoped from '#repositories/shared/customer-scoped'
 import LucidMapping from '#repositories/shared/lucid-mapping'
+import TenantScoped from '#repositories/shared/tenant-scoped'
 
 /**
  * The rows of a `count('* as total')`, typed `any` by the query builder. Postgres `count` is
@@ -46,6 +47,21 @@ export class StorageLucidRepository extends StorageRepository {
       StorageModel.query({ client: this.transaction.client() }),
     )
       .where('id', id)
+      .withScopes((scopes) => scopes.notDeleted())
+      .first()
+    if (!row) return null
+
+    return this.toEntity(row)
+  }
+
+  async findPublic(id: string): Promise<Storage | null> {
+    const row = await CustomerScoped.readable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
+      .where('id', id)
+      .where('status', UPLOAD_STATUS.UPLOADED)
+      .whereNotNull(TenantScoped.COLUMN)
+      .whereNull(CustomerScoped.COLUMN)
       .withScopes((scopes) => scopes.notDeleted())
       .first()
     if (!row) return null
@@ -89,6 +105,21 @@ export class StorageLucidRepository extends StorageRepository {
     )
       .whereIn('id', unique)
       .where('uploadedBy', uploadedBy)
+      .where('status', UPLOAD_STATUS.UPLOADED)
+      .withScopes((scopes) => scopes.notDeleted())
+
+    return rows.length === unique.length
+  }
+
+  async areAttachableByTenant(ids: ReadonlyArray<string>): Promise<boolean> {
+    const unique = [...new Set(ids)]
+    if (unique.length === 0) return true
+
+    const rows = await TenantScoped.writable(
+      StorageModel.query({ client: this.transaction.client() }),
+    )
+      .whereIn('id', unique)
+      .whereNull(CustomerScoped.COLUMN)
       .where('status', UPLOAD_STATUS.UPLOADED)
       .withScopes((scopes) => scopes.notDeleted())
 

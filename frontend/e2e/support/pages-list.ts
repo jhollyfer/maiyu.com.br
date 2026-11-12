@@ -8,6 +8,13 @@ import { readFileSync } from 'node:fs'
  * `touch-targets.spec.ts`, que assim não supõem tela nenhuma do projeto.
  */
 export class PagesList {
+  /**
+   * A sessão vazia dos specs de página. Os projetos de viewport do `playwright.config.ts` entram
+   * com a sessão do dono; com ela, rota de autenticação listada aqui redireciona ao painel e o spec
+   * mede a página errada sem reprovar (achado no curupira). Página pública se mede como o visitante.
+   */
+  static readonly anonymous = { cookies: [], origins: [] }
+
   private static readonly source = readFileSync(
     new URL('./pages.md', import.meta.url),
     'utf8',

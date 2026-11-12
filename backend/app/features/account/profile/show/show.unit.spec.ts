@@ -15,11 +15,14 @@ import {
   seedUser,
   USER_ID,
 } from '#tests/identity-unit-fixtures'
+import { ROLE_FIXTURES } from '#tests/role-fixtures'
 import {
   FILE_ID,
   storageDoubles,
   uploadedFile,
 } from '#tests/storages-unit-fixtures'
+
+const TENANT_ID = '3f1c2a52-0a43-4c0e-9d57-6f6f2f2f6a11'
 
 const ACTOR: Actor = {
   id: USER_ID,
@@ -60,6 +63,30 @@ test.group('account/profile > show (unit)', (group) => {
       phone: null,
       platformRole: PLATFORM_ROLE.USER,
       avatar: null,
+      tenant: null,
+    })
+  })
+
+  test('the active membership comes as id and role, and nothing else of the tenant', async ({
+    assert,
+  }) => {
+    const { users, useCase } = await setup()
+    await seedUser(users)
+    const actor: Actor = {
+      ...ACTOR,
+      tenant: {
+        id: TENANT_ID,
+        cityId: 'city-1',
+        role: ROLE_FIXTURES.staff,
+        childIds: ['child-1'],
+      },
+    }
+
+    const profile = rightOf(await useCase.execute({ actor }))
+
+    assert.deepEqual(profile.tenant, {
+      id: TENANT_ID,
+      role: ROLE_FIXTURES.staff,
     })
   })
 
