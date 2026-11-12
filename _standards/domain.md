@@ -551,5 +551,9 @@ O §1–§7 é o DDD tático. Do estratégico, a casa usa o que cabe num monóli
 - **Sem barramento entre módulos.** O monólito da casa não tem contexto com banco próprio, então
   feature não fala com feature por evento: o que é comum sobe para domínio, repository ou service
   (§11).
+- **O tenant é fronteira de dado, não de contexto.** Todo contexto de um projeto multi-tenant vê só
+  o tenant da requisição, pela mesma peça do kit (`backend.md` §4.14). A entidade não carrega a
+  regra de escopo: ela guarda `tenantId` como qualquer outro id de agregado (§4), e quem filtra é o
+  repositório. Cidade e catálogo global (cursos do academy, por exemplo) não têm `tenantId`.
 - **Import circular é proibido em qualquer camada** (§8): ciclo entre módulos é acoplamento
   escondido e, no Fastify, injeção que chega `undefined`.

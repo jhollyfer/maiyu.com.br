@@ -1,69 +1,50 @@
-import { readFileSync, readdirSync, statSync } from 'node:fs'
-import { join } from 'node:path'
-
 import { describe, expect, it } from 'vitest'
 
-import { baseLocale, locales } from '#/paraglide/runtime'
+import en from '../../messages/en.json'
+import es from '../../messages/es.json'
+import ptBR from '../../messages/pt-BR.json'
 
 /**
- * As mensagens do paraglide, nos três idiomas.
- *
- * O paraglide não reclama de chave faltando num idioma: ele cai no idioma
- * base, e a página em espanhol ganha uma frase em português no meio sem erro
- * nenhum. E chave sem uso não avisa que está morta, e é a que ninguém revisa
- * quando o texto muda.
+ * What belongs to the house in the message files (`_standards/i18n.md` §4). The rest
+ * (missing translation, unknown variable, plural) belongs to `inlang check`.
  */
-const root = join(import.meta.dirname, '..', '..')
+const FILES = { 'pt-BR': ptBR, es, en }
 
-function messages(locale: string): Record<string, string> {
-  const raw: unknown = JSON.parse(
-    readFileSync(join(root, 'messages', `${locale}.json`), 'utf8'),
-  )
-  if (typeof raw !== 'object' || raw === null) return {}
+/** A message's texts, including those of the plural variants. */
+function texts(value: unknown): Array<string> {
+  if (typeof value === 'string') return [value]
+  if (Array.isArray(value)) return value.flatMap(texts)
+  if (typeof value === 'object' && value !== null)
+    return Object.values(value).flatMap(texts)
 
-  return Object.fromEntries(
-    Object.entries(raw).filter(
-      (entry): entry is [string, string] =>
-        entry[0] !== '$schema' && typeof entry[1] === 'string',
-    ),
-  )
+  return []
 }
 
-/** Todo arquivo `.ts`/`.tsx` de `src/`, fora o que o paraglide gera. */
-function sources(dir: string): Array<string> {
-  return readdirSync(dir).flatMap((name) => {
-    const path = join(dir, name)
-    if (name === 'paraglide') return []
-    if (statSync(path).isDirectory()) return sources(path)
-    if (!/\.tsx?$/.test(name) || /\.test\.tsx?$/.test(name)) return []
-
-    return [readFileSync(path, 'utf8')]
-  })
+function keysOf(file: Record<string, unknown>): Array<string> {
+  return Object.keys(file)
+    .filter((key) => key !== '$schema')
+    .sort()
 }
 
-const base = messages(baseLocale)
-const code = sources(join(root, 'src')).join('\n')
+describe('messages', () => {
+  it.each(Object.entries(FILES))(
+    '%s has no em dash nor "..." in any value',
+    (_locale, file) => {
+      const offenders = Object.entries(file)
+        .filter(([key]) => key !== '$schema')
+        .filter(([, value]) =>
+          texts(value).some((text) => /[\u2014\u2013]|\.\.\./.test(text)),
+        )
+        .map(([key]) => key)
 
-describe('mensagens', () => {
-  it.each(locales)('%s tem exatamente as chaves do idioma base', (locale) => {
-    expect(Object.keys(messages(locale)).sort()).toEqual(
-      Object.keys(base).sort(),
-    )
-  })
+      expect(offenders).toEqual([])
+    },
+  )
 
-  it.each(locales)('%s não tem mensagem vazia', (locale) => {
-    const vazias = Object.entries(messages(locale))
-      .filter(([, text]) => !text.trim())
-      .map(([key]) => key)
-
-    expect(vazias).toEqual([])
-  })
-
-  it('toda chave é usada no código', () => {
-    const mortas = Object.keys(base).filter(
-      (key) => !code.includes(`m.${key}(`),
-    )
-
-    expect(mortas).toEqual([])
+  it.each([
+    ['es', es],
+    ['en', en],
+  ])('%s has the same key set as pt-BR', (_locale, file) => {
+    expect(keysOf(file)).toEqual(keysOf(ptBR))
   })
 })

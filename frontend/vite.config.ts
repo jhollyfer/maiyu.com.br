@@ -1,48 +1,51 @@
-import { defineConfig } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
 import { paraglideVitePlugin } from '@inlang/paraglide-js'
-
-import { tanstackStart } from '@tanstack/react-start/plugin/vite'
-
-import viteReact, { reactCompilerPreset } from '@vitejs/plugin-react'
 import babel from '@rolldown/plugin-babel'
 import tailwindcss from '@tailwindcss/vite'
+import { tanstackStart } from '@tanstack/react-start/plugin/vite'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { nitro } from 'nitro/vite'
+import { defineConfig, loadEnv } from 'vite'
 
-const config = defineConfig({
-  resolve: { tsconfigPaths: true },
-  plugins: [
-    devtools(),
-    /*
-     * A mesma estratégia dos irmãos, `url` e depois `baseLocale`, e aqui ela é
-     * usada de verdade: o site da Maiyu fala três línguas desde antes da
-     * migração (português, inglês e espanhol, para quem chega pela fronteira
-     * com o Peru e a Colômbia).
-     *
-     * O português é o idioma base e não leva prefixo, então todo link já
-     * compartilhado do site antigo (`/portfolio`, `/blog/...`) continua
-     * respondendo igual. Inglês e espanhol ganham endereço próprio (`/en/...`,
-     * `/es/...`), que é o que deixa o buscador indexar as três versões e o
-     * `hreflang` apontar para cada uma.
-     */
-    paraglideVitePlugin({
-      project: './project.inlang',
-      outdir: './src/paraglide',
-      strategy: ['url', 'baseLocale'],
-    }),
-    // Cravar o preset: sem ele o Nitro detecta a plataforma pelas variáveis de
-    // ambiente do CI e só cai em `node-server` quando nenhuma responde. É o que
-    // o `Dockerfile-production` espera.
-    nitro({ preset: 'node-server' }),
-    tailwindcss(),
-    tanstackStart({
-      router: {
-        routeToken: 'layout',
-      },
-    }),
-    viteReact(),
-    babel({ presets: [reactCompilerPreset()] }),
-  ],
+// With the extension: Vite's native config loader does not resolve an extensionless import.
+import { readBuildEnv } from './src/lib/build-env.ts'
+import { STATIC_SECURITY_HEADERS } from './src/lib/security-headers.ts'
+
+export default defineConfig(({ mode }) => {
+  // The `.env*` files are not in `process.env` while the config runs, hence `loadEnv`; the same
+  // schema `src/env.ts` applies, so `pnpm build` stops without `VITE_API_URL` instead of publishing
+  // a bundle that points to nowhere (_doc-lib/vitejs.md#config,
+  // https://vite.dev/config/#using-environment-variables-in-config; `DECISIONS.md` #335).
+  readBuildEnv(loadEnv(mode, process.cwd(), 'VITE_'))
+
+  return {
+    // The tsconfig `paths` (`#/*`) through Vite itself (vite.dev/config/shared-options#resolve-tsconfigpaths).
+    resolve: { tsconfigPaths: true },
+    plugins: [
+      // Pinned preset: without it Nitro guesses the platform from the CI variables, and the
+      // `Dockerfile-production` expects `node-server` (_doc-lib/nitro.md#deploy/runtimes/node).
+      nitro({
+        preset: 'node-server',
+        routeRules: {
+          // The files of `.output/public` never reach `src/server.ts`: Nitro's static handler
+          // answers first, so this rule is what gives them the headers. Same values as the server
+          // entry, from one source (`lib/security-headers.ts`, _doc-lib/nitro.md#docs/lifecycle).
+          '/**': { headers: STATIC_SECURITY_HEADERS },
+        },
+      }),
+      tailwindcss(),
+      // Compiler options live in `project.inlang/paraglide.config.ts`, shared with the CLI
+      // (_doc-lib/paraglide.md#/tanstack-start, https://paraglidejs.com/tanstack-start).
+      paraglideVitePlugin({ project: './project.inlang' }),
+      tanstackStart({
+        router: {
+          routeToken: 'layout',
+          // A test next to the route is not a route: without this the generator evaluates it.
+          routeFileIgnorePattern: '\\.(spec|test)\\.tsx?$',
+        },
+      }),
+      react(),
+      // React Compiler after the React plugin, over the processed JSX (`_standards/frontend.md` §9.1).
+      babel({ presets: [reactCompilerPreset()] }),
+    ],
+  }
 })
-
-export default config

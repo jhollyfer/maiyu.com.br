@@ -1,39 +1,44 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { alternateLinks, localizedUrl, localizedDate } from './i18n'
+import { overwriteGetLocale } from '#/paraglide/runtime'
 
-describe('localizedDate', () => {
-  it('escreve a data por extenso no idioma pedido, sem andar de dia por fuso', () => {
-    expect(localizedDate('2026-09-08', 'pt-BR')).toBe('8 de setembro de 2026')
-    expect(localizedDate('2026-09-08', 'en')).toBe('September 8, 2026')
-    expect(localizedDate('2026-09-08', 'es')).toBe('8 de septiembre de 2026')
+import { TIME_ZONE, formatCurrency, formatNumber, localized } from './i18n'
+
+afterEach(() => {
+  overwriteGetLocale(() => 'pt-BR')
+})
+
+const TEXT = { 'pt-BR': 'Olá', es: 'Hola', en: 'Hello' }
+
+describe('localized', () => {
+  it('reads the text of the current language', () => {
+    overwriteGetLocale(() => 'es')
+    expect(localized(TEXT)).toBe('Hola')
+
+    overwriteGetLocale(() => 'en')
+    expect(localized(TEXT)).toBe('Hello')
   })
 })
 
-describe('localizedUrl', () => {
-  it('não prefixa o idioma base', () => {
-    expect(localizedUrl('/portfolio', 'pt-BR')).toBe(
-      'https://maiyu.com.br/portfolio',
-    )
-  })
+describe('formatNumber', () => {
+  it('segue o separador do idioma', () => {
+    overwriteGetLocale(() => 'pt-BR')
+    expect(formatNumber(1234.5)).toBe('1.234,5')
 
-  it('prefixa os outros idiomas', () => {
-    expect(localizedUrl('/portfolio', 'en')).toBe(
-      'https://maiyu.com.br/en/portfolio',
-    )
+    overwriteGetLocale(() => 'en')
+    expect(formatNumber(1234.5)).toBe('1,234.5')
   })
 })
 
-describe('alternateLinks', () => {
-  it('publica um idioma por link, mais o x-default no base', () => {
-    const links = alternateLinks('/blog')
+describe('formatCurrency', () => {
+  it('writes in reais', () => {
+    overwriteGetLocale(() => 'pt-BR')
+    expect(formatCurrency(10)).toContain('R$')
+  })
+})
 
-    expect(links.map((link) => link.hrefLang)).toEqual([
-      'pt-BR',
-      'en',
-      'es',
-      'x-default',
-    ])
-    expect(links.at(-1)?.href).toBe('https://maiyu.com.br/blog')
+describe('TIME_ZONE', () => {
+  it('is the western Amazonas time zone (UTC-5)', () => {
+    expect(TIME_ZONE).toBe('America/Eirunepe')
   })
 })

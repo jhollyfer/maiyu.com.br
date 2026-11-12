@@ -1,11 +1,14 @@
-import { CONTACT, SITE_IMAGE, SITE_TITLE, SITE_URL, SOCIALS } from './site'
+import { baseLocale } from '#/paraglide/runtime'
+
+import { localizedUrl } from './page-head'
+import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
 
 /**
  * O JSON-LD que o site publica, montado num lugar só.
  *
  * O mesmo desenho do academy: uma função por tipo, testada, e a rota só decide
- * quando injetar. Nenhuma função devolve string; quem serializa é
- * `jsonLdScript`, porque um objeto é o que dá para inspecionar num teste sem
+ * quando injetar. Nenhuma função devolve string; quem serializa é o
+ * `jsonLd` do kit (`lib/page-head.ts`, que escapa o `<`), porque um objeto é o que dá para inspecionar num teste sem
  * reparsear.
  */
 
@@ -15,6 +18,20 @@ import { CONTACT, SITE_IMAGE, SITE_TITLE, SITE_URL, SOCIALS } from './site'
  * definição para manter em dia.
  */
 export type JsonLd = Record<string, unknown>
+
+/**
+ * O endereço da Maiyu como entidade: a home no idioma base (`/pt-br`).
+ *
+ * Não é a raiz do domínio, que responde 307 (`DECISIONS.md` #384): um `url` que
+ * redireciona obriga o buscador a seguir o salto para reconhecer a entidade.
+ * Também não é a home do idioma da requisição: a organização é uma só, e três
+ * `url` diferentes, um por língua, a partiriam em três para quem lê o grafo.
+ * O idioma base é o mesmo do `x-default` do `hreflang`
+ * (_doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
+ */
+function organizationUrl(): string {
+  return localizedUrl('/', baseLocale)
+}
 
 /**
  * A Maiyu como empresa.
@@ -33,7 +50,7 @@ export function organizationJsonLd(description: string): JsonLd {
     '@type': 'ProfessionalService',
     name: SITE_TITLE,
     description,
-    url: SITE_URL,
+    url: organizationUrl(),
     logo: SITE_IMAGE,
     image: SITE_IMAGE,
     email: CONTACT.email,
@@ -54,44 +71,6 @@ export function organizationJsonLd(description: string): JsonLd {
     ],
     sameAs: SOCIALS.map((social) => social.href),
   }
-}
-
-/** Um degrau da trilha: o nome que se lê e o caminho absoluto para onde leva. */
-export type Crumb = {
-  name: string
-  url: string
-}
-
-/**
- * A trilha de navegação de uma rota de detalhe, com a home sempre no primeiro
- * degrau.
- *
- * Recebe URL já absoluta, e não caminho como no academy: aqui o endereço
- * depende do idioma (`/en/blog/...`), e quem sabe o idioma é a rota.
- *
- * Trilha vazia devolve lista vazia: um `BreadcrumbList` de um degrau só não
- * informa hierarquia nenhuma.
- */
-export function breadcrumbListJsonLd(
-  home: Crumb,
-  trail: ReadonlyArray<Crumb>,
-): Array<JsonLd> {
-  if (trail.length === 0) return []
-
-  const crumbs = [home, ...trail]
-
-  return [
-    {
-      '@context': 'https://schema.org',
-      '@type': 'BreadcrumbList',
-      itemListElement: crumbs.map((crumb, index) => ({
-        '@type': 'ListItem',
-        position: index + 1,
-        name: crumb.name,
-        item: crumb.url,
-      })),
-    },
-  ]
 }
 
 /** Os campos de um artigo do diário que o `BlogPosting` publica. */
@@ -121,7 +100,11 @@ export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
     datePublished: article.publishedAt,
     // A autoria é da Maiyu como organização: os textos saem da equipe, e
     // `Person` anunciaria ao buscador uma pessoa que não assina nada.
-    author: { '@type': 'Organization', name: article.author, url: SITE_URL },
+    author: {
+      '@type': 'Organization',
+      name: article.author,
+      url: organizationUrl(),
+    },
     publisher: {
       '@type': 'Organization',
       name: SITE_TITLE,
@@ -161,28 +144,12 @@ export function projectListJsonLd(
         url: project.url,
         image: project.image,
         dateCreated: project.dateCreated,
-        creator: { '@type': 'Organization', name: SITE_TITLE, url: SITE_URL },
+        creator: {
+          '@type': 'Organization',
+          name: SITE_TITLE,
+          url: organizationUrl(),
+        },
       },
     })),
-  }
-}
-
-/**
- * Um objeto de JSON-LD na forma que o `scripts` do `head` recebe.
- *
- * Existe para que nenhuma rota escreva o `type` à mão: um `application/json`
- * digitado por engano é ignorado pelo buscador sem erro nenhum.
- */
-export function jsonLdScript(data: JsonLd): {
-  type: string
-  children: string
-} {
-  return {
-    type: 'application/ld+json',
-    // JSON.stringify does not escape `<`, so a record field holding
-    // `</script>` would close the tag early and let the rest run as HTML.
-    // `\u003c` is the same character to a JSON parser and inert to the HTML one
-    // (_standards/frontend.md §9.7).
-    children: JSON.stringify(data).replaceAll('<', '\\u003c'),
   }
 }

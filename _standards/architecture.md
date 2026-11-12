@@ -85,9 +85,10 @@ backend/
 │   │   ├── same-site.ts             # valor de sameSite do cookie de sessão, decidido no boot (backend.md §4.10)
 │   │   ├── trusted-proxies.ts       # TRUSTED_PROXIES em lista, validado no boot; igual em todo projeto (_templates/code/, DECISIONS #280)
 │   │   ├── transaction-context.ts   # AsyncLocalStorage da transação, lido por 2+ repositories (domain.md §6)
+│   │   ├── tenant-scope.ts          # o que a requisição lê e escreve entre os tenants (backend.md §4.14, DECISIONS #390)
 │   │   ├── validator.ts             # Fastify: reexporta o z de shared/ + regras só do backend; Adonis: o vine do backend (arquivo)
 │   │   ├── validator.unit.spec.ts   # meta-spec dos validators (backend.md §4.4)
-│   │   ├── memory-rows.ts  page-criteria.ts  unique-conflict.ts  repository-failure.ts   # helpers nomeados (DECISIONS #340)
+│   │   ├── memory-rows.ts  page-criteria.ts  unique-conflict.ts   # helpers nomeados (DECISIONS #340)
 │   │   ├── terminal-text.ts  error-message.ts   # TerminalText.plain; ErrorMessage.of(unknown)
 │   │   ├── <tema>.ts                # helper puro usado por 2+ camadas, em classe; o nome é o tema (DECISIONS #340)
 │   │   ├── <tema>.{unit,e2e}.spec.ts # spec de configuração ou de recurso sem arquivo-casa (trust proxy, arquivos de idioma)
@@ -97,8 +98,9 @@ backend/
 │   │   │   ├── <entidade>.entity.ts       # classe rica: create/restore, transições, invariantes
 │   │   │   ├── <entidade>.errors.ts       # fatos de domínio (sem status HTTP)
 │   │   │   └── <entidade>.unit.spec.ts
-│   │   └── shared/<nome>.value-object.ts  # value object só do backend (Money, Slug com unicidade…)
+│   │   └── shared/<nome>.value-object.ts  # value object só do backend (Slug com unicidade…); o que roda no front, Money incluído, vai para shared/src/value-objects/ (domain.md §3)
 │   ├── repositories/
+│   │   ├── shared/tenant-scoped.ts        # o filtro de `tenant_id` de toda tabela de tenant (backend.md §4.14)
 │   │   ├── shared/<nome>.ts               # serve a 2+ repositories e importa model ou faz I/O de persistência (Adonis: lucid-mapping.ts; driver: conexão, coleção com escopo); helper puro vai para core/ (DECISIONS #278)
 │   │   ├── unit-of-work/{unit-of-work.ts, unit-of-work.lucid.ts, unit-of-work.memory.ts}   # domain.md §6
 │   │   ├── session/                       # contrato e implementações da sessão (DECISIONS #339)
@@ -126,7 +128,9 @@ backend/
 │       ├── _shared.refusal.base.ts  # base dos tradutores de fato de domínio em HTTPException (DECISIONS #341)
 │       ├── _shared.<tema>-refusal.ts       # refusal usado por 2+ módulos
 │       ├── _shared.<entidade>.presenter.ts # presenter usado por 2+ módulos
-│       ├── authentication/{sessions,registrations,invitations,passwords}/<ação>/   # DECISIONS #339
+│       ├── authentication/{sessions,registrations,invitations,passwords,tenants}/<ação>/   # DECISIONS #339; tenants: vínculos e escolha (#390)
+│       ├── platform/{cities,overview}/<ação>/   # área do dono da plataforma (backend.md §4.14)
+│       ├── storefront/{cities,tenants}/list/    # catálogo público de cidades e clientes da cidade
 │       ├── authentication/_shared.session-cookie.ts
 │       └── <módulo>/                # público ou contexto: administrator, storefront, authentication, account
 │           ├── _shared.<tema>.ts    # só função pura, usada por 2+ recursos do módulo
@@ -292,7 +296,7 @@ Arquivo que não é código de camada também tem casa. O que não está aqui ne
 ```
 frontend/
 ├── package.json  tsconfig.json  eslint.config.js  prettier.config.js  .prettierignore
-├── vite.config.ts  vitest.config.ts  components.json  Dockerfile-production
+├── vite.config.ts  vitest.config.ts  vitest.setup.ts  components.json  Dockerfile-production
 ├── .env.example  .env.production  .env.e2e.example   # .env.production versionado, só VITE_* de produção (tooling.md §8.2)
 ├── public/                          # só nome estável: favicon, manifest (frontend.md §9.6)
 ├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4
@@ -341,11 +345,12 @@ frontend/
     │   ├── tanstack-query/{http.ts, http.server.ts, query-context.ts, query-key-factory.ts, invalidate.ts, devtools.tsx,
     │   │                   queries/<módulo>.ts, mutations/<módulo>.ts} (+ .test.ts)
     │   ├── react-hook-form/{app-field.tsx, app-field-context.ts, app-field.test.tsx}   # kit
+    │   ├── tenant/tenant-context.tsx       # kit: TenantProvider, useCity, useTenant (frontend.md §3.5)
     │   └── theme/get-theme.ts
     └── lib/
         ├── cn.ts labels.ts i18n.ts form-errors.ts form-a11y.ts list-search.ts redirect-search.ts page-head.ts
         ├── sitemap.ts load-or-not-found.ts local-store.ts bulk.ts chunking.ts upload-transport.ts upload-resume.ts
-        ├── area-capability.ts server-env.ts security-headers.ts mask.ts
+        ├── area-capability.ts server-env.ts security-headers.ts mask.ts city-path.ts
         ├── messages.test.ts                # meta-teste das mensagens
         └── <tema>.ts (+ <tema>.test.ts)    # cada um com teste ao lado
 ```
@@ -562,7 +567,7 @@ shared/
     ├── validators/<módulo>/_shared.<tema>.ts   # regra de domínio de 2+ recursos do mesmo módulo; só função pura em classe static (typescript.md §6)
     ├── validators/_shared.<tema>.ts   # a mesma regra entre módulos diferentes: sobe para a raiz de validators/, nunca importa `_shared` de outro módulo
     ├── enums/<nome>.ts              # POST_STATUS / PostStatus / POST_STATUSES
-    ├── value-objects/<nome>.ts      # Cpf, Cnpj, Email, Phone: create() devolve Either; formatação pura
+    ├── value-objects/<nome>.ts      # Cpf, Cnpj, Email, Phone, Money: create() devolve Either; formatação pura
     ├── records/<contexto>.ts        # tipo de registro e constante que os dois lados leem (Table, Row, User); sem schema
     ├── rich-text-schema.ts          # [opc] com @tiptap/core (bloco opcional do sync): lista única de extensões do Tiptap + conversão HTML/Markdown → JSON (editor e migration)
     └── responses/<módulo>/<recurso>.response.ts     # schemas Zod de resposta + tipos (§10)

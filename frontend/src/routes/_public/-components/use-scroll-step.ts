@@ -9,13 +9,17 @@ import * as React from 'react'
  * mesma conta com um ouvinte de rolagem, sem carregar a biblioteca para isso.
  *
  * O estado só muda quando o trecho muda, e não a cada pixel: `setState` com o
- * mesmo número não renderiza de novo.
+ * mesmo passo não renderiza de novo.
+ *
+ * Recebe os passos, e não a contagem, e devolve o passo, e não o índice: com
+ * `noUncheckedIndexedAccess`, quem indexasse a lista pelo número receberia
+ * `T | undefined`. A tupla não vazia dá o passo inicial já tipado.
  */
-export function useScrollStep(
+export function useScrollStep<T>(
   ref: React.RefObject<HTMLElement | null>,
-  steps: number,
-): number {
-  const [step, setStep] = React.useState(0)
+  steps: readonly [T, ...T[]],
+): T {
+  const [step, setStep] = React.useState(steps[0])
 
   React.useEffect(() => {
     function update(): void {
@@ -28,7 +32,11 @@ export function useScrollStep(
 
       const progress = Math.min(1, Math.max(0, -rect.top / travel))
 
-      setStep(Math.min(steps - 1, Math.floor(progress * steps)))
+      const next =
+        steps[Math.min(steps.length - 1, Math.floor(progress * steps.length))]
+      if (next === undefined) return
+
+      setStep(next)
     }
 
     update()

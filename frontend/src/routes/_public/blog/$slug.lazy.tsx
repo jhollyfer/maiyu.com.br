@@ -1,16 +1,14 @@
-import type * as React from 'react'
-import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
 import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { Photo } from '../-components/photo'
-import { PillButton } from '../-components/pill-button'
-import { REVEAL } from '../-components/reveal'
+import { RichText } from '#/components/common/rich-text/rich-text'
 import {
   NotFoundPage,
   NotFoundPageActions,
   NotFoundPageHomeButton,
   NotFoundPageTitle,
-} from '#/components/common/not-found-page'
+} from '#/components/common/route-status/not-found-page'
 import { Avatar, AvatarImage } from '#/components/ui/avatar'
 import { Badge } from '#/components/ui/badge'
 import {
@@ -22,11 +20,15 @@ import {
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
 import { articles } from '#/lib/articles'
-import type { ArticleBlock } from '#/lib/articles'
-import { localized, localizedDate } from '#/lib/i18n'
+import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
+import { localizedDate } from '#/lib/site-i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { Photo } from '../-components/photo'
+import { PillButton } from '../-components/pill-button'
+import { REVEAL } from '../-components/reveal'
 
 const route = getRouteApi('/_public/blog/$slug')
 
@@ -45,10 +47,10 @@ export const Route = createLazyFileRoute('/_public/blog/$slug')({
 function ArticleNotFound(): React.JSX.Element {
   return (
     <NotFoundPage className="min-h-[80dvh]">
-      <NotFoundPageTitle>{m.blogArticle_notFound()}</NotFoundPageTitle>
+      <NotFoundPageTitle>{m.blog_article_not_found()}</NotFoundPageTitle>
       <NotFoundPageActions>
         <NotFoundPageHomeButton to="/blog">
-          {m.blogArticle_returnToJournal()}
+          {m.blog_article_return_to_journal()}
         </NotFoundPageHomeButton>
       </NotFoundPageActions>
     </NotFoundPage>
@@ -56,43 +58,28 @@ function ArticleNotFound(): React.JSX.Element {
 }
 
 /**
- * Como cada tipo de bloco se desenha, por lookup e não por `if`.
- *
- * Parágrafo com `leading-[1.75]` e corpo grande: a medida vem do `max-w`
- * do artigo, não de cada linha. O intertítulo leva o losango de urucum como
- * marcador de capítulo e mais espaço acima do que abaixo, para que ele
- * pertença ao parágrafo que abre, e não ao que fecha.
+ * A tipografia do corpo, por classe sobre o `prose` do `RichText`: a medida vem do `max-w` do
+ * artigo, e não de cada linha. O intertítulo leva o losango de urucum como marcador de capítulo
+ * e mais espaço acima do que abaixo, para que ele pertença ao parágrafo que abre, e não ao que
+ * fecha.
  */
-const BLOCKS: Record<
-  ArticleBlock['kind'],
-  (text: string, key: string) => React.JSX.Element
-> = {
-  heading: (text, key) => (
-    <div key={key} className="mt-16 mb-5">
-      <span
-        aria-hidden="true"
-        className="mb-5 block size-2 rotate-45 bg-urucum"
-      />
-      <h2 className="text-h2 text-balance">{text}</h2>
-    </div>
-  ),
-  paragraph: (text, key) => (
-    <p
-      key={key}
-      className="mb-7 text-body-lg leading-[1.75] text-foreground/85"
-    >
-      {text}
-    </p>
-  ),
-}
+const BODY_CLASS = cn(
+  'prose-lg',
+  'prose-p:mb-7 prose-p:text-body-lg prose-p:leading-[1.75]',
+  // A cor sai pela variável do prose: `text-body-lg` e `text-foreground/85` na mesma lista
+  // o `twMerge` do `RichText` trata como conflito e apaga o tamanho.
+  '[--tw-prose-body:color-mix(in_oklab,var(--foreground)_85%,transparent)]',
+  'prose-h2:mt-16 prose-h2:mb-5 prose-h2:text-h2 prose-h2:text-balance',
+  "prose-h2:before:mb-5 prose-h2:before:block prose-h2:before:size-2 prose-h2:before:rotate-45 prose-h2:before:bg-urucum prose-h2:before:content-['']",
+)
 
 /**
  * Um artigo do diário, inteiro: capa, foto de lugar com crédito e
  * o corpo numa coluna de leitura.
  *
- * O corpo vem de `articles.ts` já nas três línguas, bloco a bloco. Quando o
- * volume pedir markdown, ele passa a sair do `react-markdown`, como o
- * `RichText` do academy.
+ * O corpo vem de `articles.ts` como documento Tiptap nas três línguas e sai
+ * pelo `RichText` do kit, que o desenha no servidor: o texto do artigo está
+ * no HTML da resposta.
  */
 function RouteComponent(): React.JSX.Element {
   const article = route.useLoaderData()
@@ -109,7 +96,7 @@ function RouteComponent(): React.JSX.Element {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   render={<Link to="/" />}
-                  className="inline-flex min-h-11 items-center"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center"
                 >
                   {m.nav_home()}
                 </BreadcrumbLink>
@@ -118,7 +105,7 @@ function RouteComponent(): React.JSX.Element {
               <BreadcrumbItem>
                 <BreadcrumbLink
                   render={<Link to="/blog" />}
-                  className="inline-flex min-h-11 items-center"
+                  className="inline-flex min-h-11 min-w-11 items-center justify-center"
                 >
                   {m.nav_blog()}
                 </BreadcrumbLink>
@@ -148,7 +135,7 @@ function RouteComponent(): React.JSX.Element {
             </Avatar>
             <p className="text-small text-muted-foreground">
               <span className="block text-body font-medium text-foreground">
-                {m.blogArticle_author()}
+                {m.blog_article_author()}
               </span>
               <time dateTime={article.date}>{localizedDate(article.date)}</time>
               {', '}
@@ -179,9 +166,7 @@ function RouteComponent(): React.JSX.Element {
         data-slot="article-body"
         className="mx-auto max-w-[44rem] px-4 pt-16 pb-24 md:px-8 md:pt-24"
       >
-        {article.body.map((block, index) =>
-          BLOCKS[block.kind](localized(block.text), `${index}`),
-        )}
+        <RichText content={localized(article.body)} className={BODY_CLASS} />
       </article>
 
       <span
@@ -191,7 +176,7 @@ function RouteComponent(): React.JSX.Element {
 
       <section data-slot="article-more" className="py-20 md:py-28">
         <div className="mx-auto max-w-4xl px-4 md:px-8">
-          <h2 className="text-h2">{m.blogArticle_moreTitle()}</h2>
+          <h2 className="text-h2">{m.blog_article_more_title()}</h2>
           <ul className="mt-8 divide-y divide-border border-y border-border">
             {more.map((other) => (
               <li key={other.slug}>
@@ -218,15 +203,17 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="article-cta" className="bg-secondary py-20 md:py-28">
         <div className="mx-auto flex max-w-4xl flex-col items-start gap-8 px-4 md:flex-row md:items-end md:justify-between md:px-8">
           <div>
-            <h2 className="text-h1 text-balance">{m.blogArticle_ctaTitle()}</h2>
+            <h2 className="text-h1 text-balance">
+              {m.blog_article_cta_title()}
+            </h2>
             <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
-              {m.blogArticle_ctaDescription()}
+              {m.blog_article_cta_description()}
             </p>
           </div>
           <PillButton
             render={
               <Link to="/contact">
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
                 <ArrowUpRightIcon />
               </Link>
             }

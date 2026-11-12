@@ -1,141 +1,302 @@
-//  @ts-check
+// @ts-check
 
-import { tanstackConfig } from '@tanstack/eslint-config'
+import comments from '@eslint-community/eslint-plugin-eslint-comments/configs'
 import pluginQuery from '@tanstack/eslint-plugin-query'
 import pluginRouter from '@tanstack/eslint-plugin-router'
+import vitest from '@vitest/eslint-plugin'
+import { defineConfig } from 'eslint/config'
+import importX from 'eslint-plugin-import-x'
+import jsxA11y from 'eslint-plugin-jsx-a11y'
+import playwright from 'eslint-plugin-playwright'
+import react from 'eslint-plugin-react'
+import reactHooks from 'eslint-plugin-react-hooks'
+import tseslint from 'typescript-eslint'
 
-export default [
-  ...tanstackConfig,
+// `new` allowlist by symbol (backend.md §2.1). Empty, the `:not` becomes `^()$`, which matches no name.
+const NEW_ALLOWLIST = ['AbortController']
 
-  // Os dois plugins pegam a classe de erro que o TypeScript não pega: chave de
-  // query incompleta, `queryKey` e `queryFn` declarados soltos em vez de num
-  // `queryOptions()`, e ordem de propriedade em `createFileRoute` - que decide
-  // se o contexto enriquecido pelo `beforeLoad` aparece tipado no `loader`, e
-  // que falha só no tipo, em silêncio.
-  ...pluginQuery.configs['flat/recommended'],
-  ...pluginRouter.configs['flat/recommended'],
+const NEW_SELECTOR =
+  'NewExpression[callee.name=/(Service|UseCase|Policy|Controller|Repository|Seeder)$/]' +
+  `:not([callee.name=/^(${NEW_ALLOWLIST.join('|')})$/])`
+
+const NEW_RULE = {
+  selector: NEW_SELECTOR,
+  message:
+    'Colaborador vem do container: injete por construtor (backend.md §2.1).',
+}
+
+// Every native element that has a pair in the shadcn registry (frontend.md §6, DECISIONS.md #366).
+// `input` is apart: the hidden `type="file"` behind a `Button` is the one exception §6.5 allows.
+// The element given to a Base UI `render` prop is not raw: it is the tag the `ui/` component
+// renders, as `nativeButton` asks (frontend.md §6, _doc-lib/base-ui.md#react/components/checkbox).
+const RAW_INTERACTIVE = [
   {
-    rules: {
-      'import/no-cycle': 'off',
-      'import/order': 'off',
-      'sort-imports': 'off',
-      '@typescript-eslint/array-type': 'off',
-      '@typescript-eslint/require-await': 'off',
-      'pnpm/json-enforce-catalog': 'off',
-    },
+    selector:
+      'JSXOpeningElement[name.name=/^(button|select|textarea|label|table|dialog|form|progress|hr)$/]' +
+      ':not(JSXAttribute[name.name="render"] > JSXExpressionContainer > JSXElement > JSXOpeningElement)',
+    message:
+      'Elemento cru: use o componente de `#/components/ui` ou a peça do kit (frontend.md §6, DECISIONS.md #366).',
   },
   {
-    // `src/components/ui/**` vem do registry do shadcn, e o próximo
-    // `shadcn add` reescreve o arquivo inteiro: correção de lint aqui é
-    // trabalho que a atualização seguinte desfaz.
-    //
-    // As duas regras também estariam erradas no mérito. O
-    // `no-unnecessary-condition` julga pelo TIPO, e o que estes arquivos
-    // protegem é o RUNTIME de biblioteca de terceiro - o `payload` do recharts,
-    // o slot fora de faixa do input-otp, a instância do embla capturada no
-    // cleanup. O tipo diz não-nulo; o valor em runtime nem sempre é. E o
-    // `no-shadow` reclama do `{ className, ...props }` desestruturado dentro de
-    // um componente que já tem `props` no escopo, que é a forma que o próprio
-    // registry escreve.
-    // O hook e o carregador do shiki chegam junto com o `code-block` e o
-    // `trace` do registry, e o `shadcn add` os reescreve do mesmo jeito.
-    files: [
-      'src/components/ui/**',
-      'src/hooks/use-highlighted-code.ts',
-      'src/lib/highlighter.tsx',
+    selector:
+      'JSXOpeningElement[name.name="input"]:not(:has(JSXAttribute[name.name="type"][value.value="file"]))',
+    message:
+      'Campo cru: use `Input`, `Checkbox`, `RadioGroup`, `Switch` ou `Slider` de `#/components/ui` (frontend.md §6).',
+  },
+]
+
+// One library per role (tooling.md §0.1). `paths` matches the exact name; a subpath only falls in `patterns`.
+const OUTSIDE_THE_HOUSE = [
+  { name: 'date-fns', message: 'Data e hora: Luxon (tooling.md §0.1).' },
+  { name: 'dayjs', message: 'Data e hora: Luxon (tooling.md §0.1).' },
+  { name: 'moment', message: 'Data e hora: Luxon (tooling.md §0.1).' },
+  {
+    name: 'lucide-react',
+    message: 'Ícone: @phosphor-icons/react (tooling.md §0.1).',
+  },
+  {
+    name: 'react-icons',
+    message: 'Ícone: @phosphor-icons/react (tooling.md §0.1).',
+  },
+  {
+    name: '@tabler/icons-react',
+    message: 'Ícone: @phosphor-icons/react (tooling.md §0.1).',
+  },
+  {
+    name: 'yup',
+    message: 'Schema: Zod, ou VineJS só no backend Adonis (tooling.md §0.1).',
+  },
+  {
+    name: '@vinejs/vine',
+    message: 'Schema: Zod; VineJS só no backend Adonis (tooling.md §0.1).',
+  },
+  { name: 'react-markdown', message: 'Markdown: Tiptap (tooling.md §0.1).' },
+  { name: 'marked', message: 'Markdown: Tiptap (tooling.md §0.1).' },
+  { name: 'markdown-it', message: 'Markdown: Tiptap (tooling.md §0.1).' },
+  {
+    name: 'highlight.js',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+  {
+    name: 'lowlight',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+  {
+    name: '@tiptap/extension-code-block-lowlight',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+  {
+    name: 'prismjs',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+  {
+    name: 'react-syntax-highlighter',
+    message: 'Realce de código: Shiki pelo code-block (tooling.md §0.1).',
+  },
+]
+
+const OUTSIDE_PATTERNS = [
+  {
+    group: [
+      'date-fns/*',
+      'dayjs/*',
+      'moment/*',
+      'lucide-react/*',
+      'react-icons/*',
+      '@tabler/icons-react/*',
+      'yup/*',
+      '@vinejs/vine/*',
+      'remark-*',
+      'rehype-*',
+      'highlight.js/*',
+      'prismjs/*',
+      'react-syntax-highlighter/*',
     ],
-    rules: {
-      '@typescript-eslint/no-unnecessary-condition': 'off',
-      'no-shadow': 'off',
-      // O registry escreve `import { cva, type VariantProps }` numa linha só, e
-      // desfaz a separação em `import type` a cada `shadcn add`.
-      'import/consistent-type-specifier-style': 'off',
-      // Mesmo motivo do `no-unnecessary-condition`: o `as` do `chart.tsx` existe
-      // para o payload do recharts, cujo tipo declarado é mais largo que o valor.
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
-    },
+    message: 'Biblioteca fora da casa (tooling.md §0.1).',
   },
+]
+
+export default defineConfig([
   {
-    // As regras 1 a 4 do skill `code-pattern`, cobradas pelo compilador em vez
-    // de pela disciplina de quem revisa. `lowcodejs` já as tinha; aqui e em
-    // `simple-hub` elas viviam só no skill.
-    //
-    // Só estas quatro entram: são nativas do ESLint e do typescript-eslint. As
-    // outras (Merge no lugar de `&`, lookup object no lugar de if/else, e
-    // async/await no lugar de cadeia `.then`) precisariam de plugin próprio e
-    // seguem cobradas na revisão do diff.
-    //
-    // Exceções: `routeTree.gen.ts` e `src/paraglide/**` são gerados, e
-    // `components/ui/**` vem do registry do shadcn — o próximo `shadcn add`
-    // reescreve o arquivo e desfaz qualquer correção.
-    files: ['**/*.{ts,tsx}'],
+    // Generated output: the Router plugin rewrites `routeTree.gen.ts` and Paraglide writes
+    // `src/paraglide/` on every build; neither is in the tsconfig, so `projectService` would turn
+    // each file into a parser error.
     ignores: [
+      'eslint.config.js',
+      'prettier.config.js',
       'src/routeTree.gen.ts',
       'src/paraglide/**',
-      'src/components/ui/**',
-      'src/hooks/use-highlighted-code.ts',
-      'src/lib/highlighter.tsx',
+      '.output/**',
+      '.tanstack/**',
+      'playwright-report/**',
+      'test-results/**',
     ],
+  },
+  ...tseslint.configs.recommendedTypeChecked,
+  comments.recommended,
+  // Plain JavaScript (`scripts/*.mjs`) has no types: the type-checked rules would flag every value as
+  // `any` (https://typescript-eslint.io/users/configs#disable-type-checked).
+  {
+    files: ['**/*.{js,mjs}'],
+    ...tseslint.configs.disableTypeChecked,
+  },
+  {
+    linterOptions: { reportUnusedDisableDirectives: 'error' },
+    languageOptions: { parserOptions: { projectService: true } },
+    plugins: { 'import-x': importX },
     rules: {
-      // regra 1: sem ternário como control flow. `??`, `?.` e `&&` seguem livres.
       'no-ternary': 'error',
-      // regra 2: sem `any`.
       '@typescript-eslint/no-explicit-any': 'error',
-      // regra 3: sem `as`. `as const` continua permitido - ele não mente para o
-      // compilador, só pede inferência mais estreita.
       '@typescript-eslint/consistent-type-assertions': [
         'error',
         { assertionStyle: 'never' },
       ],
-      // regra 4: sempre `type`, nunca `interface`. Module augmentation não
-      // dispara aqui porque é limite da linguagem, não escolha de estilo - o
-      // bloco de `.d.ts` abaixo cobre o caso.
+      '@typescript-eslint/no-non-null-assertion': 'error',
       '@typescript-eslint/consistent-type-definitions': ['error', 'type'],
+      '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/no-floating-promises': 'error',
+      '@typescript-eslint/no-misused-promises': 'error',
+      'import-x/order': [
+        'error',
+        {
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            ['parent', 'sibling', 'index'],
+          ],
+          // `@<project>/shared` resolves through node_modules and would be `external` without it.
+          pathGroups: [
+            { pattern: '#/**', group: 'internal' },
+            { pattern: '@maiyu/**', group: 'internal' },
+          ],
+          // The default excludes `external` from pathGroups, so `@maiyu/shared`, classified as
+          // external, would never reach the `internal` group above.
+          pathGroupsExcludedImportTypes: ['builtin'],
+          'newlines-between': 'always',
+          alphabetize: { order: 'asc' },
+        },
+      ],
+      '@eslint-community/eslint-comments/require-description': 'error',
+      'no-console': 'error',
+      // `warn` only fails because the lint script runs with `--max-warnings 0`.
+      'max-lines': [
+        'warn',
+        { max: 1000, skipBlankLines: true, skipComments: true },
+      ],
+      'no-restricted-imports': [
+        'error',
+        { paths: OUTSIDE_THE_HOUSE, patterns: OUTSIDE_PATTERNS },
+      ],
+      'no-restricted-syntax': ['error', NEW_RULE],
+      'no-restricted-properties': [
+        'error',
+        { property: 'innerHTML', message: 'XSS: renderize pelo React.' },
+        {
+          property: 'insertAdjacentHTML',
+          message: 'XSS: renderize pelo React.',
+        },
+      ],
+      'no-eval': 'error',
+      'no-new-func': 'error',
+      '@typescript-eslint/no-implied-eval': 'error',
     },
   },
+  ...pluginQuery.configs['flat/recommended'],
+  ...pluginRouter.configs['flat/recommended'],
+  jsxA11y.flatConfigs.recommended,
+  reactHooks.configs.flat.recommended,
   {
-    // O TypeScript **exige** `interface` para declaration merging; `type` não
-    // funciona. É o caso dos `.d.ts` que aumentam biblioteca de terceiro.
-    files: ['**/*.d.ts'],
+    files: ['src/**/*.{ts,tsx}'],
+    plugins: { react },
     rules: {
-      '@typescript-eslint/consistent-type-definitions': 'off',
+      '@tanstack/query/prefer-query-options': 'error',
+      // `throw redirect()` and `throw notFound()` are the router flow, not errors.
+      '@typescript-eslint/only-throw-error': [
+        'error',
+        {
+          allow: [
+            {
+              from: 'package',
+              package: '@tanstack/router-core',
+              name: 'Redirect',
+            },
+            {
+              from: 'package',
+              package: '@tanstack/router-core',
+              name: 'NotFoundError',
+            },
+          ],
+        },
+      ],
+      // Raw HTML is XSS: rich text renders through the single `components/common/rich-text/`.
+      'react/no-danger': 'error',
     },
   },
   {
-    // Fixture de teste é parcial por definição: o dublê de `useMutation` traz
-    // `mutate` e `isPending` e nada mais, porque é só disso que o teste precisa.
-    // Descrever o tipo inteiro para satisfazer o compilador seria escrever a
-    // biblioteca de novo dentro do teste.
-    //
-    // O conserto de verdade é `@total-typescript/shoehorn`, que dá o parcial
-    // sem `as` — uma dependência a mais, que fica para quando houver motivo
-    // maior que este.
-    files: ['**/*.test.ts', '**/*.test.tsx', '**/*.spec.ts', '**/*.spec.tsx'],
+    // `components/ui/` stays out of `files` because it is where the native element lives. Tests
+    // stay out because their fixtures stand in for a screen and are never shipped. Flat config
+    // replaces the rule options instead of merging them, so the `new` selector is repeated here.
+    files: ['src/routes/**/*.tsx', 'src/components/common/**/*.tsx'],
+    ignores: ['**/*.test.tsx'],
     rules: {
-      '@typescript-eslint/consistent-type-assertions': 'off',
-      // Teste monta caso e espera resultado; o ternário ali é a tabela do caso,
-      // não desvio de fluxo do produto.
-      'no-ternary': 'off',
+      'no-restricted-syntax': ['error', NEW_RULE, ...RAW_INTERACTIVE],
     },
   },
   {
-    // Arquivos gerados e artefatos de build.
-    //
-    // `src/paraglide/**` e `src/routeTree.gen.ts` são saída versionada, não
-    // código: o Paraglide reescreve o primeiro a cada compilação de mensagens e
-    // o plugin do Router reescreve o segundo a cada mudança em `src/routes`.
-    //
-    // Nenhum deles está no `include` do tsconfig, e o `parserOptions.project`
-    // recusa arquivo que não pertence a projeto nenhum - então cada um vira um
-    // erro de parser em vez de um erro de lint. Com `.output/`, isso são
-    // centenas de erros depois de um `pnpm build`.
-    ignores: [
-      'eslint.config.js',
-      'prettier.config.js',
-      'src/paraglide/**',
-      'src/routeTree.gen.ts',
-      '.output/**',
-      '.tanstack/**',
+    // The registry's output (`shadcn add --all`, `_standards/frontend.md` §6, `DECISIONS.md` #391):
+    // the CLI writes these files and `shadcn add <name> --diff` compares them with the registry, so
+    // the house style is not charged on them, or every project would rewrite the registry and lose
+    // the diff. Only the `// casa:` lines are ours. The raw-element and import bans above still hold.
+    files: [
+      'src/components/ui/**/*.tsx',
+      'src/hooks/use-mobile.ts',
+      'src/hooks/use-highlighted-code.ts',
+      'src/lib/highlighter.tsx',
     ],
+    rules: {
+      'import-x/order': 'off',
+      'no-ternary': 'off',
+      '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/no-unsafe-assignment': 'off',
+      '@typescript-eslint/no-unsafe-member-access': 'off',
+      '@typescript-eslint/no-unsafe-argument': 'off',
+      'react-hooks/set-state-in-effect': 'off',
+      'react/no-danger': 'off',
+      'jsx-a11y/no-noninteractive-tabindex': 'off',
+      'jsx-a11y/click-events-have-key-events': 'off',
+      'jsx-a11y/no-noninteractive-element-interactions': 'off',
+      'jsx-a11y/label-has-associated-control': 'off',
+      'jsx-a11y/anchor-has-content': 'off',
+    },
   },
-]
+  {
+    // Declaration merging requires `interface`: a language limit, not style.
+    files: ['**/*.d.ts'],
+    rules: { '@typescript-eslint/consistent-type-definitions': 'off' },
+  },
+  {
+    files: ['src/**/*.test.{ts,tsx}'],
+    plugins: { vitest },
+    rules: {
+      'vitest/no-focused-tests': 'error',
+      'vitest/no-disabled-tests': 'error',
+      // The test stub (resolver, upload, loader) answers an async contract with no I/O to
+      // await: the same exemption the backend gives its unit specs and in-memory doubles.
+      '@typescript-eslint/require-await': 'off',
+    },
+  },
+  {
+    files: ['e2e/**/*.ts'],
+    ...playwright.configs['flat/recommended'],
+    rules: {
+      ...playwright.configs['flat/recommended'].rules,
+      'playwright/no-wait-for-timeout': 'error',
+      'playwright/no-networkidle': 'error',
+      'playwright/no-focused-test': 'error',
+      'playwright/no-skipped-test': 'error',
+    },
+  },
+])

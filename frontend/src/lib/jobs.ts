@@ -13,8 +13,7 @@ import { JOB_POSITION_LABELS } from './labels'
  *
  * Conteúdo em código, como `projects.ts`: não há painel nem API. O texto é
  * função pela razão de `labels.ts`, lido no render, no idioma de quem visita.
- * O `id` é o mesmo valor do `Select` do formulário, para o rótulo vir de um
- * lugar só.
+ * O `id` é o valor fechado de `JobPosition`, e o rótulo vem de `labels.ts`.
  */
 export type TalentArea = {
   id: JobPosition
@@ -26,16 +25,16 @@ export const TALENT_AREAS: ReadonlyArray<TalentArea> = [
   {
     id: 'development',
     title: JOB_POSITION_LABELS.development,
-    description: () => m.career_area_developmentDesc(),
+    description: () => m.career_area_development_desc(),
   },
   {
     id: 'design',
     title: JOB_POSITION_LABELS.design,
-    description: () => m.career_area_designDesc(),
+    description: () => m.career_area_design_desc(),
   },
   {
     id: 'data',
     title: JOB_POSITION_LABELS.data,
-    description: () => m.career_area_dataDesc(),
+    description: () => m.career_area_data_desc(),
   },
 ]

@@ -1,5 +1,11 @@
+import academyShot from '#/assets/academy.webp'
+import adacaibsShot from '#/assets/adacaibs.webp'
+import aportaShot from '#/assets/aporta.webp'
+import curupiraShot from '#/assets/curupira.webp'
+import interclasseShot from '#/assets/interclasse.webp'
+import type { LocalizedText } from '@maiyu/shared'
+
 import type { ProjectStatus } from './entity'
-import type { LocalizedText } from './i18n'
 
 /**
  * Os projetos da Maiyu no ar, na ordem em que aparecem na home e no
@@ -23,7 +29,12 @@ export type Project = {
   featured?: boolean
 }
 
-export const projects: ReadonlyArray<Project> = [
+/**
+ * Tupla não vazia, e não `ReadonlyArray`: com `noUncheckedIndexedAccess`, `projects[0]` e o
+ * `[lead, ...rest]` da home tipariam `Project | undefined`. O tipo guarda o que a tela supõe (há
+ * pelo menos um projeto), e o compilador recusa o registro vazio.
+ */
+export const projects: readonly [Project, ...Project[]] = [
   {
     slug: 'adacaibs',
     title: 'ADACAIBS',
@@ -43,7 +54,7 @@ export const projects: ReadonlyArray<Project> = [
         'Plataforma de gestão para a associação do povo Ticuna da aldeia Belém do Solimões. Cadastro de membros, gestão de documentos, relatórios internos e ferramentas de governança, pensada para ser mantida pela própria comunidade.',
       es: 'Plataforma de gestión para la asociación del pueblo Ticuna de la aldea Belém do Solimões. Registro de miembros, gestión documental, reportes internos y herramientas de gobernanza, pensada para ser mantenida por la propia comunidad.',
     },
-    image: '/images/adacaibs.webp',
+    image: adacaibsShot,
     focus: 'left center',
     tech: ['React', 'AdonisJS', 'TanStack Query', 'PostgreSQL', 'Tailwind CSS'],
     url: 'https://adacaibs.com.br',
@@ -70,7 +81,7 @@ export const projects: ReadonlyArray<Project> = [
         'Uma iniciativa da própria Maiyu: plataforma gratuita para aprender robótica e lógica de programação, para indígenas e não indígenas, em português, espanhol e inglês. As aulas ficam abertas na plataforma, e as turmas presenciais acontecem no Alto Solimões. Quem constrói a plataforma é quem dá aula.',
       es: 'Una iniciativa de la propia Maiyu: plataforma gratuita para aprender robótica y lógica de programación, para indígenas y no indígenas, en portugués, español e inglés. Las clases quedan abiertas en la plataforma, y los grupos presenciales funcionan en el Alto Solimões. Quien construye la plataforma es quien da clase.',
     },
-    image: '/images/academy.webp',
+    image: academyShot,
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
     url: 'https://academy.maiyu.com.br',
     year: '2026',
@@ -95,7 +106,7 @@ export const projects: ReadonlyArray<Project> = [
         'Casas, apartamentos, kitnets, quartos e hotéis com contato direto com o dono pelo WhatsApp, para calouros da UFAM, servidores, viajantes e quem vem para o festival, e um guia da cidade. Antes o anúncio sumia nos grupos; agora fica achável por bairro, preço e período.',
       es: 'Casas, apartamentos, kitnets, habitaciones y hoteles con contacto directo con el dueño por WhatsApp, para estudiantes de la UFAM, servidores, viajeros y visitantes del festival, y una guía de la ciudad. Antes el anuncio se perdía en los grupos; ahora se encuentra por barrio, precio y período.',
     },
-    image: '/images/aporta.webp',
+    image: aportaShot,
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'Leaflet'],
     url: 'https://aporta.maiyu.com.br',
     year: '2026',
@@ -120,7 +131,7 @@ export const projects: ReadonlyArray<Project> = [
         'O morador consulta quando a coleta passa no seu bairro e denuncia queimada, descarte irregular e desmatamento com foto e ponto no mapa, sem se expor, e acompanha pelo protocolo. A gestão municipal ganha um painel só para tratar as ocorrências e publicar avisos. App instalável, em português, espanhol e inglês.',
       es: 'El vecino consulta cuándo pasa la recolección en su barrio y denuncia quemas, botaderos ilegales y deforestación con foto y punto en el mapa, sin exponerse, y sigue el caso por protocolo. La gestión municipal tiene un solo panel para atender los casos y publicar avisos. App instalable, en portugués, español e inglés.',
     },
-    image: '/images/curupira.webp',
+    image: curupiraShot,
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL', 'PWA'],
     url: 'https://curupira.maiyu.com.br',
     year: '2026',
@@ -146,7 +157,7 @@ export const projects: ReadonlyArray<Project> = [
         'Os jogos da escola viviam em papel e planilha. Agora o professor inscreve a turma, a organização faz o sorteio e lança o placar num sistema só, e alunos e famílias acompanham o próximo jogo e a classificação num site aberto.',
       es: 'Los juegos de la escuela vivían en papel y planillas. Ahora el profesor inscribe al curso, la organización hace el sorteo y carga el marcador en un solo sistema, y alumnos y familias siguen el próximo partido y la clasificación en un sitio abierto.',
     },
-    image: '/images/interclasse.webp',
+    image: interclasseShot,
     tech: ['TanStack Start', 'AdonisJS', 'PostgreSQL'],
     url: 'https://interclass.maiyu.com.br',
     year: '2026',
