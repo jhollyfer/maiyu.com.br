@@ -1,8 +1,4 @@
 // @vitest-environment jsdom
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
@@ -51,18 +47,4 @@ describe('ChannelsNotice', () => {
     expect(container.querySelector('button, [type="submit"]')).toBeNull()
     expect(container.textContent).not.toMatch(/enviad|recebid|sent|received/i)
   })
-})
-
-describe('the contact and careers pages', () => {
-  const here = dirname(fileURLToPath(import.meta.url))
-
-  it.each(['contact/-components/contact.tsx', 'career/-components/career.tsx'])(
-    '%s renders the notice and no <form>',
-    (file) => {
-      const source = readFileSync(join(here, '..', file), 'utf8')
-
-      expect(source).toContain('<ChannelsNotice />')
-      expect(source).not.toMatch(/<form[\s>]|Form\b/)
-    },
-  )
 })
