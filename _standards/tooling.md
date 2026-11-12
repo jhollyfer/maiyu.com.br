@@ -773,6 +773,12 @@ frontend = build:deps + i18n:compile + i18n:check + lint + typecheck + format:ch
 shared   = lint + typecheck + test:unit
 ```
 
+O build de um app roda sempre com o filtro de dependências, `pnpm --filter "{./frontend}..." build`
+(ou `./backend`), como o `Dockerfile-production` já faz: o `shared/` resolve pelo `dist/` (`exports`),
+e num clone ou worktree novo `pnpm --filter ./frontend build` falha sem ele compilado. O script
+`build` do app não chama `build:deps`, para o Dockerfile não compilar o `shared/` duas vezes. Achado
+no jhollyfer.com.br.
+
 **`.adonisjs/` em dia** (Adonis): `scripts/adonisjs-check.mjs` do upstream roda o gerador do projeto
 e reprova se `routes.d.ts` ou `client/` mudaram, como o `openapi:check` faz com o `openapi.json`:
 `node <maiyu-pattern>/scripts/adonisjs-check.mjs backend --cmd "node ace build"`. O comando do
@@ -892,7 +898,8 @@ models, `env.ts`, migrations) o sync cria se faltar e nunca reescreve. Para o mo
 em silêncio, o sync grava em `.maiyu/kit-extension-points.json` (versionado no projeto) o sha256 do modelo
 que o projeto recebeu. O `--check` lista `extension-stale: <arquivo>` quando o modelo atual difere do
 registrado (o projeto faz o merge à mão e confirma com `--ack-extension=<arquivo>` ou `--ack-extensions`,
-que regravam o sha) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
+que rodam sozinhos e só regravam o sha desses pontos no manifesto, sem tocar em mais nenhum arquivo nem
+reformatar o resto do manifesto; com outra flag, sem manifesto ou sem nada a confirmar, saem com erro) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
 ou mesma tabela); os dois saem com 1. Sem manifesto, o `--check` avisa `extension-baseline` e não falha, e
 o sync cria o manifesto com o modelo atual (`DECISIONS.md` #398).
 

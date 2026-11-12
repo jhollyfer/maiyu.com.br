@@ -1,3 +1,5 @@
+import type { RegisteredRouter } from '@tanstack/react-router'
+
 import type {
   Merge,
   SortDirection,
@@ -48,6 +50,56 @@ export type ListSearch = Merge<
 >
 
 /**
+ * The Standard Schema shape the router accepts in `validateSearch` (`router-core` declares it
+ * but `react-router` does not re-export it). `types` carries the input and the output of the
+ * search; it is phantom, so it is optional and never filled at runtime.
+ */
+export type ListSearchValidator<TInput, TOutput> = {
+  readonly '~standard': {
+    readonly types?: { readonly input: TInput; readonly output: TOutput }
+    readonly validate: (
+      value: unknown,
+    ) =>
+      | { readonly value: TOutput }
+      | { readonly issues: ReadonlyArray<{ readonly message: string }> }
+  }
+}
+
+type RoutesByPath = RegisteredRouter['routesByPath']
+
+/**
+ * A route whose search a listing can write. The table writes `page`, `perPage`, `search`, `sort`,
+ * `direction` and `trashed`, so the route's search must be assignable to `ListSearch` (a `sort`
+ * that is a closed list passes, `sort: number` does not) and must not require a key the table
+ * never sends (`{} extends` its input: a required `?q` fails; a `.default()` does not).
+ */
+export type ListRouteFits<TOutput, TInput> = TOutput extends ListSearch
+  ? Record<never, never> extends TInput
+    ? true
+    : false
+  : false
+
+type ListRouteKey<TPath extends keyof RoutesByPath> =
+  ListRouteFits<
+    RoutesByPath[TPath]['types']['fullSearchSchema'],
+    RoutesByPath[TPath]['types']['fullSearchSchemaInput']
+  > extends true
+    ? TPath
+    : never
+
+/**
+ * The route of a listing: a path of the generated route tree whose search the table can write
+ * (`ListRouteKey`). With `from` a registered path the router types the navigation, and a bare
+ * `string` would make `navigate` demand the search of **every** route of the project. A route
+ * the table cannot write to is a type error at `<Table to=...>`, not a broken URL.
+ * _doc-lib/tanstack-router.md#guide/navigation,
+ * https://tanstack.com/router/latest/docs/guide/navigation.
+ */
+export type ListRoute = {
+  [TPath in keyof RoutesByPath]: ListRouteKey<TPath>
+}[keyof RoutesByPath]
+
+/**
  * The public storefront's filters: `ListSearch` **without `trashed`**. `/storefront` never
  * sees an archived record, and the `trashedField()` stays out of the validators there.
  * Leaving the key in the typing would be promising a filter that the backend refuses with 422.
@@ -60,33 +112,54 @@ export type StorefrontSearch = Omit<ListSearch, 'trashed'>
  * output, so a filter is the domain enum and not `string`, and the API client accepts it
  * as it is.
  *
+ * It returns a Standard Schema entry, not a bare function: the router reads the search type
+ * from `types.input` and `types.output`, and a plain function makes input equal output, so a
+ * field with `.default()` becomes required in the link and `ListRoute` refuses the route. The
+ * `types` bag is phantom (absent at runtime), as the router declares it optional.
+ * _doc-lib/tanstack-router.md#guide/search-params ("Zod": input and output types),
+ * https://tanstack.com/router/latest/docs/framework/react/guide/search-params.
+ *
  * An invalid value is **dropped**, not thrown: the URL is something anyone can edit, and a
  * `?status=lixo` falls back to the default instead of halting the screen. The schema is parsed
  * whole, and on failure the keys the issues point at leave the input and it is parsed again,
  * which is the per-field `.catch()` of the router doc without rewriting every field of the
  * shared schema. An issue that points at no key of the input (an object-level refinement)
- * cannot be fixed by dropping a field, and is thrown for the route's `errorComponent`.
+ * cannot be fixed by dropping a field, and is reported as `issues`, which the router throws for the route's `errorComponent`.
  * _doc-lib/tanstack-router.md#guide/search-params,
  * https://tanstack.com/router/latest/docs/guide/search-params.
  */
 export function listValidateSearch<TSchema extends z.ZodObject>(
   schema: TSchema,
-): (search: Record<string, unknown>) => z.output<TSchema> {
-  return (search) => {
-    let input = search
+): ListSearchValidator<z.input<TSchema>, z.output<TSchema>> {
+  return {
+    '~standard': {
+      validate(search) {
+        let input: Record<string, unknown> = {}
+        if (isRecord(search)) input = search
 
-    for (;;) {
-      const result = schema.safeParse(input)
-      if (result.success) return result.data
+        for (;;) {
+          const result = schema.safeParse(input)
+          if (result.success) return { value: result.data }
 
-      const invalid = new Set(result.error.issues.map((issue) => issue.path[0]))
-      const kept = Object.entries(input).filter(([key]) => !invalid.has(key))
+          const invalid = new Set(
+            result.error.issues.map((issue) => issue.path[0]),
+          )
+          const kept = Object.entries(input).filter(
+            ([key]) => !invalid.has(key),
+          )
 
-      if (kept.length === Object.keys(input).length) throw result.error
+          if (kept.length === Object.keys(input).length)
+            return { issues: result.error.issues }
 
-      input = Object.fromEntries(kept)
-    }
+          input = Object.fromEntries(kept)
+        }
+      },
+    },
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /**

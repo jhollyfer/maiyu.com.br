@@ -1331,7 +1331,8 @@ export abstract class PaymentGatewayContract {
   sai a pasta e saem as chaves `kit_table_*`, `kit_list_shell_*`, `kit_filters` e `kit_help` (`DECISIONS.md` #432).
 - **Colisão de caminho.** O manifesto guarda em `arquivos` o que o kit já levou ao projeto. Caminho que o kit
   passa a ocupar, que o projeto já tinha com outro conteúdo e que não está na lista, vira `collision:` e não é
-  sobrescrito; `--ack-extension=<arquivo>` confirma que o kit o toma (`DECISIONS.md` #433).
+  sobrescrito. Para o kit tomar o caminho, o projeto move ou renomeia o arquivo dele e roda o sync;
+  `--ack-extension` não resolve colisão, só confirma ponto de extensão (`DECISIONS.md` #433, #471).
 - **Costura mínima.** O que o Pix toca fora dos próprios arquivos é pouco, e cada ponto é um trecho entre
   `// --- optional: pix ---` e `// --- end optional ---`: o provider no `adonisrc.ts`, o `bind` e os imports
   do `repository.provider.ts`, o grupo `payments/charges` do `start/routes.ts`, a entrada do

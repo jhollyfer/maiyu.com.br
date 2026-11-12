@@ -68,9 +68,10 @@ export function Photo({
         <span>{localized(photo.caption)}</span>
         {/*
          * The link element itself with `buttonVariants`, and not `Button render={<a/>}`:
-         * Base UI would force `role="button"` and erase the link (#440). `min-h-11` because
-         * the credit is also a touch target on the phone (44px, WCAG 2.5.5); the text size
-         * follows the caption's, not the button's.
+         * Base UI would force `role="button"` and erase the link (#440). `min-h-11` on every
+         * width, not only below `sm`: the `ui/` touch patch (#461) already gives 44px on the
+         * phone, but the credit keeps 44px on the desktop too, as it always had, so the
+         * desktop layout does not move. The text size follows the caption's, not the button's.
          */}
         <a
           href={photo.sourceUrl}
