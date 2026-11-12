@@ -2,23 +2,30 @@ package-lock.json
 pnpm-lock.yaml
 yarn.lock
 
-# Saída do paraglide: gerada a cada build e ignorada pelo git, mas o
-# `prettier --check` contava os oito arquivos como pendência que ninguém
-# podia fechar - reescrevê-los só adiava o próximo `vite dev`.
+# Paraglide output: generated on every build and ignored by git; `prettier --check` would
+# report it as pending work nobody can close.
 src/paraglide
+src/routeTree.gen.ts
 
-# Cache do inlang: gerado, e o próprio `project.inlang/.gitignore` já o mantém
-# fora do versionamento. Formatá-lo é trabalho que a próxima compilação desfaz.
+# What the inlang compiler and `inlang check` rewrite on every run (ignored by git).
+# `settings.json` and `paraglide.config.ts` are edited by hand and stay checked.
 project.inlang/cache
-
-# Os dois arquivos que a CLI do inlang escreve por conta própria - o carimbo da
-# versão do SDK e o README de boas-vindas dela. `settings.json`, que é config
-# editada à mão, fica de fora desta lista de propósito e continua cobrado. Sem
-# estas duas linhas o `pnpm check` da CI reprova por uma pendência que a
-# próxima execução da ferramenta reabre.
+project.inlang/.lix
 project.inlang/.meta.json
 project.inlang/README.md
 
-# Saída do build do Nitro. O `.gitignore` da raiz a ignora, mas o Prettier só lê o `.gitignore`
-# da pasta onde roda (`frontend/`), e sem esta linha o `format:check` cobraria o bundle compilado.
+# Build and test output: the root .gitignore does not reach the package where Prettier runs.
 .output
+.nitro
+.tanstack
+dist
+test-results
+playwright-report
+e2e/.auth
+playwright/.auth
+
+# Written by `eslint --suppress-all` / `--prune-suppressions` (the lint ratchet, tooling.md §4.1).
+eslint-suppressions.json
+
+# Contract snapshots the suite records; they are compared, never edited by hand.
+e2e/**/snapshots

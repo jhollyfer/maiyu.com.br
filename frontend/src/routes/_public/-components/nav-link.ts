@@ -29,9 +29,9 @@ export const navLinkVariants = cva(
          */
         sheet:
           'group flex min-h-11 items-center justify-between border-b border-foreground/[0.08] py-5 font-display text-4xl font-bold tracking-[-0.015em] text-foreground/60 data-[status=active]:text-foreground',
-        /** O rodapé. `min-h-11` pelo mesmo alvo de toque. */
+        /** O rodapé. `min-h-11` e `min-w-11` pelo mesmo alvo de toque: "Início" sozinho tem menos de 44px de largura. */
         footer:
-          'inline-flex min-h-11 items-center gap-1 text-body text-foreground/70 hover:text-foreground',
+          'inline-flex min-h-11 min-w-11 items-center gap-1 text-body text-foreground/70 hover:text-foreground',
       },
     },
     defaultVariants: {

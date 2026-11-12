@@ -1,13 +1,10 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { LanguageSwitcher } from './language-switcher'
-import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
-import { navLinkVariants } from './nav-link'
-import { useScrolled } from './use-scrolled'
-import { PillButton } from './pill-button'
-import { ThemeToggle } from './theme-toggle'
+import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
+import { Picture } from '#/components/common/picture/picture'
+import { ThemeToggle } from '#/components/common/theme/theme-toggle'
 import { Button } from '#/components/ui/button'
 import {
   NavigationMenu,
@@ -27,6 +24,11 @@ import {
 } from '#/components/ui/sheet'
 import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
+
+import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
+import { navLinkVariants } from './nav-link'
+import { PillButton } from './pill-button'
+import { useScrolled } from './use-scrolled'
 
 /**
  * O cabeçalho flutuante.
@@ -55,14 +57,21 @@ export function Header(): React.JSX.Element {
           aria-label={m.a11y_home()}
           className="flex items-center gap-2 justify-self-start py-2"
         >
-          <img src="/maiyu-symbol.svg" alt="" className="size-7" />
+          <Picture
+            src="/maiyu-symbol.svg"
+            alt=""
+            width={28}
+            height={28}
+            placement="lcp"
+            className="size-7"
+          />
           <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase dark:text-brand-green">
             {SITE_TITLE}
           </span>
         </Link>
 
         <NavigationMenu
-          aria-label={m.a11y_mainNav()}
+          aria-label={m.a11y_main_nav()}
           className="hidden flex-none lg:flex lg:pl-10"
         >
           <NavigationMenuList className="gap-1">
@@ -81,7 +90,7 @@ export function Header(): React.JSX.Element {
 
         <div className="flex items-center gap-1.5 justify-self-end">
           <div className="hidden md:block">
-            <LanguageSwitcher />
+            <LocaleSwitcher className="w-36" />
           </div>
           <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
           <PillButton
@@ -97,7 +106,7 @@ export function Header(): React.JSX.Element {
             render={
               <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
                 <WhatsappLogoIcon />
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
               </a>
             }
           />
@@ -128,7 +137,7 @@ function MobileMenu(): React.JSX.Element {
             variant="ghost"
             size="icon-lg"
             className="size-11 rounded-full lg:hidden"
-            aria-label={m.a11y_openMenu()}
+            aria-label={m.a11y_open_menu()}
           >
             <ListIcon />
           </Button>
@@ -145,11 +154,11 @@ function MobileMenu(): React.JSX.Element {
         */}
         <SheetHeader className="sr-only">
           <SheetTitle>{SITE_TITLE}</SheetTitle>
-          <SheetDescription>{m.a11y_mainNav()}</SheetDescription>
+          <SheetDescription>{m.a11y_main_nav()}</SheetDescription>
         </SheetHeader>
 
         <nav
-          aria-label={m.a11y_mainNav()}
+          aria-label={m.a11y_main_nav()}
           className="grid flex-1 auto-rows-min overflow-y-auto"
         >
           {MOBILE_NAVIGATION.map((item) => (
@@ -174,7 +183,7 @@ function MobileMenu(): React.JSX.Element {
 
         <SheetFooter className="flex-row items-center justify-between gap-4 px-0">
           <div className="flex items-center gap-2">
-            <LanguageSwitcher />
+            <LocaleSwitcher className="w-36" />
             <ThemeToggle className="size-11 rounded-full" />
           </div>
           <PillButton
@@ -182,7 +191,7 @@ function MobileMenu(): React.JSX.Element {
             render={
               <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
                 <WhatsappLogoIcon />
-                {m.nav_getInTouch()}
+                {m.nav_get_in_touch()}
               </a>
             }
           />

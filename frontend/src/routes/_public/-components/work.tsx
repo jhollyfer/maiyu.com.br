@@ -1,15 +1,17 @@
-import type * as React from 'react'
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
+import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
-import { PillButton } from './pill-button'
-import { ProjectStatusBadge } from './project-status'
+import { Picture } from '#/components/common/picture/picture'
 import { Badge } from '#/components/ui/badge'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PillButton } from './pill-button'
+import { ProjectStatusBadge } from './project-status'
+import { REVEAL, STAGGER } from './reveal'
 
 type ProjectProps = {
   project: Project
@@ -41,7 +43,7 @@ function Visit({ project }: ProjectProps): React.JSX.Element {
       className="rounded-xl"
       render={
         <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.home_workVisit()}
+          {m.home_work_visit()}
           <ArrowUpRightIcon />
         </a>
       }
@@ -67,13 +69,12 @@ function Shot({
         className,
       )}
     >
-      <img
+      <Picture
         src={project.image}
         alt={project.title}
         width={1863}
         height={927}
-        loading="lazy"
-        decoding="async"
+        placement="fold"
         style={{ objectPosition: project.focus }}
         className="aspect-[2/1] size-full object-cover"
       />
@@ -96,7 +97,7 @@ export function Work(): React.JSX.Element {
     <section data-slot="home-work" className="py-24 md:py-32">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <h2 className={cn(REVEAL, 'max-w-3xl text-display')}>
-          {m.home_workTitle()}
+          {m.home_work_title()}
         </h2>
 
         <article

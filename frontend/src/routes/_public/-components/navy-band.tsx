@@ -1,9 +1,7 @@
-import type * as React from 'react'
-import { Link } from '@tanstack/react-router'
 import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
+import { Link } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
-import { PillButton } from './pill-button'
 import { Badge } from '#/components/ui/badge'
 import {
   Item,
@@ -17,6 +15,9 @@ import { localized } from '#/lib/i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
+import { PillButton } from './pill-button'
+import { REVEAL, STAGGER } from './reveal'
+
 type Role = {
   title: () => string
   description: () => string
@@ -28,16 +29,16 @@ type Role = {
  */
 const ROLES: ReadonlyArray<Role> = [
   {
-    title: () => m.home_role1Title(),
-    description: () => m.home_role1Desc(),
+    title: () => m.home_role1_title(),
+    description: () => m.home_role1_desc(),
   },
   {
-    title: () => m.home_role2Title(),
-    description: () => m.home_role2Desc(),
+    title: () => m.home_role2_title(),
+    description: () => m.home_role2_desc(),
   },
   {
-    title: () => m.home_role3Title(),
-    description: () => m.home_role3Desc(),
+    title: () => m.home_role3_title(),
+    description: () => m.home_role3_desc(),
   },
 ]
 
@@ -85,10 +86,10 @@ export function NavyBand(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className={cn(REVEAL, 'max-w-4xl')}>
           <h2 className="text-display tracking-[-0.015em]">
-            {m.home_teamTitle()}
+            {m.home_team_title()}
           </h2>
           <p className="mt-6 max-w-[56ch] font-serif text-lead text-on-navy/80">
-            {m.home_teamDesc()}
+            {m.home_team_desc()}
           </p>
         </div>
 
@@ -144,13 +145,13 @@ export function NavyBand(): React.JSX.Element {
             )}
           >
             <div>
-              <h2 className="text-h1">{m.home_notesTitle()}</h2>
+              <h2 className="text-h1">{m.home_notes_title()}</h2>
             </div>
             <Link
               to="/blog"
               className="inline-flex min-h-11 items-center text-small text-on-navy/70 underline-offset-4 hover:text-on-navy hover:underline"
             >
-              {m.home_notesAll()}
+              {m.home_notes_all()}
             </Link>
           </div>
 

@@ -1,13 +1,11 @@
-<!-- intent-skills:start -->
+# Maiyu: frontend
 
-## Skill Loading
+Instrução só do `frontend/`. O padrão, os comandos e o fluxo de commit estão no `AGENTS.md` da raiz;
+aqui ficam os ponteiros de quem mexe neste pacote.
 
-Before editing files for a substantial task:
-
-- Run `npx @tanstack/intent@latest list` from the workspace root to see available local skills.
-- If a listed skill matches the task, run `npx @tanstack/intent@latest load <package>#<skill>` before changing files.
-- Use the loaded `SKILL.md` guidance while making the change.
-- Monorepos: when working across packages, run the skill check from the workspace root and prefer the local skill for the package being changed.
-- Multiple matches: prefer the most specific local skill for the package or concern you are changing; load additional skills only when the task spans multiple packages or concerns.
-
-<!-- intent-skills:end -->
+- Rota nova ou alterada: `docs/ARCHITECTURE.md` §3 e §4, `docs/USER-FLOWS.md` e `_standards/frontend.md`.
+- Tela ou componente: `docs/DESIGN.md` e `_standards/frontend.md` §6. `src/components/ui/` é do shadcn e não se edita à mão.
+- Mensagem de interface ou texto de registro: `_standards/i18n.md`; chave nova nos três idiomas de `messages/`, cobrada por `src/lib/messages.test.ts`.
+- Variável de ambiente: `docs/ENV.md` e `.env.example`, no mesmo commit.
+- Teste: `docs/TEST-PLAN.md` e `_standards/tooling.md` §10.
+- Antes de lint, typecheck ou teste num clone novo: `pnpm i18n:compile`.

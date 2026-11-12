@@ -12,8 +12,8 @@
 | [Conhecer a Maiyu](#conhecer-a-maiyu) | qualquer visitante | `/` | entende quem é a Maiyu e o que faz |
 | [Ver o portfólio](#ver-o-portfólio) | organização | `/portfolio` | vê os projetos no ar |
 | [Ler o diário](#ler-o-diário) | leitor | `/blog` | lê um artigo |
-| [Candidatar-se a uma vaga](#candidatar-se-a-uma-vaga) | candidato | `/career` | candidatura confirmada na tela |
-| [Falar com a Maiyu](#falar-com-a-maiyu) | qualquer visitante | `/contact` | contato por formulário, e-mail, telefone ou WhatsApp |
+| [Candidatar-se a uma vaga](#candidatar-se-a-uma-vaga) | candidato | `/career` | áreas do banco de talentos e canais para escrever |
+| [Falar com a Maiyu](#falar-com-a-maiyu) | qualquer visitante | `/contact` | e-mail, telefone ou WhatsApp |
 | [Trocar idioma e tema](#trocar-idioma-e-tema) | qualquer visitante | qualquer tela | página no idioma e tema escolhidos |
 
 Os endereços em inglês e espanhol levam o prefixo `/en` e `/es`; português fica sem prefixo.
@@ -85,44 +85,42 @@ Os endereços em inglês e espanhol levam o prefixo `/en` e `/es`; português fi
 ## Candidatar-se a uma vaga
 
 **Entrada:** menu "Carreiras"
-**Ação:** escolher a vaga e preencher o formulário
-**Sucesso:** toast de confirmação e formulário limpo
-**Falha:** erro por campo; o conteúdo digitado fica
+**Ação:** ler as áreas do banco de talentos e escrever por um canal direto
+**Sucesso:** o aplicativo de e-mail ou o WhatsApp abre; não há formulário nem envio pelo site (`DECISIONS.md` #17)
+**Falha:** não se aplica: o site não coleta nada
 
 | # | Usuário faz | Sistema responde | Tela |
 |---|---|---|---|
-| 1 | abre carreiras | lista as vagas | `/career` |
-| 2 | preenche o formulário | valida o campo ao sair dele | `/career` |
-| 3 | envia | confirma na tela; nada é enviado (`DECISIONS.md` #7) | `/career` |
+| 1 | abre carreiras | lista as áreas, não há vaga aberta | `/career` |
+| 2 | escolhe uma área | rola até o aviso com os canais | `/career` |
+| 3 | usa um botão do aviso | abre `mailto:` ou o WhatsApp | aplicativo do aparelho |
 
 **Caminhos alternativos**
 
 | Situação | Resposta |
 |---|---|
-| LinkedIn que não é URL | erro no campo |
-| Vaga fora da lista | erro no campo |
+| Quer se candidatar pelo site | não há formulário: o aviso diz que está fora do ar e aponta os canais |
 
 ---
 
 ## Falar com a Maiyu
 
 **Entrada:** botão "Contato" ou o convite final da home
-**Ação:** preencher o formulário ou usar um canal direto
-**Sucesso:** toast de confirmação, ou o aplicativo de e-mail, telefone ou WhatsApp abre
-**Falha:** erro por campo
+**Ação:** usar um canal direto
+**Sucesso:** o aplicativo de e-mail, telefone ou WhatsApp abre; não há formulário (`DECISIONS.md` #17)
+**Falha:** não se aplica: o site não coleta nada
 
 | # | Usuário faz | Sistema responde | Tela |
 |---|---|---|---|
-| 1 | abre contato | mostra e-mail, telefone, endereço e o formulário | `/contact` |
-| 2 | preenche e envia | valida; confirma na tela e limpa | `/contact` |
+| 1 | abre contato | mostra e-mail, telefone, endereço e o aviso de que o formulário está fora do ar | `/contact` |
+| 2 | lê o aviso | não há campo nem envio; os botões levam ao e-mail e ao WhatsApp | `/contact` |
 | 3 | usa um cartão | abre `mailto:`, `tel:` ou o WhatsApp | aplicativo do aparelho |
 
 **Caminhos alternativos**
 
 | Situação | Resposta |
 |---|---|
-| Mensagem com menos de dez caracteres | erro no campo |
-| Dois envios seguidos | o aviso se troca, não empilha |
+| Quer mandar uma mensagem pelo site | o aviso diz que o formulário está fora do ar e aponta os canais; o formulário volta com o recurso de contato do backend |
 
 ---
 

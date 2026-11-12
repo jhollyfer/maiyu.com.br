@@ -81,10 +81,10 @@ saiu a pedido do dono (`DECISIONS.md` #16).
   (`routes/_public/-components/photo.tsx`) mostra o crédito, que a CC BY-SA exige.
 - Rosto de pessoa indígena de banco de imagem não entra: não traz o consentimento de quem aparece.
   Foto do time e das comunidades entra quando for da Maiyu, com autorização.
-- Arquivos WebP em 640, 1280 e 1920 px (`public/images/photos/<nome>-<largura>.webp`), com
+- Arquivos WebP em 640, 1280 e 1920 px (`src/assets/photos/<nome>-<largura>.webp`, importados para ganhar hash), com
   `srcset`, `width` e `height` (sem pulo de layout) e `loading="lazy"`, exceto a foto da primeira
   dobra (`priority`: `eager` e `fetchpriority="high"`).
-- Produto aparece por captura real da tela (`public/images/<projeto>.webp`).
+- Produto aparece por captura real da tela (`src/assets/<projeto>.webp`).
 
 ## 4. Layout
 

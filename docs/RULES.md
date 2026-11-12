@@ -19,9 +19,9 @@
 - Dependência nova, ou troca de versão major.
 - Teste que está falhando: investiga, não apaga nem pula.
 - `docs/PRD.md` (escopo).
-- Secret do repositório, painel do Coolify, `UUID_APP` e configuração de deploy.
+- Painel do Coolify (variáveis, domínios, *Watch Paths*) e qualquer configuração de deploy: quem decide é o dono.
 - `components/ui/`: território do shadcn, nunca editado à mão.
-- `.github/workflows/`: pendente de decisão do dono (`DECISIONS.md` #6).
+- `.github/`: os workflows saem pela régua (`_standards/DECISIONS.md` #298); mexer só na frente de infra (`TASKS.md` R4.1).
 - Copy de posicionamento (quem é a Maiyu, a quem serve): vem do dono do produto (`PRD.md` §1 e §2).
 
 ## 3. Regras deste projeto
@@ -32,7 +32,7 @@
 | Mensagem lida no render | `m.chave()` dentro do componente, nunca string resolvida no módulo | a mensagem do paraglide depende do idioma da requisição |
 | Conteúdo de registro | `LocalizedText` no próprio registro de `lib/`, nas três línguas | tradução separada do dado envelhece em ritmo diferente |
 | Rótulo de valor fechado | função em `lib/labels.ts` | string no módulo congelaria o idioma do primeiro SSR |
-| Formulário | confirma na tela e não envia | não há backend (`DECISIONS.md` #7) |
+| Formulário | o site não tem; aviso e canais no lugar | contato volta com o recurso do backend (`DECISIONS.md` #17) |
 | Animação | CSS com `motion-reduce:`; sem `motion` | `DECISIONS.md` #10 |
 | Tom do texto | fala da Maiyu e de quem a Maiyu serve com respeito e sem exotizar: povos e organizações indígenas são clientes e parceiros, não tema decorativo | o público inclui organizações indígenas (`PRD.md` §2) |
 | Texto versionado | sem emoji e sem travessão | regra de escrita da casa (`AGENTS.md`, "Escrita") |

@@ -36,7 +36,7 @@ pnpm add -D @types/luxon
 import { DateTime } from 'luxon'
 
 // fuso do negócio fixo: SSR e hidratação renderizam a mesma string (frontend.md §3.5)
-const BUSINESS_ZONE = 'America/Manaus'
+const BUSINESS_ZONE = 'America/Eirunepe'
 
 export function formatDateTime(iso: string, locale: string): string {
   const value = DateTime.fromISO(iso, { zone: BUSINESS_ZONE }).setLocale(locale)
@@ -194,7 +194,7 @@ assim. A frase "Node não traz ICU por padrão" desta página está desatualizad
 contrário para Node 13+.
 
 ```ts
-DateTime.fromISO(iso, { zone: 'America/Manaus' }).setLocale('es').toLocaleString(DateTime.DATE_FULL)
+DateTime.fromISO(iso, { zone: 'America/Eirunepe' }).setLocale('es').toLocaleString(DateTime.DATE_FULL)
 // '14 de octubre de 2026'
 ```
 
@@ -213,7 +213,7 @@ de fuso único, `Settings.defaultZone` no boot do servidor e do cliente fecha o 
 zona; `keepLocalTime` a página manda evitar.
 
 ```ts
-DateTime.fromISO('2026-10-14T09:00', { zone: 'America/Manaus' }) // 09:00 em Manaus
+DateTime.fromISO('2026-10-14T09:00', { zone: 'America/Eirunepe' }) // 09:00 em Benjamin Constant
 DateTime.fromISO('2026-10-14T09:00-04:00', { setZone: true }).zoneName // 'UTC-4'
 ```
 
@@ -349,7 +349,7 @@ locale e zona explícitos, nunca com o padrão da máquina do CI.
 | [Interval](https://moment.github.io/luxon/api-docs/index.html#interval) | trecho semiaberto `[início, fim)` entre dois `DateTime` | filtro por período, sobreposição de agenda, "está dentro da janela" |
 | [Info](https://moment.github.io/luxon/api-docs/index.html#info) | métodos estáticos: nomes de mês e dia por locale, zona com horário de verão, recursos do ambiente | rótulo de mês e dia da semana num seletor, no idioma atual |
 | [Zone](https://moment.github.io/luxon/api-docs/index.html#zone) | contrato abstrato de zona (`name`, `offset`, `isUniversal`, `isValid`) | tipo de parâmetro quando o código aceita zona como objeto |
-| [IANAZone](https://moment.github.io/luxon/api-docs/index.html#ianazone) | zona por identificador IANA (`America/Manaus`) | a zona do negócio; validar zona vinda de configuração |
+| [IANAZone](https://moment.github.io/luxon/api-docs/index.html#ianazone) | zona por identificador IANA (`America/Eirunepe`) | a zona do negócio; validar zona vinda de configuração |
 | [FixedOffsetZone](https://moment.github.io/luxon/api-docs/index.html#fixedoffsetzone) | zona de offset fixo, sem horário de verão | UTC (`utcInstance`) ou string com offset lida com `setZone: true` |
 | [SystemZone](https://moment.github.io/luxon/api-docs/index.html#systemzone) | a zona do ambiente que executa | evitar: é o que o SSR não pode depender |
 | [InvalidZone](https://moment.github.io/luxon/api-docs/index.html#invalidzone) | zona que falhou no parse; "nunca instancie" | só aparece em diagnóstico de `DateTime` inválido |

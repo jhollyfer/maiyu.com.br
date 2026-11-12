@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
-import { NotFoundPage } from '#/components/common/not-found-page'
+import { NotFoundPage } from '#/components/common/route-status/not-found-page'
 import { SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
@@ -36,7 +36,7 @@ export const Route = createFileRoute('/_public/$')({
   },
   head: () => ({
     meta: [
-      { title: `${m.notFound_title()} · ${SITE_TITLE}` },
+      { title: `${m.kit_not_found_title()} · ${SITE_TITLE}` },
       { name: 'robots', content: 'noindex' },
     ],
   }),

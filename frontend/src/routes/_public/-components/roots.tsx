@@ -1,8 +1,9 @@
 import type * as React from 'react'
 
-import { REVEAL, STAGGER } from './reveal'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { REVEAL, STAGGER } from './reveal'
 
 /**
  * Os três fatos que sustentam a frase. Funções e não chaves montadas por
@@ -11,16 +12,16 @@ import { m } from '#/paraglide/messages'
  */
 const FACTS = [
   {
-    title: () => m.home_rootsFact1Title(),
-    description: () => m.home_rootsFact1Desc(),
+    title: () => m.home_roots_fact1_title(),
+    description: () => m.home_roots_fact1_desc(),
   },
   {
-    title: () => m.home_rootsFact2Title(),
-    description: () => m.home_rootsFact2Desc(),
+    title: () => m.home_roots_fact2_title(),
+    description: () => m.home_roots_fact2_desc(),
   },
   {
-    title: () => m.home_rootsFact3Title(),
-    description: () => m.home_rootsFact3Desc(),
+    title: () => m.home_roots_fact3_title(),
+    description: () => m.home_roots_fact3_desc(),
   },
 ] as const
 
@@ -47,10 +48,10 @@ export function Roots(): React.JSX.Element {
         <div className="grid items-end gap-12 md:grid-cols-12">
           <div className={cn(REVEAL, 'md:col-span-10')}>
             <h2 className="text-display tracking-[-0.015em] text-foreground">
-              {m.home_rootsTitle()}
+              {m.home_roots_title()}
             </h2>
             <p className="mt-8 max-w-[62ch] font-serif text-lead text-foreground/80">
-              {m.home_rootsDesc()}
+              {m.home_roots_desc()}
             </p>
           </div>
         </div>

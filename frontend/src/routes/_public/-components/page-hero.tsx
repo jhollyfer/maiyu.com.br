@@ -1,7 +1,8 @@
 import type * as React from 'react'
 
-import { REVEAL } from './reveal'
 import { cn } from '#/lib/utils'
+
+import { REVEAL } from './reveal'
 
 type PageHeroProps = {
   /** O `h1` da página. */

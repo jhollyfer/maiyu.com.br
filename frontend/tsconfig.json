@@ -1,42 +1,61 @@
 {
-  // Os tipos do servidor gerado pelo Nitro. Sem isto, `nitro/*` e as globais do
-  // runtime não resolvem - passo documentado em `examples/vite-nitro-plugin`.
+  // Nitro's server types (`nitro/*` and the runtime globals); the profile row of
+  // tooling.md §3 adds on top and never loosens the floor.
   "extends": "nitro/tsconfig",
 
+  // Every file the lint reads: `projectService` turns a file outside the project into a parser
+  // error. The two `*.config.js` stay out because eslint.config.js ignores them.
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    "eslint.config.js",
-    "prettier.config.js",
-    "vite.config.js"
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "e2e/**/*.ts",
+    "scripts/**/*.ts",
+    "scripts/**/*.mjs",
+    "vite.config.ts",
+    "vitest.config.ts",
+    // Paraglide's project config, present in every project with i18n.
+    "project.inlang/**/*.ts",
+    // The Tuyau registry types the client from the backend's routes and controllers, so the backend
+    // app code compiles here too (_doc-lib/tuyau.md, DECISIONS.md #324). Only `app/` and the generated
+    // `.adonisjs/`: `../backend/**` would pull scripts/ and tests/, which break this config. A project
+    // without backend/ matches nothing here, which tsc accepts.
+    "../backend/app/**/*.ts",
+    "../backend/.adonisjs/**/*.ts"
+  ],
+  "exclude": [
+    "../backend/build",
+    "../backend/node_modules",
+    "../backend/**/*.spec.ts"
   ],
 
   "compilerOptions": {
-    "target": "ES2022",
-    "jsx": "react-jsx",
+    "target": "ES2023",
     "module": "ESNext",
-    // Um alias só, e é o que o campo `imports` do package.json declara. Com os
-    // dois, cada arquivo escolhia um e o `@/` voltava sozinho toda vez que o
-    // shadcn gerava um componente.
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "allowJs": true,
+    "types": ["vite/client"],
+    // Repeats package.json#imports: the Playwright runner only reads `paths`
+    // (_doc-lib/playwright.md#docs/test-typescript).
     "paths": {
       "#/*": ["./src/*"]
     },
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["vite/client"],
 
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "allowJs": true,
-    "verbatimModuleSyntax": true,
-    "noEmit": true,
-
-    /* Linting */
-    "skipLibCheck": true,
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noImplicitReturns": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "noUncheckedSideEffectImports": true,
+    // Off in a Start app only: on, it can leak server code into the client bundle
+    // (_doc-lib/tanstack-start.md#build-from-scratch, DECISIONS.md #319).
+    "verbatimModuleSyntax": false,
+    "skipLibCheck": true,
+    // The backend's controllers and services use decorators (`@inject()`), and they compile here.
+    "experimentalDecorators": true
   }
 }

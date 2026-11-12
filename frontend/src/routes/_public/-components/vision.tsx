@@ -1,11 +1,12 @@
 import * as React from 'react'
 
+import { cn } from '#/lib/utils'
+import { m } from '#/paraglide/messages'
+
 import { REVEAL } from './reveal'
 import { useScrollStep } from './use-scroll-step'
 import { VisionScene } from './vision-scenes'
 import type { VisionStep } from './vision-scenes'
-import { cn } from '#/lib/utils'
-import { m } from '#/paraglide/messages'
 
 /**
  * Os três passos da visão. Funções e não chaves montadas por texto
@@ -14,21 +15,21 @@ import { m } from '#/paraglide/messages'
  */
 const ITEMS = [
   {
-    title: () => m.home_vision1Title(),
-    description: () => m.home_vision1Desc(),
+    title: () => m.home_vision1_title(),
+    description: () => m.home_vision1_desc(),
   },
   {
-    title: () => m.home_vision2Title(),
-    description: () => m.home_vision2Desc(),
+    title: () => m.home_vision2_title(),
+    description: () => m.home_vision2_desc(),
   },
   {
-    title: () => m.home_vision3Title(),
-    description: () => m.home_vision3Desc(),
+    title: () => m.home_vision3_title(),
+    description: () => m.home_vision3_desc(),
   },
 ] as const
 
 /** O índice como passo tipado, para a cena só aceitar o que existe. */
-const STEPS: ReadonlyArray<VisionStep> = [0, 1, 2]
+const STEPS: readonly [VisionStep, ...VisionStep[]] = [0, 1, 2]
 
 /**
  * "A visão": três passos numerados à esquerda e o palco navy à direita, preso
@@ -45,7 +46,7 @@ const STEPS: ReadonlyArray<VisionStep> = [0, 1, 2]
  */
 export function Vision(): React.JSX.Element {
   const ref = React.useRef<HTMLElement>(null)
-  const step = STEPS[useScrollStep(ref, ITEMS.length)]
+  const step = useScrollStep(ref, STEPS)
   const current = ITEMS[step]
 
   return (
@@ -57,7 +58,7 @@ export function Vision(): React.JSX.Element {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-24 md:grid-cols-12 md:gap-12 md:px-8 md:motion-safe:sticky md:motion-safe:top-0 md:motion-safe:h-[100dvh]">
         <div className="flex flex-col md:col-span-5">
           <div className={REVEAL}>
-            <h2 className="text-display">{m.home_visionTitle()}</h2>
+            <h2 className="text-display">{m.home_vision_title()}</h2>
           </div>
           <ol className="mt-auto space-y-3 pt-10">
             {ITEMS.map((item, index) => (

@@ -1,18 +1,20 @@
-import type * as React from 'react'
-import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
 import { ArrowRightIcon } from '@phosphor-icons/react'
+import { Link, createLazyFileRoute, getRouteApi } from '@tanstack/react-router'
+import type * as React from 'react'
 
-import { PageHero } from '../-components/page-hero'
-import { Photo } from '../-components/photo'
-import { REVEAL, STAGGER } from '../-components/reveal'
 import { Badge } from '#/components/ui/badge'
 import { articles, featuredArticle } from '#/lib/articles'
 import { ARTICLE_CATEGORIES } from '#/lib/entity'
 import type { ArticleCategory } from '#/lib/entity'
-import { localized, localizedDate } from '#/lib/i18n'
+import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
+import { localizedDate } from '#/lib/site-i18n'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+
+import { PageHero } from '../-components/page-hero'
+import { Photo } from '../-components/photo'
+import { REVEAL, STAGGER } from '../-components/reveal'
 
 const route = getRouteApi('/_public/blog/')
 
@@ -106,7 +108,7 @@ function RouteComponent(): React.JSX.Element {
                 params={{ slug: featuredArticle.slug }}
                 className="group inline-flex min-h-11 items-center gap-2 self-start text-body font-medium text-urucum"
               >
-                {m.blog_readArticle()}
+                {m.blog_read_article()}
                 <ArrowRightIcon
                   size={18}
                   aria-hidden="true"
@@ -121,9 +123,9 @@ function RouteComponent(): React.JSX.Element {
       <section data-slot="blog-list" className="pb-24 md:pb-32">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex flex-col gap-6 border-t border-border pt-12 md:flex-row md:items-end md:justify-between">
-            <h2 className="text-h1">{m.blog_recentArticles()}</h2>
+            <h2 className="text-h1">{m.blog_recent_articles()}</h2>
             <nav
-              aria-label={m.blog_recentArticles()}
+              aria-label={m.blog_recent_articles()}
               className="flex flex-wrap gap-2"
             >
               {FILTERS.map((filter) => {
