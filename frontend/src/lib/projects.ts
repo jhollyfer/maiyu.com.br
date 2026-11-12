@@ -10,8 +10,9 @@ import type { LocalizedText } from '@maiyu/shared'
  * vai usar. O portfólio diz isso na tela para não vender como pronto o que a
  * prefeitura, a escola ou o morador ainda estão testando.
  *
- * A trinca mora aqui e não em `shared/src/enums/` porque só o site lê o valor:
- * não há API nem banco por trás (`docs/DECISIONS.md` #17).
+ * O lugar desta trinca é `shared/src/enums/` (`_standards/typescript.md` §4). Fica aqui só até o sync da
+ * leva 10A do kit: o export passa pelo `shared/src/index.ts`, que a 10A muda, e quem move é a
+ * sessão do `shared/`. Depois disso este arquivo importa a trinca de `@maiyu/shared`.
  */
 export const PROJECT_STATUS = {
   PRODUCTION: 'production',

@@ -4,8 +4,10 @@ import type { PhotoKey } from './photos'
 
 /**
  * As editorias do diário. "Tudo" não é categoria: é a ausência de filtro.
- * Só o site lê o valor (a URL do filtro e o rótulo), então a trinca fica aqui
- * e não em `shared/src/enums/`.
+ *
+ * O lugar desta trinca é `shared/src/enums/` (`_standards/typescript.md` §4). Fica aqui só até o sync da
+ * leva 10A do kit: o export passa pelo `shared/src/index.ts`, que a 10A muda, e quem move é a
+ * sessão do `shared/`. Depois disso este arquivo importa a trinca de `@maiyu/shared`.
  */
 export const ARTICLE_CATEGORY = {
   TECH: 'tech',

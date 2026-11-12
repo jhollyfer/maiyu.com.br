@@ -3,9 +3,11 @@ import { m } from '#/paraglide/messages'
 import { JOB_POSITION_LABELS } from './labels'
 
 /**
- * As áreas do banco de talentos, listadas na página de carreiras. Sem
- * formulário de candidatura (`docs/DECISIONS.md` #17), só a página lê o
- * valor, então a trinca fica aqui e não em `shared/src/enums/`.
+ * As áreas do banco de talentos, listadas na página de carreiras.
+ *
+ * O lugar desta trinca é `shared/src/enums/` (`_standards/typescript.md` §4). Fica aqui só até o sync da
+ * leva 10A do kit: o export passa pelo `shared/src/index.ts`, que a 10A muda, e quem move é a
+ * sessão do `shared/`. Depois disso este arquivo importa a trinca de `@maiyu/shared`.
  */
 export const JOB_POSITION = {
   DEVELOPMENT: 'development',
