@@ -18,7 +18,7 @@
 
 ## Parou em
 
-Correção pós-R2.2: o gerador de rotas trocou `_public/index.lazy.tsx` pelo placeholder (`Hello "/_public/"!`) ao mover a home; o arquivo volta a montar `Home` de `-components/home/home` e `_public/lazy-routes.test.tsx` prova que cada rota lazy pública monta a própria tela. O wordmark do rodapé deixou de reprovar o axe (próximo commit).
+Correção pós-R2.2: o gerador de rotas trocou `_public/index.lazy.tsx` pelo placeholder (`Hello "/_public/"!`) ao mover a home; o arquivo volta a montar `Home` de `-components/home/home` e `_public/lazy-routes.test.tsx` prova que cada rota lazy pública monta a própria tela. O wordmark do rodapé virou um `<svg>` decorativo (`aria-hidden`, `focusable=false`) com o mesmo texto, fonte, tamanho e opacidade, e deixou de reprovar o axe `color-contrast`; o filtro de categoria ativo do diário no tema escuro (`dark:bg-input/30` do `Badge` vencia o `bg-foreground`) ganhou `dark:data-[active=true]:bg-foreground`.
 
 R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
 
