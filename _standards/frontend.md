@@ -1385,7 +1385,7 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
   tocar no `h-*` original, e o patch `// casa:` só acrescenta `max-sm:min-h-11` (mais
   `max-sm:min-w-11` nos tamanhos de ícone, `size-*`). `max-sm:` vale só abaixo de `sm`, então de `sm`
   para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos: `button`, `toggle`,
-  `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`) e `input-group`. O
+  `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`), `tabs` (o `TabsTrigger`) e `input-group`. O
   `ToggleGroupItem` monta a classe com `toggleVariants`: o patch do `toggle` vai dentro do `cva`
   (base e tamanhos), não no `className` do componente `Toggle`, senão o item do grupo fica de fora
   e mede 40 px. No `input-group` o patch vai
