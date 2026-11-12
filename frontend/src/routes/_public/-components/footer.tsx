@@ -12,6 +12,13 @@ import { m } from '#/paraglide/messages'
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 
+// The giant signature is a drawing and not a paragraph: it is decoration at 15% opacity,
+// and as text axe measured its contrast (1.22:1) even with `aria-hidden`. The viewBox is
+// 0.9 em tall (the old line height) and 4.8123 em wide, the width of "MAIYU" in Michroma,
+// so the height keeps the old `clamp` and the width follows from it.
+const WORDMARK_FONT_SIZE = 100
+const WORDMARK_VIEW_BOX = '0 0 481.23 90'
+
 /**
  * The footer: the weave as the top, four columns separated by lines, the back-to-top button
  * and the giant "MAIYU" signature.
@@ -123,12 +130,24 @@ export function Footer(): React.JSX.Element {
           </Button>
         </div>
 
-        <p
+        <svg
           aria-hidden="true"
-          className="pointer-events-none text-center font-brand text-[clamp(3.5rem,17vw,14rem)] leading-[0.9] text-forest uppercase opacity-15 select-none dark:text-brand-green dark:opacity-15"
+          focusable="false"
+          viewBox={WORDMARK_VIEW_BOX}
+          className="pointer-events-none mx-auto block h-[calc(clamp(3.5rem,17vw,14rem)*0.9)] w-auto overflow-visible text-forest opacity-15 select-none dark:text-brand-green dark:opacity-15"
         >
-          {SITE_TITLE}
-        </p>
+          <text
+            x="50%"
+            y="50%"
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={WORDMARK_FONT_SIZE}
+            fill="currentColor"
+            className="font-brand uppercase"
+          >
+            {SITE_TITLE}
+          </text>
+        </svg>
       </div>
     </footer>
   )

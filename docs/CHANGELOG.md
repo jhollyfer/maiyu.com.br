@@ -44,3 +44,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 - Visual mais amazônico: fundo de papel de fibra, mata mais densa, rio barrento, e uma faixa de trançado em urucum, terra e mata na parte da home que fala do time.
 - O destaque do título da home passa do gradiente azul para o verde da mata.
+
+### Corrigido
+
+- No tema escuro, o filtro de categoria ativo do diário ficava com texto escuro sobre fundo escuro e quase não se lia; agora o fundo claro do filtro ativo vale nos dois temas.

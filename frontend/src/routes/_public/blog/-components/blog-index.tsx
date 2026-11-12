@@ -140,7 +140,7 @@ export function BlogIndex(): React.JSX.Element {
                         aria-current={active}
                       />
                     }
-                    className="h-auto min-h-11 border-foreground/20 bg-transparent px-4 py-0 text-small font-medium text-foreground/70 transition-colors duration-300 hover:border-foreground/45 hover:text-foreground data-[active=true]:border-foreground data-[active=true]:bg-foreground data-[active=true]:text-background motion-reduce:transition-none"
+                    className="h-auto min-h-11 border-foreground/20 bg-transparent px-4 py-0 text-small font-medium text-foreground/70 transition-colors duration-300 hover:border-foreground/45 hover:text-foreground data-[active=true]:border-foreground data-[active=true]:bg-foreground data-[active=true]:text-background dark:data-[active=true]:bg-foreground motion-reduce:transition-none"
                   >
                     {filter.label()}
                   </Badge>
