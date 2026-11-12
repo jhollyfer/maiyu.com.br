@@ -17,6 +17,24 @@ import TenantScoped from '#repositories/shared/tenant-scoped'
  * same rule as a `where`, so a row the request may not reach is simply not found and the use case
  * answers the 404 of a missing id (`_standards/backend.md` §4.6).
  */
+export type CustomerReadOptions = {
+  /**
+   * The table is read by the platform's staff in every tenant (DECISIONS.md #511): the review queue
+   * of a payment the platform checks. Off by default, so a table nobody declared (the file library)
+   * does not widen. Who counts is `TenantScope.platformStaff`, never a role named here.
+   */
+  readonly platform?: boolean
+  /**
+   * The statuses of `column` the staff of the tenant reads in its customers' rows (the store sees an
+   * order only from CONFIRMED on). It cuts only that branch: the owner keeps its own rows whatever
+   * the status, and the platform's read is not cut.
+   */
+  readonly tenantStatuses?: {
+    readonly column: string
+    readonly allowed: ReadonlyArray<string>
+  }
+}
+
 export default class CustomerScoped {
   /** The column that holds the owner account, the same name in every customer table. */
   static readonly COLUMN = 'customer_id'
@@ -24,10 +42,12 @@ export default class CustomerScoped {
   /**
    * The owner's rows in any tenant; the tenant's own rows (`customer_id` null) as `TenantScoped`
    * reads them; a customer's row only for the staff of its own tenant (never a plain member, never
-   * the parent tenant, never the public).
+   * the parent tenant, never the public). With `options.platform` the platform's staff reads every
+   * row of the table, in every tenant; `writable` has no such branch (DECISIONS.md #511).
    */
   static readable<TModel extends LucidModel, TResult>(
     query: ModelQueryBuilderContract<TModel, TResult>,
+    options: CustomerReadOptions = {},
   ): ModelQueryBuilderContract<TModel, TResult> {
     const scope = TenantScope.current()
     if (!scope) return query
@@ -42,8 +62,16 @@ export default class CustomerScoped {
             .whereIn(TenantScoped.COLUMN, tenantIds)
             .whereNull(CustomerScoped.COLUMN)
         })
-      if (scope.platform) rows.orWhereNull(TenantScoped.COLUMN)
-      CustomerScoped.ownedOrServed(rows, scope)
+      // The platform's own rows only: a customer's row with no tenant is not one of them (#511).
+      if (scope.platform)
+        rows.orWhere((platformOwn) => {
+          platformOwn
+            .whereNull(TenantScoped.COLUMN)
+            .whereNull(CustomerScoped.COLUMN)
+        })
+      if (options.platform === true && scope.platformStaff)
+        rows.orWhereRaw('true')
+      CustomerScoped.ownedOrServed(rows, scope, options.tenantStatuses)
     })
   }
 
@@ -64,7 +92,13 @@ export default class CustomerScoped {
             .where(TenantScoped.COLUMN, own)
             .whereNull(CustomerScoped.COLUMN)
         })
-      if (scope.platform) rows.orWhereNull(TenantScoped.COLUMN)
+      // The platform's own rows only: a customer's row with no tenant is not one of them (#511).
+      if (scope.platform)
+        rows.orWhere((platformOwn) => {
+          platformOwn
+            .whereNull(TenantScoped.COLUMN)
+            .whereNull(CustomerScoped.COLUMN)
+        })
       CustomerScoped.ownedOrServed(rows, scope)
     })
   }
@@ -73,9 +107,14 @@ export default class CustomerScoped {
   private static ownedOrServed<TModel extends LucidModel, TResult>(
     rows: ModelQueryBuilderContract<TModel, TResult>,
     scope: TenantScope,
+    statuses?: CustomerReadOptions['tenantStatuses'],
   ): void {
     const served = scope.servedTenantId()
-    if (served !== null) rows.orWhere(TenantScoped.COLUMN, served)
+    if (served !== null)
+      rows.orWhere((tenant) => {
+        tenant.where(TenantScoped.COLUMN, served)
+        if (statuses) tenant.whereIn(statuses.column, [...statuses.allowed])
+      })
     if (scope.accountId !== null)
       rows.orWhere(CustomerScoped.COLUMN, scope.accountId)
   }

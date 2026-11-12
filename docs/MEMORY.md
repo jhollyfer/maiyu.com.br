@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
+| 2026-11-12 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
 
 ## Já feito
 
@@ -17,6 +17,8 @@
 - Copy pt-BR, en e es do novo posicionamento e `areaServed` do JSON-LD (Brasil, Peru, Colômbia).
 
 ## Parou em
+
+RB.6 (multi-tenant do backend, `chore/backend-multi-tenant` sobre a `chore/regua-sync-10a`): o `backend/.env.example` segue o catálogo único do kit (#417) com `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*` da Maiyu, e o `docs/ENV.md` traz `TRUSTED_PROXIES=uniquelocal` obrigatória na API do Coolify. O contato virou tabela de cliente do tenant único: migration `1700000000110` (`tenant_id` obrigatório e `customer_id` nulo), `POST /storefront/contacts` com `publicTenant({ access: 'insert' })` gravando no tenant do `SINGLE_TENANT_SLUG`, painel `/administrator/contacts` só com o tenant da sessão (contato de outro tenant é 404) e `contacts:prune` sem escopo; o `.env.test` tem `SINGLE_TENANT_SLUG` e `SEED_TENANT_*`, e os specs do contato trocam o `TenantConfig` para o modo cliente único. O contrato do `shared/` não mudou. Próximo: `TRUSTED_PROXIES` no Coolify e a rodada final antes de tirar a PR do rascunho.
 
 Leva 10C do kit (frontend): o `.env.example` segue o catálogo de 10 chaves, sem `E2E_OWNER_*` nem `E2E_DEMO_PASSWORD`. O E2E cria as próprias contas com `node ace e2e:accounts` pelo `e2e/auth.setup.ts` (#443), e `playwright/.auth/` fica no `frontend/.gitignore`, onde nunca foi versionado. O `docs/ENV.md` acompanha.
 

@@ -91,6 +91,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta entregue pela rota de conta (R2.10) |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
 | RB.5 | Tuyau dentro do `request()` no frontend | M | Feita | #324; depois de RB.1 |
+| RB.6 | Multi-tenant do backend: catálogo de ENV (#417), contato como tabela de cliente do tenant único (#397, #399), `SINGLE_TENANT_SLUG` e o seed do tenant, `TRUSTED_PROXIES` no Coolify | M | Em revisão | PR #30 (`chore/backend-multi-tenant`, sobre a #29), verificada: catálogo do kit com 35 chaves, contato no tenant único (migration `1700000000110`, `CustomerScoped`, `publicTenant({ access: 'insert' })`, painel só com o tenant da sessão), verificação independente com cinco mutações mortas, funcional 339/339 em banco novo; falta o merge do dono e, no Coolify, `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` na API, com o banco recriado antes do deploy |
 
 ### Régua 2 · Árvore e camadas
 

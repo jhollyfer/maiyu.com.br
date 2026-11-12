@@ -252,6 +252,8 @@
   "kit_restore": "Restaurar",
   "kit_retry": "Tentar de novo",
   "kit_route_error_description": "Esta tela não conseguiu carregar. Tentar de novo costuma bastar.",
+  "kit_row_remove_description": "A exclusão é definitiva e não pode ser desfeita.",
+  "kit_row_remove_title": "Excluir este registro?",
   "kit_save": "Salvar",
   "kit_server_error_description": "Esta tela não conseguiu carregar. Tentar de novo costuma bastar; se insistir, volte ao início.",
   "kit_server_error_subtitle": "A falha é nossa, não sua",

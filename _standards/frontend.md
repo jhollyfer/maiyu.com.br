@@ -819,6 +819,15 @@ A forma única está nas skills `dialog-pattern` e `sheet-pattern`; o resumo que
 - Ação destrutiva: `ConfirmDialog` do kit (AlertDialog) e as regras de §10.6.
   _doc-lib/base-ui.md#react/components/alert-dialog.
 - Texto de toda sobreposição sai de `m.*()`.
+- **`RowActions` (`components/common/row-actions/`) tem uma peça genérica e duas de exclusão** *(opinião
+  da casa, `DECISIONS.md` #501)*. Ação de domínio com confirmação ("Reenviar convite") usa
+  `RowActionsAction` (o item, `handle.open(null)`) com `RowActionsActionDialog` (o alerta: título,
+  descrição, rótulo de confirmar, `destructive` e `onAction`; promessa segura o botão e fecha no sucesso,
+  falha deixa aberto), irmão do menu como em `RowActionsConfirm`. `RowActionsArchive`, `Unarchive` e
+  `Delete` são `RowActionsAction` com ícone e rótulo fixos; `RowActionsDelete` continua só para o
+  arquivado (`*_NOT_ARCHIVED`). Exclusão direta, sem arquivar (contato pela LGPD): `RowActionsRemove` +
+  `RowActionsRemoveDialog`, com texto próprio (`kit_row_remove_*`), sem supor arquivamento. Tela não
+  reescreve item nem alerta de linha: escolhe a peça. Doc: _doc-lib/base-ui.md#react/components/alert-dialog.
 
 ### 6.3 Componentes e hooks
 
@@ -1648,6 +1657,11 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   _doc-lib/playwright.md#docs/test-projects (https://playwright.dev/docs/test-projects, aberta),
   #docs/emulation (https://playwright.dev/docs/emulation, aberta). Quando roda (fase final do plano,
   e a rodada antes de todo PR): `tooling.md` §7 e §10.1.
+  **Site sem backend** (vitrine): com `E2E_API_URL` vazia o config não cria `setup` nem `cleanup`, nenhum
+  projeto depende deles e só o app sobe; as specs públicas (`pages`, `touch-targets`, `a11y`, `locale`,
+  `responsive`) rodam sem API e sem banco (`scripts/e2e-config.test.ts` carrega o config nos dois modos).
+  `dependencies` só existe onde há projeto de preparação a esperar: _doc-lib/playwright.md#docs/test-projects
+  (https://playwright.dev/docs/test-projects, aberta).
 - **Axe mede depois das animações de tempo, não das de rolagem** (`DECISIONS.md` #429). A fixture
   espera `document.getAnimations()` terminarem antes de medir contraste, filtrando as infinitas e as
   que não correm na `DocumentTimeline`: animação ligada à rolagem (`animation-timeline: scroll()`,

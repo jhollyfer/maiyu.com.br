@@ -6,6 +6,7 @@ import {
 } from './contact.repository.ts'
 
 import MemoryRows from '#core/memory-rows'
+import { TenantScope } from '#core/tenant-scope'
 import { Contact, type ContactProps } from '#domain/contact/contact.entity'
 
 /**
@@ -18,7 +19,8 @@ export class ContactMemoryRepository extends ContactRepository {
 
   async findById(id: string): Promise<Contact | null> {
     const props = this.rows.get(id)
-    if (!props) return null
+    if (!props || !TenantScope.readsOwned(props.tenantId, props.customerId))
+      return null
 
     return Contact.restore(MemoryRows.copy(props))
   }
@@ -30,6 +32,7 @@ export class ContactMemoryRepository extends ContactRepository {
   async paginate(criteria: ContactListCriteria): Promise<Paginated<Contact>> {
     const rows = [...this.rows.values()].filter(
       (row) =>
+        TenantScope.readsOwned(row.tenantId, row.customerId) &&
         this.matchesStatus(row, criteria) &&
         MemoryRows.contains([row.name, row.email], criteria.search),
     )
@@ -42,7 +45,12 @@ export class ContactMemoryRepository extends ContactRepository {
 
   async claimAnswer(contact: Contact): Promise<boolean> {
     const row = this.rows.get(contact.id)
-    if (!row || row.answeredAt !== null) return false
+    if (
+      !row ||
+      row.answeredAt !== null ||
+      !TenantScope.writesOwned(row.tenantId, row.customerId)
+    )
+      return false
 
     this.rows.set(contact.id, MemoryRows.copy(contact.snapshot()))
 
@@ -50,6 +58,9 @@ export class ContactMemoryRepository extends ContactRepository {
   }
 
   async delete(contact: Contact): Promise<void> {
+    const row = this.rows.get(contact.id)
+    if (!row || !TenantScope.writesOwned(row.tenantId, row.customerId)) return
+
     this.rows.delete(contact.id)
   }
 

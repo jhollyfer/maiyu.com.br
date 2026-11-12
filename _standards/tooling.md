@@ -832,7 +832,9 @@ cada papel na hora, por `node ace e2e:accounts` (só em development e test, senh
 ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
 projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
 Projeto só frontend não define `E2E_API_URL`: o config não sobe a API, não cria os projetos `setup` e
-`cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`).
+`cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`). O modo vem do valor da
+chave (vazia ou ausente é sem backend; liga-se por valor, nunca por chave, `AGENTS.md`), e as specs
+públicas rodam sem API e sem banco; `scripts/e2e-config.test.ts` cobre os dois modos (`DECISIONS.md` #501).
 
 **`shared/`**: `check` *(teste)*, antes do backend.
 

@@ -3,7 +3,7 @@ import {
   ArrowCounterClockwiseIcon,
   TrashIcon,
 } from '@phosphor-icons/react'
-import type * as React from 'react'
+import * as React from 'react'
 
 import { ConfirmDialog } from '#/components/common/confirm-dialog/confirm-dialog'
 import {
@@ -11,7 +11,11 @@ import {
   ConfirmDialogConfirm,
   ConfirmDialogFooter,
 } from '#/components/common/confirm-dialog/confirm-dialog-footer'
-import { ConfirmDialogHeader } from '#/components/common/confirm-dialog/confirm-dialog-header'
+import {
+  ConfirmDialogDescription,
+  ConfirmDialogHeader,
+  ConfirmDialogTitle,
+} from '#/components/common/confirm-dialog/confirm-dialog-header'
 import { DropdownMenuItem } from '#/components/ui/dropdown-menu'
 import type { ConfirmHandle } from '#/lib/dialog-handle'
 import { m } from '#/paraglide/messages'
@@ -22,12 +26,13 @@ type RowActionsItemProps = Readonly<{
   handle: ConfirmHandle
 }>
 
-type MenuConfirmProps = Readonly<
+type RowActionsActionProps = Readonly<
   Merge<
     RowActionsItemProps,
     {
-      slot: string
-      icon: React.ReactNode
+      /** The `data-slot` of the item, for the E2E and the styles that read it. */
+      slot?: string
+      icon?: React.ReactNode
       label: string
       destructive?: boolean
     }
@@ -35,18 +40,20 @@ type MenuConfirmProps = Readonly<
 >
 
 /**
- * A menu item that asks for confirmation.
+ * A menu item that asks for confirmation. The generic piece: the archive, restore and delete
+ * items are this one with a fixed icon and label, and a domain action ("Reenviar convite",
+ * "Marcar como lido") is this one with its own.
  *
  * The item only opens the alert: `handle.open(null)` on click, and the menu closes like
- * any item. The alert is `RowActionsConfirm`, a sibling of the menu.
+ * any item. The alert is `RowActionsConfirm` or `RowActionsActionDialog`, a sibling of the menu.
  */
-function MenuConfirm({
-  slot,
+export function RowActionsAction({
+  slot = 'row-actions-action',
   icon,
   label,
   destructive = false,
   handle,
-}: MenuConfirmProps): React.JSX.Element {
+}: RowActionsActionProps): React.JSX.Element {
   let variant: 'destructive' | 'default' = 'default'
   if (destructive) variant = 'destructive'
 
@@ -107,12 +114,76 @@ export function RowActionsConfirm({
   )
 }
 
+type RowActionsActionDialogProps = Readonly<{
+  handle: ConfirmHandle
+  title: string
+  description: string
+  /** The text of the button that confirms. */
+  confirmLabel: string
+  destructive?: boolean
+  /** The domain action. A promise holds the confirm button until it settles, then the alert closes. */
+  onAction: () => void | Promise<void>
+  /** For a mutation the screen already owns (`isPending`); without it the dialog tracks the promise. */
+  isPending?: boolean
+}>
+
+/**
+ * The alert of a domain action, with the text as props: title, description and confirm label.
+ *
+ * `RowActionsConfirm` stays for the screen that needs markup in the description; this one is for
+ * the common case, plain text. When `onAction` is async the dialog holds the button while it runs
+ * and closes on success; on failure it stays open so the caller's error surface can speak.
+ */
+export function RowActionsActionDialog({
+  handle,
+  title,
+  description,
+  confirmLabel,
+  destructive = false,
+  onAction,
+  isPending = false,
+}: RowActionsActionDialogProps): React.JSX.Element {
+  const [running, setRunning] = React.useState(false)
+
+  const run = async (close: () => void): Promise<void> => {
+    setRunning(true)
+    try {
+      await onAction()
+      close()
+    } catch {
+      // The failure surface (toast) is the caller's mutation; the alert only stays open.
+    } finally {
+      setRunning(false)
+    }
+  }
+
+  return (
+    <ConfirmDialog
+      handle={handle}
+      destructive={destructive}
+      isPending={isPending || running}
+      onConfirm={(close) => {
+        void run(close)
+      }}
+    >
+      <ConfirmDialogHeader>
+        <ConfirmDialogTitle>{title}</ConfirmDialogTitle>
+        <ConfirmDialogDescription>{description}</ConfirmDialogDescription>
+      </ConfirmDialogHeader>
+      <ConfirmDialogFooter>
+        <ConfirmDialogCancel />
+        <ConfirmDialogConfirm>{confirmLabel}</ConfirmDialogConfirm>
+      </ConfirmDialogFooter>
+    </ConfirmDialog>
+  )
+}
+
 /** Archive the row. Only appears on what is not yet archived. */
 export function RowActionsArchive(
   props: RowActionsItemProps,
 ): React.JSX.Element {
   return (
-    <MenuConfirm
+    <RowActionsAction
       slot="row-actions-archive"
       icon={<ArchiveIcon />}
       label={m.kit_archive()}
@@ -126,7 +197,7 @@ export function RowActionsUnarchive(
   props: RowActionsItemProps,
 ): React.JSX.Element {
   return (
-    <MenuConfirm
+    <RowActionsAction
       slot="row-actions-unarchive"
       icon={<ArrowCounterClockwiseIcon />}
       label={m.kit_restore()}
@@ -156,12 +227,65 @@ export function RowActionsDelete({
   ...props
 }: RowActionsDeleteProps): React.JSX.Element {
   return (
-    <MenuConfirm
+    <RowActionsAction
       slot="row-actions-delete"
       icon={<TrashIcon />}
       label={label}
       destructive
       {...props}
+    />
+  )
+}
+
+/**
+ * Delete the row directly, with no archiving step (a contact to erase under the LGPD, a record
+ * that was never in the trash). It does not assume `<RESOURCE>_NOT_ARCHIVED`: use it only where the
+ * use-case deletes a live record. The archived-only flow keeps `RowActionsDelete`.
+ */
+export function RowActionsRemove({
+  label = m.kit_delete(),
+  ...props
+}: RowActionsDeleteProps): React.JSX.Element {
+  return (
+    <RowActionsAction
+      slot="row-actions-remove"
+      icon={<TrashIcon />}
+      label={label}
+      destructive
+      {...props}
+    />
+  )
+}
+
+type RowActionsRemoveDialogProps = Readonly<
+  Merge<
+    Omit<
+      RowActionsActionDialogProps,
+      'title' | 'description' | 'confirmLabel' | 'destructive'
+    >,
+    {
+      /** Names the record: "Excluir o contato Maria?". Without it, the generic sentence. */
+      title?: string
+      description?: string
+      confirmLabel?: string
+    }
+  >
+>
+
+/** The alert of `RowActionsRemove`: irreversible, with its own text that does not talk about the trash. */
+export function RowActionsRemoveDialog({
+  title = m.kit_row_remove_title(),
+  description = m.kit_row_remove_description(),
+  confirmLabel = m.kit_delete(),
+  ...rest
+}: RowActionsRemoveDialogProps): React.JSX.Element {
+  return (
+    <RowActionsActionDialog
+      title={title}
+      description={description}
+      confirmLabel={confirmLabel}
+      destructive
+      {...rest}
     />
   )
 }

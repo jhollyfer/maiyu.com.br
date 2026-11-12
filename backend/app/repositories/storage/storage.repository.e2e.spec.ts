@@ -7,8 +7,10 @@ import type { StorageRepository } from './storage.repository.ts'
 
 import { UserFactory } from '#database/factories/user.factory'
 import { Storage } from '#domain/storage/storage.entity'
+import StorageModel from '#models/storage'
 import UserModel from '#models/user'
 import { resetDatabase } from '#tests/http-fixtures'
+import { storageRow } from '#tests/storages-fixtures'
 import { PNG_HEAD } from '#tests/storages-unit-fixtures'
 
 /**
@@ -392,5 +394,24 @@ test.group('StorageRepository (lucid) > usedBy', (group) => {
       await repository.findOrphans(new Date(NOW.getTime() + 1)),
       [],
     )
+  })
+})
+
+test.group('StorageRepository (lucid) > uploaded_by', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  test('the file stays, with no uploader, when the account that uploaded it is really deleted', async ({
+    assert,
+  }) => {
+    const user = await UserFactory.create()
+    const kept = await storageRow({ uploadedBy: user.id })
+    assert.equal((await StorageModel.findOrFail(kept.id)).uploadedBy, user.id)
+
+    // Hard delete on purpose: soft delete never reaches the `ON DELETE` of the FK (`SET NULL`, not `CASCADE`).
+    await UserModel.query().where('id', user.id).delete()
+
+    const row = await StorageModel.find(kept.id)
+    assert.isNotNull(row)
+    assert.isNull(row?.uploadedBy ?? null)
   })
 })

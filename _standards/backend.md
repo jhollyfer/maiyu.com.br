@@ -210,7 +210,7 @@ que nasce o segundo módulo, e as tags e códigos sem prefixo colidem (administr
 | classe base de template method | `abstract class` com o algoritmo, subclasse preenche o passo, **um nível** de herança. Em `services/` e `policies/`, `<nome>.base.ts`; entre recursos de um módulo, `_shared.<tema>.base.ts` (`architecture.md` §3). Não é contrato: o contrato é fronteira de I/O trocável em teste, a base não se troca |
 | comando de CLI | `commands/<recurso>-<verbo>.command.ts`, invocado como `<recurso>:<verbo>`; mutante aceita `--dry-run` (§4.12). _doc-lib/adonisjs.md#guides/ace/creating-commands |
 | evento | `<recurso>:<particípio>` (`post:archived`), como a doc (`_doc-lib/adonisjs.md#guides/digging-deeper/emitter`) |
-| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono liga pela chave e não restringe ambiente (§6); só a demonstração declara `static environment = ['development', 'test']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
+| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono liga pela chave e não restringe ambiente (§6); só o conteúdo de exemplo de `dev/` declara `static environment = ['development']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
 | factory | `database/factories/<entidade>.factory.ts`, uma por entidade viva, usada só por spec; espelha o model, sem regra de negócio, nasce com o papel menos privilegiado (§7). _doc-lib/lucid.md#model-factories |
 | provider | um por contrato, `providers/<contrato>.provider.ts`, mais `repository.provider.ts` e `i18n.provider.ts`, com import estático (`DECISIONS.md` #340): `register()` liga contrato → implementação, `shutdown()` libera pool/conexão; `singleton` quando o cliente guarda conexão, `bind` quando é sem estado, comentário do porquê. _doc-lib/adonisjs.md#guides/concepts/service-providers |
 | socket | por feature, no contrato do service do socket: `<FEATURE>_NAMESPACE` (constante) e `<feature>Room(scopeId)` (única função que monta o nome da sala): quem entra e quem emite montam a mesma string. _doc-lib/socket-io.md#namespaces, #rooms |
@@ -1148,6 +1148,19 @@ existente. A policy base confere com `ownsRow` e `reachesCustomerRow`. O storage
 status derruba as sessões da conta na mesma transação (`UserRepository.save`,
 `TenantRepository.saveMember` e `removeMember`).
 
+**Equipe da plataforma e recorte de status em tabela de cliente (#511).** `CustomerScoped.readable(query, options)`
+tem duas opções tipadas, ambas opcionais. `platform: true` é a tabela declarando que a equipe da
+plataforma (`TenantScope.platformStaff`: `OWNER` e `ADMINISTRATOR`, a única regra de quem é equipe)
+lê toda linha dela em todo tenant, como a fila de conferência do Pix (#404); sem a declaração nada
+alarga, e `USER`, cliente, tenant pai e público continuam sem ler. `tenantStatuses: { column, allowed }`
+limita os status que a equipe do próprio tenant lê nas linhas dos clientes (a loja só vê o pedido a
+partir de `CONFIRMED`) e recorta só esse ramo. O `writable` não tem ramo de plataforma: a equipe da
+plataforma escreve em linha de cliente só por use case de plataforma com policy de `PLATFORM_ROLE`
+(rota sob `/platform/...`), por método explícito e nomeado do repositório (ex.: buscar por `number` em
+`AWAITING_REVIEW`), nunca por escopo "sem filtro", e a transição leva guarda de status no `WHERE`
+(só sai do status de origem), como o `claim` da cobrança. O use case é dono da autorização; o
+repositório só aplica o `WHERE`.
+
 Usuário é global (e-mail único); o acesso é vínculo usuário x tenant x papel (`tenant_memberships`).
 A chave do arquivo no storage começa pelo id do tenant (`platform/` sem tenant). A prova é
 `app/core/tenant-scope.e2e.spec.ts`: dado de outro tenant responde 404 em toda rota que o alcança
@@ -1762,10 +1775,10 @@ unitário, `DRIVE_DISK` escolhe o disco, `supportsACL: false` no R2; `DECISIONS.
 
 **Seed ligado pela chave.** Cada seed liga pela presença do valor da sua chave, em qualquer ambiente,
 nunca por flag à parte (`SEED_ENABLED`, `SEED_DEMO=true`) nem pelo `NODE_ENV`: o `static environment`
-do seeder não restringe o seed do dono, e o da demonstração só o exclui de produção (abaixo). Dado de referência que o app precisa
+do seeder não restringe o seed do dono, e o de conteúdo de exemplo só o exclui de produção (abaixo). Dado de referência que o app precisa
 para funcionar (bairros, categorias) não tem chave e roda sempre. Conteúdo de exemplo (anúncio, notícia,
-partida de mentira) é parte da demonstração; conta extra de exemplo
-não reusa `SEED_OWNER_PASSWORD`. O mesmo vale para todo recurso do catálogo: valor presente liga,
+partida de mentira) é dado de desenvolvimento (abaixo); conta extra de exemplo
+não existe. O mesmo vale para todo recurso do catálogo: valor presente liga,
 ausente desliga (`DECISIONS.md` #276).
 
 **O seed roda a cada deploy** (o *Post-deployment* do Coolify, `tooling.md` §8.3), então todo seeder
@@ -1779,29 +1792,21 @@ porque a variável só é necessária no primeiro deploy e o erro reprovaria o d
 referência segue com `updateOrCreate`/`updateOrCreateMany` pela chave natural
 (https://lucid.adonisjs.com/docs/seeders, "Idempotent seeders").
 
-**A demonstração nunca roda em produção.** Além de ligar pela chave, o seeder de demonstração
-declara `static environment = ['development', 'test']`, que é o uso que a página dá à flag: manter
-fixture de desenvolvimento e de teste fora da execução de produção
-(_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders, "Environment-specific seeders").
-Nenhuma senha de seed mora no código, e a demonstração não liga em produção. Se as contas de demonstração já chegaram a
-produção, elas saem por migration de alteração (§4.13), nunca por edição de seeder: a migration
-arquiva as contas (soft delete, para matrícula e nota presas a elas manterem a referência) e apaga
-os tokens, para a sessão aberta morrer agora. O `down` dela não reativa conta.
-
-**Forma da demonstração.** Um seeder só, `database/seeders/dev/demo.ts`, idempotente (`updateOrCreate`
-pela chave natural), que roda no `node ace db:seed` e pelo atalho `pnpm db:seed:demo`. Uma conta por
-papel do `USER_ROLE` do `shared/`, fora o dono, com e-mail `<papel em minúsculo>@example.com`
-(`advisor@example.com`); segunda conta do mesmo papel `<papel>-2@example.com`. Quando o seed dispara e-mail real
-(convite, confirmação), o domínio é um próprio do projeto em vez de `@example.com` (`DECISIONS.md` #354). A lista de e-mails mora
-em `shared/src/records/demo-accounts.ts` (`DEMO_ACCOUNTS`), lida pelo seeder e pelo
-`frontend/e2e/support/env.ts`; não se repete. O conteúdo de exemplo cobre toda tela de todo papel
-(cada status de cada recurso) e é reconhecível como exemplo.
+**Não há demonstração com conta e senha.** Nenhum projeto tem seeder de contas de demonstração,
+`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem `shared/src/records/demo-accounts.ts` (`DEMO_ACCOUNTS`):
+o E2E cria a própria conta por papel na hora (`e2e:accounts`, abaixo, `DECISIONS.md` #443). Conteúdo
+de exemplo sem conta (anúncio, notícia, partida de mentira) é dado de desenvolvimento: seeder em
+`database/seeders/dev/`, com `static environment = ['development']`, para nunca rodar em produção nem
+na suíte funcional, que semeia o banco a cada teste e espera as tabelas do domínio vazias; o E2E sobe o
+backend em `development` e vê o conteúdo (_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders,
+"Environment-specific seeders"). Achado no aporta.
+Projeto que ainda tem conta de demonstração a apaga junto da chave; se ela chegou a produção, sai por
+migration de alteração (§4.13), nunca por edição de seeder: a migration arquiva as contas (soft delete,
+para registro preso a elas manter a referência) e apaga os tokens, para a sessão aberta morrer agora, e
+o `down` dela não reativa conta.
 
 `OWNER` aqui é "dono da instalação", o primeiro administrador, e o nome não muda com o papel que o
-projeto der a ele. As contas de demonstração (um usuário por papel, para testar e mostrar cada perfil)
-dividem uma senha só; o e-mail de cada uma sai do próprio seeder, determinístico. A chave dessa
-senha (`SEED_DEMO_PASSWORD`, e `E2E_DEMO_PASSWORD` no E2E) só entra no catálogo junto com o seeder de
-demonstração do kit, que será o leitor dela: hoje o kit não o tem (`DECISIONS.md` #275, #417).
+projeto der a ele.
 
 **`# Mail`** e **`# Queue`** (em todo projeto; vazios onde o recurso não existe, e ligados pelo valor da chave gatilho)
 
@@ -1876,7 +1881,7 @@ Cada linha vira item em `_findings/<projeto>.md` (seção "Chaves de ambiente") 
 | `E2E_PORT` | `E2E_BASE_URL` | a origem inteira, não só a porta | interclasse |
 | `VITE_STORAGE_URL` (build) | `STORAGE_PUBLIC_URL` (runtime) | lida por requisição, a mesma imagem serve qualquer ambiente | interclasse, curupira |
 | `CHROMIUM_PATH` | `E2E_CHROMIUM_PATH` | um nome para o mesmo binário | aporta, curupira |
-| `VITE_DATA_SOURCE` (`mock`/`api`) | (sai) | o frontend fala só com a API; dado de exemplo é o seeder de demonstração | curupira |
+| `VITE_DATA_SOURCE` (`mock`/`api`) | (sai) | o frontend fala só com a API; dado de exemplo é o seeder de desenvolvimento em `database/seeders/dev/` | curupira |
 | `E2E_WORKERS`, `E2E_FULL_MATRIX` | (sai) | execução é do `playwright.config.ts` e do comando da rodada | curupira |
 | `API_URL`, `APP_URL`, `URL_API`, `UUID_API`, `COOLIFY_*`, `DOCKERHUB_*` no workflow de deploy | (sai) | não há workflow de deploy: o Coolify constrói da `main` (`tooling.md` §8.3, #290) | adacaibs, aporta, interclasse, curupira |
 | `CLIENT_URL`, `SERVER_URL` | `APP_CLIENT_URL`, `APP_SERVER_URL` | prefixo `APP_` da origem pública (#417) | matiscraft |

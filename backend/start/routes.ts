@@ -203,7 +203,7 @@ router
         router
           .post('/', [controllers.storefront.contacts.create.Create])
           .as('storefront.contacts.create')
-          .use(contactThrottle)
+          .use([middleware.publicTenant({ access: 'insert' }), contactThrottle])
       })
       .prefix('contacts')
   })

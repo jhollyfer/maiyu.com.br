@@ -14,3 +14,7 @@ public/revision.txt
 
 # Sessões e contas do E2E: accounts.json guarda login e senha sorteada de cada papel (e2e/support/accounts.ts).
 playwright/.auth/
+
+# Saídas de cada rodada do Playwright (relatório, rastros, capturas): nunca versionadas.
+test-results/
+playwright-report/
