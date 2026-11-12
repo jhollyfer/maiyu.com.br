@@ -18,6 +18,8 @@
 
 ## Parou em
 
+R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
+
 R2.6: os ícones gerados (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) entraram em `public/` e estão ligados no `__root.tsx`; o `manifest.json` espera o modelo do kit.
 
 R2.3 volta a Em andamento: os enums `PROJECT_STATUS`, `JOB_POSITION` e `ARTICLE_CATEGORY` ficam em

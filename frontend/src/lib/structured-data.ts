@@ -4,45 +4,42 @@ import { localizedUrl } from './page-head'
 import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
 
 /**
- * O JSON-LD que o site publica, montado num lugar só.
+ * The JSON-LD the site publishes, assembled in a single place.
  *
- * O mesmo desenho do academy: uma função por tipo, testada, e a rota só decide
- * quando injetar. Nenhuma função devolve string; quem serializa é o
- * `jsonLd` do kit (`lib/page-head.ts`, que escapa o `<`), porque um objeto é o que dá para inspecionar num teste sem
- * reparsear.
+ * The same design as academy: one function per type, tested, and the route only decides when to
+ * inject. No function returns a string; the one that serializes is the kit's `jsonLd`
+ * (`lib/page-head.ts`, which escapes the `<`), because an object is what can be inspected in a
+ * test without reparsing.
  */
 
 /**
- * Um nó de JSON-LD. `unknown` no valor, e não um tipo por schema: o
- * vocabulário do schema.org não é nosso, e redeclará-lo aqui seria uma segunda
- * definição para manter em dia.
+ * A JSON-LD node. `unknown` in the value, and not one type per schema: the schema.org vocabulary
+ * is not ours, and redeclaring it here would be a second definition to keep up to date.
  */
 export type JsonLd = Record<string, unknown>
 
 /**
- * O endereço da Maiyu como entidade: a home no idioma base (`/pt-br`).
+ * Maiyu's address as an entity: the home in the base language (`/pt-br`).
  *
- * Não é a raiz do domínio, que responde 307 (`DECISIONS.md` #384): um `url` que
- * redireciona obriga o buscador a seguir o salto para reconhecer a entidade.
- * Também não é a home do idioma da requisição: a organização é uma só, e três
- * `url` diferentes, um por língua, a partiriam em três para quem lê o grafo.
- * O idioma base é o mesmo do `x-default` do `hreflang`
- * (_doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
+ * It is not the domain root, which answers 307 (`DECISIONS.md` #384): a `url` that redirects forces
+ * the search engine to follow the hop to recognize the entity. Nor is it the home of the request's
+ * language: the organization is one, and three different `url`s, one per language, would split it
+ * into three for whoever reads the graph. The base language is the same as the `hreflang`'s
+ * `x-default` (_doc-lib/paraglide.md#/i18n-routing, https://paraglidejs.com/i18n-routing).
  */
 function organizationUrl(): string {
   return localizedUrl('/', baseLocale)
 }
 
 /**
- * A Maiyu como empresa.
+ * Maiyu as a company.
  *
- * `ProfessionalService` e não `Organization`: é o tipo que o buscador usa para
- * serviço prestado a partir de um endereço, e a busca que traz cliente para uma
- * consultoria do interior do Amazonas é local.
+ * `ProfessionalService` and not `Organization`: it is the type the search engine uses for a
+ * service provided from an address, and the search that brings clients to a consultancy from the
+ * interior of Amazonas is local.
  *
- * Mora na **raiz**, e não na home: é a identidade do site inteiro, e quem
- * chega por um artigo compartilhado precisa que o rastreador saiba de quem é a
- * página.
+ * It lives at the **root**, not on the home: it is the identity of the whole site, and whoever
+ * arrives through a shared article needs the crawler to know whose page it is.
  */
 export function organizationJsonLd(description: string): JsonLd {
   return {
@@ -62,8 +59,8 @@ export function organizationJsonLd(description: string): JsonLd {
       addressRegion: 'AM',
       addressCountry: 'BR',
     },
-    // A sede é em Benjamin Constant, mas quem contrata está dos três lados da
-    // fronteira: sem isto o buscador lê a Maiyu como empresa só do Brasil.
+    // The headquarters is in Benjamin Constant, but whoever hires is on all three sides of the
+    // border: without this the search engine reads Maiyu as a company of Brazil only.
     areaServed: [
       { '@type': 'Country', name: 'Brasil' },
       { '@type': 'Country', name: 'Peru' },
@@ -73,7 +70,7 @@ export function organizationJsonLd(description: string): JsonLd {
   }
 }
 
-/** Os campos de um artigo do diário que o `BlogPosting` publica. */
+/** The fields of a journal article that `BlogPosting` publishes. */
 export type ArticleEntry = {
   title: string
   description: string
@@ -84,10 +81,10 @@ export type ArticleEntry = {
 }
 
 /**
- * Um artigo do diário.
+ * A journal article.
  *
- * `BlogPosting` é o que faz o buscador mostrar data e autor no resultado, e é
- * a data que diz a quem procura se o texto ainda vale.
+ * `BlogPosting` is what makes the search engine show date and author in the result, and the date
+ * is what tells whoever searches whether the text is still valid.
  */
 export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
   return {
@@ -98,8 +95,8 @@ export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
     url: article.url,
     image: article.image,
     datePublished: article.publishedAt,
-    // A autoria é da Maiyu como organização: os textos saem da equipe, e
-    // `Person` anunciaria ao buscador uma pessoa que não assina nada.
+    // Authorship belongs to Maiyu as an organization: the texts come from the team, and
+    // `Person` would announce to the search engine a person who signs nothing.
     author: {
       '@type': 'Organization',
       name: article.author,
@@ -113,7 +110,7 @@ export function blogPostingJsonLd(article: ArticleEntry): JsonLd {
   }
 }
 
-/** Os campos de um projeto do portfólio que o `CreativeWork` publica. */
+/** The fields of a portfolio project that `CreativeWork` publishes. */
 export type ProjectEntry = {
   name: string
   description: string
@@ -123,10 +120,10 @@ export type ProjectEntry = {
 }
 
 /**
- * A lista do portfólio: um `ItemList` de `CreativeWork`, na ordem da página.
+ * The portfolio list: an `ItemList` of `CreativeWork`, in the page's order.
  *
- * Cada item aponta para o site no ar do projeto, e não para uma página daqui:
- * o portfólio não tem página de detalhe, e o que prova o trabalho é o produto.
+ * Each item points to the project's live site, and not to a page here: the portfolio has no
+ * detail page, and what proves the work is the product.
  */
 export function projectListJsonLd(
   projects: ReadonlyArray<ProjectEntry>,

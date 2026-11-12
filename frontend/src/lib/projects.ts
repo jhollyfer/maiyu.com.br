@@ -6,13 +6,14 @@ import interclasseShot from '#/assets/projects/interclasse.webp'
 import type { LocalizedText } from '@maiyu/shared'
 
 /**
- * Onde cada projeto está: no ar para o público, ou ainda em validação com quem
- * vai usar. O portfólio diz isso na tela para não vender como pronto o que a
- * prefeitura, a escola ou o morador ainda estão testando.
+ * Where each project stands: live for the public, or still in validation with whoever will use it.
+ * The portfolio says so on screen so as not to sell as finished what the city hall, the school or
+ * the resident is still testing.
  *
- * O lugar desta trinca é `shared/src/enums/` (`_standards/typescript.md` §4). Fica aqui só até o sync da
- * leva 10A do kit: o export passa pelo `shared/src/index.ts`, que a 10A muda, e quem move é a
- * sessão do `shared/`. Depois disso este arquivo importa a trinca de `@maiyu/shared`.
+ * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
+ * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
+ * and the `shared/` session is the one that moves it. After that this file imports the triplet from
+ * `@maiyu/shared`.
  */
 export const PROJECT_STATUS = {
   PRODUCTION: 'production',
@@ -24,8 +25,8 @@ export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS]
 export const PROJECT_STATUSES = Object.values(PROJECT_STATUS)
 
 /**
- * Os projetos da Maiyu no ar, na ordem em que aparecem na home e no
- * portfólio. Conteúdo em código, como `articles.ts`.
+ * Maiyu's live projects, in the order they appear on the home and in the portfolio. Content in
+ * code, like `articles.ts`.
  */
 
 export type Project = {
@@ -35,20 +36,20 @@ export type Project = {
   summary: LocalizedText
   description: LocalizedText
   image: string
-  /** O `object-position` que mantém a manchete do print enquadrada no recorte. */
+  /** The `object-position` that keeps the screenshot's headline framed in the crop. */
   focus?: string
   tech: string[]
   url: string
   year: string
-  /** No ar ou ainda em validação com quem vai usar (`PROJECT_STATUS`). */
+  /** Live or still in validation with whoever will use it (`PROJECT_STATUS`). */
   status: ProjectStatus
   featured?: boolean
 }
 
 /**
- * Tupla não vazia, e não `ReadonlyArray`: com `noUncheckedIndexedAccess`, `projects[0]` e o
- * `[lead, ...rest]` da home tipariam `Project | undefined`. O tipo guarda o que a tela supõe (há
- * pelo menos um projeto), e o compilador recusa o registro vazio.
+ * A non-empty tuple, not `ReadonlyArray`: with `noUncheckedIndexedAccess`, `projects[0]` and the
+ * home's `[lead, ...rest]` would be typed `Project | undefined`. The type keeps what the screen
+ * assumes (there is at least one project), and the compiler rejects the empty registry.
  */
 export const projects: readonly [Project, ...Project[]] = [
   {
@@ -181,6 +182,8 @@ export const projects: readonly [Project, ...Project[]] = [
   },
 ]
 
-/** O estudo de caso em destaque no portfólio: o marcado, ou o primeiro. */
-export const featuredProject =
-  projects.find((project) => project.featured) ?? projects[0]
+/** The featured case study in the portfolio: the flagged one, or the first. */
+const flaggedProject = projects.find((project) => project.featured)
+let leadProject = projects[0]
+if (flaggedProject) leadProject = flaggedProject
+export const featuredProject = leadProject

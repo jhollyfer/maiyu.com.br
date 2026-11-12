@@ -2,44 +2,44 @@ import logo512 from '#/assets/brand/logo-512.png'
 import { env } from '#/env'
 
 /**
- * O que identifica o site nos metadados de toda rota.
+ * What identifies the site in the metadata of every route.
  *
- * As constantes aparecem no `head` da raiz, que é o padrão, e no `head` das
- * rotas que escrevem o seu. Escrevê-las à mão nos dois lugares faria o cartão
- * de link de uma página anunciar outra coisa que a home.
+ * The constants appear in the root `head`, which is the default, and in the `head` of the routes
+ * that write their own. Writing them by hand in both places would make one page's link card
+ * announce something other than the home.
  */
 
-/** O nome da empresa, e o que fica no fim de todo título. */
+/** The company name, and what goes at the end of every title. */
 export const SITE_TITLE = 'Maiyu'
 
 /**
- * O endereço público, sem barra no fim, vindo de `VITE_SITE_URL` (`lib/build-env.ts`): a mesma
- * origem que o canônico, o sitemap e o `robots.txt` do kit usam, e não um segundo literal.
+ * The public address, without a trailing slash, coming from `VITE_SITE_URL` (`lib/build-env.ts`):
+ * the same origin the kit's canonical, sitemap and `robots.txt` use, and not a second literal.
  *
- * Só para o que precisa de URL absoluta. Link interno é caminho relativo - cravar o domínio
- * neles quebraria a navegação em qualquer ambiente que não fosse produção.
+ * Only for what needs an absolute URL. An internal link is a relative path: hard-coding the domain
+ * in them would break navigation in any environment other than production.
  */
 export const SITE_URL = env.VITE_SITE_URL
 
 /**
- * A imagem da marca nos dados estruturados, absoluta porque quem a lê é um rastreador de
- * fora: caminho relativo resolveria contra o domínio de quem raspa. É a mesma `logo-512.png`
- * de `assets/brand/` que o `pageHead` do kit usa no `og:image` (`frontend.md` §9.7), e não um
- * segundo arquivo em `public/`.
+ * The brand image in the structured data, absolute because whoever reads it is an outside
+ * crawler: a relative path would resolve against the scraper's domain. It is the same
+ * `logo-512.png` from `assets/brand/` that the kit's `pageHead` uses in `og:image`
+ * (`frontend.md` §9.7), and not a second file in `public/`.
  */
 export const SITE_IMAGE = new URL(logo512, SITE_URL).href
 
-/** O caminho vira endereço absoluto, para `canonical` e `og:url`. */
+/** The path becomes an absolute address, for `canonical` and `og:url`. */
 export function absoluteUrl(path: string): string {
   return `${SITE_URL}${path}`
 }
 
-/** O WhatsApp da Maiyu, só dígitos com o código do país. */
+/** Maiyu's WhatsApp, digits only with the country code. */
 export const WHATSAPP_NUMBER = '5597984317149'
 
 /**
- * "Agendar conversa" abre o WhatsApp. É o canal que quem contrata na região já
- * usa, e o site fecha o ciclo em vez de competir com ele.
+ * "Schedule a conversation" opens WhatsApp. It is the channel that people who hire in the region
+ * already use, and the site closes the loop instead of competing with it.
  */
 export const CALL_URL = `https://wa.me/${WHATSAPP_NUMBER}`
 

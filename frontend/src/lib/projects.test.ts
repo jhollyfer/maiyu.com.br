@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import { projects } from './projects'
 
 describe('projects', () => {
-  it('diz quais projetos ainda estão em validação, e não os vende como prontos', () => {
+  it('says which projects are still in validation, and does not sell them as finished', () => {
     const status = Object.fromEntries(
       projects.map((project) => [project.slug, project.status]),
     )

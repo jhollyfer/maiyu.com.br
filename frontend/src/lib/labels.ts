@@ -5,31 +5,30 @@ import type { JobPosition } from './jobs'
 import type { ProjectStatus } from './projects'
 
 /**
- * Os rótulos de cada valor do vocabulário, no idioma da requisição.
+ * The labels of each vocabulary value, in the request's language.
  *
- * Separado das trincas de `projects.ts`, `jobs.ts` e `articles.ts`: lá o valor
- * é identificador, aqui é texto de interface. A diferença para os irmãos é que o valor aqui é
- * **função** e não string: a mensagem do paraglide precisa ser lida no render,
- * no idioma de quem visita, e uma string resolvida no carregamento do módulo
- * congelaria o idioma da primeira requisição do servidor.
+ * Kept apart from the triplets of `projects.ts`, `jobs.ts` and `articles.ts`: there the value is an
+ * identifier, here it is interface text. The difference from the siblings is that the value here is
+ * a **function** and not a string: the paraglide message has to be read at render time, in the
+ * language of whoever visits, and a string resolved when the module loads would freeze the language
+ * of the server's first request.
  *
- * `Record` com a chave fechada, então valor novo no vocabulário sem rótulo
- * aqui não compila.
+ * A `Record` with a closed key, so a new vocabulary value without a label here does not compile.
  */
 
-export const JOB_POSITION_LABELS: Record<JobPosition, () => string> = {
+export const JOB_POSITION_LABELS = {
   development: () => m.career_area_development(),
   design: () => m.career_area_design(),
   data: () => m.career_area_data(),
-}
+} satisfies Record<JobPosition, () => string>
 
-export const PROJECT_STATUS_LABELS: Record<ProjectStatus, () => string> = {
+export const PROJECT_STATUS_LABELS = {
   production: () => m.project_status_production(),
   validation: () => m.project_status_validation(),
-}
+} satisfies Record<ProjectStatus, () => string>
 
-export const ARTICLE_CATEGORY_LABELS: Record<ArticleCategory, () => string> = {
+export const ARTICLE_CATEGORY_LABELS = {
   tech: () => m.blog_category_tech(),
   design: () => m.blog_category_design(),
   marketing: () => m.blog_category_marketing(),
-}
+} satisfies Record<ArticleCategory, () => string>
