@@ -1156,6 +1156,43 @@ projeto repete o teste no recurso dele.
 
 ---
 
+### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
+
+- **Foto.** `PUT /account/profile` aceita `avatarId`, o id de um arquivo `UPLOADED` e vivo que a
+  própria conta enviou, no tenant da requisição (`StorageRepository.areAttachable(ids, uploadedBy)`:
+  `uploaded_by` é a conta e o escopo é o do tenant da sessão). Arquivo de outra conta, da própria conta
+  em outro tenant, ainda não confirmado, apagado, ou id que não existe, é `422 AVATAR_INVALID` no
+  campo `avatarId`. `GET` e `PUT` devolvem
+  `avatar` com a URL assinada (`StorageContract.withOptionalUrl`), `null` sem foto; `users.avatar_id` já
+  estava em `STORAGE_REFERENCES`, então o `storages:prune` não apaga a foto em uso. `avatarId: null` remove a foto: o VineJS lê `null` como
+  campo ausente, então o "ao menos um campo" e o `currentPassword` obrigatório são regras implícitas
+  (`Rule.atLeastOneOf`, `Rule.requiredIfAnyOf`) que contam `null` como presente.
+- **E-mail.** `email` no corpo é um pedido, não uma troca, e exige a senha atual. O núcleo depende de
+  `EmailChangeContract` (`services/email-change/`): `isAvailable()` é o portão único, e `deliver()` manda o
+  token. Sem o bloco `mail`, ou com o bloco e `SMTP_HOST` vazio, o contrato é `EmailChangeUnavailable` ou
+  o serviço do bloco com `isConfigured()` falso, e a resposta é `422 EMAIL_CHANGE_UNAVAILABLE` no campo
+  `email`: só o administrador troca o e-mail de outra pessoa, no CRUD de usuários, e ninguém troca o
+  próprio. Disponível, o caso de uso grava o pedido pendente (`EmailChangeRepository`, tabela
+  `email_changes`, uma linha por conta, só o sha256 do token) e o serviço do bloco manda o token de 256
+  bits, de uso único e 60 minutos, ao **endereço novo**. A resposta traz `pendingEmail`; o `email` do perfil
+  continua o antigo. O mesmo e-mail da conta é `422 EMAIL_SAME_AS_CURRENT` e o de outra conta
+  `422 EMAIL_TAKEN`.
+- **Confirmação.** `POST /account/email/confirm` (sessão, `accountThrottle`, parte do bloco `mail`) lê o
+  token e o consome com um único `DELETE ... RETURNING` da linha da própria conta
+  (_doc-lib/lucid.md#update-and-delete-queries, https://lucid.adonisjs.com/docs/update-and-delete-queries):
+  token de outra conta, usado, vencido ou inventado é o mesmo `422 EMAIL_TOKEN_INVALID` em `token`, e de
+  duas confirmações simultâneas uma vence. A claim, a troca do e-mail e a sessão nova são uma unidade de
+  trabalho: `UserRepository.save` derruba todas as sessões da conta (o e-mail é campo de sessão, §4.2), e o
+  caso de uso emite um par novo para a sessão que confirmou, então as outras caem e esta segue.
+  Endereço que outra conta tomou no meio-tempo é `422 EMAIL_TAKEN` e a claim é desfeita.
+- **Onde mora.** Do núcleo: `EmailChangeContract`, `EmailChangeUnavailable`, `EmailChangeFake`,
+  `EmailToken`, `EmailChangeRepository` (contrato, Lucid, memória) e a migration. Do bloco `mail`
+  (`kit-manifest.mjs`): `services/email-confirmation/` (o serviço que manda o e-mail), `features/account/email/`,
+  o validator da confirmação, as mensagens `email.json` e, dentro de arquivos comuns, os trechos
+  `optional: mail` (rota, provider do contrato, providers de e-mail e fila no `adonisrc.ts`). O `shared/`
+  tem `AccountProfileUpdateResponse` e `AccountEmailConfirmValidator`. O kit não tem peça de perfil no
+  frontend: só o contrato e a API; a página de perfil é do projeto até o kit ganhar a peça.
+
 ## 5. Módulos de infraestrutura
 
 Os arquivos de `core/`, `exceptions/*`, os services do piso (`storage`, e `mail` quando o produto manda e-mail) e os middlewares
@@ -1634,7 +1671,7 @@ as regras abaixo são *(opinião da casa)*: nenhuma dessas páginas fixa nome de
 - **`VITE_` só para o que pode ir ao navegador** (`frontend.md` §3.3). O que o servidor do frontend lê
   em tempo de execução e não pode ir ao bundle não leva o prefixo (`SERVER_API_URL`).
 - **Mesma coisa, mesmo nome.** O teto de upload é `UPLOAD_MAX_SIZE` na API e `VITE_UPLOAD_MAX_SIZE` no
-  web (espelho); a conta do semeador é `SEED_OWNER_*` e o E2E a reusa como `E2E_OWNER_*`. Sinônimo
+  web (espelho); a conta do semeador é `SEED_OWNER_*`; o E2E não a reusa, cria as dele (#443). Sinônimo
   (`CORS_ORIGIN`, `VITE_API_BASE_URL`, `TRUST_PROXY`) é desvio.
 - **Chave removida sai do `.env.example`, do `.env.test`, do `env.ts` e do `docs/ENV.md` no mesmo
   commit.**
@@ -1794,12 +1831,17 @@ demonstração do kit, que será o leitor dela: hoje o kit não o tem (`DECISION
 |---|---|---|---|---|
 | `E2E_BASE_URL` | e2e | ao rodar o E2E | não | origem do web sob teste |
 | `E2E_API_URL` | e2e | ao rodar o E2E | não | raiz da API, para as fixtures |
-| `E2E_OWNER_EMAIL` | e2e | ao rodar o E2E | não | conta do `auth.setup.ts`; a do seeder |
-| `E2E_OWNER_PASSWORD` | e2e | ao rodar o E2E | sim | senha dela; na rodada antes do PR, gerada a cada execução |
 | `E2E_CHROMIUM_PATH` | e2e | não | não | binário do Chromium para o Playwright onde o baixado não roda (container da nuvem); ausente, o Playwright usa o dele. Script do projeto que precise de navegador (gerar ícone) lê a mesma chave |
 
-O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`): o dono é `E2E_OWNER_*`; os outros
-papéis entram pela demonstração, quando o kit a tiver (acima). Nem porta solta
+O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`) **nem de senha**: as contas por papel
+nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.command.ts`), que o
+`e2e/auth.setup.ts` chama. Ele cria uma conta para o dono da plataforma, o administrador da plataforma, o
+`staff`, o `nonStaff` (quando o projeto tem papel fora do staff) e o cliente final, lendo os papéis de
+`tests/role-fixtures.ts` e sem literal de enum; sorteia a senha a cada execução, a imprime só na saída do
+comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. Nada disso é chave de ambiente: não há
+`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
+com 35 chaves no backend e 10 no frontend (`DECISIONS.md` #443). O spec de papel pede a sessão com
+`test.use({ storageState: E2eAccountsStore.stateOf('staff') })`. Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no
 `playwright.config.ts` e no comando da rodada (`tooling.md` §7), não em chave.
 
@@ -1830,7 +1872,7 @@ Cada linha vira item em `_findings/<projeto>.md` (seção "Chaves de ambiente") 
 | `APP_URL` | `APP_SERVER_URL` | a API é o servidor; o web é `APP_CLIENT_URL` | modelo antigo de `_templates/docs/ENV.md` (corrigido) |
 | `SEED_OWNER_*` renomeado pelo papel do projeto | `SEED_OWNER_*` | `OWNER` é a conta da instalação, não um papel | interclasse (I5 deixa de valer) |
 | `SEED_ADMINISTRATOR_EMAIL`, `SEED_ADMINISTRATOR_PASSWORD` | `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD` | mesmo motivo da linha acima | interclasse |
-| `E2E_ADMIN_*`, `E2E_<PAPEL>_*` | `E2E_OWNER_*` | o dono reusa a conta do seeder; os papéis voltam com a demonstração do kit (#275, #417) | interclasse |
+| `E2E_ADMIN_*`, `E2E_<PAPEL>_*` | (sai) | sem leitor: as contas por papel nascem no `auth.setup.ts`, pelo `e2e:accounts` (#443) | interclasse |
 | `E2E_PORT` | `E2E_BASE_URL` | a origem inteira, não só a porta | interclasse |
 | `VITE_STORAGE_URL` (build) | `STORAGE_PUBLIC_URL` (runtime) | lida por requisição, a mesma imagem serve qualquer ambiente | interclasse, curupira |
 | `CHROMIUM_PATH` | `E2E_CHROMIUM_PATH` | um nome para o mesmo binário | aporta, curupira |

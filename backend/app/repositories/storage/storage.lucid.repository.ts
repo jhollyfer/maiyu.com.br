@@ -77,7 +77,10 @@ export class StorageLucidRepository extends StorageRepository {
     return rows.map((row) => this.toResponse(row))
   }
 
-  async areAttachable(ids: ReadonlyArray<string>): Promise<boolean> {
+  async areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean> {
     const unique = [...new Set(ids)]
     if (unique.length === 0) return true
 
@@ -85,6 +88,7 @@ export class StorageLucidRepository extends StorageRepository {
       StorageModel.query({ client: this.transaction.client() }),
     )
       .whereIn('id', unique)
+      .where('uploadedBy', uploadedBy)
       .where('status', UPLOAD_STATUS.UPLOADED)
       .withScopes((scopes) => scopes.notDeleted())
 
@@ -253,6 +257,7 @@ export class StorageLucidRepository extends StorageRepository {
       id: row.id,
       tenantId: row.tenantId,
       customerId: row.customerId,
+      uploadedBy: row.uploadedBy,
       filename: row.filename,
       originalName: row.originalName,
       mimetype: row.mimetype,

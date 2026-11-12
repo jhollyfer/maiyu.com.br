@@ -46,7 +46,6 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
-| `SEED_DEMO_PASSWORD` | api | não | **sim** | senha das contas de demonstração; o projeto não tem demonstração | vazio |
 | `DB_PORT`, `STORAGE_PORT`, `STORAGE_CONSOLE_PORT` | compose | só em dev | não | portas do `backend/docker-compose.yml`, nunca lidas pela API | `5440`, `9016`, `9017` |
 
 Em produção a API responde em `https://api.maiyu.com.br` (decisão do dono) e o site em
@@ -73,7 +72,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 | `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
-| `E2E_*` | web | não | `E2E_*_PASSWORD` sim | só para Playwright; o site não tem E2E | ver `.env.example` |
+| `E2E_*` | web | não | não | só para Playwright: URL do site e da API e o Chromium opcional; as contas de cada papel o `e2e/auth.setup.ts` cria na hora com `node ace e2e:accounts` (#443), sem senha em chave | ver `.env.example` |
 
 Regras (detalhe em `backend.md` §6):
 

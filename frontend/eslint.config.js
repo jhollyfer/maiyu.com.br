@@ -231,6 +231,10 @@ export default defineConfig([
       ],
       // Raw HTML is XSS: rich text renders through the single `components/common/rich-text/`.
       'react/no-danger': 'error',
+      // The Tailwind preflight strips the list marker and VoiceOver then stops announcing the
+      // list, so the doc asks for `role="list"` on it (_doc-lib/tailwindcss.md, "Decisões que a
+      // doc impõe", https://tailwindcss.com/docs/preflight). The doc wins over the lint rule.
+      'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'], ol: ['list'] }],
     },
   },
   {

@@ -23,6 +23,8 @@ export type UserProps = {
   password: string
   platformRole: PlatformRole
   status: ActiveStatus
+  /** The profile photo: a file of `storages`; `null` is no photo. */
+  avatarId: string | null
   readonly createdAt: Date
   updatedAt: Date | null
 }
@@ -43,6 +45,7 @@ export class User {
     readonly password: string
     readonly platformRole: PlatformRole
     readonly status?: ActiveStatus
+    readonly avatarId?: string | null
     readonly now: Date
   }): Either<UserError, User> {
     if (input.name.trim() === '') return left({ code: 'USER_NAME_EMPTY' })
@@ -61,6 +64,7 @@ export class User {
         password: input.password,
         platformRole: input.platformRole,
         status: input.status ?? ACTIVE_STATUS.ACTIVE,
+        avatarId: input.avatarId ?? null,
         createdAt: input.now,
         updatedAt: input.now,
       }),
@@ -78,21 +82,26 @@ export class User {
   }
 
   /**
-   * The owner's own edit: the name, the password, the phone or any of them. A new password enters
-   * in plain text, as in `create`; the repository hashes it on `save`. The password and the phone
-   * are what the account signs in with, so changing either ends its sessions.
+   * The owner's own edit: the name, the password, the phone, the e-mail, the photo or any of them.
+   * A new password enters in plain text, as in `create`; the repository hashes it on `save`. The
+   * password, the phone and the e-mail are what the account signs in with, so changing any of them
+   * ends its sessions. The e-mail arrives here only after its confirmation token was proved.
    */
   update(
     patch: {
       readonly name?: string
       readonly password?: string
       readonly phone?: string
+      readonly email?: string
+      readonly avatarId?: string | null
     },
     now: Date,
   ): void {
     if (patch.name !== undefined) this.props.name = patch.name
     if (patch.password !== undefined) this.props.password = patch.password
     if (patch.phone !== undefined) this.props.phone = patch.phone
+    if (patch.email !== undefined) this.props.email = patch.email
+    if (patch.avatarId !== undefined) this.props.avatarId = patch.avatarId
     this.props.updatedAt = now
   }
 

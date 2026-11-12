@@ -83,11 +83,12 @@ const tags: TagRule[] = [
     plural: 'cidades',
   },
   {
-    prefix: '/account/profile',
+    prefix: '/account',
     name: 'Conta',
     description:
-      'A conta de quem está na sessão: ler o nome, o e-mail e o celular, e trocar o nome ou a ' +
-      'senha com a senha atual.',
+      'A conta de quem está na sessão: ler o nome, o e-mail, o celular e a foto, e trocar o nome, a ' +
+      'senha, o celular ou a foto com a senha atual; pedir a troca do e-mail e confirmá-la com o ' +
+      'código que chega ao endereço novo.',
     singular: 'conta',
     plural: 'contas',
   },

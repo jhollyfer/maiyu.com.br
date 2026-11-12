@@ -4,6 +4,8 @@ import { CityLucidRepository } from '#repositories/city/city.lucid.repository'
 import { CityRepository } from '#repositories/city/city.repository'
 import { ContactLucidRepository } from '#repositories/contact/contact.lucid.repository'
 import { ContactRepository } from '#repositories/contact/contact.repository'
+import { EmailChangeLucidRepository } from '#repositories/email-change/email-change.lucid.repository'
+import { EmailChangeRepository } from '#repositories/email-change/email-change.repository'
 import { SessionLucidRepository } from '#repositories/session/session.lucid.repository'
 import { SessionRepository } from '#repositories/session/session.repository'
 import { StorageLucidRepository } from '#repositories/storage/storage.lucid.repository'
@@ -32,6 +34,9 @@ export default class RepositoryProvider {
     )
     this.app.container.bind(StorageRepository, () =>
       this.app.container.make(StorageLucidRepository),
+    )
+    this.app.container.bind(EmailChangeRepository, () =>
+      this.app.container.make(EmailChangeLucidRepository),
     )
     this.app.container.bind(CityRepository, () =>
       this.app.container.make(CityLucidRepository),

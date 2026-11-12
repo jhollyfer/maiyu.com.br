@@ -5,7 +5,7 @@ import { I18n } from '@adonisjs/i18n'
 import {
   left,
   right,
-  type AccountProfileShowResponse,
+  type AccountProfileUpdateResponse,
   type Actor,
   type Either,
   type Merge,
@@ -16,15 +16,20 @@ import { ProfilePresenter } from '../profile.presenter.ts'
 
 import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import HTTPException from '#exceptions/http.exception'
+import { EmailChangeRepository } from '#repositories/email-change/email-change.repository'
+import { StorageRepository } from '#repositories/storage/storage.repository'
 import { UserRepository } from '#repositories/user/user.repository'
 import { ClockContract } from '#services/clock/clock.contract'
+import { EmailChangeContract } from '#services/email-change/email-change.contract'
+import EmailToken from '#services/email-change/email-token'
+import { StorageContract } from '#services/storage/storage.contract'
 import type { AccountProfileUpdatePayload } from '#validators/account/profile.validator'
 
 /** The session account: the guard already read it, excluding archived and inactive. */
 type Payload = Merge<AccountProfileUpdatePayload, { readonly actor: Actor }>
 
 type Result = {
-  readonly profile: AccountProfileShowResponse
+  readonly profile: AccountProfileUpdateResponse
   /** Whether every session of the account ended, so the controller clears the cookies. */
   readonly sessionsRevoked: boolean
 }
@@ -41,12 +46,23 @@ type Response = Either<HTTPException, Result>
  * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`; a phone
  * another account holds is `422 PHONE_TAKEN` on `phone`.
  *
- * A name alone is not a credential: `200` and the sessions stay. The e-mail does not change here.
+ * A name or a photo alone is not a credential: `200` and the sessions stay. The photo (`avatarId`)
+ * must be a live, confirmed file the request owns, else `422 AVATAR_INVALID`.
+ *
+ * The e-mail does not change here (DECISIONS.md #442): the request keeps a pending change
+ * (`EmailChangeRepository`) and sends a one-use token to the new address (`EmailChangeContract`), the answer carries it in
+ * `pendingEmail`, and the e-mail only changes in `account/email/confirm`. Where the contract is
+ * unavailable (no e-mail block or no SMTP) it is `422 EMAIL_CHANGE_UNAVAILABLE`; the same address
+ * the account has is `422 EMAIL_SAME_AS_CURRENT`, another account's is `422 EMAIL_TAKEN`.
  */
 @inject()
 export default class AccountProfileUpdateUseCase {
   constructor(
     private readonly users: UserRepository,
+    private readonly storages: StorageRepository,
+    private readonly bucket: StorageContract,
+    private readonly emailChange: EmailChangeContract,
+    private readonly emailChanges: EmailChangeRepository,
     private readonly clock: ClockContract,
     private readonly i18n: I18n,
   ) {}
@@ -54,6 +70,7 @@ export default class AccountProfileUpdateUseCase {
   async execute({
     actor,
     currentPassword,
+    email,
     ...patch
   }: Payload): Promise<Response> {
     try {
@@ -76,6 +93,17 @@ export default class AccountProfileUpdateUseCase {
         (await hasher.verify(stored, currentPassword))
       if (!proven) return left(this.wrongCurrentPassword())
 
+      if (
+        patch.avatarId &&
+        !(await this.storages.areAttachable([patch.avatarId], actor.id))
+      )
+        return left(ProfileRefusal.avatarInvalid(this.i18n))
+
+      if (email !== undefined) {
+        const refused = await this.refuseEmail(user.snapshot().email, email)
+        if (refused) return left(refused)
+      }
+
       // Same password is not a change, yet it would end every session: refused before the entity
       // is touched. The entity only holds the hash, so the comparison is a verify against it.
       if (
@@ -89,13 +117,33 @@ export default class AccountProfileUpdateUseCase {
       const phoneChanged =
         patch.phone !== undefined && patch.phone !== user.snapshot().phone
 
-      user.update(patch, this.clock.now().toJSDate())
-      const saved = await this.users.save(user)
-      if (saved.isLeft())
-        return left(ProfileRefusal.http(saved.value, this.i18n))
+      // An e-mail alone writes nothing in the account: the row only changes on confirmation.
+      const changesAccount = [
+        patch.name,
+        patch.phone,
+        patch.password,
+        patch.avatarId,
+      ].some((value) => value !== undefined)
+      if (changesAccount) {
+        user.update(patch, this.clock.now().toJSDate())
+        const saved = await this.users.save(user)
+        if (saved.isLeft())
+          return left(ProfileRefusal.http(saved.value, this.i18n))
+      }
+
+      if (email !== undefined) await this.requestEmailChange(user.id, email)
+
+      const { avatarId } = user.snapshot()
+      const [file = null] = await this.storages.detailsOf(
+        [avatarId].filter((id) => id !== null),
+      )
 
       return right({
-        profile: ProfilePresenter.show(user),
+        profile: ProfilePresenter.update(
+          user,
+          await this.bucket.withOptionalUrl(file),
+          email ?? null,
+        ),
         sessionsRevoked: patch.password !== undefined || phoneChanged,
       })
     } catch (error) {
@@ -111,6 +159,39 @@ export default class AccountProfileUpdateUseCase {
         ),
       )
     }
+  }
+
+  /** Keeps the pending change, with the hash of a new token, and mails the token to the new address. */
+  private async requestEmailChange(
+    userId: string,
+    email: string,
+  ): Promise<void> {
+    const token = EmailToken.generate()
+    await this.emailChanges.replace({
+      userId,
+      email,
+      tokenHash: EmailToken.hash(token),
+      expiresAt: this.clock
+        .now()
+        .plus({ minutes: EmailToken.EXPIRES_IN_MINUTES })
+        .toJSDate(),
+    })
+    await this.emailChange.deliver({ to: email, token }, this.i18n)
+  }
+
+  /** The refusal of the requested e-mail, or `null` when the request may go on. */
+  private async refuseEmail(
+    current: string | null,
+    email: string,
+  ): Promise<HTTPException | null> {
+    if (!this.emailChange.isAvailable())
+      return ProfileRefusal.emailChangeUnavailable(this.i18n)
+    if (current?.toLowerCase() === email)
+      return ProfileRefusal.emailSameAsCurrent(this.i18n)
+    if (await this.users.findByEmail(email))
+      return ProfileRefusal.http({ code: 'USER_EMAIL_TAKEN' }, this.i18n)
+
+    return null
   }
 
   private wrongCurrentPassword(): HTTPException {

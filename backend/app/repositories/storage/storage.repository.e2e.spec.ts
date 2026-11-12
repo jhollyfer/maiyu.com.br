@@ -23,7 +23,12 @@ const IMPLEMENTATIONS = {
 
 const NOW = new Date('2026-10-29T12:00:00.000Z')
 
-function file(id: string, originalName: string, confirmed = true): Storage {
+function file(
+  id: string,
+  originalName: string,
+  confirmed = true,
+  uploadedBy: string | null = null,
+): Storage {
   const opened = Storage.open({
     id,
     key: `${id}.png`,
@@ -34,6 +39,7 @@ function file(id: string, originalName: string, confirmed = true): Storage {
     partSize: 10,
     tenantId: null,
     customerId: null,
+    uploadedBy,
     now: NOW,
   })
   if (opened.isLeft()) throw new Error(`open refused: ${opened.value.code}`)
@@ -117,26 +123,50 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       assert.deepEqual(await repository.detailsOf([]), [])
     })
 
-    test('areAttachable only accepts a confirmed and existing file', async ({
+    test('areAttachable only accepts a confirmed, existing file the account uploaded', async ({
       assert,
     }) => {
       const repository = await make()
-      const ok = file('7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c11', 'ok.png')
+      const owner = await UserFactory.create()
+      const other = await UserFactory.create()
+      const ok = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c11',
+        'ok.png',
+        true,
+        owner.id,
+      )
       const pending = file(
         '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c12',
         'pendente.png',
         false,
+        owner.id,
       )
-      await repository.save(ok)
-      await repository.save(pending)
+      const theirs = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c13',
+        'dela.png',
+        true,
+        other.id,
+      )
+      const nobodys = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c14',
+        'ninguem.png',
+      )
+      for (const each of [ok, pending, theirs, nobodys])
+        await repository.save(each)
 
-      assert.isTrue(await repository.areAttachable([ok.id, ok.id]))
-      assert.isTrue(await repository.areAttachable([]))
-      assert.isFalse(await repository.areAttachable([ok.id, pending.id]))
+      assert.isTrue(await repository.areAttachable([ok.id, ok.id], owner.id))
+      assert.isTrue(await repository.areAttachable([], owner.id))
       assert.isFalse(
-        await repository.areAttachable([
-          '0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f',
-        ]),
+        await repository.areAttachable([ok.id, pending.id], owner.id),
+      )
+      assert.isFalse(await repository.areAttachable([theirs.id], owner.id))
+      assert.isFalse(await repository.areAttachable([nobodys.id], owner.id))
+      assert.isFalse(await repository.areAttachable([ok.id], other.id))
+      assert.isFalse(
+        await repository.areAttachable(
+          ['0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f'],
+          owner.id,
+        ),
       )
     })
 

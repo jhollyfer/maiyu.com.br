@@ -10,6 +10,7 @@ describe('AccountProfileShowResponse', () => {
       email: 'ana@exemplo.com',
       phone: null,
       platformRole: 'USER',
+      avatar: null,
       password: '$argon2id$segredo',
     })
 
@@ -19,6 +20,7 @@ describe('AccountProfileShowResponse', () => {
       email: 'ana@exemplo.com',
       phone: null,
       platformRole: 'USER',
+      avatar: null,
     })
   })
 })

@@ -244,6 +244,16 @@ incompatível é erro de tipo em `<Table to>`. Cada peça navega com `from: to`,
 `direction` nem `trashed` que não usa. O tipo confere a rota, não o objeto que cada reducer devolve
 (`DECISIONS.md` #445; `_doc-lib/tanstack-router.md#guide/navigation`).
 
+**Detalhes da tabela que o tipo não mostra** (`DECISIONS.md` #481). `to` sai de `routesByPath`, então a rota de
+índice leva a barra final (`/painel/membros/`), ao contrário do `Link`, que aceita sem ela; sem a barra é
+erro de tipo em `<Table to>`. O nome do `columnheader` e o `aria-label` do botão de mover vêm de
+`columnDef.meta.label` (`columnLabel`, `table-column-label.ts`; _doc-lib/tanstack-table.md#guide/table-and-column-meta,
+https://tanstack.com/table/latest/docs/guide/table-and-column-meta), com o id só de reserva: toda coluna de
+dado declara `meta.label`. `TableEmpty` trata como filtro qualquer chave da busca que não seja
+`page`, `perPage`, `sort`, `direction` e `trashed`, com valor preenchido (`hasActiveFilter`), e o botão de limpar
+zera todas elas (`withoutFilters`). Os cartões do celular são lista (`ul`/`li`); com `onRowClick` o título é
+`Button` esticado sobre o cartão, nunca `div` clicável (§10.2).
+
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
 4xx e devolve `false` no servidor: retry no SSR segura a resposta da página (`DECISIONS.md` #352).

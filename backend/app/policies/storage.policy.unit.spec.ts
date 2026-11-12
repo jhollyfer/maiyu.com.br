@@ -41,6 +41,7 @@ test.group('StoragePolicy > download', () => {
     partSize: null,
     tenantId: 'tenant-a',
     customerId: null,
+    uploadedBy: null,
     createdAt: null,
     updatedAt: null,
     deletedAt: null,

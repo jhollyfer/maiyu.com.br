@@ -11,6 +11,7 @@ import {
 
 import {
   compactQuery,
+  hasActiveFilter,
   LIST_SEARCH_DEFAULTS,
   listValidateSearch,
   queryString,
@@ -108,6 +109,28 @@ describe('LIST_SEARCH_DEFAULTS', () => {
  * `compactQuery` and `queryString` share one predicate, so its cases are covered here
  * once; `queryString` below only checks that it goes through it.
  */
+describe('hasActiveFilter', () => {
+  it('when only paging and sorting are set, there is no filter', () => {
+    expect(
+      hasActiveFilter({
+        page: 3,
+        perPage: 10,
+        sort: 'title',
+        direction: 'asc',
+      }),
+    ).toBe(false)
+  })
+
+  it('when the search term or a resource filter is set, there is a filter', () => {
+    expect(hasActiveFilter({ search: 'abc' })).toBe(true)
+    expect(hasActiveFilter({ page: 1, status: 'PENDING' })).toBe(true)
+  })
+
+  it('when a filter is blank, it does not count', () => {
+    expect(hasActiveFilter({ search: '', status: undefined })).toBe(false)
+  })
+})
+
 describe('compactQuery', () => {
   it("drops '', false, null and undefined and keeps 0 and true", () => {
     expect(

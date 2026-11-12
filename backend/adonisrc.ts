@@ -61,6 +61,7 @@ export default defineConfig({
     () => import('#providers/i18n.provider'),
     () => import('#providers/clock.provider'),
     () => import('#providers/id-generator.provider'),
+    () => import('#providers/email-change.provider'),
   ],
 
   /*

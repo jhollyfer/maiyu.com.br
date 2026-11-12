@@ -65,6 +65,13 @@ export type StorageProps = {
    * the store's; `null` is a file of the tenant, shared by its members.
    */
   readonly customerId: string | null
+  /**
+   * The account that opened the upload. A profile photo (`avatarId`) is accepted only from the
+   * account that uploaded it: the library is shared inside a tenant, and an id alone must not let
+   * one member wear another member's file (or a served customer's). `null` for a file opened
+   * outside a request, or whose uploader account is gone.
+   */
+  readonly uploadedBy: string | null
   readonly filename: string
   readonly originalName: string
   readonly mimetype: string
@@ -100,6 +107,7 @@ export class Storage {
     readonly id: string
     readonly tenantId: string | null
     readonly customerId: string | null
+    readonly uploadedBy: string | null
     readonly key: string
     readonly originalName: string
     readonly mimetype: string
@@ -122,6 +130,7 @@ export class Storage {
         id: input.id,
         tenantId: input.tenantId,
         customerId: input.customerId,
+        uploadedBy: input.uploadedBy,
         filename: input.key,
         originalName: input.originalName,
         mimetype: input.mimetype,

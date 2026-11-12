@@ -1,15 +1,24 @@
+import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
-import { AccountProfileShowResponse } from '@maiyu/shared'
+import {
+  AccountProfileShowResponse,
+  AccountProfileUpdateResponse,
+  UPLOAD_STATUS,
+} from '@maiyu/shared'
 
 import { SESSION_TOKEN } from '#config/session-token'
-import { FACTORY_PASSWORD } from '#database/factories/user.factory'
+import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
+import { EmailChangeContract } from '#services/email-change/email-change.contract'
+import { EmailChangeFake } from '#services/email-change/email-change.fake'
 import {
   authenticate,
   body,
   resetDatabase,
   signInWithFactory,
 } from '#tests/http-fixtures'
+import { storageRow } from '#tests/storages-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 import { loginOf } from '#tests/users-fixtures'
 
 const NEW_PASSWORD = 'Nova@12345'
@@ -174,5 +183,158 @@ test.group('account/profile > update', (group) => {
 
     response.assertStatus(422)
     assert.include(JSON.stringify(response.body()), 'PHONE_TAKEN')
+  })
+
+  test('a photo of the request scope is saved, comes back signed and keeps the session', async ({
+    client,
+    assert,
+  }) => {
+    const { user, session } = await signInWithFactory(client)
+    const file = await storageRow({ uploadedBy: user.id })
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({ avatarId: file.id, currentPassword: FACTORY_PASSWORD })
+
+    response.assertStatus(200)
+    const profile = body(response, AccountProfileUpdateResponse)
+    assert.equal(profile.avatar?.id, file.id)
+    assert.isString(profile.avatar?.url)
+    assert.isNull(profile.pendingEmail)
+    const again = await client.get('/account/profile').cookies(session)
+    again.assertStatus(200)
+    assert.equal(body(again, AccountProfileShowResponse).avatar?.id, file.id)
+  })
+
+  test("a file the account did not upload is 422 AVATAR_INVALID: another member, another tenant, own file in another tenant, not confirmed, a customer's", async ({
+    client,
+    assert,
+  }) => {
+    const member = await signInWithFactory(client)
+    const outsider = await signInWithFactory(
+      client,
+      'staff',
+      await Tenants.create(),
+    )
+    const customer = await UserFactory.create()
+    const mine = await signInWithFactory(client)
+    const others = [
+      // Same tenant, uploaded by another member.
+      await storageRow({ uploadedBy: member.user.id }),
+      // Another tenant's member's file.
+      await storageRow({
+        uploadedBy: outsider.user.id,
+        tenantId: outsider.tenant?.id ?? null,
+      }),
+      // The account's own file, but in another tenant than the session's.
+      await storageRow({
+        uploadedBy: mine.user.id,
+        tenantId: outsider.tenant?.id ?? null,
+      }),
+      // A customer's file the staff reaches (`CustomerScoped.writable`).
+      await storageRow({
+        uploadedBy: customer.id,
+        customerId: customer.id,
+      }),
+      // Nobody's (a file whose uploader is unknown).
+      await storageRow({ uploadedBy: null }),
+    ]
+    const pending = await storageRow({
+      uploadedBy: mine.user.id,
+      status: UPLOAD_STATUS.PENDING,
+    })
+
+    for (const file of [...others, pending]) {
+      const response = await client
+        .put('/account/profile')
+        .cookies(mine.session)
+        .json({ avatarId: file.id, currentPassword: FACTORY_PASSWORD })
+
+      response.assertStatus(422)
+      assert.include(JSON.stringify(response.body()), 'AVATAR_INVALID')
+    }
+    const profile = await client.get('/account/profile').cookies(mine.session)
+    assert.isNull(body(profile, AccountProfileShowResponse).avatar)
+  })
+
+  test('a photo that does not exist is 422 AVATAR_INVALID on avatarId', async ({
+    client,
+    assert,
+  }) => {
+    const { session } = await signInWithFactory(client)
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({
+        avatarId: '00000000-0000-4000-8000-000000000000',
+        currentPassword: FACTORY_PASSWORD,
+      })
+
+    response.assertStatus(422)
+    assert.include(JSON.stringify(response.body()), 'AVATAR_INVALID')
+  })
+
+  test('the photo is removed with null, and null alone is a change', async ({
+    client,
+    assert,
+  }) => {
+    const { user, session } = await signInWithFactory(client)
+    const file = await storageRow({ uploadedBy: user.id })
+    await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({ avatarId: file.id, currentPassword: FACTORY_PASSWORD })
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({ avatarId: null, currentPassword: FACTORY_PASSWORD })
+
+    response.assertStatus(200)
+    assert.isNull(body(response, AccountProfileUpdateResponse).avatar)
+    const again = await client.get('/account/profile').cookies(session)
+    assert.isNull(body(again, AccountProfileShowResponse).avatar)
+  })
+
+  test('null without the current password is 422 on currentPassword', async ({
+    client,
+    assert,
+  }) => {
+    const { session } = await signInWithFactory(client)
+
+    const response = await client
+      .put('/account/profile')
+      .cookies(session)
+      .json({ avatarId: null })
+
+    response.assertStatus(422)
+    assert.include(JSON.stringify(response.body()), 'currentPassword')
+  })
+
+  test('where the e-mail change is unavailable (no block or no SMTP) it is 422 EMAIL_CHANGE_UNAVAILABLE and the e-mail stays', async ({
+    client,
+    assert,
+  }) => {
+    app.container.swap(EmailChangeContract, () => new EmailChangeFake(false))
+    try {
+      const { user, session } = await signInWithFactory(client)
+
+      const response = await client
+        .put('/account/profile')
+        .cookies(session)
+        .json({ email: 'nova@mail.com', currentPassword: FACTORY_PASSWORD })
+
+      response.assertStatus(422)
+      assert.include(
+        JSON.stringify(response.body()),
+        'EMAIL_CHANGE_UNAVAILABLE',
+      )
+      const still = await client.get('/account/profile').cookies(session)
+      assert.equal(body(still, AccountProfileShowResponse).email, user.email)
+    } finally {
+      app.container.restore(EmailChangeContract)
+    }
   })
 })

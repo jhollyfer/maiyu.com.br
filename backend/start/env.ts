@@ -142,7 +142,6 @@ const env = await Env.create(new URL('../', import.meta.url), {
   */
   SEED_OWNER_EMAIL: Env.schema.string.optional(),
   SEED_OWNER_PASSWORD: Env.schema.string.optional(),
-  SEED_DEMO_PASSWORD: Env.schema.string.optional(),
   /*
   | The first tenant (DECISIONS.md #390): the client the existing data migrates to. No default:
   | a name or a city written here would seed the wrong client in every project. The four go

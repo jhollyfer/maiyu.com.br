@@ -174,6 +174,50 @@ function filled(value: unknown): boolean {
 }
 
 /**
+ * The keys of a listing's search that are **not** a filter: they say where in the result the
+ * person is (`page`, `perPage`), how it is ordered (`sort`, `direction`) or which of the two
+ * lists it is (`trashed`, which the table reads as its own state). Everything else the route
+ * declares (`search`, `?status`, `?category`...) narrows the result.
+ */
+const NOT_A_FILTER: ReadonlySet<string> = new Set([
+  'page',
+  'perPage',
+  'sort',
+  'direction',
+  'trashed',
+])
+
+/**
+ * Whether the search narrows the result: any key that is not in `NOT_A_FILTER` with a filled
+ * value. By key and not by a list of filters because the kit does not know the resource's
+ * filters; `?status=PENDING` with zero rows is "nothing matches", not "nothing registered".
+ */
+export function hasActiveFilter(
+  search: Readonly<Record<string, unknown>>,
+): boolean {
+  return Object.entries(search).some(
+    ([key, value]) => !NOT_A_FILTER.has(key) && filled(value),
+  )
+}
+
+/**
+ * The search with every filter cleared (`undefined`) and the page back to the first, keeping
+ * what is not a filter (`perPage`, `sort`, `direction`, `trashed`). For the "clear filter"
+ * button of an empty result.
+ */
+export function withoutFilters(
+  search: Readonly<Record<string, unknown>>,
+): Record<string, unknown> {
+  const cleared: Record<string, unknown> = {}
+
+  for (const key of Object.keys(search)) {
+    if (!NOT_A_FILTER.has(key) || key === 'page') cleared[key] = undefined
+  }
+
+  return { ...search, ...cleared }
+}
+
+/**
  * The search without the blank filters, for the API client's `query`. The Tuyau client
  * drops only `null` and `undefined`, and `?search=` or `?pending=false` would reach the
  * backend as a filter. Same rule as `queryString`, through `filled`.

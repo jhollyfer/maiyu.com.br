@@ -18,6 +18,7 @@ const OPENING = {
   partSize: 10,
   tenantId: null,
   customerId: null,
+  uploadedBy: null,
   now: NOW,
 }
 
