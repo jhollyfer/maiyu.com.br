@@ -96,8 +96,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 
 | # | Tarefa | Tam. | Status | Notas |
 |---|---|---|---|---|
-| R2.1 | `.lazy.tsx` como stub; tela em `-components/` da rota | M | A fazer | ARVORE.md |
-| R2.2 | Peças no ancestral certo; `common/` só o que 2+ rotas usam | M | A fazer | CANONICAS.md |
+| R2.1 | `.lazy.tsx` como stub; tela em `-components/` da rota | M | Feita | `frontend.md` §1.3; career, contact e portfolio viraram pasta (`<área>/index.tsx`, `index.lazy.tsx`, `-components/<área>.tsx`) sem mudar a URL; blog ganhou `blog/-components/{blog-index,article}.tsx`; o `.lazy.tsx` só exporta o `component` (e o `notFoundComponent` do artigo) |
+| R2.2 | Peças no ancestral certo; `common/` só o que 2+ rotas usam | M | Feita | `frontend.md` §1.1; as 11 peças só da home e o `use-scroll-step` desceram para `_public/-components/home/`; `page-hero`, `photo`, `pill-button`, `reveal`, `channels-notice` e `project-status` ficam em `_public/-components/` (2+ rotas); `components/common/` não mudou (é o kit) |
 | R2.3 | `lib/entity.ts` e `lib/interfaces.ts` na árvore; enums com a trinca canônica | M | A fazer | |
 | R2.4 | Conteúdo editorial (artigos, projetos, vagas, fotos) fora de `lib/` | G | A fazer | forma depende de R2.10 |
 | R2.5 | Head e SEO num lugar só; sitemap com hreflang; `robots` por ambiente | M | A fazer | |

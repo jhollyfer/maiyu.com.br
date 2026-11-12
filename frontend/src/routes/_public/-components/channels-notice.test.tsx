@@ -56,7 +56,7 @@ describe('ChannelsNotice', () => {
 describe('the contact and careers pages', () => {
   const here = dirname(fileURLToPath(import.meta.url))
 
-  it.each(['contact.lazy.tsx', 'career.lazy.tsx'])(
+  it.each(['contact/-components/contact.tsx', 'career/-components/career.tsx'])(
     '%s renders the notice and no <form>',
     (file) => {
       const source = readFileSync(join(here, '..', file), 'utf8')

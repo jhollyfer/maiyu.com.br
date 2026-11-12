@@ -1,19 +1,14 @@
 import { ArrowDownIcon } from '@phosphor-icons/react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { TALENT_AREAS } from '#/lib/jobs'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { ChannelsNotice } from './-components/channels-notice'
-import { PageHero } from './-components/page-hero'
-import { Photo } from './-components/photo'
-import { REVEAL, STAGGER } from './-components/reveal'
-
-export const Route = createLazyFileRoute('/_public/career')({
-  component: RouteComponent,
-})
+import { ChannelsNotice } from '../../-components/channels-notice'
+import { PageHero } from '../../-components/page-hero'
+import { Photo } from '../../-components/photo'
+import { REVEAL, STAGGER } from '../../-components/reveal'
 
 type Principle = {
   title: () => string
@@ -55,7 +50,7 @@ const APPLY_ID = 'contato'
  * descrição de cargo, e um link para lugar nenhum seria pior que levar direto
  * a quem responde. Não há formulário de candidatura (`docs/DECISIONS.md` #17).
  */
-function RouteComponent(): React.JSX.Element {
+export function Career(): React.JSX.Element {
   return (
     <>
       <PageHero

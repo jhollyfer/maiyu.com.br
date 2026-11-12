@@ -5,21 +5,16 @@ import {
   WhatsappLogoIcon,
 } from '@phosphor-icons/react'
 import type { Icon } from '@phosphor-icons/react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { CALL_URL, CONTACT } from '#/lib/site'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { ChannelsNotice } from './-components/channels-notice'
-import { PageHero } from './-components/page-hero'
-import { Photo } from './-components/photo'
-import { REVEAL, STAGGER } from './-components/reveal'
-
-export const Route = createLazyFileRoute('/_public/contact')({
-  component: RouteComponent,
-})
+import { ChannelsNotice } from '../../-components/channels-notice'
+import { PageHero } from '../../-components/page-hero'
+import { Photo } from '../../-components/photo'
+import { REVEAL, STAGGER } from '../../-components/reveal'
 
 type Channel = {
   icon: Icon
@@ -74,7 +69,7 @@ const CHANNELS: ReadonlyArray<Channel> = [
  * e o JSON-LD da raiz mostram os mesmos dados, e três cópias do telefone
  * divergiriam na primeira troca de número.
  */
-function RouteComponent(): React.JSX.Element {
+export function Contact(): React.JSX.Element {
   return (
     <>
       <PageHero

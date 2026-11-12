@@ -3,11 +3,11 @@ import { createFileRoute } from '@tanstack/react-router'
 import { pageHead } from '#/lib/page-head'
 import { m } from '#/paraglide/messages'
 
-export const Route = createFileRoute('/_public/contact')({
+export const Route = createFileRoute('/_public/career/')({
   head: () =>
     pageHead({
-      pathname: '/contact',
-      title: m.contact_page_meta_title(),
-      description: m.contact_page_meta_description(),
+      pathname: '/career',
+      title: m.career_meta_title(),
+      description: m.career_meta_description(),
     }),
 })

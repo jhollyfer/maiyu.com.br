@@ -7,7 +7,7 @@ import { absoluteUrl } from '#/lib/site'
 import { projectListJsonLd } from '#/lib/structured-data'
 import { m } from '#/paraglide/messages'
 
-export const Route = createFileRoute('/_public/portfolio')({
+export const Route = createFileRoute('/_public/portfolio/')({
   head: () =>
     pageHead({
       pathname: '/portfolio',

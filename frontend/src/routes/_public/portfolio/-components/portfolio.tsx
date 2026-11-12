@@ -1,5 +1,4 @@
 import { ArrowUpRightIcon } from '@phosphor-icons/react'
-import { createLazyFileRoute } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { Picture } from '#/components/common/picture/picture'
@@ -11,14 +10,10 @@ import type { Project } from '#/lib/projects'
 import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
-import { PageHero } from './-components/page-hero'
-import { PillButton } from './-components/pill-button'
-import { ProjectStatusBadge } from './-components/project-status'
-import { REVEAL, STAGGER } from './-components/reveal'
-
-export const Route = createLazyFileRoute('/_public/portfolio')({
-  component: RouteComponent,
-})
+import { PageHero } from '../../-components/page-hero'
+import { PillButton } from '../../-components/pill-button'
+import { ProjectStatusBadge } from '../../-components/project-status'
+import { REVEAL, STAGGER } from '../../-components/reveal'
 
 /** Os outros projetos, sem o que já está em destaque no topo. */
 const REST = projects.filter((project) => project.slug !== featuredProject.slug)
@@ -98,7 +93,7 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
  * daqui: o que prova o trabalho é o produto no ar. Por isso a captura vem
  * inteira, sem recorte de cartão, e o texto é lista e tipografia.
  */
-function RouteComponent(): React.JSX.Element {
+export function Portfolio(): React.JSX.Element {
   return (
     <>
       <PageHero

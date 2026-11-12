@@ -18,6 +18,8 @@
 
 ## Parou em
 
+R2.1 feita: as telas de career, contact, portfolio e blog moram em `-components/` da rota e os `.lazy.tsx` são stubs; os testes de contrato leem os caminhos novos. R2.2 feita: as peças só da home desceram para `_public/-components/home/`.
+
 RD.3 feita: `ARCHITECTURE.md` §9.1 descreve os dois recursos do Coolify (site e API) pelo quadro da régua, sem workflows de entrega. RD.2 feita: `docs/` posto em dia (SECURITY, TEST-PLAN, ENV, ARCHITECTURE, RULES, PRD) e as decisões locais substituídas marcadas em `DECISIONS.md`. RD.4 feita: `frontend/README.md` e `frontend/AGENTS.md` pela régua, `frontend/CLAUDE.md` com `@AGENTS.md`, `components/common/CLAUDE.md` removido. Régua D fechada na branch `docs/regua-docs`.
 
 R4.1 e R4.3: os sete workflows saíram de `.github/workflows/` (`--remover-workflows`); `dependabot.yml` e `.editorconfig` já estavam iguais ao kit. Falta o dono: ligar o *Auto Deploy* no Coolify e apagar os secrets do Actions (`ENV.md` §3). O `AGENTS.md` (seção Produção, ainda cita workflows e smoke por `revision.txt`) não diverge do modelo no `sync --check` e não foi editado.
