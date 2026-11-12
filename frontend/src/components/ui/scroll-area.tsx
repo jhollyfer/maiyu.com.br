@@ -1,6 +1,6 @@
 // casa: unused React import dropped, the project compiles with noUnusedLocals
 import { ScrollArea as ScrollAreaPrimitive } from '@base-ui/react/scroll-area'
-import { cn } from '#/lib/utils'
+import { cn } from '#/lib/cn'
 
 function ScrollArea({
   className,

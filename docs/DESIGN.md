@@ -101,7 +101,7 @@ saiu a pedido do dono (`DECISIONS.md` #16).
 
 ## 7. Componentes
 
-Vêm de `components/ui/` (shadcn sobre Base UI, nunca editado à mão) e do kit `components/common/`.
+Vêm de `components/ui/` (shadcn sobre Base UI; editável só com a linha `// casa:` e o motivo em inglês) e do kit `components/common/`.
 
 | Componente | Variantes usadas | Regra |
 |---|---|---|
@@ -114,6 +114,79 @@ Vêm de `components/ui/` (shadcn sobre Base UI, nunca editado à mão) e do kit 
 | Badge | `neutral`, `info`, `success`, `warning` | cor nunca sozinha: sempre com rótulo |
 
 Estados de todo controle: default, hover, focus-visible, active, disabled, error.
+
+### Componentes do shadcn
+
+O registry inteiro fica instalado (`_standards/frontend.md` §6, `DECISIONS.md` #299 da régua); cada componente é avaliado aqui. Decisões: **já usado** (algum arquivo fora de `components/ui/` o importa), **aplicado** (entra nesta revisão) e **não se aplica**. Nesta revisão (reinstalação do registry, #451) nenhum componente passou a ter uso novo.
+
+| Componente | Decisão | Onde se usa ou por quê |
+|---|---|---|
+| `accordion` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `alert-dialog` | já usado | `common/form-shell/form-shell-leave-guard.tsx`, `common/confirm-dialog/confirm-dialog-header.tsx`, `common/confirm-dialog/confirm-dialog.tsx` e mais 1 |
+| `alert` | já usado | `_public/-components/channels-notice.tsx` |
+| `aspect-ratio` | já usado | `_public/-components/photo.tsx`, `_public/portfolio/-components/portfolio.tsx` |
+| `attachment` | já usado | `common/multi-file-upload/multi-file-upload-list.tsx` |
+| `avatar` | já usado | `common/image-field/image-field-preview.tsx`, `_public/blog/-components/article.tsx` |
+| `badge` | já usado | `common/filters/filter-chip-grid.tsx`, `_public/-components/home/navy-band.tsx`, `_public/-components/home/work.tsx` e mais 4 |
+| `breadcrumb` | já usado | `_public/blog/-components/article.tsx` |
+| `bubble` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `button-group` | já usado | `common/image-field/image-field-actions.tsx`, `common/page-shell/page-header.tsx` |
+| `button` | já usado | `common/sheet-on-demand/sheet-on-demand.tsx`, `common/row-actions/row-actions.tsx`, `common/image-field/image-field-actions.tsx` e mais 18 |
+| `calendar` | já usado | `common/date-picker/date-picker.tsx` |
+| `card` | já usado | `common/form-shell/form-shell-content.tsx` |
+| `carousel` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `chart` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `checkbox` | já usado | `common/field/field-checkbox.tsx` |
+| `code-block` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `collapsible` | já usado | `common/filters/filter-section.tsx` |
+| `combobox` | já usado | `common/option-combobox/option-combobox.tsx` |
+| `command` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `context-menu` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `dialog` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `direction` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `drawer` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `dropdown-menu` | já usado | `common/row-actions/row-actions.tsx`, `common/row-actions/row-actions-items.tsx`, `common/theme/theme-toggle.tsx` |
+| `empty` | já usado | `common/empty-state/empty-state.tsx`, `common/route-status/route-error.tsx`, `common/route-status/load-error.tsx` e mais 1 |
+| `field` | já usado | `common/field/field-number.tsx`, `common/field/field-select.tsx`, `common/field/field-mask.tsx` e mais 15 |
+| `hover-card` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `input-group` | já usado | `common/field/field-number.tsx`, `common/field/field-mask.tsx`, `common/field/secret-input.tsx` e mais 3 |
+| `input-otp` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `input` | já usado | `common/image-field/image-field.tsx`, `common/input-password/input-password.tsx` |
+| `item` | já usado | `_public/-components/home/navy-band.tsx`, `_public/-components/home/audience.tsx`, `_public/-components/home/capabilities.tsx` |
+| `kbd` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `label` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `marker` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `menubar` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `message-scroller` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `message` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `native-select` | já usado | `common/city-switcher/city-switcher.tsx`, `common/locale-switcher/locale-switcher.tsx` |
+| `navigation-menu` | já usado | `_public/-components/header.tsx` |
+| `pagination` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `popover` | já usado | `common/date-picker/date-picker.tsx` |
+| `progress` | já usado | `common/multi-file-upload/multi-file-upload-list.tsx` |
+| `questionnaire` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `radio-group` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `resizable` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `scroll-area` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `select` | já usado | `common/field/field-select.tsx` |
+| `separator` | já usado | `common/filters/filter-section.tsx` |
+| `sheet` | já usado | `_public/-components/header.tsx` |
+| `sidebar` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `skeleton` | já usado | `common/page-shell/page-shell-skeleton.tsx`, `common/form-shell/form-shell-skeleton.tsx` |
+| `slider` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `sonner` | já usado | `common/theme/theme-provider-toaster.tsx` |
+| `spinner` | já usado | `common/image-field/image-field-actions.tsx`, `common/route-status/route-pending.tsx`, `common/multi-file-upload/multi-file-upload-list.tsx` e mais 2 |
+| `switch` | já usado | `common/field/field-switch.tsx`, `common/filters/filter-toggle.tsx` |
+| `table` | já usado | `common/platform-overview/platform-overview.tsx` |
+| `tabs` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `textarea` | já usado | `common/field/field-textarea.tsx` |
+| `toast` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+| `toggle-group` | já usado | `common/filters/filter-segmented.tsx`, `common/filters/filter-chip-grid.tsx` |
+| `toggle` | já usado | `common/rich-editor/rich-editor-toolbar.tsx` |
+| `tooltip` | já usado | `common/filters/filter-chip-grid.tsx`, `__root.tsx` |
+| `trace` | não se aplica | nenhuma tela do site precisa dele hoje; fica instalado pelo registry inteiro (`frontend.md` §6, #299) e entra quando uma tela pedir |
+
+O toque de 44 px no celular vem do `ui/` (`max-sm:min-h-11`, `max-sm:min-w-11` nos tamanhos de ícone; `max-sm:text-base` nos campos de digitação), sem altura nem largura de controle ajustada na tela (`frontend.md` §10.2, #461).
 
 ## 8. Estados de tela
 

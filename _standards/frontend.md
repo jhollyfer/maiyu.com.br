@@ -233,8 +233,16 @@ página, e a tabela pisca (`DECISIONS.md` #347).
 Duas ou mais rotas leem: `lib/<tema>-search.ts`. Lista do painel usa a fábrica de
 `lib/list-search.ts`: `listValidateSearch(schema)` e `LIST_SEARCH_DEFAULTS`, que lê os tetos
 (`page ≥ 1`, `perPage ≤ 100`) do validator de `@<projeto>/shared` em vez de redigitá-los, e
-`stripSearchParams` tira o default da URL; `withExtra` sai. O `-search.ts` exporta `validateSearch`
+`stripSearchParams` tira o default da URL; `withExtra` sai. A fábrica devolve um Standard Schema que expõe `z.input` e `z.output`, e não uma função solta: o router lê o tipo de entrada do validator, e uma função faz entrada igual a saída (o `.default()` viraria obrigatório no link e `ListRoute` recusaria a rota; _doc-lib/tanstack-router.md#guide/search-params, seção Zod). O `-search.ts` exporta `validateSearch`
 e `to<Recurso>Params`, que converte a busca da URL nos parâmetros da API (`DECISIONS.md` #347). O tipo da busca do recurso mora nesse `-search.ts`, como `z.output` do validator de `@<projeto>/shared`, com o filtro no enum do domínio e nunca `string`; `lib/list-search.ts` guarda só os genéricos (`ListSearch`, `StorefrontSearch`) e o `compactQuery`, que tira o filtro em branco antes do `query` do cliente. _doc-lib/tanstack-router.md#how-to/validate-search-params, #guide/search-params.
+
+**A tabela navega relativa à rota da listagem.** `Table` recebe `to: ListRoute` (`lib/list-search.ts`): só
+entra rota cuja busca é atribuível a `ListSearch` (`sort` em lista fechada passa, `sort: number` não) e
+não exige chave que a tabela não envia (um `?q` obrigatório reprova; `.default()` passa); rota
+incompatível é erro de tipo em `<Table to>`. Cada peça navega com `from: to`, `to: '.'` e
+`search: (prev) => ({ ...prev, ... })`, então filtro que só a rota conhece sobrevive e a rota não declara
+`direction` nem `trashed` que não usa. O tipo confere a rota, não o objeto que cada reducer devolve
+(`DECISIONS.md` #445; `_doc-lib/tanstack-router.md#guide/navigation`).
 
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
@@ -612,6 +620,23 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   **aplicado** nesta revisão, **não se aplica**) e onde se usa ou por que não. Componente que o
   registry traz depois entra na tabela no mesmo PR que atualiza `ui/` *(opinião da casa; a doc lista
   os componentes, mas não manda avaliar)*.
+- **Reinstalar o registry** (`DECISIONS.md` #451). O registry atual (estilos `base-*`) traz
+  `import { cn } from "cn"` dentro de cada `ui/*.tsx` e declara `cn` como dependência. Não é erro do
+  alias: `aliases.utils` do `components.json` só diz à CLI onde pôr o arquivo de utilitários, e
+  nenhum valor dele muda esse import (conferido no `shadcn@4.23.0`, `add button --dry-run` com
+  `#/lib/cn` e com `#/lib/utils`: `Dependencies + cn` nos dois). O pacote `cn` é o oficial do shadcn
+  (`shadcn-ui/cn`, `shadcn migrate cn`), mas a casa não o usa: o `cn` dela é `lib/cn.ts`, com a escala
+  do tema em `extendTailwindMerge`, e o `cn` do pacote não a conhece. `components.json` fica com
+  `"utils": "#/lib/cn"`. Depois de cada `shadcn add`:
+  1. `sed -i -E "s#from ['\"]cn['\"]#from '\#/lib/cn'#" src/components/ui/*.tsx` e `pnpm remove cn`;
+  2. reverter o que a CLI trouxe contra a régua: `date-fns` (transitivo do `react-day-picker`, nunca
+     direto), `next-themes` (patch `// casa:` do `sonner`, acima), `recharts` de volta à versão do
+     `kit.deps.json`, e aspas simples e sem ponto e vírgula (`pnpm format`);
+  3. `shadcn add <nome> --diff` e reaplicar à mão os arquivos com `// casa:`.
+  `sync-to-project.mjs --check` reprova o que sobrar: `cn-import:` (import de `cn` em `ui/`) e
+  `cn-pacote:` (`cn` no `package.json`).
+  _doc-lib/shadcn.md#docs/components-json, https://ui.shadcn.com/docs/components-json, e
+  #docs/cli (`migrate cn`), https://ui.shadcn.com/docs/cli, abertas.
 
 _doc-lib/shadcn.md#docs/theming, #docs/components-json.
 
@@ -1355,15 +1380,39 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 - Alvo de toque ≥ 44×44 px, por área invisível se preciso *(opinião da casa: AA não exige)*; hover
   nunca é o único caminho para uma função; gesto (arrastar, deslizar) tem alternativa de um
   ponteiro.
-- **44 px no celular vem do kit, nunca caso a caso** *(opinião da casa, `DECISIONS.md` #267)*: os
-  controles de `components/ui/` (botão, campo, select, toggle, paginação, itens de menu) crescem
-  abaixo de `sm` por tamanho responsivo no próprio arquivo (`h-11 sm:h-7`) e voltam ao tamanho denso
-  de `sm` para cima; a tela não ajusta altura de controle. O `touch-targets.spec` (§11.2) cobra 44 px no
-  projeto `mobile`. 24 px é o mínimo do WCAG 2.2 AA (2.5.8): vale só como degrau registrado no
+- **44 px no celular vem do kit, nunca caso a caso** *(opinião da casa, `DECISIONS.md` #267, forma
+  em #461)*: os controles de `components/ui/` mantêm o tamanho denso do shadcn (`h-7`, `h-8`...) sem
+  tocar no `h-*` original, e o patch `// casa:` só acrescenta `max-sm:min-h-11` (mais
+  `max-sm:min-w-11` nos tamanhos de ícone, `size-*`). `max-sm:` vale só abaixo de `sm`, então de `sm`
+  para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos: `button`, `toggle`,
+  `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`) e `input-group`. O
+  `ToggleGroupItem` monta a classe com `toggleVariants`: o patch do `toggle` vai dentro do `cva`
+  (base e tamanhos), não no `className` do componente `Toggle`, senão o item do grupo fica de fora
+  e mede 40 px. No `input-group` o patch vai
+  em dois lugares: na raiz `InputGroup` (`max-sm:min-h-11`), senão o `InputGroupInput` herda o mínimo
+  do `Input` e transborda a borda do grupo, que fica no `h-8`; e no `InputGroupButton`, só o
+  `max-sm:min-w-11` dos tamanhos de ícone (`icon-xs`, `icon-sm`), porque ele consome o `size` e
+  repassa o default ao `Button`, que então não ganha a largura mínima (a altura mínima já vem do
+  `Button`). A tela não ajusta altura de controle. Campo de digitação (`input`,
+  `textarea`, o `select` nativo do `native-select` e o input do `input-group`) também leva
+  `max-sm:text-base` no mesmo patch: o registry deixa `text-sm`/`text-xs`, e abaixo de 16 px o Safari
+  do iOS dá zoom na página ao focar o campo (comportamento do navegador, sem entrada em `_doc-lib`:
+  não coberto). Link solto (fora de texto corrido, como "Ainda não tem
+  conta? Crie" das páginas de autenticação) é `Link` com `className={buttonVariants({ variant:
+  'link' })}` (nunca `Button render={<Link />}`, `DECISIONS.md` #440), que já herda o mínimo de
+  44 px do `buttonVariants`; só o link em linha dentro de frase fica isento, pela exceção de link em linha do
+  WCAG 2.5.8 (sem entrada em `_doc-lib`: não coberto). **Nunca `h-11 sm:h-7`**: o `tailwind-merge` 3.7 não junta classe
+  com e sem variante, e `twMerge('h-11 sm:h-7', 'h-12')` devolve `sm:h-7 h-12`, de modo que de `sm`
+  para cima todo `Button`, `Toggle` ou `Input` com altura própria (`h-12`, `size="lg"` + `h-11`)
+  cai para o denso. Com a forma nova, `twMerge('h-7 max-sm:min-h-11', 'h-12')` devolve
+  `max-sm:min-h-11 h-12`: a altura passada vence no desktop e o mínimo segue no celular. Altura que a
+  peça do kit passava só para compensar o patch antigo sai. O `touch-targets.spec` (§11.2) cobra 44 px
+  no projeto `mobile`. 24 px é o mínimo do WCAG 2.2 AA (2.5.8): vale só como degrau registrado no
   `docs/DESIGN.md` do projeto (por exemplo, numa vitrine que ainda não migrou), nunca como padrão.
-  Variante por largura: _doc-lib/tailwindcss.md#responsive-design
-  (https://tailwindcss.com/docs/responsive-design, aberta). O critério 2.5.8 do WCAG não tem entrada
-  em `_doc-lib`: não coberto.
+  Variante `max-*` (e a armadilha de `sm:` não ser "só celular"): _doc-lib/tailwindcss.md#responsive-design
+  (https://tailwindcss.com/docs/responsive-design, aberta, "Targeting a breakpoint range"); piso de
+  altura: https://tailwindcss.com/docs/min-height (aberta; `min-h-*` sem entrada própria em
+  `_doc-lib`, vizinha de `#height`). O critério 2.5.8 do WCAG não tem entrada em `_doc-lib`: não coberto.
 - Sessão que expira avisa e permite estender.
 
 ### 10.3 Formulário acessível

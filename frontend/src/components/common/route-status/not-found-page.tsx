@@ -153,7 +153,7 @@ export function NotFoundPageHomeButton({
     <Link
       to={to}
       data-slot="not-found-page-home-button"
-      className={cn(buttonVariants({ size: 'lg' }), 'h-11 w-fit px-5 text-sm')}
+      className={cn(buttonVariants({ size: 'lg' }), 'w-fit px-5 text-sm')}
     >
       {children}
     </Link>

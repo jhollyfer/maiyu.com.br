@@ -7,6 +7,33 @@ export const TOUCH_TARGET = 44
 export class ResponsiveAudit {
   constructor(private readonly page: Page) {}
 
+  /**
+   * Waits for the finite, time-based animations to end: measured mid-entrance, a target under a
+   * `transform` reads smaller than it is (seen on a breadcrumb, failing one run in a few) and text
+   * mixes with the background. One cancelled midway (React swaps the entrance class on hydration)
+   * rejects `finished` with `AbortError`: it ended all the same. A scroll-linked animation
+   * (`animation-timeline: scroll()`) never ends by itself, so it is left out.
+   */
+  async settle(): Promise<void> {
+    await this.page.evaluate(() =>
+      Promise.all(
+        document
+          .getAnimations()
+          .filter(
+            (animation) =>
+              animation.effect?.getComputedTiming().iterations !== Infinity,
+          )
+          .filter((animation) => animation.timeline instanceof DocumentTimeline)
+          .map((animation) =>
+            animation.finished.then(
+              () => undefined,
+              () => undefined,
+            ),
+          ),
+      ),
+    )
+  }
+
   /** The page is wider than the window: `scrollWidth` above `clientWidth` on the root element. */
   async horizontalOverflow(): Promise<string[]> {
     return this.page.evaluate(() => {
@@ -40,6 +67,7 @@ export class ResponsiveAudit {
    * plain size check of the 44 px goal, with no spacing exception.
    */
   async smallTouchTargets(minimum: number): Promise<string[]> {
+    await this.settle()
     return this.page.evaluate(
       ({ min }) => {
         const selector = [

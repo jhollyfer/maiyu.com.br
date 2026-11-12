@@ -4,6 +4,7 @@ import type { Locator, Page } from '@playwright/test'
 
 import { ClientAddress } from './client-address'
 import { E2eEnv } from './env'
+import { ResponsiveAudit } from './responsive-audit'
 
 type Fixtures = {
   /** O IP deste teste no `X-Forwarded-For` (`client-address.ts`). */
@@ -82,33 +83,8 @@ export const test = base.extend<Fixtures>({
   expectNoBlockingViolations: async ({ page }, provide) => {
     await provide(async () => {
       // Animação finita ainda rodando mistura o texto com o fundo e simula uma
-      // falha de `color-contrast`: mede só depois que elas terminam. A que é
-      // cancelada no meio (o React troca a classe da entrada ao hidratar)
-      // rejeita o `finished` com `AbortError`: terminou do mesmo jeito, e
-      // reprovar por ela fazia a home falhar uma vez a cada tantas execuções.
-      await page.evaluate(() =>
-        Promise.all(
-          document
-            .getAnimations()
-            .filter(
-              (animation) =>
-                animation.effect?.getComputedTiming().iterations !== Infinity,
-            )
-            // Só as animações de tempo. A ligada à rolagem (`animation-timeline:
-            // scroll()`, o `scroll-fade` do `CodeBlock`) avança com o scroll e
-            // nunca termina sozinha: esperar por ela travava a aula até o
-            // tempo do teste acabar.
-            .filter(
-              (animation) => animation.timeline instanceof DocumentTimeline,
-            )
-            .map((animation) =>
-              animation.finished.then(
-                () => undefined,
-                () => undefined,
-              ),
-            ),
-        ),
-      )
+      // falha de `color-contrast`: mede só depois que elas terminam.
+      await new ResponsiveAudit(page).settle()
 
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

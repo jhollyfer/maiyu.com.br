@@ -127,6 +127,11 @@ export function BlogIndex(): React.JSX.Element {
               {FILTERS.map((filter) => {
                 const active = filter.category === category
 
+                /*
+                  `min-h-11` on every width: a Badge is not covered by the `ui/` touch
+                  patch (#461), and the chip keeps 44px on the desktop as well, so the
+                  layout does not move between widths.
+                */
                 return (
                   <Badge
                     key={String(filter.category)}
