@@ -86,6 +86,36 @@ const routes = {
     tokens: [[0,"storages"],[1,"id"],[0,"download"]],
     types: placeholder as Registry['storages.files.download']['types'],
   },
+  'storefront.contacts.create': {
+    methods: ["POST"],
+    pattern: '/storefront/contacts',
+    tokens: [[0,"storefront"],[0,"contacts"]],
+    types: placeholder as Registry['storefront.contacts.create']['types'],
+  },
+  'administrator.contacts.paginate': {
+    methods: ["GET","HEAD"],
+    pattern: '/administrator/contacts',
+    tokens: [[0,"administrator"],[0,"contacts"]],
+    types: placeholder as Registry['administrator.contacts.paginate']['types'],
+  },
+  'administrator.contacts.show': {
+    methods: ["GET","HEAD"],
+    pattern: '/administrator/contacts/:id',
+    tokens: [[0,"administrator"],[0,"contacts"],[1,"id"]],
+    types: placeholder as Registry['administrator.contacts.show']['types'],
+  },
+  'administrator.contacts.answer': {
+    methods: ["POST"],
+    pattern: '/administrator/contacts/:id/answer',
+    tokens: [[0,"administrator"],[0,"contacts"],[1,"id"],[0,"answer"]],
+    types: placeholder as Registry['administrator.contacts.answer']['types'],
+  },
+  'administrator.contacts.delete': {
+    methods: ["DELETE"],
+    pattern: '/administrator/contacts/:id',
+    tokens: [[0,"administrator"],[0,"contacts"],[1,"id"]],
+    types: placeholder as Registry['administrator.contacts.delete']['types'],
+  },
 } as const satisfies Record<string, AdonisEndpoint>
 
 export { routes }

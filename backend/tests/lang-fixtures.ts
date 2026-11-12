@@ -55,25 +55,30 @@ export async function langFiles(locale: Locale): Promise<Array<string>> {
 }
 
 /**
- * The project's field labels: a nested file the loader keys as
- * `validator.shared.fields.*`, merged with the kit's `validator.json`. It is not in
- * `validator.json` because the sync overwrites that file (KIT.md §3.4).
+ * The project's field labels and rule messages: nested files the loader keys as
+ * `validator.shared.fields.*` and `validator.shared.messages.*`, merged with the kit's
+ * `validator.json`. They are not in `validator.json` because the sync overwrites that file
+ * (KIT.md §3.4).
  */
-const PROJECT_FIELDS_FILE = 'validator/shared/fields'
+const PROJECT_FILES = {
+  'validator/shared/fields': 'shared.fields',
+  'validator/shared/messages': 'shared.messages',
+} as const
 
 /**
- * `validator.json` plus the project's labels, keyed as `validator.json` keys them
- * (`shared.fields.title`). A project with no resource label has no file, and that is
+ * `validator.json` plus the project's labels and messages, keyed as `validator.json` keys
+ * them (`shared.fields.title`, `shared.messages.cpf`). A project with no file of its own is
  * not an error.
  */
 export async function readValidatorLang(locale: Locale): Promise<LangEntries> {
   const entries = new Map(await readLang(locale, 'validator'))
-  const project = `${langDirectory(locale)}/${PROJECT_FIELDS_FILE}.json`
 
-  if (!existsSync(project)) return entries
+  for (const [file, prefix] of Object.entries(PROJECT_FILES)) {
+    if (!existsSync(`${langDirectory(locale)}/${file}.json`)) continue
 
-  for (const [key, message] of await readLang(locale, PROJECT_FIELDS_FILE)) {
-    entries.set(`shared.fields.${key}`, message)
+    for (const [key, message] of await readLang(locale, file)) {
+      entries.set(`${prefix}.${key}`, message)
+    }
   }
 
   return entries

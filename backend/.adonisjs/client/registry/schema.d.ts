@@ -177,6 +177,71 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/download/download.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'storefront.contacts.create': {
+    methods: ["POST"]
+    pattern: '/storefront/contacts'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/storefront/contacts.validator').StorefrontContactCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/storefront/contacts.validator').StorefrontContactCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storefront/contacts/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'administrator.contacts.paginate': {
+    methods: ["GET","HEAD"]
+    pattern: '/administrator/contacts'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: ExtractQueryForGet<InferInput<(typeof import('#validators/administrator/contacts.validator').AdministratorContactPaginateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/administrator/contacts/paginate/paginate.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/administrator/contacts/paginate/paginate.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/administrator/contacts/paginate/paginate.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'administrator.contacts.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/administrator/contacts/:id'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQueryForGet<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/administrator/contacts/show/show.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/administrator/contacts/show/show.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/administrator/contacts/show/show.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'administrator.contacts.answer': {
+    methods: ["POST"]
+    pattern: '/administrator/contacts/:id/answer'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/administrator/contacts/answer/answer.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/administrator/contacts/answer/answer.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/administrator/contacts/answer/answer.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'administrator.contacts.delete': {
+    methods: ["DELETE"]
+    pattern: '/administrator/contacts/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/administrator/contacts/delete/delete.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/administrator/contacts/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/administrator/contacts/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
 }
 
 export namespace Route {

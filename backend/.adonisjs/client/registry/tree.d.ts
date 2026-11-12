@@ -29,4 +29,17 @@ export interface ApiDefinition {
       download: typeof routes['storages.files.download']
     }
   }
+  storefront: {
+    contacts: {
+      create: typeof routes['storefront.contacts.create']
+    }
+  }
+  administrator: {
+    contacts: {
+      paginate: typeof routes['administrator.contacts.paginate']
+      show: typeof routes['administrator.contacts.show']
+      answer: typeof routes['administrator.contacts.answer']
+      delete: typeof routes['administrator.contacts.delete']
+    }
+  }
 }

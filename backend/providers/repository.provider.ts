@@ -1,5 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 
+import { ContactLucidRepository } from '#repositories/contact/contact.lucid.repository'
+import { ContactRepository } from '#repositories/contact/contact.repository'
 import { SessionLucidRepository } from '#repositories/session/session.lucid.repository'
 import { SessionRepository } from '#repositories/session/session.repository'
 import { StorageLucidRepository } from '#repositories/storage/storage.lucid.repository'
@@ -20,6 +22,9 @@ export default class RepositoryProvider {
   register() {
     this.app.container.bind(UnitOfWork, () =>
       this.app.container.make(LucidUnitOfWork),
+    )
+    this.app.container.bind(ContactRepository, () =>
+      this.app.container.make(ContactLucidRepository),
     )
     this.app.container.bind(SessionRepository, () =>
       this.app.container.make(SessionLucidRepository),

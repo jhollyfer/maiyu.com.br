@@ -9,7 +9,19 @@ import type { Locale } from '../enums/locale.js'
  * `resources/lang/<l>/validator/shared/fields.json` of the backend.
  */
 export const PROJECT_FIELD_LABELS = {
-  'pt-BR': {},
-  es: {},
-  en: {},
+  'pt-BR': {
+    message: 'a mensagem',
+    locale: 'o idioma',
+    website: 'o site',
+  },
+  es: {
+    message: 'el mensaje',
+    locale: 'el idioma',
+    website: 'el sitio',
+  },
+  en: {
+    message: 'the message',
+    locale: 'the language',
+    website: 'the website',
+  },
 } as const satisfies Record<Locale, Readonly<Record<string, string>>>

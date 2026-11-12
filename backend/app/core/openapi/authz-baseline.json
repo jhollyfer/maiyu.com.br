@@ -1,4 +1,10 @@
 {
+  "GET /account/profile": "authenticated",
+  "PUT /account/profile": "authenticated",
+  "GET /administrator/contacts": "ADMINISTRATOR",
+  "GET /administrator/contacts/{id}": "ADMINISTRATOR",
+  "DELETE /administrator/contacts/{id}": "ADMINISTRATOR",
+  "POST /administrator/contacts/{id}/answer": "ADMINISTRATOR",
   "POST /authentication/refresh": "anonymous",
   "POST /authentication/sign-in": "anonymous",
   "POST /authentication/sign-out": "authenticated",
@@ -8,5 +14,6 @@
   "DELETE /storages/{id}": "authenticated",
   "POST /storages/{id}/complete": "authenticated",
   "GET /storages/{id}/download": "authenticated",
-  "GET /storages/{id}/parts": "authenticated"
+  "GET /storages/{id}/parts": "authenticated",
+  "POST /storefront/contacts": "anonymous"
 }

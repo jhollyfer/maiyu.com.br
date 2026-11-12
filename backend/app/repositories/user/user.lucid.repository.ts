@@ -8,14 +8,19 @@ import { UserRepository } from './user.repository.ts'
 
 import RepositoryFailure from '#core/repository-failure'
 import { TransactionContext } from '#core/transaction-context'
+import type { UniqueConflict } from '#core/unique-conflict'
 import { User } from '#domain/user/user.entity'
 import UserModel from '#models/user'
+import { SessionRepository } from '#repositories/session/session.repository'
 import LucidMapping from '#repositories/shared/lucid-mapping'
 
 /** Extension point (KIT.md §3.4): the account on Lucid; the project adds its columns. */
 @inject()
 export class UserLucidRepository extends UserRepository {
-  constructor(private readonly transaction: TransactionContext) {
+  constructor(
+    private readonly transaction: TransactionContext,
+    private readonly sessions: SessionRepository,
+  ) {
     super()
   }
 
@@ -39,20 +44,10 @@ export class UserLucidRepository extends UserRepository {
     return this.toEntity(row)
   }
 
-  async save(user: User): Promise<void> {
-    const { id, createdAt, updatedAt, ...columns } = user.snapshot()
-
-    // The model hook hashes only a dirty password: the stored hash written back unchanged
-    // is not dirty, so it is not hashed twice.
-    await UserModel.updateOrCreate(
-      { id },
-      {
-        ...columns,
-        createdAt: DateTime.fromJSDate(createdAt),
-        updatedAt: LucidMapping.dateTime(updatedAt),
-      },
-      { client: this.transaction.client() },
-    )
+  async save(
+    user: User,
+  ): Promise<Either<UniqueConflict | RepositoryFailure, void>> {
+    return LucidMapping.unlessUnique(this.persist(user))
   }
 
   async delete(user: User): Promise<void> {
@@ -80,6 +75,28 @@ export class UserLucidRepository extends UserRepository {
     } catch (error) {
       return left(RepositoryFailure.of(error))
     }
+  }
+
+  /**
+   * The row first, the revocation after: a taken e-mail raises before any session is
+   * touched, and both run on the unit of work's client, so a rollback undoes the two.
+   */
+  private async persist(user: User): Promise<void> {
+    const { id, createdAt, updatedAt, ...columns } = user.snapshot()
+
+    // The model hook hashes only a dirty password: the stored hash written back unchanged
+    // is not dirty, so it is not hashed twice.
+    await UserModel.updateOrCreate(
+      { id },
+      {
+        ...columns,
+        createdAt: DateTime.fromJSDate(createdAt),
+        updatedAt: LucidMapping.dateTime(updatedAt),
+      },
+      { client: this.transaction.client() },
+    )
+
+    if (user.credentials().revokeSessions) await this.sessions.revokeAll(id)
   }
 
   private toEntity(row: UserModel): User {

@@ -28,11 +28,11 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `TZ` | api | não | não | fuso do processo e da sessão do banco: `America/Eirunepe` em todo ambiente, e no recurso da API no Coolify (`_standards/DECISIONS.md` #393) | `America/Eirunepe` |
 | `LOG_LEVEL` | api | sim | não | nível do logger | `info` |
 | `APP_KEY` | api | sim | **sim** | chave de cifra, gerada por `node ace generate:key` | `<segredo>` |
-| `APP_SERVER_URL` | api | sim | não | endereço público da API | `http://localhost:3333` |
+| `APP_SERVER_URL` | api | sim | não | endereço público da API; em produção `https://api.maiyu.com.br` | `http://localhost:3333` |
 | `APP_CLIENT_URL` | api | só com app e API em sites diferentes | não | origem pública do site; decide o `sameSite` do cookie | `https://maiyu.com.br` |
 | `TRUSTED_PROXIES` | api | em produção atrás de proxy | não | proxies de que `X-Forwarded-For` vale; ausente vale `loopback`; nunca `true` | `uniquelocal` |
 | `COOKIE_DOMAIN` | api | em produção com hosts irmãos | não | domínio dos cookies de sessão | `.maiyu.com.br` |
-| `CORS_ORIGINS` | api | sim fora de dev | não | origens do navegador que podem escrever, separadas por vírgula | `http://localhost:3000` |
+| `CORS_ORIGINS` | api | sim fora de dev | não | origens do navegador que podem escrever, separadas por vírgula; em produção só `https://maiyu.com.br`, a origem do site | `http://localhost:3000` |
 | `DATABASE_URL` | api | sim | **sim** | conexão com o Postgres, só no servidor | `postgres://maiyu:<senha>@localhost:5440/maiyu` |
 | `DATABASE_SSL` | api | não | não | TLS na conexão; ausente é desligado | `false` |
 | `DRIVE_DISK` | api | sim | não | disco dos anexos: `s3` (o bucket abaixo, MinIO em dev e teste) ou `fs` (`tmp/uploads`, sem multipart nem URL assinada, então sem fluxo de upload); sem default | `s3` |
@@ -48,6 +48,12 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
 | `SEED_DEMO_PASSWORD` | api | não | **sim** | senha das contas de demonstração; o projeto não tem demonstração | vazio |
 | `DB_PORT`, `STORAGE_PORT`, `STORAGE_CONSOLE_PORT` | compose | só em dev | não | portas do `backend/docker-compose.yml`, nunca lidas pela API | `5440`, `9016`, `9017` |
+
+Em produção a API responde em `https://api.maiyu.com.br` (decisão do dono) e o site em
+`https://maiyu.com.br`, então os dois valores são `APP_SERVER_URL=https://api.maiyu.com.br` e
+`CORS_ORIGINS=https://maiyu.com.br`. O endereço público mora no recurso da API do Coolify (domínio e
+variáveis de runtime, `ARCHITECTURE.md` §9.1), nunca no repositório; o `.env.example` continua com os
+valores de desenvolvimento. O site e a API são hosts irmãos, então `COOKIE_DOMAIN=.maiyu.com.br`.
 
 O `backend/.env.test` (versionado) só tem banco e bucket de teste locais, `CORS_ORIGINS` e o par
 `SEED_OWNER_*` que a suíte usa; a guarda de `tests/database-guard.ts` recusa banco sem `_test` no nome

@@ -106,9 +106,17 @@ const FORBIDDEN: IRegularForbiddenRuleType[] = [
     severity: 'error',
     from: {
       path: '^app/',
-      pathNot: ['^app/repositories/', '^app/models/', SPEC],
+      pathNot: ['^app/repositories/', '^app/models/', '^app/guards/', SPEC],
     },
     to: { path: '^app/models/' },
+  },
+  {
+    name: 'guard-imports-only-account-model',
+    comment:
+      'a guard imports the account model and no other: `GuardContract<User>` returns it and the token provider lives on it (architecture.md §2)',
+    severity: 'error',
+    from: { path: '^app/guards/', pathNot: SPEC },
+    to: { path: '^app/models/', pathNot: '^app/models/user\\.ts$' },
   },
   {
     name: 'model-imports-only-core',

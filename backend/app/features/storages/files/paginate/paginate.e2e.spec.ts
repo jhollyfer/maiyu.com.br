@@ -1,3 +1,4 @@
+import emitter from '@adonisjs/core/services/emitter'
 import { test } from '@japa/runner'
 import { DateTime } from 'luxon'
 
@@ -13,6 +14,7 @@ import {
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { QueryCount } from '#tests/query-count-fixtures'
 import { storageRow } from '#tests/storages-fixtures'
 
 const StoragesPage = ResponseRule.paginated(StoragesFileShowResponse)
@@ -144,6 +146,38 @@ test.group('storages > listagem', (group) => {
 
     response.assertStatus(422)
     assert.property(body(response, ErrorEnvelope).errors, 'sort')
+  })
+
+  // The cost of the listing is locked (#382): two rows or twenty, the count is the same, and a
+  // refused query stops before the page is read.
+  test('the listing costs 5 queries, whatever the number of rows', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+    await storageRow()
+    await storageRow()
+
+    await QueryCount.assert(
+      assert,
+      emitter,
+      () => client.get('/storages').cookies(session),
+      5,
+    )
+  })
+
+  test('a refused ?sort costs 3 queries, before any select', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+
+    await QueryCount.assert(
+      assert,
+      emitter,
+      () => client.get('/storages?sort=path').cookies(session),
+      3,
+    )
   })
 
   test('without a session responds 401', async ({ client }) => {

@@ -95,13 +95,19 @@ senha, e-mail, papel ou status apaga as sessões da conta.
 
 ## 4. Autorização
 
-As rotas do site são públicas e de leitura. Na API, `/storages` exige sessão e a documentação
-(`/openapi.json`, `/documentation`) exige papel de staff. Perfis: `ADMINISTRATOR` (o dono) e `MEMBER`,
-que nenhuma rota cria hoje (`shared/src/enums/user-role.ts`).
+O site (frontend) é todo público e de leitura. Na API há quatro áreas:
+
+- `/storefront/*`, sem sessão: hoje só `POST /storefront/contacts`, a única escrita anônima, declarada em `backend/app/core/openapi/public-routes.ts`.
+- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, a única barreira de papel (a regra mora numa só, sem policy por registro). Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota).
+- `/account/profile`, com sessão e sem papel: só a própria conta, com a senha atual em toda troca.
+- `/storages` e a documentação (`/openapi.json`, `/documentation`): `/storages` exige sessão e a documentação exige papel de staff.
+
+Perfis: `ADMINISTRATOR` (o dono) e `MEMBER`, que nenhuma rota cria hoje (`shared/src/enums/user-role.ts`).
 
 ## 5. Entrada e saída
 
 - O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada à mão em `lib/blog-search.ts`. A API valida a requisição com VineJS (`shared/` e validators do backend).
+- `POST /storefront/contacts` valida na API (nome 1 a 120, e-mail até 254, mensagem 10 a 5000, idioma `pt-BR`, `en` ou `es`), tem o honeypot `website` (preenchido, responde 201 igual ao sucesso e não grava) e limite de 5 envios por hora por IP (429 no sexto). Escrita de outra origem fora de `CORS_ORIGINS` é 403. O log nunca leva nome, e-mail nem mensagem.
 - Upload só na API, multipart assinado e com sessão; o site não envia arquivo.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLd` do kit escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
 
@@ -137,10 +143,10 @@ Pendências conhecidas:
 
 | Dado | Finalidade | Base legal | Retenção | Exclusão |
 |---|---|---|---|---|
+| nome, e-mail, mensagem e idioma do formulário de contato (`contacts`) | responder a quem escreveu | consentimento do titular, que envia a mensagem pedindo a resposta (LGPD art. 7º, I) | 12 meses a partir de `created_at`, respondido ou não | `DELETE /administrator/contacts/:id` a pedido do titular, e o comando `node ace contacts:prune`, que apaga de vez o que passou de 12 meses |
 | e-mail, nome e hash da senha do dono, no `users` da API | acesso do dono | Não se aplica: dado do operador, não de titular externo | enquanto a conta existir | arquivar a conta apaga as sessões |
-| nenhum dado de visitante: o site não tem formulário | nenhuma | Não se aplica: sem tratamento | não há | não há |
 
-O contato por e-mail e WhatsApp acontece fora do site, nos serviços do próprio visitante.
+O expurgo roda como tarefa agendada do Coolify (`ARCHITECTURE.md` §9.1). Não há lixeira: apagar é de vez. A API não envia e-mail ao dono: ele lê a caixa de entrada no painel e responde do próprio e-mail. O contato por e-mail e WhatsApp também acontece fora do site, nos serviços do próprio visitante.
 
 ## 9. Checklist de revisão
 

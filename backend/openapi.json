@@ -16,11 +16,568 @@
       "description": "Entrada, saída e renovação da sessão. O par de tokens viaja em cookies `httpOnly`, então estas rotas respondem `204` sem corpo."
     },
     {
+      "name": "Conta",
+      "description": "A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um dos dois exige a senha atual e derruba todas as sessões da conta."
+    },
+    {
       "name": "Arquivos",
       "description": "Upload em três passos: o `POST` abre e assina as URLs das partes, o navegador manda os bytes direto ao bucket e o `complete` confirma."
+    },
+    {
+      "name": "Contato (vitrine)",
+      "description": "O formulário de contato do site. É a única escrita sem sessão: guarda a mensagem para a equipe responder, com limite por IP e uma armadilha para robôs."
+    },
+    {
+      "name": "Contatos (painel)",
+      "description": "A caixa de entrada do dono: lista as mensagens do site, abre uma, marca como respondida e apaga de vez. Exige sessão com papel de equipe."
     }
   ],
   "paths": {
+    "/account/profile": {
+      "get": {
+        "operationId": "accountProfileShow",
+        "summary": "Ver a própria conta",
+        "tags": [
+          "Conta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileShowResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AccountProfileShowError"
+                }
+              }
+            }
+          }
+        },
+        "description": "A conta de quem está na sessão, seja qual for o papel: id, nome, e-mail e papel, nunca a senha nem o hash. Não há identificador no caminho: o escopo vem sempre do cookie.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ]
+      },
+      "put": {
+        "operationId": "accountProfileUpdate",
+        "summary": "Trocar nome ou senha",
+        "tags": [
+          "Conta"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountProfileUpdateResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Senha atual incorreta · A nova senha deve ser diferente da atual",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422CurrentPasswordInvalidPasswordSameAsCurrentValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AccountProfileUpdateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Troca o nome, a senha ou os dois. O corpo precisa de `name` ou `password`, e trocar qualquer um exige `currentPassword`: o cookie prova a sessão, não a pessoa, e sem isso um cookie roubado trocaria a senha do dono. Senha atual errada responde `422` no campo `currentPassword`; senha nova igual à atual responde `422` `PASSWORD_SAME_AS_CURRENT` no campo `password`.\n\nTrocar a senha **derruba todas as sessões da conta**, inclusive a que fez esta chamada, na mesma transação da gravação; a resposta `200` já limpa os cookies, e o dono entra de novo com a senha nova. Trocar só o nome responde `200` e mantém as sessões e os cookies.\n\nLimite de 10 trocas por 15 minutos por usuário. O e-mail e o papel não mudam por aqui.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountProfileUpdateBody"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/administrator/contacts": {
+      "get": {
+        "operationId": "administratorContactsPaginate",
+        "summary": "Listar contatos",
+        "tags": [
+          "Contatos (painel)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "meta": {
+                      "$ref": "#/components/schemas/PaginationMeta"
+                    },
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/AdministratorContactsPaginateItem"
+                      }
+                    }
+                  },
+                  "required": [
+                    "meta",
+                    "data"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: ADMINISTRATOR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AdministratorContactPaginateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "A caixa de entrada do painel: as mensagens do formulário do site, da mais recente para a mais antiga. A ordem é fixa, por isso não há `?sort`.\n\n`?search` procura no nome e no e-mail, sem diferenciar maiúsculas. `?status` aceita pending ou answered: `pending` traz o que ainda não foi respondido e `answered` o que já foi.\n\nPadrão: página 1, 20 por página.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-roles": [
+          "ADMINISTRATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "pending",
+                "answered"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "/administrator/contacts/{id}": {
+      "get": {
+        "operationId": "administratorContactsShow",
+        "summary": "Detalhar contato",
+        "tags": [
+          "Contatos (painel)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministratorContactsShowResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: ADMINISTRATOR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contato não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404ContactNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AdministratorContactShowError"
+                }
+              }
+            }
+          }
+        },
+        "description": "A mensagem inteira, com quem escreveu, o idioma e se já foi respondida (`answeredAt` preenchido). Ler não marca como respondida: quem marca é `POST /administrator/contacts/:id/answer`.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-roles": [
+          "ADMINISTRATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      },
+      "delete": {
+        "operationId": "administratorContactsDelete",
+        "summary": "Remover contato",
+        "tags": [
+          "Contatos (painel)"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: ADMINISTRATOR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contato não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404ContactNotFound"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AdministratorContactDeleteError"
+                }
+              }
+            }
+          }
+        },
+        "description": "**Irreversível**: apaga a linha do banco, que guarda dado pessoal (nome e e-mail de quem escreveu). É também a forma de atender o pedido de exclusão do titular, sem esperar os 12 meses da guarda.\n\nNão há lixeira: o contato respondido ou pendente sai da mesma forma. Privilégio da equipe.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-roles": [
+          "ADMINISTRATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
+    "/administrator/contacts/{id}/answer": {
+      "post": {
+        "operationId": "administratorContactsAnswer",
+        "summary": "Marcar contato como respondido",
+        "tags": [
+          "Contatos (painel)"
+        ],
+        "responses": {
+          "200": {
+            "description": "Sucesso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdministratorContactsAnswerResponse200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: ADMINISTRATOR.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Contato não encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error404ContactNotFound"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Este contato já foi marcado como respondido",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error409ContactAlreadyAnswered"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AdministratorContactAnswerError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Marca a mensagem como respondida e devolve o contato com `answeredAt` no instante da chamada. **Mão única**: não há como desmarcar, e marcar de novo responde `409`, sem mudar o instante da primeira vez.\n\nA resposta ao visitante o dono envia do próprio e-mail: a API só registra que ela foi dada. Duas chamadas simultâneas para o mesmo contato dão um `200` e um `409`.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "x-roles": [
+          "ADMINISTRATOR"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ]
+      }
+    },
     "/authentication/refresh": {
       "post": {
         "operationId": "authenticationSessionsRefresh",
@@ -265,8 +822,9 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
-              "minimum": 1
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
             }
           },
           {
@@ -274,7 +832,7 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "number",
+              "type": "integer",
               "minimum": 1,
               "maximum": 100
             }
@@ -872,6 +1430,73 @@
           }
         ]
       }
+    },
+    "/storefront/contacts": {
+      "post": {
+        "operationId": "storefrontContactsCreate",
+        "summary": "Criar contato",
+        "tags": [
+          "Contato (vitrine)"
+        ],
+        "responses": {
+          "201": {
+            "description": "Recurso criado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorefrontContactsCreateResponse201"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422ValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500StorefrontContactCreateError"
+                }
+              }
+            }
+          }
+        },
+        "description": "O formulário de contato do site. **Pública**: não exige sessão, e por isso é a única escrita anônima da vitrine.\n\nGuarda o nome, o e-mail, a mensagem e o idioma, para a equipe responder a quem escreveu. O dado pessoal é guardado por 12 meses e apagado depois.\n\nResponde `201` só com o recibo (`id` e `createdAt`), sem repetir o que o visitante digitou. O campo `website` é uma armadilha para robôs: preenchido, a resposta é a mesma `201` e nada é gravado, para o robô não aprender que foi barrado.\n\nLimite de 5 envios por hora por IP: o sexto responde `429`.",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorefrontContactsCreateBody"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -900,6 +1525,386 @@
       }
     },
     "schemas": {
+      "AccountProfileShowResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "AccountProfileUpdateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 32,
+            "description": "Requires at least one lowercase letter, one uppercase letter, one digit and one special character.",
+            "allOf": [
+              {
+                "pattern": "[a-z]"
+              },
+              {
+                "pattern": "[A-Z]"
+              },
+              {
+                "pattern": "[0-9]"
+              },
+              {
+                "pattern": "[^a-zA-Z0-9]"
+              }
+            ]
+          },
+          "currentPassword": {
+            "type": "string",
+            "maxLength": 32
+          },
+          "passwordConfirmation": {
+            "type": "string",
+            "description": "Exact repetition of `password`."
+          }
+        },
+        "required": [],
+        "additionalProperties": false
+      },
+      "AccountProfileUpdateResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "ADMINISTRATOR",
+              "MEMBER"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "role"
+        ],
+        "additionalProperties": false
+      },
+      "AdministratorContactsAnswerResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "pt-BR",
+              "es",
+              "en"
+            ]
+          },
+          "answeredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "message",
+          "locale",
+          "answeredAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
+      "AdministratorContactsPaginateItem": {
+        "type": "object",
+        "properties": {
+          "meta": {
+            "$ref": "#/$defs/PaginationMeta"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "email": {
+                  "type": "string"
+                },
+                "message": {
+                  "type": "string"
+                },
+                "locale": {
+                  "type": "string",
+                  "enum": [
+                    "pt-BR",
+                    "es",
+                    "en"
+                  ]
+                },
+                "answeredAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "createdAt": {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                },
+                "updatedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "email",
+                "message",
+                "locale",
+                "answeredAt",
+                "createdAt",
+                "updatedAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "meta",
+          "data"
+        ],
+        "additionalProperties": false,
+        "$defs": {
+          "PaginationMeta": {
+            "type": "object",
+            "properties": {
+              "total": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "perPage": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "currentPage": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "lastPage": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "firstPage": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+              },
+              "firstPageUrl": {
+                "type": "string"
+              },
+              "lastPageUrl": {
+                "type": "string"
+              },
+              "nextPageUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "previousPageUrl": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "total",
+              "perPage",
+              "currentPage",
+              "lastPage",
+              "firstPage",
+              "firstPageUrl",
+              "lastPageUrl",
+              "nextPageUrl",
+              "previousPageUrl"
+            ],
+            "additionalProperties": false,
+            "description": "Metadados da página, como o paginator do Lucid os devolve."
+          }
+        }
+      },
+      "AdministratorContactsShowResponse200": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "locale": {
+            "type": "string",
+            "enum": [
+              "pt-BR",
+              "es",
+              "en"
+            ]
+          },
+          "answeredAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          },
+          "updatedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email",
+          "message",
+          "locale",
+          "answeredAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "additionalProperties": false
+      },
       "AuthenticationSessionsSignInBody": {
         "type": "object",
         "properties": {
@@ -1008,6 +2013,74 @@
           "code"
         ]
       },
+      "Error403AccessDenied": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              403
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCESS_DENIED"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error404ContactNotFound": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              404
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CONTACT_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
       "Error404StorageNotFound": {
         "type": "object",
         "properties": {
@@ -1026,6 +2099,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "STORAGE_NOT_FOUND"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error409ContactAlreadyAnswered": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              409
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CONTACT_ALREADY_ANSWERED"
             ]
           },
           "errors": {
@@ -1109,6 +2216,43 @@
           "message",
           "status",
           "code"
+        ]
+      },
+      "Error422CurrentPasswordInvalidPasswordSameAsCurrentValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "CURRENT_PASSWORD_INVALID",
+              "PASSWORD_SAME_AS_CURRENT",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
         ]
       },
       "Error422StorageContentMismatchStorageSizeInvalidStorageSizeMismatchStorageTypeUnsupportedValidationError": {
@@ -1203,6 +2347,210 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "TOO_MANY_REQUESTS"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AccountProfileShowError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCOUNT_PROFILE_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AccountProfileUpdateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCOUNT_PROFILE_UPDATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AdministratorContactAnswerError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ADMINISTRATOR_CONTACT_ANSWER_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AdministratorContactDeleteError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ADMINISTRATOR_CONTACT_DELETE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AdministratorContactPaginateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ADMINISTRATOR_CONTACT_PAGINATE_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AdministratorContactShowError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ADMINISTRATOR_CONTACT_SHOW_ERROR"
             ]
           },
           "errors": {
@@ -1543,6 +2891,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "STORAGES_FILE_SHOW_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500StorefrontContactCreateError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "STOREFRONT_CONTACT_CREATE_ERROR"
             ]
           },
           "errors": {
@@ -2299,6 +3681,64 @@
           "updatedAt",
           "deletedAt",
           "url"
+        ],
+        "additionalProperties": false
+      },
+      "StorefrontContactsCreateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "format": "email",
+            "maxLength": 254
+          },
+          "message": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000
+          },
+          "locale": {
+            "enum": [
+              "pt-BR",
+              "es",
+              "en"
+            ]
+          },
+          "website": {
+            "type": "string",
+            "maxLength": 2048
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "message",
+          "locale"
+        ],
+        "additionalProperties": false
+      },
+      "StorefrontContactsCreateResponse201": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+          }
+        },
+        "required": [
+          "id",
+          "createdAt"
         ],
         "additionalProperties": false
       }

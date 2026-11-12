@@ -60,7 +60,7 @@ O `src/start.ts` e o cliente `http.ts` existem, do kit (`_standards/DECISIONS.md
 
 ## 4. Módulos (features)
 
-Backend (`backend/app/features/`), todo do kit da régua:
+Backend (`backend/app/features/`): o kit da régua e o contato do site:
 
 | Módulo | Rotas | Quem |
 |---|---|---|
@@ -68,6 +68,9 @@ Backend (`backend/app/features/`), todo do kit da régua:
 | `authentication/sessions` | `POST /authentication/{sign-in,sign-out,refresh}` | o dono |
 | `storages/files` | `/storages` (abrir, partes, confirmar, listar, ver, baixar, apagar) | sessão |
 | `documentation` | `GET /openapi.json`, `GET /documentation` | papel de staff |
+| `account/profile` | `GET /account/profile`, `PUT /account/profile` | qualquer papel, com sessão |
+| `storefront/contacts` | `POST /storefront/contacts` | visitante, sem sessão |
+| `administrator/contacts` | `GET /administrator/contacts`, `GET /administrator/contacts/:id`, `POST /administrator/contacts/:id/answer`, `DELETE /administrator/contacts/:id`; mais o comando `contacts:prune` | papel de staff |
 
 Frontend: o site tem um grupo de rotas, `_public`.
 
@@ -82,7 +85,7 @@ Frontend: o site tem um grupo de rotas, `_public`.
 | `/sitemap.xml` | `routes/sitemap[.]xml.ts` | buscadores |
 | qualquer outra | `_public/$.tsx` | 404 |
 
-Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquivo enviado), ambas do kit.
+Entidades de domínio do backend: `user` (a conta do dono, que troca nome e senha por `update` e marca a revogação das sessões em `credentials()`) e `storage` (o arquivo enviado), do kit, e `contact` (a mensagem do formulário, que nasce pendente e tem uma só transição, `answer`).
 
 ### 4.1 Linguagem do domínio
 
@@ -96,7 +99,7 @@ Entidades de domínio do backend: `user` (a conta do dono) e `storage` (o arquiv
 
 ## 5. Modelo de dados
 
-Banco da API (`backend/database/migrations/`, todas do kit):
+Banco da API (`backend/database/migrations/`, as do kit e a de `contacts`):
 
 | Tabela | O que guarda |
 |---|---|
@@ -105,6 +108,7 @@ Banco da API (`backend/database/migrations/`, todas do kit):
 | `rate_limits` | contadores dos limites nomeados de `start/limiter.ts` |
 | `consumed_refresh_tokens` | refresh já usado, para detectar reuso e revogar a família da sessão |
 | `storages` | metadados do arquivo no bucket: nome, tipo, tamanho, estado do upload multipart |
+| `contacts` | a mensagem do formulário de contato: nome (120), e-mail (254), mensagem, idioma, `answered_at` (nulo é pendente), `created_at`; índices em `created_at` e `answered_at`; sem lixeira |
 
 O conteúdo do site continua em constantes tipadas em `frontend/src/lib/` (`projects`, artigos de
 `articles.ts`, `JOBS`), com o tipo de cada um no próprio arquivo.
@@ -135,6 +139,22 @@ trocada). Sessão por par de tokens opacos em cookie `httpOnly` (guard `cookie-a
 com refresh rotativo e checagem de origem em toda escrita. Mudar senha, e-mail, papel ou status da
 conta, ou arquivá-la, apaga as sessões dela na mesma transação do save. Papéis do esqueleto do kit em `shared/src/enums/user-role.ts`:
 `ADMINISTRATOR`, que é a lista de staff, e `MEMBER`, o papel menos privilegiado, que nenhuma rota cria hoje.
+
+Troca de nome e de senha (`PUT /account/profile`, `.specs/features/conta/`): o dono ou qualquer conta
+com sessão troca o próprio nome e a própria senha, sem `role`, e a rota não recebe id: o escopo é o
+`actor` do cookie. O corpo precisa de `name` (1 a 120) ou `password`, e trocar qualquer um exige
+`currentPassword` (422 no campo `currentPassword` se errada, antes de qualquer outra regra); a senha
+nova segue o `Rule.password()` do `shared/`, com confirmação, e igual à atual é 422
+`PASSWORD_SAME_AS_CURRENT` no campo `password`. A troca de e-mail não está nesta entrega: a `backend.md`
+§7 item 7 manda confirmar o endereço novo por link, com aviso ao antigo, e o bloco de e-mail ainda não
+existe (decisão do dono; o corpo não aceita `email`). Quando muda a senha, a entidade `User` marca a
+revogação, e o `UserRepository.save` grava a linha e chama `SessionRepository.revokeAll` na mesma
+`UnitOfWork`: ou ficam a senha antiga e as sessões, ou nenhuma das duas. A revogação inclui a sessão
+que fez a chamada, então a resposta 200 limpa os cookies (`SessionCookie.clear`) e o dono entra de novo
+com a senha nova; o cookie de antes responde 401. Trocar só o nome não é troca de credencial: 200, sem
+revogar e sem limpar cookie. O limite é de 10 trocas por 15 minutos por usuário (`accountThrottle` do
+kit, em `start/limiter.base.ts`, com bloqueio de 15 minutos), porque a rota compara a senha atual e
+seria um oráculo de senha para quem roubasse o cookie.
 
 ## 9. Ambientes
 
@@ -188,6 +208,9 @@ Dois recursos *Application* no Coolify, os dois com origem no repositório priva
 - Secrets do repositório no GitHub (`DOCKERHUB_*`, `COOLIFY_*`, `VITE_SITE_URL`) deixam de existir
   quando os workflows saem (`_standards/DECISIONS.md` #368, #369); o dono os apaga em Settings, Secrets
   and variables, Actions.
+- Tarefa agendada da API: `node ace contacts:prune`, todo dia, no container da API (*Scheduled Tasks*
+  do recurso da API no Coolify). A aplicação não tem agendador interno; sem a tarefa a guarda de 12
+  meses do contato (`SECURITY.md` §8) não se cumpre. Rodar duas vezes é inofensivo, e `--dry-run` só conta.
 
 ## 10. Escala e limites conhecidos
 

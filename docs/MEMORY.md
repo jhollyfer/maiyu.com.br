@@ -61,6 +61,22 @@ sync, e a migration de `users` segue a do kit (papéis `ADMINISTRATOR` e `MEMBER
 storage rodou contra o MinIO local, ambiente declarado que não vale como prova de PR até a régua
 escolher o substituto. O RB.3 ficou no que o kit traz; rota de conta é proposta ao dono (R2.10).
 
+Contato do backend (R2.10, spec `.specs/features/contato/`, branch `feat/backend-contato-conta`) feito:
+`POST /storefront/contacts` (público, honeypot, 5 por hora por IP), `GET /administrator/contacts`,
+`GET /administrator/contacts/:id`, `POST /administrator/contacts/:id/answer` (mão única, 409),
+`DELETE /administrator/contacts/:id` e o comando `contacts:prune` (12 meses). Aviso por e-mail ao dono
+ficou fora, por decisão do dono. Verde com `shared/` em 79 testes, backend unitário 265 e funcional 194. O formulário do frontend ainda não envia (R0.3, RB.5 e R3).
+
+Conta do dono no backend (R2.10, spec `.specs/features/conta/`, mesma branch) feita: `GET /account/profile`
+e `PUT /account/profile` (sessão, sem `role`), com troca de nome e de senha exigindo `currentPassword`,
+senha nova pela regra do `Rule` (422 `PASSWORD_SAME_AS_CURRENT` se igual à atual), revogação de todas as
+sessões na mesma `UnitOfWork` do save quando a senha troca (a da chamada inclusive, com cookies limpos na
+200) e limite do kit, 10 por 15 minutos por usuário (`accountThrottle`). Trocar só o nome responde 200 e
+mantém a sessão. A troca de e-mail ficou fora por decisão do dono (sem o link de confirmação da
+`backend.md` §7 item 7): bloqueada até existir o bloco de e-mail. O `Rule.email()` do kit passou a baixar a
+caixa (upstream a8462c8, pelo sync). A funcional prova 200 seguido de 401 para a senha. Falta a
+verificação final da feature; a tela da conta no frontend é a frente F.
+
 Antes da migração, a fase 2 parou com a vitrine reposicionada (tarefas 2.1 e 2.4), sem o serviço de
 aplicativos e a newsletter, e com a rota-curinga respondendo 404 de verdade (`routes/_public/$.tsx`).
 
@@ -74,9 +90,10 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 
 ## Próximos passos
 
-1. PR do backend inicial (#23) em revisão; a PR do frontend vai empilhada sobre ela.
-2. R0.3: formulários desligados com aviso honesto (`DECISIONS.md` #17) até o recurso de contato do
-   backend, que vem numa PR seguinte.
+1. PR do contato e da conta do dono (#25) em revisão; depois do merge dela, o lote multi-tenant
+   (`chore/backend-multi-tenant`), com o painel de contatos no escopo `platform`.
+2. Agendar no Coolify a tarefa `node ace contacts:prune` (`ARCHITECTURE.md` §9.1) antes de o
+   formulário ir ao ar, e ligar o formulário de contato e a tela da conta à API (frente F).
 3. Frente do frontend: R0.1 e as peças do kit que esperavam o backend (router, http, env, page-head,
    sitemap, route-error, Tuyau, start.ts: R1.10, R1.11, RB.5); depois snake_case (R3.5) e #366 (R3.4).
 4. Revisar os quatro artigos do diário e o texto de carreiras: foram escritos pela equipe de agentes

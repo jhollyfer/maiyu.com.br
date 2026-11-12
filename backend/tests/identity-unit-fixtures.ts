@@ -12,10 +12,10 @@ export const PASSWORD = 'Senha@123'
  * The project adds its own doubles; the kit session specs read `users` and `sessions`.
  */
 export function identityDoubles() {
-  return {
-    users: new UserMemoryRepository(),
-    sessions: new SessionMemoryRepository(),
-  }
+  // One session repository for both: saving a credential change revokes through it.
+  const sessions = new SessionMemoryRepository()
+
+  return { users: new UserMemoryRepository(sessions), sessions }
 }
 
 /** The seed options the kit session specs use; the project may add more. */

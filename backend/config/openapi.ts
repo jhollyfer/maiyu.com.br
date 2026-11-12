@@ -38,6 +38,15 @@ const tags: TagRule[] = [
     plural: 'sessões',
   },
   {
+    prefix: '/account',
+    name: 'Conta',
+    description:
+      'A própria conta de quem está na sessão: ver o perfil e trocar e-mail ou senha. Trocar um ' +
+      'dos dois exige a senha atual e derruba todas as sessões da conta.',
+    singular: 'perfil',
+    plural: 'perfis',
+  },
+  {
     prefix: '/storages',
     name: 'Arquivos',
     description:
@@ -45,6 +54,24 @@ const tags: TagRule[] = [
       'manda os bytes direto ao bucket e o `complete` confirma.',
     singular: 'arquivo',
     plural: 'arquivos',
+  },
+  {
+    prefix: '/storefront/contacts',
+    name: 'Contato (vitrine)',
+    description:
+      'O formulário de contato do site. É a única escrita sem sessão: guarda a mensagem para a ' +
+      'equipe responder, com limite por IP e uma armadilha para robôs.',
+    singular: 'contato',
+    plural: 'contatos',
+  },
+  {
+    prefix: '/administrator/contacts',
+    name: 'Contatos (painel)',
+    description:
+      'A caixa de entrada do dono: lista as mensagens do site, abre uma, marca como respondida ' +
+      'e apaga de vez. Exige sessão com papel de equipe.',
+    singular: 'contato',
+    plural: 'contatos',
   },
 ]
 
@@ -68,6 +95,8 @@ const openapi = {
  * table, keyed by the controller file name without the suffix. It wins over the
  * mechanism table and the group noun.
  */
-export const ACTION_OVERRIDES: Record<string, string> = {}
+export const ACTION_OVERRIDES: Record<string, string> = {
+  answer: 'Marcar contato como respondido',
+}
 
 export default openapi

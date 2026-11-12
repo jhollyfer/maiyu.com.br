@@ -4,6 +4,32 @@
  */
 
 export const controllers = {
+  account: {
+    profile: {
+      show: {
+        Show: () => import('#features/account/profile/show/show.controller'),
+      },
+      update: {
+        Update: () => import('#features/account/profile/update/update.controller'),
+      },
+    },
+  },
+  administrator: {
+    contacts: {
+      answer: {
+        Answer: () => import('#features/administrator/contacts/answer/answer.controller'),
+      },
+      delete: {
+        Delete: () => import('#features/administrator/contacts/delete/delete.controller'),
+      },
+      paginate: {
+        Paginate: () => import('#features/administrator/contacts/paginate/paginate.controller'),
+      },
+      show: {
+        Show: () => import('#features/administrator/contacts/show/show.controller'),
+      },
+    },
+  },
   authentication: {
     sessions: {
       refresh: {
@@ -52,6 +78,13 @@ export const controllers = {
       },
       show: {
         Show: () => import('#features/storages/files/show/show.controller'),
+      },
+    },
+  },
+  storefront: {
+    contacts: {
+      create: {
+        Create: () => import('#features/storefront/contacts/create/create.controller'),
       },
     },
   },

@@ -155,7 +155,9 @@ type MarkableField = SchemaTypes & {
  */
 export class Rule {
   static email() {
-    return vine.string().trim().email().maxLength(254)
+    // Lowercase, like the shared pair: `A@x.com` and `a@x.com` are one account, for the
+    // login, the unique column and the sessions an e-mail change revokes.
+    return vine.string().trim().toLowerCase().email().maxLength(254)
   }
 
   /**
@@ -240,8 +242,9 @@ export class Rule {
    */
   static pageFields() {
     return {
-      page: vine.number().min(1).optional(),
-      perPage: vine.number().min(1).max(100).optional(),
+      // Whole numbers with a ceiling: `page=1.5` or `page=1e308` would reach the offset (#382).
+      page: vine.number().withoutDecimals().min(1).max(10_000).optional(),
+      perPage: vine.number().withoutDecimals().min(1).max(100).optional(),
     }
   }
 

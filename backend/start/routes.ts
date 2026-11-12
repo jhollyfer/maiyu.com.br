@@ -10,9 +10,13 @@
 
 import router from '@adonisjs/core/services/router'
 
+import { STAFF_USER_ROLES } from '@maiyu/shared'
+
 import { controllers } from '#generated/controllers'
 import { middleware } from '#start/kernel'
+import { contactThrottle } from '#start/limiter'
 import {
+  accountThrottle,
   refreshThrottle,
   signInAccountThrottle,
   signInThrottle,
@@ -98,3 +102,70 @@ router
   })
   .prefix('storages')
   .use(middleware.auth())
+
+/**
+ * The owner's own account, for any signed-in role: the group carries `auth` and no `role`,
+ * because the scope is the session's account and never an identifier in the path.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .get('/', [controllers.account.profile.show.Show])
+          .as('account.profile.show')
+        // Changing e-mail or password checks the current password, so it carries its own ceiling.
+        router
+          .put('/', [controllers.account.profile.update.Update])
+          .as('account.profile.update')
+          .use(accountThrottle)
+      })
+      .prefix('profile')
+  })
+  .prefix('account')
+  .use(middleware.auth())
+
+/**
+ * The public area: no session, so every write here is declared in
+ * `core/openapi/public-routes.ts` and carries its own limiter.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .post('/', [controllers.storefront.contacts.create.Create])
+          .as('storefront.contacts.create')
+          .use(contactThrottle)
+      })
+      .prefix('contacts')
+  })
+  .prefix('storefront')
+
+/**
+ * The panel: the group carries `auth` and `role`, so a route added here is born protected.
+ * Whoever has a session but no staff role answers 403 before reaching any controller.
+ */
+router
+  .group(() => {
+    router
+      .group(() => {
+        router
+          .get('/', [controllers.administrator.contacts.paginate.Paginate])
+          .as('administrator.contacts.paginate')
+        router
+          .get(':id', [controllers.administrator.contacts.show.Show])
+          .as('administrator.contacts.show')
+        router
+          .post(':id/answer', [
+            controllers.administrator.contacts.answer.Answer,
+          ])
+          .as('administrator.contacts.answer')
+        router
+          .delete(':id', [controllers.administrator.contacts.delete.Delete])
+          .as('administrator.contacts.delete')
+      })
+      .prefix('contacts')
+  })
+  .prefix('administrator')
+  .use([middleware.auth(), middleware.role(STAFF_USER_ROLES)])
