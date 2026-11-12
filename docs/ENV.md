@@ -10,7 +10,7 @@ O `backend/` (API AdonisJS, `ARCHITECTURE.md` §1) lê as chaves do `backend/.en
 boot por `backend/start/env.ts`; a seção 1.1 diz cada uma. O frontend lê `VITE_API_URL`, `VITE_SITE_URL`
 e `VITE_UPLOAD_MAX_SIZE` no build (`src/env.ts`) e `SITE_ENV`, `SERVER_API_URL`, `STORAGE_PUBLIC_URL` e
 `SECURITY_CONTACT` por requisição no servidor (`src/lib/server-env.ts`, `src/server.ts`). O
-`frontend/.env.example` é o modelo fechado da casa e traz chaves que o site ainda não usa
+`frontend/.env.example` é o modelo fechado da casa, idêntico ao de `_templates/frontend/.env.example`, e traz chaves que o site ainda não usa
 (`DECISIONS.md` #9); a seção 1.2 diz, chave a chave, o que vale aqui.
 
 ## 1. Variáveis
@@ -25,7 +25,7 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `NODE_ENV` | api | sim | não | `development`, `production` ou `test` | `development` |
 | `PORT` | api | sim | não | porta HTTP | `3333` |
 | `HOST` | api | sim | não | interface de escuta; `0.0.0.0` em container | `localhost` |
-| `TZ` | api | não | não | fuso do processo, `UTC` em todo ambiente | `UTC` |
+| `TZ` | api | não | não | fuso do processo e da sessão do banco: `America/Eirunepe` em todo ambiente, e no recurso da API no Coolify (`_standards/DECISIONS.md` #393). O `backend/.env.example` ainda traz `UTC`, pendente de ressincronizar com o modelo | `America/Eirunepe` |
 | `LOG_LEVEL` | api | sim | não | nível do logger | `info` |
 | `APP_KEY` | api | sim | **sim** | chave de cifra, gerada por `node ace generate:key` | `<segredo>` |
 | `APP_SERVER_URL` | api | sim | não | endereço público da API | `http://localhost:3333` |
@@ -63,6 +63,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 | `SERVER_API_URL` | web | não | não | endereço da API visto pelo SSR; sem uso aqui | `http://api:3333` |
 | `VITE_SITE_URL` | web | sim, no build | não | origem pública do site, sem barra no fim: canônico, hreflang, sitemap, `robots.txt` e JSON-LD; `SITE_URL` de `lib/site.ts` lê dela. Produção em `frontend/.env.production` (`https://maiyu.com.br`) | `http://localhost:3000` |
 | `SITE_ENV` | web | sim em produção | não | onde o site roda, lida pelo `server.ts` a cada requisição; só `production` deixa indexar, ausente ou outro valor responde `X-Robots-Tag: noindex, nofollow` e `Disallow: /` | `development` |
+| `TZ` | web | não | não | fuso do processo do Nitro no recurso do Coolify: `America/Eirunepe` (`_standards/DECISIONS.md` #393); o código formata pelo `TIME_ZONE` do kit e não lê esta variável | `America/Eirunepe` |
 | `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
@@ -90,9 +91,17 @@ antes do PR (`_standards/tooling.md` §7). Do backend se versionam só o `.env.e
 `.env.test`; as variáveis de runtime da API de produção se cadastram no recurso do Coolify
 (`_standards/tooling.md` §8.3). O `backend/.adonisjs/server/routes.json` também fica fora: é o arquivo
 de passagem que o Adonis grava a cada boot fora de produção para o dev server ler e apagar; o resto
-de `backend/.adonisjs/` é versionado. Os segredos do
-CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`, `COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL` (`DECISIONS.md` #14). `VITE_SITE_URL` em `https://`, sem barra no fim; vazios, o build de publicação reprova
-(`ARCHITECTURE.md` §9.1).
+de `backend/.adonisjs/` é versionado. O repositório não tem secret de
+deploy: sem GitHub Actions de entrega, o Coolify constrói do Git e os valores moram no painel
+(`_standards/tooling.md` §8.3, `_standards/DECISIONS.md` #368). `VITE_SITE_URL` e `VITE_API_URL` são
+públicos e vêm de `frontend/.env.production`, em `https://` e sem barra no fim (`ARCHITECTURE.md` §9.1).
+
+**Passo do dono, fora do repositório:** apagar os secrets do Actions (Settings, Secrets and variables,
+Actions) que os workflows removidos usavam: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`, `COOLIFY_URL`,
+`COOLIFY_TOKEN`, `COOLIFY_APP_UUID` e `VITE_SITE_URL`. Antes de apagar, no painel do Coolify, ligar o
+*Auto Deploy* do recurso do site com *Dockerfile Location* `/frontend/Dockerfile-production` e o
+*Health Check* do painel vazio (`ARCHITECTURE.md` §9.1); só então apagar os secrets e revogar o token no
+Docker Hub.
 
 ## 4. Por ambiente
 
@@ -101,7 +110,7 @@ CI/CD ficam nos secrets do repositório (aba Secrets, não Variables): `DOCKERHU
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
 | Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `maiyu_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
-| Produção | painel do Coolify, um recurso por app | API: as de runtime da seção 1.1, nunca no repositório; site: `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores); healthcheck e porta também ficam no painel |
+| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe` e `CORS_ORIGINS=https://maiyu.com.br`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
 
 ## 5. Primeira configuração
 

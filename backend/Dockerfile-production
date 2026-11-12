@@ -15,13 +15,12 @@ FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4
 
 WORKDIR /app
 
-# pnpm through the install page's path, without Corepack; on first use it
-# switches to the `devEngines.packageManager` version of the root, the same as CI
-# (_doc-lib/pnpm.md#installation, https://pnpm.io/installation). The installer
-# writes to `PNPM_HOME`, which must be on the PATH.
-ENV PNPM_HOME=/pnpm \
-    PATH=/pnpm/bin:$PATH
-RUN npx --yes get-pnpm
+# pnpm by npm, as in the academy (DECISIONS.md #395), and not by Corepack: pnpm 12 changed
+# the package layout and the Corepack bundled with Node 24 looks for the binary at the old
+# path and fails with MODULE_NOT_FOUND. On first use pnpm switches to the
+# `devEngines.packageManager` version of the root, so the version lives in one place
+# (_doc-lib/pnpm.md#installation, https://pnpm.io/installation).
+RUN npm install -g pnpm
 
 # Manifests before the code, so the install stays cached while only the
 # code changes. `pnpm-workspace.yaml` carries `allowBuilds`: without it the install
@@ -30,6 +29,9 @@ RUN npx --yes get-pnpm
 # `--frozen-lockfile` checks all of them; the bracket makes it a wildcard, which BuildKit
 # lets match nothing when the project has no `frontend/`.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+# The root `prepare` (`node .husky/install.mjs`) runs on the filtered install; without the
+# script the install dies on MODULE_NOT_FOUND before it reads `HUSKY=0` (relato do maiyu.com.br).
+COPY .husky/install.mjs .husky/
 COPY backend/package.json backend/
 COPY frontend/package.jso[n] frontend/
 COPY shared/package.json shared/
@@ -83,6 +85,9 @@ FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4
 
 WORKDIR /app
 
+# `curl` for the healthcheck, as in the academy image (`DECISIONS.md` #395).
+RUN apk add --no-cache curl
+
 # `build/` brings `bin/`, `config/`, `database/` and the `openapi.json` declared in
 # `metaFiles` - the `GET /openapi.json` route reads that file from disk. The
 # `node_modules` comes from the deploy: production only, no assembler, eslint or typescript.
@@ -99,12 +104,11 @@ ENV NODE_ENV=production \
     PORT=3333 \
     HOST=0.0.0.0
 
-# BusyBox `wget` ships with `node:24-alpine`; `curl` does not, and an `apk add`
-# here only for the healthcheck breaks the build when the Alpine mirror is down
-# (`tooling.md` section 8.2, `DECISIONS.md` #262). The image healthcheck is the
-# one Coolify uses (`DECISIONS.md` #328).
+# The orchestrator must know the app answers, not only that the process is alive. The
+# route is `/health-check` and never `/`, and it touches no database. The image
+# healthcheck is the one Coolify uses (`tooling.md` section 8.2, `DECISIONS.md` #328, #395).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD wget -q -O /dev/null http://127.0.0.1:3333/health-check || exit 1
+    CMD curl -fsS http://127.0.0.1:3333/health-check || exit 1
 
 # No ENTRYPOINT: migrations do not run on container start. What migrates is the
 # platform's deploy command (`node ace migration:run --force`; on Coolify the
