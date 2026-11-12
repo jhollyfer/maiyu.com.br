@@ -8,6 +8,7 @@ import { ClockFake } from '#services/clock/clock.fake'
 import { contactRow } from '#tests/contacts-fixtures'
 import { resetDatabase } from '#tests/http-fixtures'
 import { Stored } from '#tests/stored-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 const NOW = DateTime.fromISO('2026-11-05T15:00:00Z', { zone: 'utc' })
 
@@ -52,6 +53,21 @@ test.group('contacts > prune', (group) => {
     assert.isNull(await Stored.contact(pending.id))
     assert.isNull(await Stored.contact(answered.id))
     assert.isNull(await Stored.contact(dayOver.id))
+  })
+
+  // A system process has no tenant scope (DECISIONS.md #397): the sweep reaches every tenant.
+  test('deletes old contacts of every tenant, not only the default one', async ({
+    assert,
+  }) => {
+    const other = await Tenants.create()
+    const elsewhere = await contactRow({ ...created(13), tenantId: other.id })
+    const kept = await contactRow({ ...created(1), tenantId: other.id })
+
+    const command = await prune()
+
+    command.assertSucceeded()
+    assert.isNull(await Stored.contact(elsewhere.id))
+    assert.isNotNull(await Stored.contact(kept.id))
   })
 
   test('keeps contacts of 12 months or less', async ({ assert }) => {
