@@ -252,6 +252,8 @@
   "kit_restore": "Restaurar",
   "kit_retry": "Intentar de nuevo",
   "kit_route_error_description": "Esta pantalla no pudo cargarse. Volver a intentarlo suele bastar.",
+  "kit_row_remove_description": "La eliminación es definitiva y no se puede deshacer.",
+  "kit_row_remove_title": "¿Eliminar este registro?",
   "kit_save": "Guardar",
   "kit_server_error_description": "Esta pantalla no se pudo cargar. Intentarlo de nuevo suele bastar; si persiste, vuelve al inicio.",
   "kit_server_error_subtitle": "El fallo es nuestro, no tuyo",

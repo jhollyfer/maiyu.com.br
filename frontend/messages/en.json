@@ -252,6 +252,8 @@
   "kit_restore": "Restore",
   "kit_retry": "Try again",
   "kit_route_error_description": "This screen could not load. Trying again usually works.",
+  "kit_row_remove_description": "Deletion is permanent and cannot be undone.",
+  "kit_row_remove_title": "Delete this record?",
   "kit_save": "Save",
   "kit_server_error_description": "This screen could not load. Trying again usually works; if it keeps failing, go back to the home page.",
   "kit_server_error_subtitle": "The fault is ours, not yours",

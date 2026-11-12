@@ -1,4 +1,5 @@
 import app from '@adonisjs/core/services/app'
+import db from '@adonisjs/lucid/services/db'
 import { test } from '@japa/runner'
 
 import {
@@ -9,8 +10,10 @@ import {
 
 import { SESSION_TOKEN } from '#config/session-token'
 import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
+import { EmailChangeRepository } from '#repositories/email-change/email-change.repository'
 import { EmailChangeContract } from '#services/email-change/email-change.contract'
 import { EmailChangeFake } from '#services/email-change/email-change.fake'
+import EmailToken from '#services/email-change/email-token'
 import {
   authenticate,
   body,
@@ -333,6 +336,54 @@ test.group('account/profile > update', (group) => {
       )
       const still = await client.get('/account/profile').cookies(session)
       assert.equal(body(still, AccountProfileShowResponse).email, user.email)
+    } finally {
+      app.container.restore(EmailChangeContract)
+    }
+  })
+
+  test('where the e-mail change is available it is a pending request: 200 with pendingEmail, the token is delivered and only its hash is stored, and the claim works once', async ({
+    client,
+    assert,
+  }) => {
+    const fake = new EmailChangeFake(true)
+    app.container.swap(EmailChangeContract, () => fake)
+    try {
+      const { user, session } = await signInWithFactory(client)
+
+      const response = await client
+        .put('/account/profile')
+        .cookies(session)
+        .json({ email: 'Nova@Mail.com', currentPassword: FACTORY_PASSWORD })
+
+      response.assertStatus(200)
+      const profile = body(response, AccountProfileUpdateResponse)
+      assert.equal(profile.pendingEmail, 'nova@mail.com')
+      assert.equal(profile.email, user.email)
+      assert.lengthOf(fake.delivered, 1)
+      assert.equal(fake.delivered[0]?.to, 'nova@mail.com')
+      const token = fake.delivered[0]?.token ?? ''
+
+      const { rows } = await db.rawQuery<{
+        rows: { new_email: string; token_hash: string }[]
+      }>('select new_email, token_hash from email_changes where user_id = ?', [
+        user.id,
+      ])
+      assert.lengthOf(rows, 1)
+      assert.equal(rows[0]?.new_email, 'nova@mail.com')
+      assert.equal(rows[0]?.token_hash, EmailToken.hash(token))
+      assert.notEqual(rows[0]?.token_hash, token)
+
+      // The container's own binding of the repository (not a double) is what the confirmation reads.
+      const changes = await app.container.make(EmailChangeRepository)
+      const claimed = await changes.claim(
+        user.id,
+        EmailToken.hash(token),
+        new Date(),
+      )
+      assert.equal(claimed?.email, 'nova@mail.com')
+      assert.isNull(
+        await changes.claim(user.id, EmailToken.hash(token), new Date()),
+      )
     } finally {
       app.container.restore(EmailChangeContract)
     }
