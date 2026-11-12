@@ -1,3 +1,4 @@
+import logo512 from '#/assets/brand/logo-512.png'
 import { env } from '#/env'
 
 /**
@@ -21,11 +22,12 @@ export const SITE_TITLE = 'Maiyu'
 export const SITE_URL = env.VITE_SITE_URL
 
 /**
- * A imagem do cartão de link, absoluta porque quem a lê é um rastreador de
- * fora: caminho relativo em `og:image` resolveria contra o domínio de quem
- * raspa.
+ * A imagem da marca nos dados estruturados, absoluta porque quem a lê é um rastreador de
+ * fora: caminho relativo resolveria contra o domínio de quem raspa. É a mesma `logo-512.png`
+ * de `assets/brand/` que o `pageHead` do kit usa no `og:image` (`frontend.md` §9.7), e não um
+ * segundo arquivo em `public/`.
  */
-export const SITE_IMAGE = `${SITE_URL}/og-image.png`
+export const SITE_IMAGE = new URL(logo512, SITE_URL).href
 
 /** O caminho vira endereço absoluto, para `canonical` e `og:url`. */
 export function absoluteUrl(path: string): string {

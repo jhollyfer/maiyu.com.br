@@ -1,7 +1,7 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
 
 import { NotFoundPage } from '#/components/common/route-status/not-found-page'
-import { SITE_TITLE } from '#/lib/site'
+import { pageHead } from '#/lib/page-head'
 import { m } from '#/paraglide/messages'
 
 /** A tela do endereço que não existe, dentro da casca pública. */
@@ -34,11 +34,13 @@ export const Route = createFileRoute('/_public/$')({
   loader: () => {
     throw notFound()
   },
-  head: () => ({
-    meta: [
-      { title: `${m.kit_not_found_title()} · ${SITE_TITLE}` },
-      { name: 'robots', content: 'noindex' },
-    ],
-  }),
+  // Título, `robots` e canonical saem do `pageHead` como em toda rota pública (`frontend.md` §9.7):
+  // à mão o separador divergia (`·`) e o `robots` ficava sem o `nofollow`.
+  head: ({ params }) =>
+    pageHead({
+      pathname: '/'.concat(params._splat ?? ''),
+      title: m.kit_not_found_title(),
+      noindex: true,
+    }),
   notFoundComponent: NotFound,
 })

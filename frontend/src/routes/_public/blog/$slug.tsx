@@ -29,15 +29,14 @@ export const Route = createFileRoute('/_public/blog/$slug')({
     return article
   },
   head: ({ loaderData, params }) => {
-    if (!loaderData)
-      return {
-        meta: [
-          { title: `${m.blog_article_not_found()} · ${SITE_TITLE}` },
-          { name: 'robots', content: 'noindex' },
-        ],
-      }
-
     const pathname = '/blog/'.concat(params.slug)
+    if (!loaderData)
+      return pageHead({
+        pathname,
+        title: m.blog_article_not_found(),
+        noindex: true,
+      })
+
     const title = localized(loaderData.title)
     const description = localized(loaderData.excerpt)
     const image = absoluteUrl(`${PHOTOS[loaderData.photo].src}-1280.webp`)
