@@ -3,11 +3,11 @@ import type * as React from 'react'
 import { Picture } from '#/components/common/picture/picture'
 import type { PicturePlacement } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
-import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { PHOTOS } from '#/lib/photos'
 import type { PhotoKey } from '#/lib/photos'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 type PhotoProps = {
@@ -67,24 +67,23 @@ export function Photo({
       <figcaption className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 text-small text-muted-foreground">
         <span>{localized(photo.caption)}</span>
         {/*
-         * Button from ui/ and not a bare `<a>` (#366). `min-h-11` because the credit
-         * is also a touch target on the phone (44px, WCAG 2.5.5); the text size
-         * follows the caption's, not the button's.
+         * The link element itself with `buttonVariants`, and not `Button render={<a/>}`:
+         * Base UI would force `role="button"` and erase the link (#440). `min-h-11` on every
+         * width, not only below `sm`: the `ui/` touch patch (#461) already gives 44px on the
+         * phone, but the credit keeps 44px on the desktop too, as it always had, so the
+         * desktop layout does not move. The text size follows the caption's, not the button's.
          */}
-        <Button
-          variant="link"
-          nativeButton={false}
-          className="h-auto min-h-11 px-0 text-small font-normal text-muted-foreground hover:text-foreground"
-          render={
-            <a
-              href={photo.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer license"
-            >
-              {m.photo_credit({ author: photo.author, license: photo.license })}
-            </a>
-          }
-        />
+        <a
+          href={photo.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer license"
+          className={cn(
+            buttonVariants({ variant: 'link' }),
+            'h-auto min-h-11 px-0 text-small font-normal text-muted-foreground hover:text-foreground',
+          )}
+        >
+          {m.photo_credit({ author: photo.author, license: photo.license })}
+        </a>
       </figcaption>
     </figure>
   )

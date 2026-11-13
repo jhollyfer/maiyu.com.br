@@ -33,7 +33,7 @@ export function FormShellContent({
           would put the fields - password included - in the URL and in the history. */}
       {/* `max-w-3xl`: a text field stretched to 1200px makes the eye cross the
           whole screen to read a name. */}
-      {/* eslint-disable-next-line no-restricted-syntax -- the kit's single real <form>: the registry has no form element, and every screen submits through FormShell */}
+      {/* eslint-disable-next-line no-restricted-syntax -- the registry has no form element: this and PlainForm (sign-in, profile) are the kit's two real <form> */}
       <form
         data-slot="form-shell-content"
         method="post"

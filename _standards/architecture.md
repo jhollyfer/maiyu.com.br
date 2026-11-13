@@ -86,6 +86,8 @@ backend/
 │   │   ├── trusted-proxies.ts       # TRUSTED_PROXIES em lista, validado no boot; igual em todo projeto (_templates/code/, DECISIONS #280)
 │   │   ├── transaction-context.ts   # AsyncLocalStorage da transação, lido por 2+ repositories (domain.md §6)
 │   │   ├── tenant-scope.ts          # o que a requisição lê e escreve entre os tenants (backend.md §4.14, DECISIONS #390)
+│   │   ├── membership-access.ts     # quando uma escrita de vínculo tira acesso e derruba a sessão (backend.md §4.14, DECISIONS #581)
+│   │   ├── credential.ts            # contrato e peças da credencial pública que acha o tenant (backend.md §4.14, DECISIONS #583)
 │   │   ├── validator.ts             # Fastify: reexporta o z de shared/ + regras só do backend; Adonis: o vine do backend (arquivo)
 │   │   ├── validator.unit.spec.ts   # meta-spec dos validators (backend.md §4.4)
 │   │   ├── memory-rows.ts  page-criteria.ts  unique-conflict.ts   # helpers nomeados (DECISIONS #340)
@@ -118,7 +120,7 @@ backend/
 │   │       ├── <nome>.fake.ts       # dublê em memória para unit
 │   │       └── <nome>.unit.spec.ts
 │   ├── policies/<entidade>.policy.ts (+ .unit.spec.ts)   # base comum: session-scoped-policy.base.ts
-│   ├── middleware/<nome>.middleware.ts (+ .e2e.spec.ts)   # inclui private-cache.middleware.ts (Cache-Control com sessão, DECISIONS #339)
+│   ├── middleware/<nome>.middleware.ts (+ .e2e.spec.ts)   # inclui private-cache.middleware.ts (Cache-Control com sessão, DECISIONS #339; credential-tenant.middleware.ts (tenant de código, token ou protocolo, #583)
 │   ├── exceptions/{http.exception.ts, handler.ts}   # HTTPException e fábricas por status (backend.md §4.2); handler → envelope
 │   └── features/
 │       ├── health-check.controller.ts  health-check.controller.e2e.spec.ts   # infra pura, sem módulo (§7)
@@ -128,10 +130,10 @@ backend/
 │       ├── _shared.refusal.base.ts  # base dos tradutores de fato de domínio em HTTPException (DECISIONS #341)
 │       ├── _shared.<tema>-refusal.ts       # refusal usado por 2+ módulos
 │       ├── _shared.<entidade>.presenter.ts # presenter usado por 2+ módulos
+│       ├── _shared.session-cookie.ts       # cookie da sessão (authentication e account), sem I/O (DECISIONS #414)
 │       ├── authentication/{sessions,registrations,invitations,passwords,tenants}/<ação>/   # DECISIONS #339; tenants: vínculos e escolha (#390)
 │       ├── platform/{cities,overview}/<ação>/   # área do dono da plataforma (backend.md §4.14)
 │       ├── storefront/{cities,tenants}/list/    # catálogo público de cidades e clientes da cidade
-│       ├── authentication/_shared.session-cookie.ts
 │       └── <módulo>/                # público ou contexto: administrator, storefront, authentication, account
 │           ├── _shared.<tema>.ts    # só função pura, usada por 2+ recursos do módulo
 │           ├── _shared.<tema>.base.ts   # abstract class de template method de 2+ recursos (backend.md §3)
@@ -302,6 +304,7 @@ frontend/
 ├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4
 ├── messages/{pt-BR,es,en}.json      # chaves kit_* fundidas pelo sync (DECISIONS #343)
 ├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
+├── scripts/{check-ui-patches.mjs, check-ui-patches.test.ts, ui-patches.json}   # kit: cobrança dos patches // casa: de ui/ (frontend.md §6)
 ├── e2e/                             # árvore abaixo
 └── src/
     ├── router.tsx            # getRouter(); getContext() por chamada; declare module Register { router }
@@ -317,12 +320,12 @@ frontend/
     ├── routes/
     │   ├── __root.tsx  health-check.ts  sitemap[.]xml.ts  robots[.]txt.ts   # frontend.md §9.7
     │   ├── _public/{layout.tsx, $.tsx, index.tsx, index.lazy.tsx, -components/, <área>/…}
-    │   ├── _authentication/{layout.tsx, -components/, sign-in/, sign-up/, forgot-password/, reset-password/}{index,index.lazy}.tsx
+    │   ├── _authentication/{layout.tsx, sign-in/, sign-up/, forgot-password/, reset-password/}{index,index.lazy}.tsx   # [painel] layout e sign-in são do kit; as outras telas são do projeto, montadas em AuthShell
     │   ├── _setup/{layout.tsx, <etapa>/…}  # opcional: instalação (lowcodejs) (DECISIONS #356)
     │   └── _private/
-    │       ├── layout.tsx  -use-session-expiry-redirect.ts  -components/{sidebar,header,menu}.tsx   # portão único: sessão
+    │       ├── layout.tsx  -use-session-expiry-redirect.ts  profile/{index,index.lazy}.tsx   # [painel] portão único: sessão (esqueleto do projeto, monta PanelShell); perfil e hook do kit
     │       └── <área>/
-    │           ├── layout.tsx              # guard da área: requireAreaCapability
+    │           ├── layout.tsx              # guard da área: SessionGuard.requireArea(context.account, AREAS.<área>)
     │           └── <recurso>/
     │               ├── layout.tsx          # opcional: só quando não há área e o papel muda por recurso (DECISIONS #356)
     │               ├── index.tsx  index.lazy.tsx  -search.ts   # -search.ts: validateSearch e to<Recurso>Params (nunca inline)
@@ -334,6 +337,7 @@ frontend/
     │   ├── ui/<shadcn>.tsx                 # registry inteiro, Base UI; só variante cva e rótulo, marcados // casa:
     │   └── common/
     │       ├── <peça-do-kit>/{<peça>.tsx, <peça>-<parte>.tsx, <peça>-context.ts, use-<peça>-<parte>.ts, <peça>.test.tsx}   # kit, sem index.ts
+    │       │   # [painel] panel-shell/ auth-shell/ sign-in-form/ account-profile-form/ tenant-switcher/ plain-form/
     │       ├── <recurso>/{form-fields.tsx, combobox.tsx, …}     # peça de domínio que serve 2+ rotas
     │       └── <peça-de-domínio>/…
     ├── hooks/
@@ -343,14 +347,16 @@ frontend/
     │   └── tanstack-query/_query-keys.ts
     ├── integrations/
     │   ├── tanstack-query/{http.ts, http.server.ts, query-context.ts, query-key-factory.ts, invalidate.ts, devtools.tsx,
-    │   │                   queries/<módulo>.ts, mutations/<módulo>.ts} (+ .test.ts)
+    │   │                   queries/<módulo>.ts, mutations/<módulo>.ts} (+ .test.ts)   # [painel] queries/account.ts, mutations/account.ts
     │   ├── react-hook-form/{app-field.tsx, app-field-context.ts, app-field.test.tsx}   # kit
     │   ├── tenant/tenant-context.tsx       # kit: TenantProvider, useCity, useTenant (frontend.md §3.5)
     │   └── theme/get-theme.ts
     └── lib/
         ├── cn.ts labels.ts i18n.ts form-errors.ts form-a11y.ts list-search.ts redirect-search.ts page-head.ts
         ├── sitemap.ts load-or-not-found.ts local-store.ts bulk.ts chunking.ts upload-transport.ts upload-resume.ts
-        ├── area-capability.ts server-env.ts security-headers.ts mask.ts city-path.ts
+        ├── server-env.ts security-headers.ts mask.ts city-path.ts
+        ├── area-capability.ts session-guard.ts breadcrumbs.ts panel-menu.ts account-name.ts static-data.d.ts   # [painel] kit
+        ├── areas.ts panel.ts               # [painel] do projeto: AREAS e homeOf; PANEL_MENU (nenhum arquivo `menu` em _private/-components)
         ├── messages.test.ts                # meta-teste das mensagens
         └── <tema>.ts (+ <tema>.test.ts)    # cada um com teste ao lado
 ```
@@ -361,7 +367,7 @@ frontend/e2e/
 ├── auth.setup.ts  cleanup.teardown.ts
 ├── pages.spec.ts  responsive.spec.ts  touch-targets.spec.ts  a11y.spec.ts  locale.spec.ts
 ├── <fluxo>.spec.ts
-└── support/{test.ts, env.ts, client-address.ts, session.ts, <tema>.ts, <tema>.md}
+└── support/{test.ts, env.ts, client-address.ts, sign-in-retry.ts, session.ts, <tema>.ts, <tema>.md}
 ```
 
 O `.env.e2e.example` lista as variáveis da suíte sem valor (DECISIONS #350). E2E do backend é a suíte

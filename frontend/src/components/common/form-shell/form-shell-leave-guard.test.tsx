@@ -1,16 +1,11 @@
 // @vitest-environment jsdom
-import {
-  RouterProvider,
-  createMemoryHistory,
-  createRootRoute,
-  createRoute,
-  createRouter,
-  useNavigate,
-} from '@tanstack/react-router'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { useNavigate } from '@tanstack/react-router'
+import { act, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
+
+import { renderWithRouter } from '#/lib/render-with-router'
 
 import { FormShellLeaveGuard } from './form-shell-leave-guard'
 
@@ -42,30 +37,18 @@ function EditPage(): React.JSX.Element {
   )
 }
 
-// `navigate` type-checks against the registered router, so the list is `/health-check`, a route
-// the kit itself brings to every app; the edit path is free, since only `to` is typed.
-// Returns the current pathname.
 function renderAt(): () => string {
-  const root = createRootRoute()
-  const edit = createRoute({
-    getParentRoute: () => root,
-    path: '/groups/new',
-    component: EditPage,
-  })
-  const list = createRoute({
-    getParentRoute: () => root,
-    path: '/health-check',
-    component: (): React.JSX.Element => <p>Lista</p>,
-  })
-  const router = createRouter({
-    routeTree: root.addChildren([edit, list]),
-    history: createMemoryHistory({ initialEntries: ['/groups/new'] }),
-  })
-  render(<RouterProvider router={router} />)
-  return (): string => router.state.location.pathname
+  return renderWithRouter(
+    [
+      { path: '/groups/new', component: EditPage },
+      {
+        path: '/health-check',
+        component: (): React.JSX.Element => <p>Lista</p>,
+      },
+    ],
+    '/groups/new',
+  )
 }
-
-afterEach(cleanup)
 
 describe('FormShellLeaveGuard', () => {
   it('leaves a pristine form without asking', async () => {

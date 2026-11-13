@@ -1,15 +1,13 @@
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
-import { STAFF_USER_ROLES } from '@maiyu/shared'
+import { PLATFORM_ROLE } from '@maiyu/shared'
 
 import HTTPException from '#exceptions/http.exception'
 
-/** Who operates the panel: the project's staff roles (`enums/user-role.ts`). */
-const STAFF: ReadonlyArray<string> = STAFF_USER_ROLES
-
 /**
- * The API reference only exists for whoever operates the installation.
+ * The API reference only exists for whoever operates the installation: the platform owner
+ * (DECISIONS.md #390), and not a tenant's administrator.
  *
  * The document describes the **whole** surface: every route, every parameter, every
  * body shape and every error code. Publishing it without a session hands the complete
@@ -27,7 +25,7 @@ export default class DocumentationMiddleware {
 
     if (!user) throw this.notFound(context)
 
-    if (!STAFF.includes(user.role)) throw this.notFound(context)
+    if (user.platformRole !== PLATFORM_ROLE.OWNER) throw this.notFound(context)
 
     await next()
   }

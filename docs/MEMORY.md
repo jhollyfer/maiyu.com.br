@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-11 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
+| 2026-11-13 | Pausa para deploy (régua `maiyu-pattern` em 7092226) | 7 de 47 itens | Pausado após o deploy |
 
 ## Já feito
 
@@ -18,14 +18,27 @@
 
 ## Parou em
 
+**Pausa para deploy (2026-11-13, régua `maiyu-pattern` 7092226).** O dono pediu o projeto pronto para deploy e funcional, e depois a pausa; feature nova está parada. A PR de sync de deploy (`chore/regua-sync-7092226`, base `main`) leva à `main` a #29, a #30 e a #32, que no merge de 12/11 ficaram em branches intermediárias, mais o sync da régua 7092226 (#78 a #95). Com ela vêm o `codegen` do Tuyau, o `adonisjs:check` no `check`, o `#jobs/*`, o compose do kit com as credenciais `app/app` e o banco `app_test` criado pelo `infra/postgres` (portas 5440, 9016 e 9017 em 127.0.0.1) e o toque de 44 px reaplicado pelo `check-ui-patches.mjs --fix` em 8 arquivos de `components/ui/`. O painel de contatos (#31) está pausado, à espera da aprovação da spec.
+
+Sync da régua 7092226 para o deploy (frontend, sobre a #32): os pontos `lib/areas.ts` e `_private/layout.tsx` receberam só a mudança de comentário do modelo (a área é guardada por `SessionGuard.requireArea`; `homeOf` pode usar `AreaCapability.allows`, #764) e foram confirmados com `--ack-extension`. O `-sign-in-footer.tsx` novo fica vazio como o modelo, porque o site não tem cadastro público. O `check-ui-patches.mjs --fix` reaplicou o toque de 44 px em 8 arquivos de `components/ui/`. Os hooks de conta renomeados (#89) não pediram mudança fora do kit: typecheck limpo, unitário 578/578 e build verde. A feature nova está parada por ordem do dono, então o painel de contatos (#31) espera.
+
+R3.9 (bloco `painel` do kit, frontend): o sync da régua 9cb5ffd (bloco trazido pela 289c070, #68) com `--com=painel` trouxe `PanelShell`, `AuthShell`, `/sign-in`, `/profile`, `SessionGuard` e `PANEL_MENU`. Os pontos de extensão `lib/areas.ts` (`homeOf` devolve `{ to }`, todo papel vai a `/profile`; `AREAS.administrator` usa `STAFF_USER_ROLES`), `styles.css` (só o `@utility rail`, tema intacto) e `e2e/support/pages.md` (`/sign-in`) foram fundidos à mão e confirmados com `--ack-extension`. `lib/panel.ts` e `_private/layout.tsx` ficaram iguais ao modelo (o menu só tem o perfil). Próximo: o item de contatos no `PANEL_MENU` e a casa de cada papel em `homeOf` entram com a PR do painel de contatos; `backend/database/schema.ts` e `backend/start/routes.ts` seguem com a sessão do backend.
+
+RB.6 (multi-tenant do backend, `chore/backend-multi-tenant` sobre a `chore/regua-sync-10a`): o `backend/.env.example` segue o catálogo único do kit (#417) com `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*` da Maiyu, e o `docs/ENV.md` traz `TRUSTED_PROXIES=uniquelocal` obrigatória na API do Coolify. O contato virou tabela de cliente do tenant único: migration `1700000000110` (`tenant_id` obrigatório e `customer_id` nulo), `POST /storefront/contacts` com `publicTenant({ access: 'insert' })` gravando no tenant do `SINGLE_TENANT_SLUG`, painel `/administrator/contacts` só com o tenant da sessão (contato de outro tenant é 404) e `contacts:prune` sem escopo; o `.env.test` tem `SINGLE_TENANT_SLUG` e `SEED_TENANT_*`, e os specs do contato trocam o `TenantConfig` para o modo cliente único. O contrato do `shared/` não mudou. Próximo: `TRUSTED_PROXIES` no Coolify e a rodada final antes de tirar a PR do rascunho.
+
+Leva 10C do kit (frontend): o `.env.example` segue o catálogo de 10 chaves, sem `E2E_OWNER_*` nem `E2E_DEMO_PASSWORD`. O E2E cria as próprias contas com `node ace e2e:accounts` pelo `e2e/auth.setup.ts` (#443), e `playwright/.auth/` fica no `frontend/.gitignore`, onde nunca foi versionado. O `docs/ENV.md` acompanha.
+
+R2.9 feita: `components/ui/`, `hooks/use-mobile.ts`, `hooks/use-highlighted-code.ts` e `lib/highlighter.tsx` foram regenerados pelo procedimento #451 da régua (`shadcn add --all` sem `--overwrite`, `shadcn add sonner`, `from "cn"` trocado por `#/lib/cn`); `package.json` e `pnpm-lock.yaml` ficaram iguais à base e `lib/utils.ts` saiu. Reaplicados o `// casa:` do `scroll-area`, o patch de tema do `sonner` e o toque de 44 px no celular (`max-sm:min-h-11`, `max-sm:min-w-11` nos ícones, `max-sm:text-base` nos campos; #461, #43). A seção "Componentes do shadcn" entrou no `DESIGN.md`. O `-search.test.ts` do diário passou a chamar a entrada Standard Schema do `listValidateSearch` (API nova do kit, `list-search.ts`), sem mudar o comportamento da busca. O `min-h-11` do crédito em `photo.tsx` ficou: com `h-auto` ele também dá os 44 px no desktop, não só compensava o patch.
+
 Correção pós-R2.2: o gerador de rotas trocou `_public/index.lazy.tsx` pelo placeholder (`Hello "/_public/"!`) ao mover a home; o arquivo volta a montar `Home` de `-components/home/home` e `_public/lazy-routes.test.tsx` prova que cada rota lazy pública monta a própria tela. O wordmark do rodapé virou um `<svg>` decorativo (`aria-hidden`, `focusable=false`) com o mesmo texto, fonte, tamanho e opacidade, e deixou de reprovar o axe `color-contrast`; o filtro de categoria ativo do diário no tema escuro (`dark:bg-input/30` do `Badge` vencia o `bg-foreground`) ganhou `dark:data-[active=true]:bg-foreground`.
 
 R2.8: o código do projeto no `frontend/` está em inglês (identificadores já estavam; comentários, JSDoc e descrições de teste foram traduzidos), com `Merge` e `satisfies` onde a régua pede e sem `??` e `?.` nos arquivos do projeto. O que sobra de português em `src/` é texto de interface, conteúdo editorial e nome próprio; os arquivos do kit que ainda divergem do upstream seguem para o sync.
 
 R2.6: os ícones gerados (`favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`) entraram em `public/` e estão ligados no `__root.tsx`; o `manifest.json` espera o modelo do kit.
 
-R2.3 volta a Em andamento: os enums `PROJECT_STATUS`, `JOB_POSITION` e `ARTICLE_CATEGORY` ficam em
-`lib/` até o sync da leva 10A, quando a sessão do `shared/` os publica em `shared/src/enums/`.
+Sync das levas 10A e 10B do kit (`maiyu-pattern` em ee89281, `--sem=pix --sem=table`) num commit único na `chore/regua-sync-10a`, sobre a `refactor/frontend-arvore-regua`: `shared/` com o contrato multi-tenant do kit (login por e-mail ou celular, `platformRole` e `tenant` na conta, `AccountProfileShowResponse` com `phone`), tenants, cidades e plataforma, `website` do contato em `Rule.optionalText(2048)` e os enums do site (`PROJECT_STATUS`, `JOB_POSITION`, `ARTICLE_CATEGORY`); backend com as migrations do kit, `schema.ts`, os pontos de extensão de user e as rotas do kit; frontend pela #440 (`PillButton` saiu). Contato segue `Administrator*` sem tenant no contrato. Pendente: catálogo de ENV (#417) e o domínio multi-tenant do contato, na branch empilhada da backend; recriar o PostgreSQL da API antes do deploy espera a confirmação direta do dono na revisão da PR.
+
+Leva 10A do kit (frontend): os enums `PROJECT_STATUS`, `JOB_POSITION` e `ARTICLE_CATEGORY` vêm de `@maiyu/shared` (R2.3 feita). `areas.ts` na forma nova (`platform` e `tenant`, `homeOf(account)`), `cn-project.ts` com a escala do site, `styles.css` com os tokens que o kit lê (`success`, `warning`, `line`, `caption`, `supporting`, `title`, `z-*`, `focus-ring`...), `package.json` alinhado ao `kit.deps.json` e `.env.example` pelo catálogo (#417), com `E2E_DEMO_PASSWORD` mantido e `E2E_SHOTS_DIR` fora. R2.9 segue bloqueada por `lib/utils.ts`, importado por `components/ui/`. `components/common/table/` e `list-shell/` saíram pela leva 10B (`--sem=table`), com as 37 `kit_table*`.
 
 R2.1 feita: as telas de career, contact, portfolio e blog moram em `-components/` da rota e os `.lazy.tsx` são stubs; os testes de contrato leem os caminhos novos. R2.2 feita: as peças só da home desceram para `_public/-components/home/`. R2.3 feita: `lib/entity.ts` e `lib/interfaces.ts` saíram e as enums viraram trinca nos arquivos de `lib/` que as leem. R2.7 feita: a busca do diário é `blog/-search.ts` com `listValidateSearch` do kit. R2.5 feita: o 404 público e o artigo inexistente montam o head pelo `pageHead`, e a imagem da marca nos dados estruturados é a `logo-512.png` do tema. R2.6 feita: `public/` só com `favicon.svg` e `maiyu-symbol.svg`, o símbolo da vitrine vem de `assets/brand/logo.svg` e as capturas de projeto moram em `assets/projects/`. R2.9 bloqueada: sem código morto do projeto; `lib/utils.ts` espera o sync do kit (`cn.ts`, `cn-project.ts`) e o alias `utils` do `components.json`, porque `ui/` o importa.
 
@@ -105,6 +118,13 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 
 ## Próximos passos
 
+0. Deploy, nesta ordem:
+   1. O dono faz o merge da PR de sync de deploy na `main`; ela já traz a #29, a #30 e a #32.
+   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu`, os `SEED_TENANT_*`, `SEED_OWNER_*` e `SITE_ENV=production`). Ligar o *Auto Deploy* dos dois apps.
+   3. Conferir o `/health-check` da API e o site em produção nos três idiomas.
+   4. Agendar o `node ace contacts:prune`.
+   5. Depois da pausa, retomar a #31 (painel de contatos) com o comentário do dono aprovando a spec: rebase sobre a `main` e sync com `--sem=pix --com=table --com=painel`.
+   6. Dev local com volume antigo do compose (usuário `maiyu`): `docker compose down -v` uma vez.
 1. PR do contato e da conta do dono (#25) em revisão; depois do merge dela, o lote multi-tenant
    (`chore/backend-multi-tenant`), com o painel de contatos no escopo `platform`.
 2. Agendar no Coolify a tarefa `node ace contacts:prune` (`ARCHITECTURE.md` §9.1) antes de o
@@ -138,6 +158,7 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 | 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge | todo projeto |
 | 2026-11-04 | Merge feito pelo agente | o merge é do dono; o agente abre o PR verificado e para | todo projeto |
 | 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados) | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu" | todo projeto |
+| 2026-11-13 | Pilha de PRs mergeada com a base ainda na branch de baixo: a #29, a #30 e a #32 ficaram fora da `main` (12/11) | depois do merge da PR de baixo, a de cima é reapontada para a `main` na hora, ou o merge cai na branch já mergeada | todo PR empilhado |
 | 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`) | todo projeto com rota lazy |
 
 ## Problemas conhecidos

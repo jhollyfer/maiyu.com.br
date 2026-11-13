@@ -125,8 +125,9 @@ export function EmptyStateContent(
 }
 
 /**
- * The way out of the empty state: a button. `render={<Link to="..." />}` makes it a link, as
- * in the project's `Button`.
+ * The way out of the empty state when it is an action: a button. When it is navigation, the
+ * project renders a `Link` with `buttonVariants` instead, never `render={<Link />}`: Base UI's
+ * `Button` forces `role="button"` and erases the link (_doc-lib/shadcn.md#button).
  */
 export function EmptyStateAction({
   variant = 'outline',

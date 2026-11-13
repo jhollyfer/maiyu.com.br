@@ -575,6 +575,12 @@ em `pnpm exec`, falha em 20 ms e não diz o motivo (`DECISIONS.md` #284).
 `"prepare": "node .husky/install.mjs"`, que não falha quando o install não traz as devDependencies;
 na imagem, `HUSKY=0` no `install` (§8.2; _doc-lib/husky.md#how-to.html, `DECISIONS.md` #337).
 Nunca `backend/.husky` com `prepare: cd ..`: o hook da raiz cobre os três pacotes e o `commit-msg`.
+O `--check` cobra o `prepare` da raiz igual a `node .husky/install.mjs` (`prepare-diverge:`): os
+Dockerfiles do kit copiam esse arquivo, e `husky` puro derruba o install filtrado da imagem.
+O `install.mjs` decide o que pular pelo que falta, não por `NODE_ENV`: sem `.git` (a imagem), com
+`HUSKY=0` ou sem o `husky` instalado, sai calado; com `NODE_ENV=production` no shell, num clone
+novo ou numa worktree (`.git` é arquivo), instala o hook. O `pre-commit` já roda por app tocado
+(`touches`); achado do `pattern:check` de outro app não barra o commit.
 
 **`commit-msg`** chama `pnpm exec commitlint --edit "$1"`. `.commitlintrc.json` estende
 `@commitlint/config-conventional`: tipo em inglês (`feat`, `fix`, `refactor`), descrição em pt-BR,
@@ -663,6 +669,13 @@ Commit que já entrou com a marca é corrigido reescrevendo o histórico da bran
   commit de merge com `defaultIgnores: true`, o padrão (_doc-lib/commitlint.md#reference/configuration,
   https://commitlint.js.org/reference/configuration; a lista dos ignorados, com `Merge branch` e
   `Merge pull request`, está em `@commitlint/is-ignored/src/defaults.ts`).
+- **PR empilhado entra de baixo para cima** (`DECISIONS.md` #767). Quando um PR tem como base a branch
+  de outro PR, o primeiro merge é o da base. Antes do próximo, o PR de cima precisa estar apontando
+  para a `main` (ou para a `develop`): o GitHub faz essa troca sozinho quando a branch mergeada é
+  apagada, e senão o agente troca a base à mão. Merge de cima para baixo leva o conteúdo para uma
+  branch já mergeada, e ele nunca chega à `main` (aconteceu no manganga: backend #37, frontend #38,
+  #39 e #46). O corpo de cada PR da pilha diz a ordem *(opinião da casa; comportamento do GitHub,
+  página oficial não conferida, não coberto pelo `_doc-lib`)*.
 
 **`pre-commit`, por app, filtrado por pasta, com o alvo rápido** (X1, `DECISIONS.md` #113 C9): roda
 o `check` e a suíte **unitária** só do app que o commit toca; o `commit-msg` roda o commitlint. É o
@@ -761,11 +774,32 @@ com `=== 'true'` não liga com `CI=1` (`DECISIONS.md` #350).
 os passos abaixo apontam para cá.
 
 ```
-backend  = build:deps + format:check + lint + typecheck + openapi:check + pattern:check
+backend  = build:deps + format:check + lint + typecheck + adonisjs:check (Adonis) + openapi:check + pattern:check
            + authz:check (+ validators:check no Adonis) + test:unit
 frontend = build:deps + i18n:compile + i18n:check + lint + typecheck + format:check + test:unit
 shared   = lint + typecheck + test:unit
 ```
+
+O build de um app roda sempre com o filtro de dependências, `pnpm --filter "{./frontend}..." build`
+(ou `./backend`), como o `Dockerfile-production` já faz: o `shared/` resolve pelo `dist/` (`exports`),
+e num clone ou worktree novo `pnpm --filter ./frontend build` falha sem ele compilado. O script
+`build` do app não chama `build:deps`, para o Dockerfile não compilar o `shared/` duas vezes. Achado
+no jhollyfer.com.br.
+
+**`.adonisjs/` em dia** (Adonis, `DECISIONS.md` #753): o registro do Tuyau (`.adonisjs/client/registry`)
+e o `routes.d.ts` são versionados e o frontend lê o `client/` no tsc. O hook `generateRegistry()` do
+`adonisrc.ts` só roda no `node ace serve`; `node ace build` e o test runner não rodam os hooks de
+rota. O comando oficial que os roda sem servidor é `node ace codegen` (a tabela de hooks do
+Assembler lista `CodeGen` em `init`, `routesCommitted`, `routesScanning` e `routesScanned`; _doc-lib/adonisjs.md,
+"Decisões que a doc impõe", e _doc-lib/tuyau.md). No backend do kit: `pnpm codegen` gera (regrave e
+faça o commit quando uma rota entrar, por sync ou à mão) e `pnpm adonisjs:check`
+(`scripts/adonisjs-check.ts`, no `check`) roda o mesmo comando e reprova se `.adonisjs/` mudou, como o
+`openapi:check` faz com o `openapi.json`. Rota nova do kit que chega pelo sync pede `pnpm codegen`
+antes do tsc do frontend. Página lida: https://docs.adonisjs.com/guides/concepts/assembler-hooks.
+`openapi:generate` e `authz:check --write` bootam o app, e o `start/env.ts` do kit exige
+`NODE_ENV` (enum sem default): o valor vem do `.env` ou do shell, e o carregador de ambiente do
+Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_ENV=test` na frente
+(`NODE_ENV=test node ace openapi:generate`); o kit não força o valor nesses comandos.
 
 **Backend**, na ordem:
 
@@ -786,7 +820,8 @@ shared   = lint + typecheck + test:unit
    devDependency (tradução, variável e plural faltando, mensagem sem uso, `i18n.md` §4); o typecheck
    (`tsc --noEmit`) inclui `e2e/`, porque o runner do Playwright não checa tipo
    (_doc-lib/playwright.md#docs/test-typescript); o `format:check` é o `prettier --check .`; o
-   `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` (`architecture.md` §8). O compilador do Paraglide baixa os plugins
+   `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` e `scripts/**/*.test.ts` (`architecture.md` §8), que inclui
+   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6). O compilador do Paraglide baixa os plugins
    declarados em `modules` do `project.inlang/settings.json`, que são URLs do jsDelivr com a versão
    fixada, nunca `@latest` (_doc-lib/paraglide.md#/file-formats): quem roda precisa de rede para
    `cdn.jsdelivr.net`
@@ -803,11 +838,42 @@ shared   = lint + typecheck + test:unit
 transforma teste quebrado em intermitente, _doc-lib/playwright.md#docs/test-retries; teste instável
 é bug com tarefa), `globalTimeout` sempre definido (sem ele a execução não tem teto,
 _doc-lib/playwright.md#docs/test-timeouts), `trace: 'retain-on-failure'`,
-`screenshot: 'only-on-failure'`, `baseURL` e credenciais por env sem default (`E2E_OWNER_PASSWORD`,
-como o seeder), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
+`screenshot: 'only-on-failure'`, `baseURL` por env sem default e nenhuma senha em chave de ambiente: o `e2e/auth.setup.ts` cria a conta de
+cada papel na hora, por `node ace e2e:accounts` (só em development e test, senha sorteada a cada execução,
+`DECISIONS.md` #443; as contas de domínio do projeto, com o vínculo delas, vêm do ponto de extensão `tests/e2e-project-accounts.ts` e dos nomes em `e2e/support/project-accounts.ts`, `DECISIONS.md` #611), `webServer` com `reuseExistingServer: !process.env.CI`, reporter
 `[['html', { open: 'never' }]]`. Fluxo crítico roda `@axe-core/playwright` e reprova violação séria
 ou crítica (_doc-lib/playwright.md#docs/accessibility-testing). Shard (`--shard=x/y`) só quando um
 projeto sozinho passar do tempo aceitável (_doc-lib/playwright.md#docs/test-sharding).
+Projeto só frontend não define `E2E_API_URL`: o config não sobe a API, não cria os projetos `setup` e
+`cleanup` e não cria as contas por papel (`e2e/support/env.ts`, `withBackend`). O modo vem do valor da
+chave (vazia ou ausente é sem backend; liga-se por valor, nunca por chave, `AGENTS.md`), e as specs
+públicas rodam sem API e sem banco; `scripts/e2e-config.test.ts` cobre os dois modos (`DECISIONS.md` #501).
+A fixture `watch` (`e2e/support/test.ts`) reprova `pageerror`, `console.error` e todo 5xx da API; o spec
+do erro de servidor esperado o declara pela opção `expectedApiErrors` (status e padrão do endereço, só
+naquele teste) e o erro declarado que não acontece reprova (`e2e/support/expected-api-errors.ts`,
+`scripts/e2e-expected-api-errors.test.ts`, `frontend.md` §11.2, `DECISIONS.md` #731).
+
+**O projeto `cleanup` do `playwright.config.ts` apaga o que a rodada criou.** Ele é o `teardown` do `setup` e roda
+`e2e/cleanup.teardown.ts`, que chama `node ace e2e:cleanup` (contas do `e2e:accounts` e linhas marcadas com
+`E2eEnv.marker`, só em development e test; `backend.md` §6.2, `DECISIONS.md` #713). Spec que cria dado no backend
+escreve `E2eEnv.marker` (`E2E-`, com o hífen) no começo do título ou do nome, e o projeto declara a tabela e a coluna em
+`backend/tests/e2e-project-cleanup.ts`; sem o marcador, o dado fica.
+
+**Cada conta entra uma vez por rodada** (`DECISIONS.md` #712). O `signInAccountThrottle` deixa 20 entradas por hora
+por conta e os três projetos de viewport rodam os mesmos specs: spec que entra sozinho gasta o balde três vezes
+por rodada, e duas rodadas na mesma hora trancam a conta. O `auth.setup.ts` entra uma vez por conta (conta nova
+a cada rodada, balde novo) e os projetos reaproveitam o `storageState` dela, o caminho que a biblioteca manda para
+teste que não depende de estado do servidor (_doc-lib/playwright.md#docs/auth, https://playwright.dev/docs/auth,
+"Basic: shared account in all tests"). O spec de papel pede `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`
+e nunca chama `/authentication/sign-in`; só o setup e o spec da própria tela de entrada o fazem, e
+`scripts/e2e-sign-in-once.test.ts` reprova o resto. O limiter de produção não se afrouxa para o E2E.
+
+**O setup entra de um endereço por conta e respeita o 429** (`DECISIONS.md` #742). O `signInThrottle` conta 5 por
+minuto por IP, e as contas do kit mais as do projeto saíam todas de `127.0.0.1`: a sexta tomava 429 e o bloqueio de
+10 minutos derrubava as rodadas seguintes. Cada entrada do `auth.setup.ts` leva um `X-Forwarded-For` próprio
+(`ClientAddress.random()`, o mesmo caminho dos testes) e passa por `SignInRetry` (`e2e/support/sign-in-retry.ts`):
+no 429 espera o `Retry-After` que o handler já emite (e o CORS já expõe), tenta de novo até 3 vezes e, estourado o
+teto (tentativas ou 660 s de espera), reprova dizendo qual conta. Nenhuma rota perde o limiter e nenhuma config muda.
 
 **`shared/`**: `check` *(teste)*, antes do backend.
 
@@ -851,10 +917,18 @@ interativo, e validado rodando lint num arquivo e um teste.
 hook e na sessão (§6, §7); quem constrói e publica é o Coolify, que puxa o commit da `main` pelo
 GitHub App dele e constrói cada app pelo `Dockerfile-production` (§8.2, §8.3). Enquanto o projeto
 tiver `.github/workflows/`, o `--check` acusa `workflow-pendente:`; a pasta só sai com
-`sync-to-project.mjs <dir> --remover-workflows` (ou `--so-workflows`, que tira só a pasta, sem sincronizar o resto, para a PR que só tira o CI/CD), rodado depois que o `Dockerfile-production` de cada
+`sync-to-project.mjs <dir> --remover-workflows` (ou `--so-workflows`, o mesmo modo: tira só a pasta e o bloco `github-actions` do `dependabot.yml` e sai, sem sincronizar o resto, para a PR que só tira o CI/CD), rodado depois que o `Dockerfile-production` de cada
 app constrói dentro e o dono trocou o recurso do Coolify para GitHub App (§8.3, "Troca de recurso"):
 tirar antes derruba a publicação (`DECISIONS.md` #371). Depois, tirar o check do Actions da proteção
 de branch (§9) e apagar os secrets do Actions.
+
+**O sync também cobra e limpa:** `tsconfig-diverge:` (o `tsconfig.json` e o `tsconfig.build.json` do
+`shared/`, que é esqueleto, contra o kit, comparados como JSON e sem contar comentário), arquivo que o
+kit removeu ou renomeou (`REMOVED_CODE` em `scripts/kit-manifest.mjs`: aparece como `sobra:` e sai no
+sync, mesmo fora das pastas espelhadas) e `--com-backend`, que cria `backend/` num projeto só
+frontend que ganhou API (sem a flag ele continua sem). O `kit-check` ainda prova o build do
+frontend numa árvore só com os `COPY` do `Dockerfile-production`, sem `.git`, e reprova se o
+`styles-*.css` que o SSR referencia não existe em `.output/public` (`--sem-build` pula, `--so-build` roda só ela). Achado da prova: sem `.git` (como no Docker) o Tailwind v4 perde as fontes no ambiente SSR e o CSS referenciado não é o emitido (404); o `styles.css` precisa de `@import 'tailwindcss' source('./')`.
 
 **Código que tem de ser igual em todo projeto da stack** mora em `_templates/code/<caminho>`: o sync
 grava em `<caminho>` no projeto e o `--check` reprova divergência (`code-diverge:`). Só o arquivo que
@@ -866,9 +940,23 @@ models, `env.ts`, migrations) o sync cria se faltar e nunca reescreve. Para o mo
 em silêncio, o sync grava em `.maiyu/kit-extension-points.json` (versionado no projeto) o sha256 do modelo
 que o projeto recebeu. O `--check` lista `extension-stale: <arquivo>` quando o modelo atual difere do
 registrado (o projeto faz o merge à mão e confirma com `--ack-extension=<arquivo>` ou `--ack-extensions`,
-que regravam o sha) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
+que rodam sozinhos e só regravam o sha desses pontos no manifesto, sem tocar em mais nenhum arquivo nem
+reformatar o resto do manifesto; com outra flag, sem manifesto ou sem nada a confirmar, saem com erro) e `migration-missing: <arquivo>` para migration do kit sem par no projeto (mesmo nome
 ou mesma tabela); os dois saem com 1. Sem manifesto, o `--check` avisa `extension-baseline` e não falha, e
 o sync cria o manifesto com o modelo atual (`DECISIONS.md` #398).
+
+**`.gitignore` do kit é fusão por linha**, nunca espelho (o do projeto guarda `.env`, `node_modules` e o
+resto, e sobrescrevê-lo deixaria segredo à mostra). As linhas do modelo que o do projeto não tem entram no
+fim, com o comentário que as precede; ordem e linhas do projeto ficam, o arquivo ausente é criado, a segunda
+passada não muda nada, e o `--check` lista `gitignore-falta: <arquivo>: <linha>` e sai com 1.
+
+**ENV: catálogo único de chaves** (`DECISIONS.md` #417, `backend.md` §6.2). Todo projeto tem exatamente
+as chaves de `_templates/backend/.env.example` e `_templates/frontend/.env.example`, na mesma ordem,
+com o mesmo número (hoje backend e frontend, contagem impressa pelo `--check`): nenhum bloco sai, e o recurso que o projeto não usa fica com valor vazio; só entra chave que o kit lê. O
+`--check` lista `env-diverge: <arquivo>: <chave> a mais | a menos | fora de ordem` (a chave comentada não conta onde o modelo a tem ativa) e acusa o `backend/start/env.ts` que perdeu o `EnvBlocks.assert` ou afrouxou chave obrigatória, também para o
+`.env.test`, o `.env.production` e o `.env.e2e.example` (`fora do catálogo`), e imprime
+`env: <arquivo> N chaves (modelo M)`: N igual a M em todo projeto em dia. Chave nova entra no modelo
+do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave.
 
 - **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
 - **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,
@@ -1019,35 +1107,46 @@ conferida). Isso só funciona se
 
 ### 8.4 `docker-compose.yml`
 
-Só infraestrutura local (banco, Redis, MinIO, SMTP de teste), em `backend/`. A aplicação roda
-fora dele (`pnpm dev`). Portas próprias por projeto, pela tabela abaixo, para dois projetos subirem juntos na mesma
-máquina, sempre com bind em `127.0.0.1` (`127.0.0.1:5433:5432`), nunca na rede toda; nome de container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta
-ou sem tag de versão).
-Postgres é o 18 (`postgres:18-alpine`).
+Só infraestrutura local (banco, MinIO e, com a fila, Redis), em `backend/`. A aplicação roda fora
+dele (`pnpm dev`). **O kit traz o arquivo** (`_templates/code/backend/docker-compose.yml`, ponto de
+extensão, `DECISIONS.md` #769): o sync o cria se faltar, com as portas do projeto, e nunca o reescreve.
 
-**Portas da casa** (`DECISIONS.md` #355). Projeto novo pega a próxima linha livre; interclasse e
-curupira mudam de porta, porque colidiam com academy e aporta:
-
-| Projeto | Banco | Storage (S3) | Console | Redis ou outro |
-|---|---|---|---|---|
-| simple-hub | 5432 | 9000 | 9001 | Redis 6379 |
-| adacaibs | 5433 | 9002 | 9003 | |
-| academy | 5434 | 9004 | 9005 | Redis 6382 |
-| aporta | 5435 | 9006 | 9007 | |
-| curupira | 5436 | 9010 | 9011 | |
-| interclasse | 5437 | 9008 | 9009 | |
-| matiscraft | 5438 | 9012 | 9013 | |
-| manganga | 5439 | 9014 | 9015 | |
-| maiyu.com.br | 5440 | 9016 | 9017 | |
-| lowcodejs | Postgres 5532 | 9100 | 9101 | Mongo 27117 |
+- **Serviços:** `database` (`postgres:18-alpine`, volume em `/var/lib/postgresql`, que é onde a
+  imagem 18 guarda o `PGDATA`), `minio` (compilado de `backend/infra/minio/`) e `minio-setup`; `redis`
+  (`redis:8-alpine`) só onde o bloco opcional `mail` está ligado (o trecho `# --- optional: mail ---`
+  sai do arquivo sem ele). O banco da suíte, `app_test`, nasce de `backend/infra/postgres/` montado em
+  `/docker-entrypoint-initdb.d`, na primeira subida do volume vazio.
+- **Credencial do banco local:** `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_DB` são literais no
+  compose, `app`/`app`/`app`, iguais ao padrão do `DATABASE_URL` do `.env.example`
+  (`postgres://app:app@localhost:<porta>/app`). É credencial só desta máquina, publicada só em
+  `127.0.0.1`, nunca segredo de produção: não ganha chave no catálogo de ENV (#417). Nada de `trust`
+  (`POSTGRES_HOST_AUTH_METHOD` fica sem valor; a imagem só confia no socket de dentro do container),
+  porque o bind em loopback não substitui a senha. Página da imagem: Docker Hub `postgres`, conferida
+  pela fonte que o Hub publica (`github.com/docker-library/docs`, `postgres/content.md`) em 2026-11-13;
+  `hub.docker.com` não abriu na sessão.
+- **Portas:** toda porta com bind em `127.0.0.1` (`127.0.0.1:5433:5432`), nunca na rede toda; nome de
+  container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta ou sem tag de
+  versão).
+- **Portas da casa** (`DECISIONS.md` #355 e #769): a tabela é dado, numa cópia só, `PROJECT_PORTS` em
+  `scripts/kit-manifest.mjs` do upstream, chaveada pelo escopo do `shared/` (`@<projeto>/shared`).
+  O sync troca `__PORT_DATABASE__`, `__PORT_STORAGE__`, `__PORT_CONSOLE__` e `__PORT_REDIS__` no
+  compose e nos `.env.example` que cria (`DATABASE_URL`, `STORAGE_ENDPOINT`, `STORAGE_PUBLIC_URL`
+  comentada); depois de criados, os valores são do projeto. Projeto sem linha não recebe nenhum dos
+  três (`falta:`), porque porta chutada colide com a de outro projeto na mesma máquina: projeto novo
+  pega a próxima linha livre, no upstream, antes do primeiro sync.
 
 **MinIO só para teste; produção é S3 ou R2** *(decisão do dono; `DECISIONS.md` #209 e #210)*
 
 - **MinIO jamais vai para produção.** Ele existe só no `backend/docker-compose.yml`, para dev e para
   os testes e2e (máquina e sessão de agente). Produção usa **S3** ou **R2**, pelo driver da
   FlyDrive (`_doc-lib/flydrive.md#services/s3`, `#services/r2`). `Dockerfile-production`, compose de
-  produção, workflow de deploy e `docs/ENV.md` de produção nunca citam MinIO; o `pattern:check`
-  reprova `minio` fora de `backend/docker-compose.yml` e `backend/infra/minio/`.
+  produção, workflow de deploy e `docs/ENV.md` de produção nunca citam MinIO. O `pattern:check` do
+  kit (`minio-outside-local`, `DECISIONS.md` #771) reprova `minio` em `backend/`, `frontend/` e
+  `shared/`: em qualquer linha do `Dockerfile-production` e de JSON, e no código TypeScript fora de
+  comentário. Fica fora o que é teste ou ferramenta local por definição e nunca serve produção:
+  `backend/docker-compose.yml`, `backend/infra/minio/`, specs (`*.spec.ts`, `*.test.tsx`),
+  `backend/tests/`, `frontend/e2e/` e o `scripts/` de cada app. O comentário que descreve o ambiente
+  local ("MinIO no dev e no e2e") passa; o código que depende de MinIO, não.
 - **Agente e teste sobem o compose antes dos e2e**: `docker compose -f backend/docker-compose.yml up -d`
   e só então `test:e2e` do backend e do frontend; os endpoints de upload (`create`, `parts`,
   `complete`, leitura assinada) são exercitados contra ele. Na sessão de nuvem o `scripts/cloud-setup.sh`
@@ -1077,30 +1176,8 @@ COPY --from=build /out/minio /out/mc /usr/local/bin/
 ENTRYPOINT ["minio"]
 ```
 
-```yaml
-# backend/docker-compose.yml (trecho)
-services:
-  minio:
-    build: ./infra/minio
-    image: <projeto>-minio-test:2025-10-15
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_API_CORS_ALLOW_ORIGIN: ${CORS_ORIGINS:-http://localhost:3000}
-      MINIO_API_STALE_UPLOADS_EXPIRY: 24h            # multipart abandonado some sozinho
-      MINIO_API_STALE_UPLOADS_CLEANUP_INTERVAL: 6h
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9000/minio/health/live']
-      interval: 5s
-      retries: 10
-  minio-setup:
-    image: <projeto>-minio-test:2025-10-15
-    depends_on: { minio: { condition: service_healthy } }
-    entrypoint: ['/bin/sh', '/setup/minio-setup.sh']
-    env_file: .env
-    volumes: ['./infra/minio:/setup:ro']
-```
+O `minio` e o `minio-setup` estão no modelo do kit (`_templates/code/backend/docker-compose.yml`); o
+setup lê o `.env` do backend (`env_file`).
 
 `backend/infra/minio/minio-setup.sh` (rodado e conferido em 2026-10-14; a limpeza de multipart do MinIO
 é por ENV, `MINIO_API_STALE_UPLOADS_*` em `internal/config/api/api.go`, não por `mc ilm`):
@@ -1163,7 +1240,7 @@ mc admin policy attach local app-rw --user "$STORAGE_KEY" || true
 
 - **`.gitignore` na raiz**, obrigatório, cada bloco com um comentário dizendo o motivo. Ignora
   `node_modules/`, `build/`, `.output/`, `.env` (o `.env.example` e o `.env.test` são versionados,
-  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, e o que a árvore declara
+  `backend.md` §6), `src/paraglide/`, `project.inlang/cache/` (o `.gitignore` aninhado que o inlang gera nem sempre aparece; relato do jhollyfer.com.br), relatório de teste e de Playwright, `frontend/playwright/.auth/` (sessões e `accounts.json` com a senha das contas do E2E, §7; o kit leva o `frontend/.gitignore` que o cobre), e o que a árvore declara
   fora dela: `.idea/`, `.vscode/`, `.claude/worktrees/`, pastas de resultado, e
   `CLAUDE-SECURITY-*/` (relatório de varredura com cenário de exploração não vai para o histórico,
   §10.4).
@@ -1387,19 +1464,30 @@ Camadas, cada uma com a sua ferramenta:
 |---|---|---|
 | Regente geral (entre projetos e upstream) | a sessão em que o dono conversa | `send_message` para as regentes de projeto, quadro em `_standards/_map/<rodada>/QUADRO.md` |
 | Regente do projeto | uma sessão por projeto (`create_session` com o repositório dele) | quebra cada fase do plano em itens, despacha, revisa, abre a PR; não executa item |
+| Sub-sessões shared, backend e frontend | uma sessão por pasta do projeto, abertas pela regente (`create_session`, mesmo repositório); projeto sem uma das pastas não tem a sub-sessão dela | executam todo item de resolução, correção e melhoria do seu lado, com seus subagentes; reportam à regente do projeto |
 | Item G (fase 2 ou 3 do plano, feature) | subagentes do projeto | `tlc-plan` (plano aprovado pelo dono) e `tlc-implement` (lotes, verificador independente, provas por script) |
 | Item P ou M | um subagente por item | `superpowers:subagent-driven-development`, worktree e branch próprias (#311) |
 | Mapeamento ou auditoria em massa | fan-out de leitura | `Workflow` (fatia por projeto e lado, cético que tenta refutar cada achado grave, consolidação) |
 
 Regras:
 
-- **Um item por agente, escopo fechado.** Item G vira vários. A regente do projeto pode abrir
-  sub-sessões (`create_session`, com o mesmo repositório) para uma frente inteira (backend, frontend,
-  uma migração G) quando isso divide melhor o trabalho; a sub-sessão reporta à regente do projeto, que
-  continua sendo a única a falar com a regente geral. Agente que edita usa worktree e branch
+- **Regente e uma sub-sessão por pasta, sempre (`DECISIONS.md` #425).** Todo projeto trabalha com a
+  regente do projeto e uma sub-sessão fixa para cada pasta que ele tem: `shared/` (contrato: schema Zod,
+  resposta, enum, código de erro, Money), `backend/` e `frontend/`. Toda resolução, correção e melhoria
+  passa por elas. A regente não codifica: planeja, distribui, integra, manda verificar e cuida das PRs, e
+  é a única que fala com a regente geral. Mudança de contrato nasce na sub-sessão shared, que a anuncia
+  às outras antes do commit; backend e frontend confirmam e só então consomem. As três conversam direto
+  (`send_message` com o `session_id` umas das outras) e copiam a regente em decisão de contrato,
+  bloqueio e fim de item. Item fechado: push, PR em rascunho até o verificador, `docs/TASKS.md` e
+  `docs/MEMORY.md` ("Parou em"), aviso às outras sub-sessões e à regente.
+- **Um item por agente, escopo fechado.** Item G vira vários. Agente que edita usa worktree e branch
   próprias; ninguém faz commit do trabalho de outro.
 - **Autor nunca verifica o próprio trabalho.** Todo item fecha com um verificador novo (o do
   `tlc-implement`, o revisor da `subagent-driven-development` ou o cético do `Workflow`).
+  O brief do verificador manda rodar os scripts de Python com `PYTHONDONTWRITEBYTECODE=1` (o das skills,
+  como o do `tlc-plan`, grava `__pycache__/` ao lado do script): o cache nasce no worktree de quem
+  verifica e, sem isso, vira arquivo não rastreado que alguém commita por engano. A raiz do kit ignora
+  `__pycache__/` e `*.pyc`, e o sync não os espelha (`DECISIONS.md` #439).
 - **As sessões conversam.** A regente do projeto reporta à regente geral cada item fechado, bloqueio e
   pergunta para o dono por `send_message`; onde a sessão não consegue responder, a regente geral lê o
   transcrito (`list_events`). O estado de cada projeto fica no `docs/TASKS.md` dele, o geral no
@@ -1414,8 +1502,12 @@ Regras:
   reescrever histórico, hook de guarda) nunca se contorna.
 - **Lacuna de régua ou de kit nunca se corrige no projeto.** A regente do projeto manda para a regente
   geral; a correção sai no `maiyu-pattern` e volta pelo sync (#226).
-- **O que um projeto resolve vira roteiro do próximo.** A regente geral repassa o diff e a lição na
-  ordem do plano (gêmeos primeiro), para nenhuma sessão resolver de novo o mesmo problema.
+- **O que um projeto resolve vira roteiro do próximo (`DECISIONS.md` #430).** Problema achado num
+  projeto que pode estar em outro, e decisão que serve a mais de um, vão na hora para as regentes dos
+  projetos afetados (`send_message`), com a causa, como se resolveu (commit ou PR) e como conferir lá;
+  cópia para a regente geral, que repassa aos que a regente do projeto não alcançar e leva ao upstream
+  o que for de régua ou de kit. Nenhuma sessão resolve de novo, de outro jeito, o que outro projeto já
+  resolveu.
 - **Segurança em paralelo, o resto em ordem.** A fase 0 de todos os projetos corre junta; as fases 1 a
   4 seguem a ordem do plano, uma regra de passagem por passo (`--check` limpo, `check` verde, suítes
   pesadas antes da PR).

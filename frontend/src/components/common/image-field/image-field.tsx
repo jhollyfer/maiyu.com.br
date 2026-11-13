@@ -184,7 +184,7 @@ export function ImageField({
 
       {/* The native `<input type="file">` cannot be styled, and hiding it behind
           a visible button is the only way to have a picker that looks like the
-          rest. Not to be confused with the "zero hidden button" rule of
+          rest. Not to be confused with the zero hidden button rule of
           [[dialog-pattern]]: there the target is an overlay trigger holding a `ref`,
           and here what opens the picker is the button the user sees. shadcn has no
           file piece - `AttachmentTrigger` is a `<button>`, not an input -,

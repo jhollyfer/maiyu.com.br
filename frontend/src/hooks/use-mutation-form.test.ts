@@ -2,7 +2,6 @@
 
 import type {
   MutationFunctionContext,
-  UseMutationOptions,
   UseMutationResult,
 } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
@@ -11,6 +10,7 @@ import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { HTTPError } from '#/integrations/tanstack-query/http'
+import type { MutationProps } from '#/integrations/tanstack-query/http'
 import { applyMutationError } from '#/lib/form-errors'
 import { z } from '@maiyu/shared'
 
@@ -52,10 +52,7 @@ const SAVED: SavedRecord = { id: '7', name: 'Ana' }
 
 function setup(overrides: Record<string, unknown> = {}) {
   const mutate = vi.fn()
-  type Options = Omit<
-    UseMutationOptions<SavedRecord, HTTPError, Values>,
-    'mutationFn'
-  >
+  type Options = MutationProps<SavedRecord, Values>
   let captured: Options | undefined
 
   function useStub(options?: Options) {

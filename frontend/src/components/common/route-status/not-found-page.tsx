@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import * as React from 'react'
 
-import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
@@ -148,11 +148,14 @@ export function NotFoundPageHomeButton({
   children?: React.ReactNode
 }>): React.JSX.Element {
   return (
-    <Button
+    // A link, not `Button` with `render`: Base UI's `Button` forces `role="button"` and erases
+    // the link semantics (_doc-lib/shadcn.md#button, _doc-lib/base-ui.md#react/components/button).
+    <Link
+      to={to}
       data-slot="not-found-page-home-button"
-      size="lg"
-      className="h-11 w-fit px-5 text-sm"
-      render={<Link to={to}>{children}</Link>}
-    />
+      className={cn(buttonVariants({ size: 'lg' }), 'w-fit px-5 text-sm')}
+    >
+      {children}
+    </Link>
   )
 }

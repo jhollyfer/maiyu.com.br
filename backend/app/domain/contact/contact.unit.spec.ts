@@ -8,6 +8,8 @@ const ANSWERED = new Date('2026-11-02T09:30:00Z')
 function pending(): Contact {
   return Contact.create({
     id: '8a7b6c5d-4e3f-4a2b-9c1d-0e9f8a7b6c5d',
+    tenantId: '3f1d2c4b-5a6e-4b7c-8d9e-0a1b2c3d4e5f',
+    customerId: null,
     name: 'Ana Souza',
     email: 'ana@exemplo.com',
     message: 'Quero conversar sobre um projeto.',
@@ -21,6 +23,8 @@ test.group('Contact', () => {
     const contact = pending()
 
     assert.deepInclude(contact.snapshot(), {
+      tenantId: '3f1d2c4b-5a6e-4b7c-8d9e-0a1b2c3d4e5f',
+      customerId: null,
       name: 'Ana Souza',
       email: 'ana@exemplo.com',
       locale: 'pt-BR',

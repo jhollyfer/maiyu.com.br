@@ -18,6 +18,15 @@ const bodyParserConfig = defineConfig({
     convertEmptyStringsToNull: true,
 
     /**
+     * Do not trim strings here (DECISIONS.md #402). The parser trims every string of the
+     * body, not only the fields: the text nodes of a rich text document lose the space at
+     * their edges ("bold " + "text" becomes "bold" + "text") and the password is altered
+     * before it reaches the hash. The trim lives in the rules of each text field
+     * (`vine.string().trim()`), never in the password.
+     */
+    trimWhitespaces: false,
+
+    /**
      * Content types handled by the form parser.
      */
     types: ['application/x-www-form-urlencoded'],
@@ -36,6 +45,15 @@ const bodyParserConfig = defineConfig({
      * Normalize empty string values to null.
      */
     convertEmptyStringsToNull: true,
+
+    /**
+     * Do not trim strings here (DECISIONS.md #402). The parser trims every string of the
+     * body, not only the fields: the text nodes of a rich text document lose the space at
+     * their edges ("bold " + "text" becomes "bold" + "text") and the password is altered
+     * before it reaches the hash. The trim lives in the rules of each text field
+     * (`vine.string().trim()`), never in the password.
+     */
+    trimWhitespaces: false,
 
     /**
      * Content types handled by the JSON parser.

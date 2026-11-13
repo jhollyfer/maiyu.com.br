@@ -8,6 +8,13 @@ import { readFileSync } from 'node:fs'
  * `touch-targets.spec.ts`, que assim não supõem tela nenhuma do projeto.
  */
 export class PagesList {
+  /**
+   * A sessão vazia dos specs de página. Os projetos de viewport do `playwright.config.ts` entram
+   * com a sessão do dono; com ela, rota de autenticação listada aqui redireciona ao painel e o spec
+   * mede a página errada sem reprovar (achado no curupira). Página pública se mede como o visitante.
+   */
+  static readonly anonymous = { cookies: [], origins: [] }
+
   private static readonly source = readFileSync(
     new URL('./pages.md', import.meta.url),
     'utf8',
@@ -22,6 +29,12 @@ export class PagesList {
       else if (inside && line.startsWith('- /'))
         routes.push(line.slice(2).trim())
     }
+
+    // An empty `## 200` would make every page spec run zero tests and pass: stop instead.
+    if (title === '200' && routes.length === 0)
+      throw new Error(
+        'e2e/support/pages.md has no route under "## 200": list the public pages (- /about) so the specs have something to open',
+      )
 
     return routes
   }

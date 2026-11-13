@@ -24,8 +24,9 @@ código e de texto: `typescript.md` §12. Texto que o usuário vê sai sempre de
 | Pasta | Regra |
 |---|---|
 | `routes/_public/` | vitrine: SSR completo, indexável (§9.2, §9.7) |
-| `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel); `noindex` |
-| `routes/_private/layout.tsx` | portão único de sessão (§1.3); declara `ssr` (§9.2) e `noindex` |
+| `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel) e `noindex`. No bloco `painel` o `layout.tsx` e o `sign-in/` (URL `/sign-in`, a mesma em todo projeto) são do kit; cadastro e recuperação são do projeto, montados em `AuthShell` (`DECISIONS.md` #491). O caminho para o cadastro ("Ainda não tem conta? Crie") é o `sign-in/-sign-in-footer.tsx`, esqueleto do projeto que o sync cria vazio e nunca reescreve (#763) |
+| `routes/_private/layout.tsx` | portão único de sessão (§1.3); declara `ssr` (§9.2) e `noindex`. Esqueleto do projeto que chama `SessionGuard.require` e monta `PanelShell` com o `PANEL_MENU` de `lib/panel.ts`; menu, sidebar, cabeçalho e confirmação de saída **não** moram em `-components/` (`DECISIONS.md` #491) |
+| `routes/_private/profile/` | o perfil da própria conta, `/profile`, do kit (`AccountProfileForm`) |
 | `routes/_private/<área>/layout.tsx` | guard de capacidade da área (§3.4) |
 | `routes/_private/<área>/<recurso>/` | molde de recurso (§1.2); `<recurso>/layout.tsx` só quando não há área e o papel muda por recurso (lowcodejs, `DECISIONS.md` #356) |
 | `routes/_setup/` | grupo de instalação (lowcodejs), opcional |
@@ -100,7 +101,7 @@ chunks, e a divisão manual "quase sempre é desnecessária"
 O `getRouteApi()` continua obrigatório por outro motivo: importar `Route` cria aresta estática
 entre chunks, e ciclo de chunk derruba o SSR em runtime com o build verde (§9.10).
 
-`_private/layout.tsx` é o único portão: o `beforeLoad` roda o guard e enche o cache da sessão com
+`_private/layout.tsx` é o único portão: o `beforeLoad` roda o guard (`SessionGuard.require`, do kit) e enche o cache da sessão com
 `context.queryClient.query()` (`ensureQueryData` está deprecated desde o TanStack Query 5.102,
 _doc-lib/tanstack-query.md#guides/query-options). Toda rota nascida ali herda a proteção por
 estar no lugar, não por lembrar de repetir o guard. Redireciona para o login só em 401/403, com
@@ -140,6 +141,14 @@ export function getRouter() {
   _doc-lib/tanstack-router.md#guide/type-utilities, #guide/custom-link.
 - Breadcrumb e título de tela saem do segmento de path casado contra um lookup object
   (`{ <segmento>: () => m.<chave>() }`), nunca de `if/else-if` por rota (`typescript.md` §3).
+- **Rota de detalhe com estado local remonta a cada param** (`DECISIONS.md` #426). O router
+  reaproveita o componente quando só o param muda, e com ele `useState`, `useMutation`, formulário
+  e cronômetro: na navegação de um item para o seguinte (aula → próxima aula, registro → próximo),
+  a tela mostrava o estado do item anterior. A rota declara `remountDeps: ({ params }) => params`
+  (https://tanstack.com/router/latest/docs/framework/react/api/router/RouteOptionsType, aberta:
+  "By default, a route component will not be remounted if it stays active after a navigation").
+  Rota sem estado local, que só lê o `loader`, não precisa. O E2E cobre navegando pelo `Link`, e não
+  por `page.goto`, que remonta sempre e esconde o defeito.
 
 ---
 
@@ -225,8 +234,26 @@ página, e a tabela pisca (`DECISIONS.md` #347).
 Duas ou mais rotas leem: `lib/<tema>-search.ts`. Lista do painel usa a fábrica de
 `lib/list-search.ts`: `listValidateSearch(schema)` e `LIST_SEARCH_DEFAULTS`, que lê os tetos
 (`page ≥ 1`, `perPage ≤ 100`) do validator de `@<projeto>/shared` em vez de redigitá-los, e
-`stripSearchParams` tira o default da URL; `withExtra` sai. O `-search.ts` exporta `validateSearch`
+`stripSearchParams` tira o default da URL; `withExtra` sai. A fábrica devolve um Standard Schema que expõe `z.input` e `z.output`, e não uma função solta: o router lê o tipo de entrada do validator, e uma função faz entrada igual a saída (o `.default()` viraria obrigatório no link e `ListRoute` recusaria a rota; _doc-lib/tanstack-router.md#guide/search-params, seção Zod). O `-search.ts` exporta `validateSearch`
 e `to<Recurso>Params`, que converte a busca da URL nos parâmetros da API (`DECISIONS.md` #347). O tipo da busca do recurso mora nesse `-search.ts`, como `z.output` do validator de `@<projeto>/shared`, com o filtro no enum do domínio e nunca `string`; `lib/list-search.ts` guarda só os genéricos (`ListSearch`, `StorefrontSearch`) e o `compactQuery`, que tira o filtro em branco antes do `query` do cliente. _doc-lib/tanstack-router.md#how-to/validate-search-params, #guide/search-params.
+
+**A tabela navega relativa à rota da listagem.** `Table` recebe `to: ListRoute` (`lib/list-search.ts`): só
+entra rota cuja busca é atribuível a `ListSearch` (`sort` em lista fechada passa, `sort: number` não) e
+não exige chave que a tabela não envia (um `?q` obrigatório reprova; `.default()` passa); rota
+incompatível é erro de tipo em `<Table to>`. Cada peça navega com `from: to`, `to: '.'` e
+`search: (prev) => ({ ...prev, ... })`, então filtro que só a rota conhece sobrevive e a rota não declara
+`direction` nem `trashed` que não usa. O tipo confere a rota, não o objeto que cada reducer devolve
+(`DECISIONS.md` #445; `_doc-lib/tanstack-router.md#guide/navigation`).
+
+**Detalhes da tabela que o tipo não mostra** (`DECISIONS.md` #481). `to` sai de `routesByPath`, então a rota de
+índice leva a barra final (`/painel/membros/`), ao contrário do `Link`, que aceita sem ela; sem a barra é
+erro de tipo em `<Table to>`. O nome do `columnheader` e o `aria-label` do botão de mover vêm de
+`columnDef.meta.label` (`columnLabel`, `table-column-label.ts`; _doc-lib/tanstack-table.md#guide/table-and-column-meta,
+https://tanstack.com/table/latest/docs/guide/table-and-column-meta), com o id só de reserva: toda coluna de
+dado declara `meta.label`. `TableEmpty` trata como filtro qualquer chave da busca que não seja
+`page`, `perPage`, `sort`, `direction` e `trashed`, com valor preenchido (`hasActiveFilter`), e o botão de limpar
+zera todas elas (`withoutFilters`). Os cartões do celular são lista (`ul`/`li`); com `onRowClick` o título é
+`Button` esticado sobre o cartão, nunca `div` clicável (§10.2).
 
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
@@ -325,7 +352,18 @@ Render do SSR não lê nada que só existe no cliente (`localStorage`, fuso do n
 _doc-lib/tanstack-start.md#guide/hydration-errors.
 
 **Sessão vencida no meio do uso**: o layout privado assina o `QueryCache` e o `MutationCache` e
-redireciona ao login em 401, com `?redirect=` da tela atual *(opinião da casa)*.
+redireciona ao login em 401, com `?redirect=` da tela atual *(opinião da casa)*. O hook é o
+`useSessionExpiryRedirect` do kit (`routes/_private/-use-session-expiry-redirect.ts`), já ligado no
+esqueleto do `_private/layout.tsx`, e limpa o prefixo `accountKeys.all` de `queries/account.ts`. Essa
+chave é do kit: a fábrica `_query-keys.ts` do projeto a reexporta (`queryKeys.account = accountKeys`),
+sem reescrever o array (`DECISIONS.md` #491).
+
+**A conta sai do cache, não é invalidada.** O portão lê a sessão com `staleTime: 'static'`, e
+`'static'` vence a invalidação (`isStaleByTime` do `query-core`): `invalidateQueries` marcaria a conta
+como velha e o `beforeLoad` a serviria do mesmo jeito. Entrar, sair, trocar de vínculo e salvar o
+perfil fazem `removeQueries({ queryKey: accountKeys.all })` e `router.invalidate()`, que roda de novo o
+`beforeLoad`. Trocar senha ou celular derruba as sessões, e essa releitura devolve o 401 que leva à
+entrada.
 
 ### 3.3 Ambiente e cliente HTTP
 
@@ -387,6 +425,24 @@ redireciona ao login em 401, com `?redirect=` da tela atual *(opinião da casa)*
 O guard de capacidade de uma área mora no `layout.tsx` da área (`_private/<área>/layout.tsx`),
 nunca num middleware central nem repetido em cada rota *(opinião da casa)*: a área que exige a
 capacidade é a que declara o guard. O `_private/layout.tsx` cobre a sessão; o da área, a permissão.
+
+O guard é `SessionGuard.requireArea(context.account, AREAS.<área>)` (`lib/session-guard.ts`, do kit;
+`requireAreaCapability`, a função solta do simple-hub, e `AreaCapability.require` não existem mais,
+`DECISIONS.md` #764). A regra pura mora em `lib/area-capability.ts` (`AreaCapability.allows`), que não
+importa nada de `lib/areas.ts`: o `homeOf` do projeto pode usar `AreaCapability.allows` sem ciclo, e o
+redirect fica com quem já dependia de `homeOf`. `context.account` é
+o `AccountProfileShowResponse` que o portão pôs ali, com `platformRole` e o vínculo ativo `tenant`
+(`GET /account/profile`, `DECISIONS.md` #491), e `AREAS`/`homeOf` são do projeto (`lib/areas.ts`). O
+menu lê a mesma tabela: `PanelMenu.visible` filtra os itens por `AreaCapability.allows`, e o link nunca
+leva a uma tela que devolveria quem clicou.
+
+**Área de quem não tem papel** (o entregador, o vendedor aprovado: uma conta comum com uma linha
+de domínio, nem `PlatformRole` nem `UserRole`) fica fora de `AREAS` e do `PANEL_MENU`
+(`DECISIONS.md` #765). O layout da área carrega o recurso que prova o vínculo
+(`context.queryClient.query(<recurso>MeQueryOptions)`, ex. `GET /courier/me`) e, no 403/404, manda a
+conta para `homeOf`. O backend continua sendo quem autoriza, por policy sobre a mesma linha. O link
+para a área mora onde o vínculo já foi lido, por exemplo o perfil ou o fluxo de cadastro. Não sai no
+menu por regra de papel, e o `AccountProfileShowResponse` do kit não ganha campo de domínio.
 
 O que decide **o que renderizar dentro** de uma rota já carregada (esconder botão, desabilitar
 célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel espalhado pela tela.
@@ -452,6 +508,14 @@ const form = useForm<AdministratorPostCreatePayload>({
   que revoga a parte de máscara da #320). Os aliases moram em `lib/mask.ts`. Lê o valor **sem
   máscara** pelas funções dela (`unmaskedValue()` do ref, `getUnmaskedValue` ou `unformatWithMask`) antes de
   submeter, nunca regex tirando caractere. _doc-lib/use-mask-input.md#api-reference.
+- **Máscara sem molde à mostra** (`DECISIONS.md` #428). Toda máscara recebe uma constante de módulo
+  com `jitMasking: true`, `placeholder: ''`, `showMaskOnFocus: false` e `showMaskOnHover: false` (as
+  `Options` são as do Inputmask, _doc-lib/use-mask-input.md#api-reference,
+  https://robinherbots.github.io/Inputmask/): a pontuação só entra quando o dígito seguinte chega, e
+  o campo nunca mostra `33_.___.___-__`. O wrapper do campo mascarado aplica a constante por padrão.
+  Data usa máscara por dígitos (`99/99/9999`), e não o alias `date-br`, que impõe o molde
+  `dd/mm/yyyy` mesmo com `placeholder` vazio; quem valida a data é o parser do campo, não a máscara.
+  Conferido em Chromium digitando campo a campo *(opinião da casa)*.
 - **Formulário dinâmico** (campos definidos em runtime): o resolver recebe o schema montado pelo
   construtor de `@<projeto>/shared` a partir da definição dos campos (`architecture.md` §10);
   `rules` por campo e `resolver` nunca convivem no mesmo form (o RHF ignora `rules` quando há
@@ -576,8 +640,23 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   alterada marcada com `// casa:` e o motivo em inglês (`// casa: success variant for status
   badges`). A marca é o que permite reaplicar a mudança quando o componente vem de novo do
   registry.
+- **`ui/sonner.tsx` leva patch obrigatório**: o registry importa `useTheme` de `next-themes`, que a
+  casa não instala (tema por cookie, §6 "Tokens e tema"). O patch, com `// casa: theme comes from the
+  cookie, not from next-themes`, tira o import e deixa `theme` entrar como prop de `ToasterProps`;
+  quem passa é `common/theme/theme-provider-toaster.tsx` do kit, com o tema do `ThemeProvider`.
+  Sem o patch o `next-themes` volta ao `package.json` e o toast não segue o cookie. O `date-fns` do
+  `calendar` é transitivo do `react-day-picker` e o código da casa não o importa (`tooling.md` §0.1).
 - **Não pode**: hook do app, regra de negócio, fetch, componente que não veio do registry (vai
   para `common/`).
+- **Patch exigido é cobrado, não só escrito** (`DECISIONS.md` #772). A lista dos patches
+  obrigatórios (arquivo, classe âncora, classes que faltam e motivo) mora num lugar só, como dado:
+  `frontend/scripts/ui-patches.json` do kit. `scripts/check-ui-patches.test.ts` roda no `test:unit`
+  (portanto no `check` e no `pre-commit`) e reprova o `ui/` do projeto sem o patch: arquivo, linha,
+  classe que falta e esta seção. `node scripts/check-ui-patches.mjs --fix` aplica o que falta logo
+  depois da classe âncora, com a linha `// casa:`, e formata com o Prettier; rodar de novo não muda
+  nada. Arquivo que o projeto não tem é pulado; âncora que não casa com nada reprova (o registry mudou
+  de forma e o patch precisa ser revisto). Patch obrigatório novo entra no JSON, e a régua aponta
+  para ele em vez de repetir a lista.
 - **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
   sai" da #146): `shadcn add --all` sem `--overwrite`, que é o padrão da CLI, para não apagar
   arquivo que já tem linha `// casa:`. Antes, `--dry-run` mostra o que entra; depois, o arquivo marcado que o
@@ -590,6 +669,24 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   **aplicado** nesta revisão, **não se aplica**) e onde se usa ou por que não. Componente que o
   registry traz depois entra na tabela no mesmo PR que atualiza `ui/` *(opinião da casa; a doc lista
   os componentes, mas não manda avaliar)*.
+- **Reinstalar o registry** (`DECISIONS.md` #451). O registry atual (estilos `base-*`) traz
+  `import { cn } from "cn"` dentro de cada `ui/*.tsx` e declara `cn` como dependência. Não é erro do
+  alias: `aliases.utils` do `components.json` só diz à CLI onde pôr o arquivo de utilitários, e
+  nenhum valor dele muda esse import (conferido no `shadcn@4.23.0`, `add button --dry-run` com
+  `#/lib/cn` e com `#/lib/utils`: `Dependencies + cn` nos dois). O pacote `cn` é o oficial do shadcn
+  (`shadcn-ui/cn`, `shadcn migrate cn`), mas a casa não o usa: o `cn` dela é `lib/cn.ts`, com a escala
+  do tema em `extendTailwindMerge`, e o `cn` do pacote não a conhece. `components.json` fica com
+  `"utils": "#/lib/cn"`. Depois de cada `shadcn add`:
+  1. `sed -i -E "s#from ['\"]cn['\"]#from '\#/lib/cn'#" src/components/ui/*.tsx` e `pnpm remove cn`;
+  2. reverter o que a CLI trouxe contra a régua: `date-fns` (transitivo do `react-day-picker`, nunca
+     direto), `next-themes` (patch `// casa:` do `sonner`, acima), `recharts` de volta à versão do
+     `kit.deps.json`, e aspas simples e sem ponto e vírgula (`pnpm format`);
+  3. `shadcn add <nome> --diff` e reaplicar à mão os arquivos com `// casa:`; os da lista exigida
+     voltam com `node scripts/check-ui-patches.mjs --fix` (acima).
+  `sync-to-project.mjs --check` reprova o que sobrar: `cn-import:` (import de `cn` em `ui/`) e
+  `cn-pacote:` (`cn` no `package.json`).
+  _doc-lib/shadcn.md#docs/components-json, https://ui.shadcn.com/docs/components-json, e
+  #docs/cli (`migrate cn`), https://ui.shadcn.com/docs/cli, abertas.
 
 _doc-lib/shadcn.md#docs/theming, #docs/components-json.
 
@@ -609,8 +706,12 @@ _doc-lib/shadcn.md#docs/theming, #docs/components-json.
   que os componentes de `ui/` do registry base-mira usam; sem ele Tabs e afins quebram sem erro
   (relato do jhollyfer.com.br). `shadcn`, `tw-animate-css` e `class-variance-authority` estão no
   `kit.deps.json`. O tema define também os tokens que as peças do kit leem (`font-display`,
-  `text-caption`, `min-h-stage-sm`, a escala `z-*` de `lib/cn.ts`); a lista fechada vem com o esqueleto
-  de `styles.css` da leva 9. _doc-lib/shadcn.md#docs/theming.
+  `text-caption`, `text-error-code`, `min-h-page-state`, `min-h-stage-sm`, `max-w-popup-inset`, a
+  escala `z-*` de `lib/cn.ts`); a lista fechada é o esqueleto `_templates/code/frontend/src/styles.css`
+  (ponto de extensão: nasce se faltar, valores de exemplo, nunca sobrescrito; o `logo-512.png` que o
+  `pageHead` lê está documentado no cabeçalho dele). `lib/theme-tokens.test.ts` compila cada classe que o
+  código escreve contra o `styles.css` (`@tailwindcss/node`) e reprova a que não gera CSS, porque classe de
+  token ausente some sem erro. `prose` vem de `@plugin '@tailwindcss/typography'`. _doc-lib/shadcn.md#docs/theming.
 - **Todo valor de design é token no `@theme`**, pelo namespace dele (`--color-*`, `--text-*`,
   `--font-*`, `--leading-*`, `--spacing-*`, `--radius-*`, `--shadow-*`, `--breakpoint-*`,
   `--ease-*`, `--animate-*`). Valor arbitrário em classe (`text-[13px]`, `z-[9999]`,
@@ -748,12 +849,25 @@ A forma única está nas skills `dialog-pattern` e `sheet-pattern`; o resumo que
   Dialog, não por lugar que abre.
 - Dialog de formulário foca o primeiro campo (`initialFocus`); conteúdo montado só aberto (§4).
 - Sheet de filtro não guarda filtro: desenha os controles e navega search params (§2). Link de menu
-  mobile vai em `<SheetClose render={<Link ... />} />`.
+  mobile vai em `<SheetClose nativeButton={false} render={<Link ... />} />`: `SheetClose` é
+  `DialogClose`, que renderiza `<button>`; sem `nativeButton={false}` o Base UI acusa o elemento que
+  não é botão no console e o teclado (Enter e Espaço) não fecha (`NativeButtonProps` em
+  `@base-ui/react/dialog/close`, tipo instalado; _doc-lib/base-ui.md#react/components/dialog).
+  Pelo mesmo motivo link com cara de botão é `Link` com `buttonVariants`, não `Button render={<Link />}`. O `pattern:check` reprova `Button render={<Link />}` (regra `link-as-button`, `DECISIONS.md` #440); `SheetClose nativeButton={false}` e `SidebarMenuButton` seguem permitidos, e o `Link` da seta de voltar, do descartar e do criar do kit já é `Link` com `buttonVariants`.
 - Modal não é a primeira opção: só para tarefa que precisa interromper ou proteger o foco; o resto
   é inline, Sheet ou página *(opinião da casa)*.
 - Ação destrutiva: `ConfirmDialog` do kit (AlertDialog) e as regras de §10.6.
   _doc-lib/base-ui.md#react/components/alert-dialog.
 - Texto de toda sobreposição sai de `m.*()`.
+- **`RowActions` (`components/common/row-actions/`) tem uma peça genérica e duas de exclusão** *(opinião
+  da casa, `DECISIONS.md` #501)*. Ação de domínio com confirmação ("Reenviar convite") usa
+  `RowActionsAction` (o item, `handle.open(null)`) com `RowActionsActionDialog` (o alerta: título,
+  descrição, rótulo de confirmar, `destructive` e `onAction`; promessa segura o botão e fecha no sucesso,
+  falha deixa aberto), irmão do menu como em `RowActionsConfirm`. `RowActionsArchive`, `Unarchive` e
+  `Delete` são `RowActionsAction` com ícone e rótulo fixos; `RowActionsDelete` continua só para o
+  arquivado (`*_NOT_ARCHIVED`). Exclusão direta, sem arquivar (contato pela LGPD): `RowActionsRemove` +
+  `RowActionsRemoveDialog`, com texto próprio (`kit_row_remove_*`), sem supor arquivamento. Tela não
+  reescreve item nem alerta de linha: escolhe a peça. Doc: _doc-lib/base-ui.md#react/components/alert-dialog.
 
 ### 6.3 Componentes e hooks
 
@@ -864,6 +978,16 @@ Código que o usuário lê (aula, documentação, post de blog) sai do `CodeBloc
   registry que chega com ícone de outra biblioteca é trocado, com a linha marcada `// casa:` (§6).
 - **Rótulos pelo i18n**: "Copiar", "Copiado", título de terminal e o `aria-label` de cada ação
   saem de `m.*()` (`i18n.md`).
+- **Código inline sem crase na tela** (`DECISIONS.md` #427). O `@tailwindcss/typography` põe uma
+  crase em `::before` e outra em `::after` de todo `code` fora de `pre`, e o leitor via `` `tsx` ``
+  como se a crase fizesse parte do comando. Em `styles.css`, `.prose :where(code):not(:where(pre
+  code))::before, ::after { content: none }`, e o fundo do `code` (token `--muted`) marca o trecho
+  (_doc-lib/tailwindcss.md#typography-plugin, https://github.com/tailwindlabs/tailwindcss-typography,
+  "Undoing typography styles").
+- **Texto curto de conteúdo fora do texto rico** (pergunta e alternativa de quiz, rótulo vindo de
+  frontmatter) passa por um `InlineCode` de `components/common/`: só o trecho entre crases vira
+  `<code>`, o resto continua texto, crase sem par fica como está, e nada vira HTML. Nunca
+  `dangerouslySetInnerHTML` nem um segundo parser de markdown para isso *(opinião da casa)*.
 
 ### 6.7 Lista de passos com status: `Trace` *(`DECISIONS.md` #302)*
 
@@ -933,12 +1057,13 @@ A lista é fechada:
 | `components/common/list-shell/` | casca de listagem: cabeçalho, filtro, corpo, rodapé | toda lista do painel |
 | `components/common/form-shell/` | casca de formulário: título, corpo, ações; `FormShellContent` é `<form method="post">` com `HydratedFieldset` | submit travado por upload em voo (§4) |
 | `components/common/submit-button/` | botão de envio com estado de envio | sem duplo envio (§10.1) |
-| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, redimensionar, esqueleto, virtualização opcional (§9.9) | toda listagem; layout persistido validado pelo schema de `shared/` |
+| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, redimensionar, esqueleto, virtualização opcional (§9.9); o quadro que rola é `role="region"` com `tabIndex={0}`, `focus-ring` e nome (`label`, senão `kit_table_region`), §10.2 | toda listagem; layout persistido validado pelo schema de `shared/` |
 | `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção) e o `FiltersSheet` | filtro de lista igual em toda tela |
 | `components/common/row-actions/` | menu de ações por linha | ação de linha igual em toda tabela |
 | `components/common/bulk-archive/` | arquivar, restaurar, remover em massa | detalhe e lista não reescrevem o ciclo |
 | `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog), com `confirm-dialog-handle.ts` | §10.6 |
 | `components/common/empty-state/` | estado vazio por motivo, sobre `ui/empty` | §10.1; _doc-lib/shadcn.md#empty |
+| `components/common/rail/` | trilho de rolagem lateral: lista com nome (`label`, por `m.*()`), `tabIndex={0}` e anel de foco do tema; `list` `ordered`/`unordered`; o utilitário `rail` mora no `styles.css` | §10.2, §10.4; _doc-lib/tailwindcss.md#adding-custom-styles |
 | `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending`, `AccessDenied`, `QueryBoundary` | §5 |
 | `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox local e paginado |
 | `components/common/date-picker/` | data e intervalo, valor no formato da API (Luxon) | campo de data |
@@ -948,6 +1073,12 @@ A lista é fechada:
 | `components/common/picture/` | imagem com dimensão, `alt` e carregamento por posição | §9.6 |
 | `components/common/maiyu-credit/` | crédito do rodapé: logo da Maiyu (`src/assets/maiyu.png`) + "Desenvolvido por Maiyu", com `Maiyu` em link para `https://maiyu.com.br` | abaixo |
 | `components/common/brand-mark/` | marca do projeto, pelo SVG de `assets/brand/` | cabeçalho e rodapé |
+| `components/common/panel-shell/` *(bloco `painel`)* | casca do painel autenticado, compound: `PanelShell` (provedor, link de pular, contexto de conta e menu), `PanelShellSidebar` (marca, grupos filtrados pela conta, contador por item), `PanelShellInset`, `PanelShellHeader` (trilha, idioma, tema), `PanelShellAccountMenu` (perfil, `TenantSwitcher`, sair), `PanelShellSignOutConfirm`, `PanelShellContent` (rola, limite de erro, `MaiyuCredit`) | `_private/layout.tsx` (§1.1); só depende da API pública do `ui/sidebar` do shadcn (`shadcn` de `kit.deps.json`) |
+| `components/common/auth-shell/` *(bloco `painel`)* | casca das telas de sessão: `AuthShell` (`<header>` com a marca, `<main>` com o cartão, `<footer>` com o crédito), `AuthShellHeader`, `AuthShellTitle` (o `h1`), `AuthShellDescription`, `AuthShellContent` | `_authentication/` (entrada do kit; cadastro e recuperação do projeto) |
+| `components/common/sign-in-form/` *(bloco `painel`)* | formulário de entrada: e-mail ou celular e senha, validator do `shared/`, mensagem do kit para `401 INVALID_CREDENTIALS` e `429`; depois de entrar só invalida o router, e a guarda inversa decide o destino | `/sign-in` |
+| `components/common/account-profile-form/` *(bloco `painel`)* | o perfil da própria conta: nome, celular, senha nova, tudo confirmado com a senha atual (`PUT /account/profile`); `AccountProfilePayload` traduz o texto dos campos para o validator do `shared/` | `/profile` |
+| `components/common/tenant-switcher/` *(bloco `painel`)* | grupo de itens de rádio para o menu de conta: troca o vínculo ativo, só aparece com dois ou mais | `PanelShellAccountMenu` |
+| `components/common/plain-form/` *(bloco `painel`)* | o `<form method="post">` das telas que não são cadastro do painel (entrada, perfil); o outro `<form>` do kit é o do `FormShell` | formulário de sessão |
 | `components/common/theme/` | provider, contexto, alternador de tema e o toaster | §6 |
 | `components/common/locale-switcher/` | troca de idioma (nome único) | `i18n.md` §2 |
 | `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha; I/O por prop | registra no `uploading-context` |
@@ -1170,7 +1301,8 @@ Toda rota pública monta o `head` por `pageHead()` de `lib/page-head.ts`, pelo m
 de `head()`/`loaderData` (_doc-lib/tanstack-router.md#guide/document-head-management;
 _doc-lib/tanstack-start.md#guide/seo). O formato é da casa (`DECISIONS.md` #47):
 
-- título com o sufixo do site e descrição, por `m.*()`; título e descrição únicos por página;
+- título com o sufixo do site e descrição, por `m.*()`; título e descrição únicos por página. O
+  separador é `|` (`<página> | <site>`), decidido para todo projeto: nada de `·`, `-` ou `—`;
 - **canonical** absoluto: a URL do idioma atual sem query string, exceto o parâmetro de página;
   filtro e ordenação nunca geram canonical próprio;
 - **hreflang** recíproco para `pt-BR`, `es` e `en`, mais `x-default` (a URL de `pt-BR`), pelo
@@ -1184,11 +1316,18 @@ _doc-lib/tanstack-start.md#guide/seo). O formato é da casa (`DECISIONS.md` #47)
   hreflang e sitemap saem da mesma função, com teste da raiz nos três idiomas: no academy, a
   função tirava a barra de tudo, e o `hreflang` da raiz divergia do endereço que o navegador e o
   buscador leem;
-- **Open Graph**: `og:title`, `og:description`, `og:image`, `og:url`, `og:locale`;
+- **Open Graph**: `og:title`, `og:description`, `og:type`, `og:image`, `og:url`, `og:locale`, e o
+  cartão `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`. `pageHead` aceita
+  `image` (caminho ou URL absoluta; sem ela vale `assets/brand/logo-512.png`, que o tema entrega,
+  `KIT.md` §3.4) e `type` (`article` em notícia e post, `website` no resto) por página;
 - **JSON-LD** por `head().scripts` com `type: 'application/ld+json'`, com `<` escapado
   (`JSON.stringify(data).replaceAll('<', '\\u003c')`): `Organization` na raiz, `BreadcrumbList`
   em detalhe, e o tipo do domínio (`Product`, `Course`, `Event`, `NewsArticle`) a partir do
   `loaderData` (formato de `scripts`: página oficial não conferida);
+- **`pageHead()` uma vez por página, na rota folha.** O `head` do layout (`_authentication/layout.tsx`,
+  `_private/layout.tsx`) só acrescenta o que é do grupo (o `robots`); canonical, `hreflang` e
+  `x-default` saem do `pageHead` da folha, que é quem sabe o `pathname`. Chamá-lo no layout e na folha
+  duplica `link rel="alternate"` e o `og:*` (`DECISIONS.md` #491);
 - `robots: noindex, nofollow` em `_private/`, `_authentication/` e no 404; ambiente que não é
   produção responde `X-Robots-Tag: noindex, nofollow` em toda resposta, posto pelo `server.ts`
   quando `SITE_ENV` lida no servidor não é `production` (`DECISIONS.md` #356), nunca por
@@ -1202,7 +1341,8 @@ Mais:
   redirect 301 no backend.
 - **`sitemap.xml` e `robots.txt` são rotas de servidor** (`src/routes/sitemap[.]xml.ts`,
   `robots[.]txt.ts`), não arquivos de `public/`: a URL absoluta e o `Disallow: /` de staging
-  dependem do ambiente. Sitemap só com URL canônica e indexável, `lastmod` do `updatedAt`, uma
+  dependem do ambiente. Sitemap só com URL canônica e indexável, `lastmod` do `updatedAt`, `priority`
+  por entrada (início 1, listas 0.8, detalhes 0.6), uma
   entrada por idioma com `xhtml:link` de `hreflang`, `Cache-Control: public, max-age=3600`, cada
   fonte num `try` próprio; acima de 50 mil URLs, sitemap index. A lógica pura mora em
   `lib/sitemap.ts`, com teste. _doc-lib/tanstack-start.md#guide/server-routes.
@@ -1288,6 +1428,15 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 
 - Todo controle tem os estados default, hover, `focus-visible`, active, disabled, loading e erro;
   hover sem foco equivalente é defeito.
+- **Região que rola é focável e tem nome.** Elemento com `overflow` que rola e sem nada focável dentro
+  reprova o axe `scrollable-region-focusable` (WCAG 2.1.1 e 2.1.3;
+  https://dequeuniversity.com/rules/axe/4.10/scrollable-region-focusable): o teclado não alcança a
+  rolagem. O próprio elemento leva `tabIndex={0}`, o `focus-ring` do tema e nome. Já tem papel (a lista
+  do `Rail`): o nome vai por `aria-label` e não se acrescenta `role`. É um `div` sem papel (o quadro
+  da `TableGrid`): `aria-label` solto num `div` é proibido pelo ARIA, então leva `role="region"` com o
+  nome, e a tabela dentro mantém o papel dela. `ui/table.tsx` não se edita: o quadro é da peça do kit.
+  O nome é da lista ou do quadro, nunca o do container rotulado que o envolve: o `responsive.spec.ts`
+  cobra isso em toda tela (`ResponsiveAudit.repeatedNames`).
 - **Nativo antes de ARIA**: `<button>` para ação, `<Link>` para navegação; nunca `<div onClick>`,
   nunca `<a><button>`.
 - **Nome acessível**: botão só de ícone leva `aria-label` por `m.*()`; ícone decorativo
@@ -1310,15 +1459,41 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 - Alvo de toque ≥ 44×44 px, por área invisível se preciso *(opinião da casa: AA não exige)*; hover
   nunca é o único caminho para uma função; gesto (arrastar, deslizar) tem alternativa de um
   ponteiro.
-- **44 px no celular vem do kit, nunca caso a caso** *(opinião da casa, `DECISIONS.md` #267)*: os
-  controles de `components/ui/` (botão, campo, select, toggle, paginação, itens de menu) crescem
-  abaixo de `sm` por tamanho responsivo no próprio arquivo (`h-11 sm:h-7`) e voltam ao tamanho denso
-  de `sm` para cima; a tela não ajusta altura de controle. O `touch-targets.spec` (§11.2) cobra 44 px no
-  projeto `mobile`. 24 px é o mínimo do WCAG 2.2 AA (2.5.8): vale só como degrau registrado no
+- **44 px no celular vem do kit, nunca caso a caso** *(opinião da casa, `DECISIONS.md` #267, forma
+  em #461)*: os controles de `components/ui/` mantêm o tamanho denso do shadcn (`h-7`, `h-8`...) sem
+  tocar no `h-*` original, e o patch `// casa:` só acrescenta `max-sm:min-h-11` (mais
+  `max-sm:min-w-11` nos tamanhos de ícone, `size-*`). `max-sm:` vale só abaixo de `sm`, então de `sm`
+  para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos, âncoras e classes:
+  `frontend/scripts/ui-patches.json` do kit, cobrado no `test:unit` (§6, `DECISIONS.md` #772): `button`, `toggle`
+  (com `max-sm:min-w-11`, porque o `min-w-7` do registry deixa o toggle só de ícone com 28 px de largura),
+  `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`), `tabs` (o `TabsTrigger`) e `input-group`. O
+  `ToggleGroupItem` monta a classe com `toggleVariants`: o patch do `toggle` vai dentro do `cva`
+  (base e tamanhos), não no `className` do componente `Toggle`, senão o item do grupo fica de fora
+  e mede 40 px. No `input-group` o patch vai
+  em dois lugares: na raiz `InputGroup` (`max-sm:min-h-11`), senão o `InputGroupInput` herda o mínimo
+  do `Input` e transborda a borda do grupo, que fica no `h-8`; e no `InputGroupButton`, só o
+  `max-sm:min-w-11` dos tamanhos de ícone (`icon-xs`, `icon-sm`), porque ele consome o `size` e
+  repassa o default ao `Button`, que então não ganha a largura mínima (a altura mínima já vem do
+  `Button`). A tela não ajusta altura de controle. Campo de digitação (`input`,
+  `textarea`, o `select` nativo do `native-select` e o input do `input-group`) também leva
+  `max-sm:text-base` no mesmo patch: o registry deixa `text-sm`/`text-xs`, e abaixo de 16 px o Safari
+  do iOS dá zoom na página ao focar o campo (comportamento do navegador, sem entrada em `_doc-lib`:
+  não coberto). Link solto (fora de texto corrido, como "Ainda não tem
+  conta? Crie" das páginas de autenticação) é `Link` com `className={buttonVariants({ variant:
+  'link' })}` (nunca `Button render={<Link />}`, `DECISIONS.md` #440), que já herda o mínimo de
+  44 px do `buttonVariants`; só o link em linha dentro de frase fica isento, pela exceção de link em linha do
+  WCAG 2.5.8 (sem entrada em `_doc-lib`: não coberto). **Nunca `h-11 sm:h-7`**: o `tailwind-merge` 3.7 não junta classe
+  com e sem variante, e `twMerge('h-11 sm:h-7', 'h-12')` devolve `sm:h-7 h-12`, de modo que de `sm`
+  para cima todo `Button`, `Toggle` ou `Input` com altura própria (`h-12`, `size="lg"` + `h-11`)
+  cai para o denso. Com a forma nova, `twMerge('h-7 max-sm:min-h-11', 'h-12')` devolve
+  `max-sm:min-h-11 h-12`: a altura passada vence no desktop e o mínimo segue no celular. Altura que a
+  peça do kit passava só para compensar o patch antigo sai. O `touch-targets.spec` (§11.2) cobra 44 px
+  no projeto `mobile`. 24 px é o mínimo do WCAG 2.2 AA (2.5.8): vale só como degrau registrado no
   `docs/DESIGN.md` do projeto (por exemplo, numa vitrine que ainda não migrou), nunca como padrão.
-  Variante por largura: _doc-lib/tailwindcss.md#responsive-design
-  (https://tailwindcss.com/docs/responsive-design, aberta). O critério 2.5.8 do WCAG não tem entrada
-  em `_doc-lib`: não coberto.
+  Variante `max-*` (e a armadilha de `sm:` não ser "só celular"): _doc-lib/tailwindcss.md#responsive-design
+  (https://tailwindcss.com/docs/responsive-design, aberta, "Targeting a breakpoint range"); piso de
+  altura: https://tailwindcss.com/docs/min-height (aberta; `min-h-*` sem entrada própria em
+  `_doc-lib`, vizinha de `#height`). O critério 2.5.8 do WCAG não tem entrada em `_doc-lib`: não coberto.
 - Sessão que expira avisa e permite estender.
 
 ### 10.3 Formulário acessível
@@ -1355,6 +1530,13 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 - Celular primeiro: base sem prefixo, camadas `md:`/`lg:`, breakpoint em `--breakpoint-*`. Sem
   rolagem horizontal a 320 px, uso a 200% de zoom, nunca `user-scalable=no`/`maximum-scale=1`.
   _doc-lib/tailwindcss.md#responsive-design.
+- **Peça que pode ir em coluna estreita decide o layout pelo container, não pela tela.** Card, trilho,
+  grade de itens: o pai marca `@container` e o filho usa `@md:`/`@2xl:` (largura do pai), e não `md:`
+  (largura da viewport), que erra quando a mesma peça cai numa sidebar, num `Sheet` ou numa coluna ao
+  lado de outra. Peça de página inteira, que só ocupa a largura toda, segue pelo breakpoint da viewport.
+  O container nomeado (`@container/nome`, `@md/nome:`) separa dois pais aninhados. Variante
+  `@max-*` e faixa fechada (`@md:@max-2xl:`) valem como as de viewport
+  (_doc-lib/tailwindcss.md#responsive-design; https://tailwindcss.com/docs/responsive-design, "Container queries").
 - Altura cheia com `min-h-dvh`, nunca `h-screen`; filho de flex com `min-w-0`; texto longo com
   `truncate`/`line-clamp`/`break-words`; contêiner de texto sem largura fixa (es e en são mais
   longos que pt-BR). Celular adapta, não amputa: tabela vira lista de cartões ou rola dentro do
@@ -1458,7 +1640,12 @@ O `docs/DESIGN.md` do projeto diz o que usa no lugar, na identidade dele.
 
 ### 10.10 Arrastar e reordenar (dnd kit)
 
-- `sensors` e `plugins` do `DragDropProvider` sempre na forma de função
+- A tabela do kit (`common/table/`, bloco opcional que só liga com `@tanstack/react-table` e
+  `@dnd-kit/*` no `package.json`) usa a geração `core`/`sortable`/`utilities`, que a doc diz ser a da
+  casa; o `kit.deps.json` declara essa geração, não a `@dnd-kit/react`. A migração é um commit só,
+  pelo passo a passo de _doc-lib/dnd-kit.md#react/guides/migration
+  (https://dndkit.com/react/guides/migration.md), quando o pacote novo sair do `0.x`.
+- Nos projetos que já estão na API nova, `sensors` e `plugins` do `DragDropProvider` sempre na forma de função
   (`(defaults) => [...defaults, X]`): o array substitui o padrão e some com o `KeyboardSensor` e o
   plugin `Accessibility` (_doc-lib/dnd-kit.md#react/components/drag-drop-provider,
   #react/guides/sensors).
@@ -1528,7 +1715,15 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   (_doc-lib/playwright.md#docs/best-practices, #docs/mock): esse é o uso livre. Contra o backend do
   próprio projeto *(opinião da casa)*, só para o que ele não produz sob demanda (5xx, latência para
   ver o esqueleto, offline); sucesso simulado do próprio backend é proibido, porque o E2E existe para
-  pegar a costura com ele. Rota não precisa de `unrouteAll`: cada teste recebe contexto novo, e o
+  pegar a costura com ele. O 5xx real do backend, porém, reprova o teste (a fixture `watch` de
+  `e2e/support/test.ts`): o spec que **espera** o erro de servidor (a lista com "Tentar de novo") o
+  declara pela opção `expectedApiErrors` da fixture, com status e padrão do endereço, e só esse
+  erro, com o `console.error` que o navegador loga por ele (e o `HTTPError` do kit com o mesmo status,
+  que o router loga no erro de um `loader`, `DECISIONS.md` #743), deixa de reprovar naquele teste
+  (`test.use({ expectedApiErrors: [[{ status: 503, url: /\/members/ }], { scope: 'test' }] })`,
+  dentro do `describe` do caso; lista leva o escopo,
+  _doc-lib/playwright.md#docs/test-fixtures, "Fixtures-options", `DECISIONS.md` #731). Declarar e
+  não receber o erro reprova também. Rota não precisa de `unrouteAll`: cada teste recebe contexto novo, e o
   `route` morre com ele.
 - **Viewports** *(opinião da casa, `DECISIONS.md` #266)*: três projetos de viewport rodam os mesmos
   specs: `mobile` 360×740 com toque (`devices['Pixel 5']` com o viewport trocado), `tablet` 768×1024 e
@@ -1539,6 +1734,16 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   _doc-lib/playwright.md#docs/test-projects (https://playwright.dev/docs/test-projects, aberta),
   #docs/emulation (https://playwright.dev/docs/emulation, aberta). Quando roda (fase final do plano,
   e a rodada antes de todo PR): `tooling.md` §7 e §10.1.
+  **Site sem backend** (vitrine): com `E2E_API_URL` vazia o config não cria `setup` nem `cleanup`, nenhum
+  projeto depende deles e só o app sobe; as specs públicas (`pages`, `touch-targets`, `a11y`, `locale`,
+  `responsive`) rodam sem API e sem banco (`scripts/e2e-config.test.ts` carrega o config nos dois modos).
+  `dependencies` só existe onde há projeto de preparação a esperar: _doc-lib/playwright.md#docs/test-projects
+  (https://playwright.dev/docs/test-projects, aberta).
+- **Axe mede depois das animações de tempo, não das de rolagem** (`DECISIONS.md` #429). A fixture
+  espera `document.getAnimations()` terminarem antes de medir contraste, filtrando as infinitas e as
+  que não correm na `DocumentTimeline`: animação ligada à rolagem (`animation-timeline: scroll()`,
+  como o `scroll-fade` do `CodeBlock`) nunca termina sozinha e travava o teste até o tempo acabar.
+  Página da Web Animations API (`Animation.timeline`) não conferida: não coberto pela `_doc-lib`.
 - **Axe ignora o interior de iframe de terceiro** *(opinião da casa, `DECISIONS.md` #268)*: vídeo e
   player embutidos têm marcação que não é do projeto. A fixture exclui o conteúdo e mantém o próprio
   `<iframe>` (título, tamanho) checado: `new AxeBuilder({ page }).exclude({ fromFrames: ['iframe', 'body'] })`.
@@ -1557,6 +1762,17 @@ await expect(page.getByRole('alert')).toHaveText(m.posts_archived_conflict())
   editava (data em ISO contra validator `YYYY-MM-DD`, `backend.md` §4.4), URL desconhecida com
   `200` (§5), botão estourando a 360 px em `es` e `en`, `hreflang` da raiz sem a barra (SEO,
   abaixo) e uma mensagem de "não encontrado" no lugar de "é da turma".
+- **Specs de sessão do kit** *(bloco `painel`, `DECISIONS.md` #491)*: `e2e/session.spec.ts` (credencial
+  errada, entrada pelo formulário com `?redirect=` honrado e `//outro-site` recusado, guarda inversa,
+  saída com confirmação, sessão que vence no meio do uso) e `e2e/panel-shell.spec.ts` (tema que persiste no
+  cookie, idioma que mantém a rota, gaveta no celular, link de pular, axe na entrada e no perfil em claro
+  e escuro) são o mesmo arquivo em todo projeto, com `support/session.ts` (`SessionPage`). O nome de cada
+  controle vem da chave do JSON de mensagens (`import ptBR from '../messages/pt-BR.json'`, `ptBR.kit_sign_out`) e
+  não de `src/paraglide/messages`: depois do `vite build` essa pasta é um módulo virtual que o carregador do
+  Playwright não importa (`Only URLs with a scheme in: file, data, and node`). Cada entrada
+  pelo formulário conta no limite da conta (20 por hora): só entra pelo formulário onde ele é o assunto,
+  sempre com o administrador da plataforma de `auth.setup.ts`, e o resto usa o `storageState`. O papel
+  errado devolvido a `homeOf` não tem spec do kit, porque o kit não traz rota de área: é do projeto.
 - **Limiter ligado no E2E** *(opinião da casa, `DECISIONS.md` #305)*: desligar o limiter é testar
   outro servidor, e o E2E inteiro sai de um IP só, então o sexto cadastro da rodada (ou a segunda
   rodada na mesma hora) leva 429. Cada teste ganha um endereço de cliente próprio, da faixa de teste

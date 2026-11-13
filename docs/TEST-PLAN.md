@@ -11,7 +11,7 @@
 | Nível | Ferramenta | Onde | Roda em |
 |---|---|---|---|
 | Unitário do backend | Japa (`pnpm --filter ./backend test:unit`) | `backend/app/**/*.unit.spec.ts` | hook local e sessão do agente antes do PR |
-| E2E do backend | Japa, suíte `functional` (`test:e2e`), contra o banco `maiyu_test` e o bucket de teste | `backend/app/**/*.e2e.spec.ts` | sessão do agente, uma vez, antes do PR |
+| E2E do backend | Japa, suíte `functional` (`test:e2e`), contra o banco `app_test` e o bucket de teste | `backend/app/**/*.e2e.spec.ts` | sessão do agente, uma vez, antes do PR |
 | `shared/` | Vitest (`test:unit`) | `shared/src/**/*.test.ts` | hook local |
 | Unitário do frontend | Vitest (`pnpm test:unit`) | `frontend/src/**/*.test.ts(x)`, ao lado do arquivo que cobre, um teste por arquivo | hook local |
 | Ciclo de chunk | `check-chunk-cycles.mjs` (`pnpm check-cycles`) | `frontend/scripts/` | depois do build |
@@ -60,7 +60,7 @@ O que a régua pede de toda rota da API (`_standards/backend.md` §7) vale para 
 
 ## 5. Dados de teste
 
-Frontend: os registros de `lib/` e valores literais. Backend: banco `maiyu_test` e bucket `maiyu-test` locais, com os fixtures de `backend/tests/` (`ENV.md` §4).
+Frontend: os registros de `lib/` e valores literais. Backend: banco `app_test` e bucket `maiyu-test` locais, com os fixtures de `backend/tests/` (`ENV.md` §4).
 
 ## 6. Critério de pronto
 

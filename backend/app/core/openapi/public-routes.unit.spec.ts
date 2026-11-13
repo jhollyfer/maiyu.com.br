@@ -51,6 +51,39 @@ function readBaseline(): Record<string, string> {
   return baseline
 }
 
+/** Anonymous or optional session: both answer a caller with no session at all. */
+function reachableByAnonymous(protection: string): boolean {
+  return (
+    protection === AuthzCheck.ANONYMOUS || protection === AuthzCheck.OPTIONAL
+  )
+}
+
+/** Writes anyone can call, as `METHOD /path`, over a given baseline. */
+function anonymousWritesOf(baseline: Record<string, string>): string[] {
+  return Object.entries(baseline)
+    .filter(
+      ([route, protection]) =>
+        reachableByAnonymous(protection) && !route.startsWith('GET '),
+    )
+    .map(([route]) => route)
+    .sort()
+}
+
+/** Routes under a public prefix that the net would not accept as read-only and reachable. */
+function prefixOffenders(
+  baseline: Record<string, string>,
+  prefix: string,
+): string[] {
+  return Object.entries(baseline)
+    .filter(([route]) => route.includes(` ${prefix}`))
+    .filter(
+      ([route, protection]) =>
+        !route.startsWith('GET ') || !reachableByAnonymous(protection),
+    )
+    .map(([route]) => route)
+    .sort()
+}
+
 function routesWhere(
   predicate: (route: string, protection: string) => boolean,
 ): string[] {
@@ -61,15 +94,10 @@ function routesWhere(
 }
 
 test.group('public routes (unit)', () => {
-  test('an anonymous route that is not GET is in the declared list', ({
+  test('an anonymous or optional-session route that is not GET is in the declared list', ({
     assert,
   }) => {
-    const writes = routesWhere(
-      (route, protection) =>
-        protection === AuthzCheck.ANONYMOUS && !route.startsWith('GET '),
-    )
-
-    assert.deepEqual(writes, DECLARED_ANONYMOUS_WRITES)
+    assert.deepEqual(anonymousWritesOf(BASELINE), DECLARED_ANONYMOUS_WRITES)
   })
 
   for (const prefix of READ_ONLY_PUBLIC_PREFIXES) {
@@ -87,9 +115,79 @@ test.group('public routes (unit)', () => {
       const routes = routesWhere((route) => route.includes(` ${prefix}`))
 
       assert.isAbove(routes.length, 0)
-      assert.isTrue(
-        routes.every((route) => BASELINE[route] === AuthzCheck.ANONYMOUS),
-      )
+      assert.deepEqual(prefixOffenders(BASELINE, prefix), [])
     })
   }
 })
+
+test.group(
+  'public routes (unit) > optional session counts as anonymous',
+  () => {
+    test('a POST with silentAuth is a public write, so it must be declared', ({
+      assert,
+    }) => {
+      const baseline = {
+        'GET /storefront/cart': AuthzCheck.OPTIONAL,
+        'POST /storefront/orders': AuthzCheck.OPTIONAL,
+      }
+
+      assert.deepEqual(anonymousWritesOf(baseline), ['POST /storefront/orders'])
+      // Not in the declared list, so the net's comparison fails for it.
+      assert.notDeepEqual(
+        anonymousWritesOf(baseline),
+        DECLARED_ANONYMOUS_WRITES,
+      )
+    })
+
+    test('a declared POST with silentAuth passes', ({ assert }) => {
+      const baseline = { 'POST /authentication/sign-in': AuthzCheck.OPTIONAL }
+
+      assert.deepEqual(anonymousWritesOf(baseline), [
+        'POST /authentication/sign-in',
+      ])
+      assert.includeMembers(
+        DECLARED_ANONYMOUS_WRITES,
+        anonymousWritesOf(baseline),
+      )
+    })
+
+    test('an authenticated or role-gated write is not a public write', ({
+      assert,
+    }) => {
+      assert.deepEqual(
+        anonymousWritesOf({
+          'POST /account': AuthzCheck.AUTHENTICATED,
+          'POST /administrator/x': 'OWNER',
+        }),
+        [],
+      )
+    })
+
+    test('a GET with optional session under a public prefix is accepted', ({
+      assert,
+    }) => {
+      assert.deepEqual(
+        prefixOffenders(
+          {
+            'GET /storefront/cart': AuthzCheck.OPTIONAL,
+            'GET /storefront/notices': AuthzCheck.ANONYMOUS,
+          },
+          '/storefront',
+        ),
+        [],
+      )
+    })
+
+    test('a GET that requires a session under a public prefix is not', ({
+      assert,
+    }) => {
+      assert.deepEqual(
+        prefixOffenders(
+          { 'GET /storefront/mine': AuthzCheck.AUTHENTICATED },
+          '/storefront',
+        ),
+        ['GET /storefront/mine'],
+      )
+    })
+  },
+)

@@ -1,24 +1,25 @@
 {
-  // `shared/` profile of `_standards/tooling.md` §3: no preset, `NodeNext`, and relative
-  // imports with the `.js` extension. What compiles under `NodeNext` also compiles under
-  // `bundler`, so the same source serves the backend (Node) and the frontend (Vite).
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2022"],
+    "target": "ES2024",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-
+    "lib": ["ES2024"],
     "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": false,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
     "noImplicitOverride": true,
-    "noUncheckedIndexedAccess": true,
     "noUncheckedSideEffectImports": true,
     "verbatimModuleSyntax": true,
+    "isolatedModules": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "declaration": true,
+    "rootDir": "src",
+    "outDir": "dist"
   },
-  "include": ["src/**/*.ts", "*.ts"]
+  "include": ["src/**/*.ts"]
 }

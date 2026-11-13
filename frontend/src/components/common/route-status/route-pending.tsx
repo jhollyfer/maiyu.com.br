@@ -8,8 +8,11 @@ export function RoutePending(): React.JSX.Element {
       className="min-h-page-state flex items-center justify-center"
     >
       <div className="flex flex-col items-center gap-4">
-        <Spinner className="size-10 text-primary" />
-        {/* The Spinner already announces "Carregando" (role=status); the text is visual only. */}
+        <Spinner
+          aria-label={m.kit_loading()}
+          className="size-10 text-primary"
+        />
+        {/* The Spinner announces kit_loading (role=status); the text is visual only. */}
         <p aria-hidden className="text-muted-foreground">
           {m.kit_loading()}
         </p>

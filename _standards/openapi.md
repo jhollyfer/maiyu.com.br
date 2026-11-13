@@ -181,7 +181,7 @@ novo ao gerador. **É o coração do sistema** — se algo não foi derivado, é
 | `body` / `querystring` / `params` | o `<Módulo><Recurso><Ação>Validator` de `@<projeto>/shared` que o handler chama |
 | status e corpo vazio | `response.status(N).send(X)` |
 | erros de domínio | `HTTPException.<Fábrica>(t('<chave>'), '<CODE>')` do use-case, da tabela de tradução de fatos (`domain.md` §2) e do `_shared.<recurso>-refusal.ts` que ele importa |
-| 429 | o limitador da rota (`start/limiter.ts` no Adonis, `@fastify/rate-limit` ou o limitador próprio no Fastify) (`DECISIONS.md` #357) |
+| 429 | o limitador da rota: no Adonis, `start/limiter.base.ts` para as rotas do kit (arquivo do kit, o sync sobrescreve) e `start/limiter.ts` para as do projeto (ponto de extensão, `scripts/kit-manifest.mjs` `EXTENSION_POINTS`; `architecture.md` §3); no Fastify, `@fastify/rate-limit` ou o limitador próprio (`DECISIONS.md` #357, #770) |
 | 400 / 500 | `app/exceptions/handler.ts` |
 | envelope da resposta | `type Response = Either<HTTPException, X>` |
 | corpo da resposta | o registro, pela chave do diretório da ação, apontando o schema de `shared/src/responses/` |

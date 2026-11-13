@@ -1,24 +1,24 @@
+import { inject } from '@adonisjs/core'
 import hash from '@adonisjs/core/services/hash'
 
 import { left, right, type Either } from '@maiyu/shared'
 
 import { UserRepository } from './user.repository.ts'
 
-import type RepositoryFailure from '#core/repository-failure'
-import { UNIQUE_CONFLICT, type UniqueConflict } from '#core/unique-conflict'
 import { User, type UserProps } from '#domain/user/user.entity'
-import type { SessionRepository } from '#repositories/session/session.repository'
+import type { UserError } from '#domain/user/user.errors'
+import { SessionRepository } from '#repositories/session/session.repository'
 
 /**
  * Extension point (KIT.md §3.4): the second real implementation, for the use case unit
  * test (`_standards/domain.md` §5.3). It keeps copies, so the test does not change the
  * "database" by reference.
  *
- * It hashes the password on `save` when it changed, as the model hook does: without that
- * the sign-in spec would pass against a lying double. It also keeps the other two promises of
- * the Lucid one: a taken e-mail is `UNIQUE_CONFLICT`, and a credential change revokes the
- * account's sessions in the session repository it shares with the use case.
+ * It hashes the password on `save` when it changed, as the model hook does, and revokes the
+ * account's sessions on the same changes as the Lucid one: without that the sign-in spec would
+ * pass against a lying double.
  */
+@inject()
 export class UserMemoryRepository extends UserRepository {
   private readonly rows = new Map<string, UserProps>()
 
@@ -34,21 +34,30 @@ export class UserMemoryRepository extends UserRepository {
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    const props = [...this.rows.values()].find((row) => row.email === email)
+    const props = [...this.rows.values()].find(
+      (row) => row.email?.toLowerCase() === email.toLowerCase(),
+    )
     if (!props) return null
 
     return User.restore(structuredClone(props))
   }
 
-  async save(
-    user: User,
-  ): Promise<Either<UniqueConflict | RepositoryFailure, void>> {
+  async findByPhone(phone: string): Promise<User | null> {
+    const props = [...this.rows.values()].find((row) => row.phone === phone)
+    if (!props) return null
+
+    return User.restore(structuredClone(props))
+  }
+
+  async save(user: User): Promise<Either<UserError, void>> {
     const snapshot = structuredClone(user.snapshot())
     const taken = [...this.rows.values()].some(
-      (row) => row.id !== snapshot.id && row.email === snapshot.email,
+      (row) =>
+        snapshot.phone !== null &&
+        row.phone === snapshot.phone &&
+        row.id !== snapshot.id,
     )
-    // Refused before any write, like the `UNIQUE` index: nothing is saved or revoked.
-    if (taken) return left(UNIQUE_CONFLICT)
+    if (taken) return left({ code: 'USER_PHONE_TAKEN' })
 
     const stored = this.rows.get(snapshot.id)
     let password = snapshot.password
@@ -56,7 +65,7 @@ export class UserMemoryRepository extends UserRepository {
       password = await hash.make(snapshot.password)
 
     this.rows.set(snapshot.id, { ...snapshot, password })
-    if (user.credentials().revokeSessions)
+    if (stored && this.endsSessions(stored, snapshot))
       await this.sessions.revokeAll(snapshot.id)
 
     return right(undefined)
@@ -70,12 +79,12 @@ export class UserMemoryRepository extends UserRepository {
     id: string,
     stored: string,
     password: string,
-  ): Promise<Either<RepositoryFailure, boolean>> {
+  ): Promise<boolean> {
     const row = this.rows.get(id)
-    if (!row || row.password !== stored) return right(false)
+    if (!row || row.password !== stored) return false
 
     this.rows.set(id, { ...row, password: await hash.make(password) })
 
-    return right(true)
+    return true
   }
 }

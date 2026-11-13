@@ -1,14 +1,8 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import type { Resolver, ResolverResult } from 'react-hook-form'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -75,8 +69,6 @@ function pick(container: HTMLElement, names: ReadonlyArray<string>): void {
     },
   })
 }
-
-afterEach(cleanup)
 
 describe('FieldFiles', () => {
   it('an invalid submit focuses the trigger: the Controller ref reaches it', async () => {

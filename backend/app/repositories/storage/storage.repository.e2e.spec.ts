@@ -5,11 +5,17 @@ import { StorageLucidRepository } from './storage.lucid.repository.ts'
 import { StorageMemoryRepository } from './storage.memory.repository.ts'
 import type { StorageRepository } from './storage.repository.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { UserFactory } from '#database/factories/user.factory'
 import { Storage } from '#domain/storage/storage.entity'
+import StorageModel from '#models/storage'
 import UserModel from '#models/user'
+import { scopedHttpContext } from '#tests/http-context-fixtures'
 import { resetDatabase } from '#tests/http-fixtures'
+import { ROLE_FIXTURES } from '#tests/role-fixtures'
+import { storageRow } from '#tests/storages-fixtures'
 import { PNG_HEAD } from '#tests/storages-unit-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
  * The same contract in both implementations (`_standards/domain.md` §5.4): it is what
@@ -23,7 +29,16 @@ const IMPLEMENTATIONS = {
 
 const NOW = new Date('2026-10-29T12:00:00.000Z')
 
-function file(id: string, originalName: string, confirmed = true): Storage {
+function file(
+  id: string,
+  originalName: string,
+  confirmed = true,
+  uploadedBy: string | null = null,
+  owner: { tenantId: string | null; customerId: string | null } = {
+    tenantId: null,
+    customerId: null,
+  },
+): Storage {
   const opened = Storage.open({
     id,
     key: `${id}.png`,
@@ -32,6 +47,9 @@ function file(id: string, originalName: string, confirmed = true): Storage {
     size: 1024,
     uploadId: null,
     partSize: 10,
+    tenantId: owner.tenantId,
+    customerId: owner.customerId,
+    uploadedBy,
     now: NOW,
   })
   if (opened.isLeft()) throw new Error(`open refused: ${opened.value.code}`)
@@ -45,6 +63,7 @@ function file(id: string, originalName: string, confirmed = true): Storage {
 for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
   test.group(`StorageRepository (${name})`, (group) => {
     group.each.setup(() => resetDatabase())
+    const within = scopedHttpContext(group)
 
     test('save and findById return the same file', async ({ assert }) => {
       const repository = await make()
@@ -115,27 +134,128 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       assert.deepEqual(await repository.detailsOf([]), [])
     })
 
-    test('areAttachable only accepts a confirmed and existing file', async ({
+    test('areAttachable only accepts a confirmed, existing file the account uploaded', async ({
       assert,
     }) => {
       const repository = await make()
-      const ok = file('7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c11', 'ok.png')
+      const owner = await UserFactory.create()
+      const other = await UserFactory.create()
+      const ok = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c11',
+        'ok.png',
+        true,
+        owner.id,
+      )
       const pending = file(
         '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c12',
         'pendente.png',
         false,
+        owner.id,
       )
-      await repository.save(ok)
-      await repository.save(pending)
+      const theirs = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c13',
+        'dela.png',
+        true,
+        other.id,
+      )
+      const nobodys = file(
+        '7e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c14',
+        'ninguem.png',
+      )
+      for (const each of [ok, pending, theirs, nobodys])
+        await repository.save(each)
 
-      assert.isTrue(await repository.areAttachable([ok.id, ok.id]))
-      assert.isTrue(await repository.areAttachable([]))
-      assert.isFalse(await repository.areAttachable([ok.id, pending.id]))
+      assert.isTrue(await repository.areAttachable([ok.id, ok.id], owner.id))
+      assert.isTrue(await repository.areAttachable([], owner.id))
       assert.isFalse(
-        await repository.areAttachable([
-          '0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f',
-        ]),
+        await repository.areAttachable([ok.id, pending.id], owner.id),
       )
+      assert.isFalse(await repository.areAttachable([theirs.id], owner.id))
+      assert.isFalse(await repository.areAttachable([nobodys.id], owner.id))
+      assert.isFalse(await repository.areAttachable([ok.id], other.id))
+      assert.isFalse(
+        await repository.areAttachable(
+          ['0c1f9d1e-8b7a-4c3d-9e2f-1a2b3c4d5e6f'],
+          owner.id,
+        ),
+      )
+    })
+
+    test('areAttachableByTenant only accepts a live confirmed file of the session tenant, never a customer row', async ({
+      assert,
+    }) => {
+      const repository = await make()
+      const store = await Tenants.create()
+      const rival = await Tenants.create()
+      const staff = await UserFactory.create()
+      const buyer = await UserFactory.create()
+      const of = (tenantId: string, customerId: string | null) => ({
+        tenantId,
+        customerId,
+      })
+      const photo = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c21',
+        'foto.png',
+        true,
+        staff.id,
+        of(store.id, null),
+      )
+      const proof = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c22',
+        'comprovante.png',
+        true,
+        buyer.id,
+        of(store.id, buyer.id),
+      )
+      const foreign = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c23',
+        'outra.png',
+        true,
+        null,
+        of(rival.id, null),
+      )
+      const pending = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c24',
+        'pendente.png',
+        false,
+        staff.id,
+        of(store.id, null),
+      )
+      const gone = file(
+        '8e1d3c2b-1a0f-4e9d-8c7b-6a5f4e3d2c25',
+        'apagado.png',
+        true,
+        staff.id,
+        of(store.id, null),
+      )
+      const trashed = Storage.restore({ ...gone.snapshot(), deletedAt: NOW })
+      for (const each of [photo, proof, foreign, pending, trashed])
+        await repository.save(each)
+
+      await within(
+        TenantScope.ofAccess({
+          id: staff.id,
+          platformRole: 'USER',
+          tenant: {
+            id: store.id,
+            cityId: store.cityId,
+            role: ROLE_FIXTURES.staff,
+            childIds: [],
+          },
+        }),
+      )
+
+      assert.isTrue(
+        await repository.areAttachableByTenant([photo.id, photo.id]),
+      )
+      assert.isTrue(await repository.areAttachableByTenant([]))
+      assert.isFalse(await repository.areAttachableByTenant([proof.id]))
+      assert.isFalse(
+        await repository.areAttachableByTenant([photo.id, proof.id]),
+      )
+      assert.isFalse(await repository.areAttachableByTenant([foreign.id]))
+      assert.isFalse(await repository.areAttachableByTenant([pending.id]))
+      assert.isFalse(await repository.areAttachableByTenant([gone.id]))
     })
 
     test('paginate searches, filters by status and sorts', async ({
@@ -360,5 +480,24 @@ test.group('StorageRepository (lucid) > usedBy', (group) => {
       await repository.findOrphans(new Date(NOW.getTime() + 1)),
       [],
     )
+  })
+})
+
+test.group('StorageRepository (lucid) > uploaded_by', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  test('the file stays, with no uploader, when the account that uploaded it is really deleted', async ({
+    assert,
+  }) => {
+    const user = await UserFactory.create()
+    const kept = await storageRow({ uploadedBy: user.id })
+    assert.equal((await StorageModel.findOrFail(kept.id)).uploadedBy, user.id)
+
+    // Hard delete on purpose: soft delete never reaches the `ON DELETE` of the FK (`SET NULL`, not `CASCADE`).
+    await UserModel.query().where('id', user.id).delete()
+
+    const row = await StorageModel.find(kept.id)
+    assert.isNotNull(row)
+    assert.isNull(row?.uploadedBy ?? null)
   })
 })

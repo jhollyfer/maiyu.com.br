@@ -1,5 +1,5 @@
 import { env } from '#/env'
-import { localizedUrl } from '#/lib/page-head'
+import { alternateLinks, localizedUrl } from '#/lib/i18n'
 import { locales } from '#/paraglide/runtime'
 
 /**
@@ -14,6 +14,8 @@ import { locales } from '#/paraglide/runtime'
 export type SitemapEntry = Readonly<{
   pathname: string
   lastModified?: string | null
+  /** 0 to 1, a hint to the crawler: the home 1, the lists 0.8, the details 0.6. */
+  priority?: number
 }>
 
 const ESCAPES: Readonly<Record<string, string>> = {
@@ -30,15 +32,12 @@ function escapeXml(value: string): string {
 
 /** The reciprocal `xhtml:link`s of the three versions, plus the `x-default` (pt-BR). */
 function alternates(pathname: string): string {
-  const links = locales.map(
-    (locale) =>
-      `<xhtml:link rel="alternate" hreflang="${locale}" href="${escapeXml(localizedUrl(pathname, locale))}"/>`,
-  )
-  links.push(
-    `<xhtml:link rel="alternate" hreflang="x-default" href="${escapeXml(localizedUrl(pathname, 'pt-BR'))}"/>`,
-  )
-
-  return links.join('')
+  return alternateLinks(pathname)
+    .map(
+      (link) =>
+        `<xhtml:link rel="alternate" hreflang="${link.hrefLang}" href="${escapeXml(link.href)}"/>`,
+    )
+    .join('')
 }
 
 /** One entry per language, each with its siblings' `hreflang`. */
@@ -49,7 +48,12 @@ function urls(entry: SitemapEntry): Array<string> {
       lastmod = `<lastmod>${escapeXml(entry.lastModified)}</lastmod>`
     }
 
-    return `<url><loc>${escapeXml(localizedUrl(entry.pathname, locale))}</loc>${lastmod}${alternates(entry.pathname)}</url>`
+    let priority = ''
+    if (entry.priority !== undefined) {
+      priority = `<priority>${entry.priority.toFixed(1)}</priority>`
+    }
+
+    return `<url><loc>${escapeXml(localizedUrl(entry.pathname, locale))}</loc>${lastmod}${priority}${alternates(entry.pathname)}</url>`
   })
 }
 

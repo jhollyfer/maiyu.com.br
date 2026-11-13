@@ -14,7 +14,7 @@ export class SecurityTxt {
     return [
       `Contact: ${contact}`,
       `Expires: ${expires.toISOString()}`,
-      'Preferred-Languages: pt, en',
+      'Preferred-Languages: pt, es, en',
       '',
     ].join('\n')
   }

@@ -5,7 +5,7 @@ import { I18n } from '@adonisjs/i18n'
 import {
   left,
   right,
-  type AccountProfileShowResponse,
+  type AccountProfileUpdateResponse,
   type Actor,
   type Either,
   type Merge,
@@ -16,16 +16,20 @@ import { ProfilePresenter } from '../profile.presenter.ts'
 
 import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import HTTPException from '#exceptions/http.exception'
-import { UnitOfWork } from '#repositories/unit-of-work/unit-of-work'
+import { EmailChangeRepository } from '#repositories/email-change/email-change.repository'
+import { StorageRepository } from '#repositories/storage/storage.repository'
 import { UserRepository } from '#repositories/user/user.repository'
 import { ClockContract } from '#services/clock/clock.contract'
+import { EmailChangeContract } from '#services/email-change/email-change.contract'
+import EmailToken from '#services/email-change/email-token'
+import { StorageContract } from '#services/storage/storage.contract'
 import type { AccountProfileUpdatePayload } from '#validators/account/profile.validator'
 
 /** The session account: the guard already read it, excluding archived and inactive. */
 type Payload = Merge<AccountProfileUpdatePayload, { readonly actor: Actor }>
 
 type Result = {
-  readonly profile: AccountProfileShowResponse
+  readonly profile: AccountProfileUpdateResponse
   /** Whether every session of the account ended, so the controller clears the cookies. */
   readonly sessionsRevoked: boolean
 }
@@ -33,21 +37,32 @@ type Result = {
 type Response = Either<HTTPException, Result>
 
 /**
- * Changes the owner's name or password. The current password comes first: the cookie
+ * Changes the owner's name, password or phone. The current password comes first: the cookie
  * proves the session, not the person, and a stolen cookie must not be able to lock the owner
- * out. Changing the password ends every session of the account, the one that made this request
- * included: the entity asks for it, and the repository writes the row and the revocation on
- * the same unit of work, so a failed save keeps the old password and its sessions.
+ * out. Changing the password or the phone (what the account signs in with) ends every session of
+ * the account, the one that made this request included: `UserRepository.save` writes the row and
+ * the revocation in one transaction, so a failed save keeps the old credentials and its sessions.
  *
- * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`.
+ * A new password equal to the current one is `422 PASSWORD_SAME_AS_CURRENT` on `password`; a phone
+ * another account holds is `422 PHONE_TAKEN` on `phone`.
  *
- * A name alone is not a credential: `200` and the sessions stay. The e-mail does not change here.
+ * A name or a photo alone is not a credential: `200` and the sessions stay. The photo (`avatarId`)
+ * must be a live, confirmed file the request owns, else `422 AVATAR_INVALID`.
+ *
+ * The e-mail does not change here (DECISIONS.md #442): the request keeps a pending change
+ * (`EmailChangeRepository`) and sends a one-use token to the new address (`EmailChangeContract`), the answer carries it in
+ * `pendingEmail`, and the e-mail only changes in `account/email/confirm`. Where the contract is
+ * unavailable (no e-mail block or no SMTP) it is `422 EMAIL_CHANGE_UNAVAILABLE`; the same address
+ * the account has is `422 EMAIL_SAME_AS_CURRENT`, another account's is `422 EMAIL_TAKEN`.
  */
 @inject()
 export default class AccountProfileUpdateUseCase {
   constructor(
     private readonly users: UserRepository,
-    private readonly unitOfWork: UnitOfWork,
+    private readonly storages: StorageRepository,
+    private readonly bucket: StorageContract,
+    private readonly emailChange: EmailChangeContract,
+    private readonly emailChanges: EmailChangeRepository,
     private readonly clock: ClockContract,
     private readonly i18n: I18n,
   ) {}
@@ -55,6 +70,7 @@ export default class AccountProfileUpdateUseCase {
   async execute({
     actor,
     currentPassword,
+    email,
     ...patch
   }: Payload): Promise<Response> {
     try {
@@ -70,54 +86,113 @@ export default class AccountProfileUpdateUseCase {
           ),
         )
 
+      const hasher = LegacyAwareHashDriver.hasher()
+      const stored = user.snapshot().password
       const proven =
         currentPassword !== undefined &&
-        (await LegacyAwareHashDriver.hasher().verify(
-          user.snapshot().password,
-          currentPassword,
-        ))
+        (await hasher.verify(stored, currentPassword))
       if (!proven) return left(this.wrongCurrentPassword())
+
+      if (
+        patch.avatarId &&
+        !(await this.storages.areAttachable([patch.avatarId], actor.id))
+      )
+        return left(ProfileRefusal.avatarInvalid(this.i18n))
+
+      if (email !== undefined) {
+        const refused = await this.refuseEmail(user.snapshot().email, email)
+        if (refused) return left(refused)
+      }
 
       // Same password is not a change, yet it would end every session: refused before the entity
       // is touched. The entity only holds the hash, so the comparison is a verify against it.
-      if (await this.isSamePassword(user.snapshot().password, patch.password))
+      if (
+        patch.password !== undefined &&
+        (await hasher.verify(stored, patch.password))
+      )
         return left(
           ProfileRefusal.http({ code: 'PASSWORD_SAME_AS_CURRENT' }, this.i18n),
         )
 
-      user.update(patch, this.clock.now().toJSDate())
+      const phoneChanged =
+        patch.phone !== undefined && patch.phone !== user.snapshot().phone
 
-      const saved = await this.unitOfWork.run(() => this.users.save(user))
-
-      if (saved.isLeft()) {
-        // The e-mail does not change here, so the `UNIQUE` index has nothing to refuse: a
-        // conflict would be a defect, and the other left is the database.
-        if (saved.value.code === 'UNIQUE_CONFLICT')
-          return left(
-            this.failure(
-              new Error('unexpected unique conflict on the profile'),
-            ),
-          )
-
-        return left(this.failure(saved.value.cause))
+      // An e-mail alone writes nothing in the account: the row only changes on confirmation.
+      const changesAccount = [
+        patch.name,
+        patch.phone,
+        patch.password,
+        patch.avatarId,
+      ].some((value) => value !== undefined)
+      if (changesAccount) {
+        user.update(patch, this.clock.now().toJSDate())
+        const saved = await this.users.save(user)
+        if (saved.isLeft())
+          return left(ProfileRefusal.http(saved.value, this.i18n))
       }
 
+      if (email !== undefined) await this.requestEmailChange(user.id, email)
+
+      const { avatarId } = user.snapshot()
+      const [file = null] = await this.storages.detailsOf(
+        [avatarId].filter((id) => id !== null),
+      )
+
       return right({
-        profile: ProfilePresenter.show(user),
-        sessionsRevoked: user.credentials().revokeSessions,
+        profile: ProfilePresenter.update(
+          user,
+          await this.bucket.withOptionalUrl(file),
+          actor.tenant,
+          email ?? null,
+        ),
+        sessionsRevoked: patch.password !== undefined || phoneChanged,
       })
     } catch (error) {
-      return left(this.failure(error))
+      HttpContext.getOrFail().logger.error(
+        { err: error },
+        '[account/profile > update][error]',
+      )
+
+      return left(
+        HTTPException.InternalServerError(
+          this.i18n.t('errors.internal'),
+          'ACCOUNT_PROFILE_UPDATE_ERROR',
+        ),
+      )
     }
   }
 
-  private async isSamePassword(
-    stored: string,
-    candidate: string | undefined,
-  ): Promise<boolean> {
-    if (candidate === undefined) return false
+  /** Keeps the pending change, with the hash of a new token, and mails the token to the new address. */
+  private async requestEmailChange(
+    userId: string,
+    email: string,
+  ): Promise<void> {
+    const token = EmailToken.generate()
+    await this.emailChanges.replace({
+      userId,
+      email,
+      tokenHash: EmailToken.hash(token),
+      expiresAt: this.clock
+        .now()
+        .plus({ minutes: EmailToken.EXPIRES_IN_MINUTES })
+        .toJSDate(),
+    })
+    await this.emailChange.deliver({ to: email, token }, this.i18n)
+  }
 
-    return LegacyAwareHashDriver.hasher().verify(stored, candidate)
+  /** The refusal of the requested e-mail, or `null` when the request may go on. */
+  private async refuseEmail(
+    current: string | null,
+    email: string,
+  ): Promise<HTTPException | null> {
+    if (!this.emailChange.isAvailable())
+      return ProfileRefusal.emailChangeUnavailable(this.i18n)
+    if (current?.toLowerCase() === email)
+      return ProfileRefusal.emailSameAsCurrent(this.i18n)
+    if (await this.users.findByEmail(email))
+      return ProfileRefusal.http({ code: 'USER_EMAIL_TAKEN' }, this.i18n)
+
+    return null
   }
 
   private wrongCurrentPassword(): HTTPException {
@@ -127,18 +202,6 @@ export default class AccountProfileUpdateUseCase {
       {
         currentPassword: this.i18n.t('account.current_password_invalid_field'),
       },
-    )
-  }
-
-  private failure(cause: unknown): HTTPException {
-    HttpContext.getOrFail().logger.error(
-      { err: cause },
-      '[account/profile > update][error]',
-    )
-
-    return HTTPException.InternalServerError(
-      this.i18n.t('errors.internal'),
-      'ACCOUNT_PROFILE_UPDATE_ERROR',
     )
   }
 }

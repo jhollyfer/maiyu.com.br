@@ -17,8 +17,10 @@ e `VITE_UPLOAD_MAX_SIZE` no build (`src/env.ts`) e `SITE_ENV`, `SERVER_API_URL`,
 
 ### 1.1 Backend
 
-Mesma ordem de blocos do `backend/.env.example` (`_standards/backend.md` §6.2). Sem e-mail, fila nem
-JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteiros.
+Mesma ordem e mesmas chaves do `backend/.env.example` do kit (catálogo único, `_standards/DECISIONS.md`
+#417). O site não manda e-mail nem usa fila: as chaves desses blocos ficam no arquivo, vazias, e o bloco
+fica desligado pelo valor. As contas de teste do E2E não têm chave: saem do `node ace e2e:accounts`, que só roda
+em development e test.
 
 | Variável | App | Obrigatória | Segredo | O que é | Exemplo |
 |---|---|---|---|---|---|
@@ -30,7 +32,7 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `APP_KEY` | api | sim | **sim** | chave de cifra, gerada por `node ace generate:key` | `<segredo>` |
 | `APP_SERVER_URL` | api | sim | não | endereço público da API; em produção `https://api.maiyu.com.br` | `http://localhost:3333` |
 | `APP_CLIENT_URL` | api | só com app e API em sites diferentes | não | origem pública do site; decide o `sameSite` do cookie | `https://maiyu.com.br` |
-| `TRUSTED_PROXIES` | api | em produção atrás de proxy | não | proxies de que `X-Forwarded-For` vale; ausente vale `loopback`; nunca `true` | `uniquelocal` |
+| `TRUSTED_PROXIES` | api | **sim em produção** | não | proxies de que `X-Forwarded-For` vale; ausente vale `loopback`; nunca `true`. A API exige `uniquelocal` no Coolify: o `Dockerfile-production` do kit fixa `loopback`, e atrás do Traefik todo visitante teria o IP do proxy, então o limite do contato e o do login valeriam para todos juntos | `uniquelocal` |
 | `COOKIE_DOMAIN` | api | em produção com hosts irmãos | não | domínio dos cookies de sessão | `.maiyu.com.br` |
 | `CORS_ORIGINS` | api | sim fora de dev | não | origens do navegador que podem escrever, separadas por vírgula; em produção só `https://maiyu.com.br`, a origem do site | `http://localhost:3000` |
 | `DATABASE_URL` | api | sim | **sim** | conexão com o Postgres, só no servidor | `postgres://maiyu:<senha>@localhost:5440/maiyu` |
@@ -46,8 +48,17 @@ JWT: os blocos opcionais `mail`, `queue` e `jwt` do modelo ficam de fora, inteir
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
-| `SEED_DEMO_PASSWORD` | api | não | **sim** | senha das contas de demonstração; o projeto não tem demonstração | vazio |
-| `DB_PORT`, `STORAGE_PORT`, `STORAGE_CONSOLE_PORT` | compose | só em dev | não | portas do `backend/docker-compose.yml`, nunca lidas pela API | `5440`, `9016`, `9017` |
+| `SEED_TENANT_NAME` | api | sim com o tenant | não | nome do tenant único semeado (`_standards/DECISIONS.md` #390) | `Maiyu` |
+| `SEED_TENANT_SLUG` | api | sim com o tenant | não | slug do tenant; o mesmo de `SINGLE_TENANT_SLUG` | `maiyu` |
+| `SEED_TENANT_CITY` | api | sim com o tenant | não | slug da cidade semeada do tenant | `benjamin-constant` |
+| `SEED_TENANT_TYPE` | api | sim com o tenant | não | um dos `TENANT_TYPES` do shared | `ORGANIZATION` |
+| `SINGLE_TENANT_SLUG` | api | **sim** | não | modo cliente único (`_standards/DECISIONS.md` #399): a vitrine não leva cidade nem tenant na URL e resolve este tenant | `maiyu` |
+| `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | api | não | `SMTP_PASSWORD` sim | bloco de e-mail; vazio, o site não manda e-mail | vazio (`SMTP_PORT=587`) |
+| `REDIS_URL` | api | não | **sim** | fila e cache; vazio, a API usa o banco | vazio |
+
+As portas do `backend/docker-compose.yml` (5440, 9016, 9017) não são mais chaves do catálogo: o compose
+usa as dele por padrão, e quem precisa de outra porta exporta `DB_PORT`, `STORAGE_PORT` ou
+`STORAGE_CONSOLE_PORT` só no shell.
 
 Em produção a API responde em `https://api.maiyu.com.br` (decisão do dono) e o site em
 `https://maiyu.com.br`, então os dois valores são `APP_SERVER_URL=https://api.maiyu.com.br` e
@@ -73,7 +84,7 @@ Mesma ordem de blocos do `frontend/.env.example`. O `frontend/.env.test` (versio
 | `SECURITY_CONTACT` | web | não | não | contato de segurança de `/.well-known/security.txt` (`mailto:` ou `https:`); ausente, a rota responde 404. O contato do site é `contato@maiyu.com.br` (`DECISIONS.md` #17) | `mailto:security@example.com` |
 | `STORAGE_PUBLIC_URL` | web | não | não | origem do bucket para a CSP; o site não tem bucket | `http://localhost:9002` |
 | `VITE_UPLOAD_MAX_SIZE` | web | não | não | teto de upload em bytes; o site não tem upload | `1073741824` |
-| `E2E_*` | web | não | `E2E_*_PASSWORD` sim | só para Playwright; o site não tem E2E | ver `.env.example` |
+| `E2E_*` | web | não | não | só para Playwright: URL do site e da API e o Chromium opcional; as contas de cada papel o `e2e/auth.setup.ts` cria na hora com `node ace e2e:accounts` (#443), sem senha em chave | ver `.env.example` |
 
 Regras (detalhe em `backend.md` §6):
 
@@ -114,9 +125,9 @@ Docker Hub.
 | Ambiente | De onde vêm os valores | Observação |
 |---|---|---|
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
-| Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `maiyu_test` e bucket `maiyu-test` |
+| Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `app_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
-| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe` e `CORS_ORIGINS=https://maiyu.com.br`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
+| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
 
 ## 5. Primeira configuração
 

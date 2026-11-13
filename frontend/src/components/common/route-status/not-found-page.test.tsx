@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import type * as React from 'react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   NotFoundPage,
@@ -20,8 +20,6 @@ vi.mock('@tanstack/react-router', () => ({
     <a href={to}>{children}</a>
   ),
 }))
-
-afterEach(cleanup)
 
 describe('NotFoundPage', () => {
   it('without children, writes the generic 404 with the exit to the start', () => {

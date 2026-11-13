@@ -17,6 +17,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- No celular, botões, campos, seletores e alternadores passam a ter 44 px de altura (e de largura nos ícones), o tamanho mínimo confortável para o toque; no computador nada muda.
 - Contato e carreiras deixam de ter formulário: as páginas avisam que o formulário está fora do ar por enquanto e levam ao e-mail e ao WhatsApp da Maiyu, sem prometer que algo foi enviado.
 - Endereço que não existe passa a responder 404 de verdade, mantendo a tela "Você saiu da trilha" com menu e rodapé.
 - Saem da vitrine o serviço de aplicativos, que nenhum produto do portfólio usa, e a caixa de newsletter do diário, que não enviava e-mail.

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fireEvent, render, screen } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import {
   OptionCombobox,
@@ -11,8 +11,6 @@ import {
   toOptions,
 } from '#/components/common/option-combobox/option-combobox'
 import { m } from '#/paraglide/messages'
-
-afterEach(cleanup)
 
 const OPTIONS = [
   { value: 'draft', label: 'Rascunho', dot: 'bg-amber-500' },
@@ -123,6 +121,56 @@ describe('OptionCombobox', () => {
         .getByRole('combobox', { name: 'Situação' })
         .hasAttribute('disabled'),
     ).toBe(true)
+  })
+})
+
+describe('OptionCombobox, nome acessível dos botões', () => {
+  it('when rendered, the open button has an accessible name', () => {
+    renderCombobox({})
+
+    expect(
+      screen.getByRole('button', { name: m.kit_combobox_open() }),
+    ).toBeTruthy()
+  })
+
+  it('when showClear is on, the clear button has an accessible name', () => {
+    render(
+      <OptionCombobox options={OPTIONS} value="draft" onValueChange={vi.fn()}>
+        <OptionComboboxInput aria-label="Situação" showClear />
+      </OptionCombobox>,
+    )
+
+    expect(
+      screen.getByRole('button', { name: m.kit_combobox_clear() }),
+    ).toBeTruthy()
+  })
+
+  it('when the clear button is clicked, it reports an empty value', () => {
+    const onValueChange = vi.fn()
+    render(
+      <OptionCombobox
+        options={OPTIONS}
+        value="draft"
+        onValueChange={onValueChange}
+      >
+        <OptionComboboxInput aria-label="Situação" showClear />
+      </OptionCombobox>,
+    )
+
+    fireEvent.click(
+      screen.getByRole('button', { name: m.kit_combobox_clear() }),
+    )
+
+    expect(onValueChange).toHaveBeenCalledWith('')
+  })
+
+  it('when rendered, no button is left without a name', () => {
+    renderCombobox({ value: 'draft' })
+
+    for (const button of screen.getAllByRole('button', { hidden: true })) {
+      const name = button.getAttribute('aria-label') ?? button.textContent
+      expect(name).toBeTruthy()
+    }
   })
 })
 

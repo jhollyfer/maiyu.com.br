@@ -2,7 +2,6 @@
 
 import type {
   MutationFunctionContext,
-  UseMutationOptions,
   UseMutationResult,
 } from '@tanstack/react-query'
 import { renderHook } from '@testing-library/react'
@@ -11,6 +10,7 @@ import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { HTTPError } from '#/integrations/tanstack-query/http'
+import type { MutationProps } from '#/integrations/tanstack-query/http'
 import { applyMutationError } from '#/lib/form-errors'
 import { z } from '@maiyu/shared'
 
@@ -61,10 +61,7 @@ const CONTEXT = fromPartial<MutationFunctionContext>({})
 /** The resource's mutation, reduced to what the hook uses of it. */
 function mutationStub() {
   const mutate = vi.fn()
-  type Options = Omit<
-    UseMutationOptions<Record_, HTTPError, Payload>,
-    'mutationFn'
-  >
+  type Options = MutationProps<Record_, Payload>
 
   let captured: Options | undefined
 

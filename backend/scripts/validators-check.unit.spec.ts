@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-import { z } from '@maiyu/shared'
+import { Rule, z } from '@maiyu/shared'
 
 import { ValidatorsCheck } from './validators-check.ts'
 
@@ -21,12 +21,38 @@ test.group('validators:check > pair comparison', () => {
     assert.deepEqual(findings, [])
   })
 
+  // VineJS leaves a `nullable()` field out of `required` in its JSON Schema, though it refuses a
+  // missing key ("must be defined"): the pair with Zod's `nullable()` is equal.
+  test('vine nullable() and z.nullable() are the same rule', ({ assert }) => {
+    const findings = check.compare({
+      file,
+      name: 'StoragesFileCreateValidator',
+      vine: vine.create({ parentId: vine.string().nullable() }),
+      zod: z.object({ parentId: z.string().nullable() }),
+    })
+
+    assert.deepEqual(findings, [])
+  })
+
   test('vine.boolean() and z.boolean() are the same rule', ({ assert }) => {
     const findings = check.compare({
       file,
       name: 'StoragesFileCreateValidator',
       vine: vine.create({ pinned: vine.boolean() }),
       zod: z.object({ pinned: z.boolean() }),
+    })
+
+    assert.deepEqual(findings, [])
+  })
+
+  test('vine.boolean().optional() and Rule.queryBoolean() are the same rule', ({
+    assert,
+  }) => {
+    const findings = check.compare({
+      file,
+      name: 'StoragesFileCreateValidator',
+      vine: vine.create({ available: vine.boolean().optional() }),
+      zod: z.object({ available: Rule.queryBoolean() }),
     })
 
     assert.deepEqual(findings, [])

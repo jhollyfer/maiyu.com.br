@@ -48,7 +48,8 @@ export default class StoragesFileDeleteUseCase {
 
   async execute(payload: Payload): Promise<Response> {
     try {
-      const storage = await this.storages.findById(payload.id)
+      // Write scope: a parent tenant reads its children's files and never deletes them.
+      const storage = await this.storages.findWritable(payload.id)
 
       if (!storage)
         return left(

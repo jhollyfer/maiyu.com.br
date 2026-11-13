@@ -1,16 +1,14 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import type * as React from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { describe, expect, it } from 'vitest'
 
 import {
   UploadingProvider,
   useIsUploading,
   useRegisterUpload,
 } from '#/components/common/uploading-context/uploading-context'
-
-afterEach(cleanup)
 
 type FieldProps = { readonly active: boolean }
 

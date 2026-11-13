@@ -3,14 +3,14 @@ import type * as React from 'react'
 
 import { Picture } from '#/components/common/picture/picture'
 import { Badge } from '#/components/ui/badge'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
 
-import { PillButton } from '../pill-button'
+import { pillVariants } from '../pill-button'
 import { ProjectStatusBadge } from '../project-status'
 import { REVEAL, STAGGER } from '../reveal'
 
@@ -39,16 +39,15 @@ function Stack({ project }: ProjectProps): React.JSX.Element {
 /** The visit button, the same in the featured one and in the rows. */
 function Visit({ project }: ProjectProps): React.JSX.Element {
   return (
-    <PillButton
-      tone="outline"
-      className="rounded-xl"
-      render={
-        <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.home_work_visit()}
-          <ArrowUpRightIcon />
-        </a>
-      }
-    />
+    <a
+      href={project.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(pillVariants({ tone: 'outline' }), 'rounded-xl')}
+    >
+      {m.home_work_visit()}
+      <ArrowUpRightIcon />
+    </a>
   )
 }
 

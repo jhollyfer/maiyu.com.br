@@ -2,5 +2,15 @@
   "current_password_invalid": "Senha atual incorreta",
   "current_password_invalid_field": "A senha atual não confere",
   "password_same_as_current": "A nova senha deve ser diferente da atual",
-  "password_same_as_current_field": "A nova senha deve ser diferente da atual"
+  "password_same_as_current_field": "A nova senha deve ser diferente da atual",
+  "phone_taken": "Este celular já está em uso",
+  "phone_taken_field": "Este celular já está em uso por outra conta",
+  "avatar_invalid": "Foto inválida",
+  "avatar_invalid_field": "Escolha um arquivo seu, já enviado e confirmado",
+  "email_taken": "Este e-mail já está em uso",
+  "email_taken_field": "Este e-mail já está em uso por outra conta",
+  "email_same_as_current": "O novo e-mail deve ser diferente do atual",
+  "email_same_as_current_field": "O novo e-mail deve ser diferente do atual",
+  "email_change_unavailable": "A troca do e-mail por conta própria não está disponível",
+  "email_change_unavailable_field": "Peça a troca do e-mail ao administrador"
 }

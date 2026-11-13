@@ -98,7 +98,7 @@ senha, e-mail, papel ou status apaga as sessões da conta.
 O site (frontend) é todo público e de leitura. Na API há quatro áreas:
 
 - `/storefront/*`, sem sessão: hoje só `POST /storefront/contacts`, a única escrita anônima, declarada em `backend/app/core/openapi/public-routes.ts`.
-- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, a única barreira de papel (a regra mora numa só, sem policy por registro). Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota).
+- `/administrator/*`, com sessão e papel de equipe (`STAFF_USER_ROLES`, hoje `ADMINISTRATOR`): o grupo carrega `auth` e `role`, a única barreira de papel (a regra mora numa só, sem policy por registro). Sem sessão é 401, e conta fora da equipe é 403 (`authz:check` guarda a cadeia de cada rota). O papel é o do vínculo no tenant ativo, e o repositório de `contacts` filtra por `CustomerScoped` (#397): a equipe de um tenant só lê, responde e apaga os contatos dele, e o de outro tenant responde 404, como id inexistente. Só o `contacts:prune`, processo de sistema sem escopo, alcança todos os tenants.
 - `/account/profile`, com sessão e sem papel: só a própria conta, com a senha atual em toda troca.
 - `/storages` e a documentação (`/openapi.json`, `/documentation`): `/storages` exige sessão e a documentação exige papel de staff.
 
@@ -107,7 +107,7 @@ Perfis: `ADMINISTRATOR` (o dono) e `MEMBER`, que nenhuma rota cria hoje (`shared
 ## 5. Entrada e saída
 
 - O site não tem formulário nem campo de entrada: a única entrada é o `?category=` do diário, validada pelo schema Zod de `routes/_public/blog/-search.ts`. A API valida a requisição com VineJS (`shared/` e validators do backend).
-- `POST /storefront/contacts` valida na API (nome 1 a 120, e-mail até 254, mensagem 10 a 5000, idioma `pt-BR`, `en` ou `es`), tem o honeypot `website` (preenchido, responde 201 igual ao sucesso e não grava) e limite de 5 envios por hora por IP (429 no sexto). Escrita de outra origem fora de `CORS_ORIGINS` é 403. O log nunca leva nome, e-mail nem mensagem.
+- `POST /storefront/contacts` valida na API (nome 1 a 120, e-mail até 254, mensagem 10 a 5000, idioma `pt-BR`, `en` ou `es`), tem o honeypot `website` (preenchido, responde 201 igual ao sucesso e não grava) e limite de 5 envios por hora por IP (429 no sexto). Escrita de outra origem fora de `CORS_ORIGINS` é 403. A rota declara a escrita anônima (`middleware.publicTenant({ access: 'insert' })`): a mensagem nasce no tenant do `SINGLE_TENANT_SLUG`, sem dono (`customer_id` nulo), e sem tenant resolvido a resposta é 404 (slug sem tenant) ou 403 `TENANT_REQUIRED`. O log nunca leva nome, e-mail nem mensagem.
 - Upload só na API, multipart assinado e com sessão; o site não envia arquivo.
 - Texto de registro é renderizado pelo React, que escapa por padrão; JSON-LD sai de objeto, nunca de string concatenada, e o `jsonLd` do kit escapa `<` como `\u003c` (`_standards/frontend.md` §9.7): sem isso, um `</script>` num campo de registro fecharia a tag antes da hora.
 

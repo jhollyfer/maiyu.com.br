@@ -1,16 +1,12 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { render, screen, waitFor } from '@testing-library/react'
+import { describe, expect, it, vi } from 'vitest'
 
 import { RichEditor } from '#/components/common/rich-editor/rich-editor'
 import { RichEditorContent } from '#/components/common/rich-editor/rich-editor-content'
 import { RichText } from '@maiyu/shared'
 import type { RichTextDocument } from '@maiyu/shared'
-
-afterEach(() => {
-  cleanup()
-})
 
 const SOURCE = RichText.fromMarkdown(
   [

@@ -1,34 +1,50 @@
-import { isRedirect } from '@tanstack/react-router'
-import { expect, test, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 
-import { USER_ROLE } from '@maiyu/shared'
+import { expect, test } from 'vitest'
+
+import { PLATFORM_ROLES, STAFF_USER_ROLES } from '@maiyu/shared'
+import type { PlatformRole } from '@maiyu/shared'
 
 import { AreaCapability } from './area-capability'
+import type { AreaAccount } from './area-capability'
 
-vi.mock('#/lib/areas', () => ({
-  homeOf: (role: string) => ({ to: `/home-${role.toLowerCase()}` }),
-}))
+// The tenant roles are the project's (`shared/src/enums/user-role.ts`): the spec reads one, never names it.
+const [staff] = STAFF_USER_ROLES
+if (!staff) throw new Error('STAFF_USER_ROLES has no member')
+const [platform] = PLATFORM_ROLES
+if (!platform) throw new Error('PLATFORM_ROLES has no member')
 
-test('o papel da área passa sem desvio', () => {
-  expect(() =>
-    AreaCapability.require({ role: USER_ROLE.ADMINISTRATOR }, [
-      USER_ROLE.ADMINISTRATOR,
-    ]),
-  ).not.toThrow()
+const member = (platformRole: PlatformRole): AreaAccount => ({
+  platformRole,
+  tenant: { role: staff },
+})
+const customer = (platformRole: PlatformRole): AreaAccount => ({
+  platformRole,
+  tenant: null,
 })
 
-test('papel de fora volta para a casa da própria conta', () => {
-  let thrown: unknown
+test('allows lê a tabela da área: papel no tenant ou papel de plataforma', () => {
+  expect(AreaCapability.allows(member(platform), { tenant: [staff] })).toBe(
+    true,
+  )
+  expect(
+    AreaCapability.allows(customer(platform), { platform: [platform] }),
+  ).toBe(true)
+  expect(AreaCapability.allows(customer(platform), { tenant: [staff] })).toBe(
+    false,
+  )
+  expect(AreaCapability.allows(member(platform), { tenant: [] })).toBe(false)
+  expect(AreaCapability.allows(member(platform), {})).toBe(false)
+})
 
-  try {
-    // The one role the kit guarantees (`shared/src/enums/user-role.ts`), in an area that admits none.
-    AreaCapability.require({ role: USER_ROLE.ADMINISTRATOR }, [])
-  } catch (error) {
-    thrown = error
-  }
+test('não importa nada de #/lib/areas: o homeOf do projeto usa AreaCapability sem ciclo', () => {
+  // O `homeOf` do projeto pode decidir a casa com `AreaCapability.allows`; um import de volta,
+  // mesmo de tipo, convida o ciclo em runtime que a régua proíbe (DECISIONS.md #764).
+  const source = readFileSync(
+    join(import.meta.dirname, 'area-capability.ts'),
+    'utf8',
+  )
 
-  // Um `redirect` do router, e não um erro qualquer: é o que o `beforeLoad`
-  // transforma em navegação antes de a rota carregar.
-  expect(isRedirect(thrown)).toBe(true)
-  if (isRedirect(thrown)) expect(thrown.options.to).toBe('/home-administrator')
+  expect(source).not.toMatch(/from\s+['"](?:#\/lib\/areas|\.\/areas)['"]/)
 })

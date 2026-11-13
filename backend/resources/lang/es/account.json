@@ -1,6 +1,16 @@
 {
   "current_password_invalid": "Contraseña actual incorrecta",
   "current_password_invalid_field": "La contraseña actual no coincide",
-  "password_same_as_current": "La nueva contraseña debe ser diferente de la actual",
-  "password_same_as_current_field": "La nueva contraseña debe ser distinta de la actual"
+  "password_same_as_current": "La nueva contraseña debe ser distinta de la actual",
+  "password_same_as_current_field": "La nueva contraseña debe ser distinta de la actual",
+  "phone_taken": "Este celular ya está en uso",
+  "phone_taken_field": "Este celular ya está en uso por otra cuenta",
+  "avatar_invalid": "Foto inválida",
+  "avatar_invalid_field": "Elija un archivo suyo, ya enviado y confirmado",
+  "email_taken": "Este correo ya está en uso",
+  "email_taken_field": "Este correo ya está en uso por otra cuenta",
+  "email_same_as_current": "El nuevo correo debe ser distinto del actual",
+  "email_same_as_current_field": "El nuevo correo debe ser distinto del actual",
+  "email_change_unavailable": "El cambio de correo por cuenta propia no está disponible",
+  "email_change_unavailable_field": "Pida el cambio del correo al administrador"
 }

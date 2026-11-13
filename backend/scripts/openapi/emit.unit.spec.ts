@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-import { requestShape } from './emit.ts'
+import { readProtection, requestShape, securityOf } from './emit.ts'
 
 import {
   IdentifierValidator,
@@ -8,6 +8,7 @@ import {
   Rule,
   vine,
 } from '#core/validator'
+import SilentAuthMiddleware from '#middleware/silent-auth.middleware'
 
 /**
  * What the generator publishes as the input of an operation (`DECISIONS.md` #375). The
@@ -102,5 +103,61 @@ test.group('openapi:generate > request shape (unit)', () => {
     assert.isUndefined(shape.body)
     assert.isTrue(shape.parameters.every((each) => each.in === 'query'))
     assert.isTrue(shape.parameters.every((each) => !each.required))
+  })
+})
+
+test.group('openapi:generate > session of an operation (unit)', () => {
+  // The same shape `route.middleware.all()` returns for a named middleware, with the real class.
+  const entry = (name: string) => ({
+    name,
+    args: [],
+    reference: SilentAuthMiddleware,
+    handle: () => Promise.resolve(),
+  })
+
+  test('silentAuth alone makes the session optional', async ({ assert }) => {
+    const protection = await readProtection([entry('silentAuth')])
+
+    assert.isTrue(protection.optional)
+    assert.isFalse(protection.authenticated)
+  })
+
+  test('auth beats silentAuth, in either order', async ({ assert }) => {
+    for (const chain of [
+      [entry('silentAuth'), entry('auth')],
+      [entry('auth'), entry('silentAuth')],
+    ]) {
+      const protection = await readProtection(chain)
+
+      assert.isTrue(protection.authenticated)
+      assert.isFalse(protection.optional)
+    }
+  })
+
+  test('neither middleware leaves the route anonymous', async ({ assert }) => {
+    const protection = await readProtection([])
+
+    assert.isFalse(protection.authenticated)
+    assert.isFalse(protection.optional)
+  })
+})
+
+test.group('openapi:generate > security emitted for the session (unit)', () => {
+  test('optional session is the cookie alternative plus the empty one', ({
+    assert,
+  }) => {
+    assert.deepEqual(securityOf({ authenticated: false, optional: true }), [
+      { cookieAuth: [] },
+      {},
+    ])
+  })
+
+  test('required session is the cookie alone, and none is absent', ({
+    assert,
+  }) => {
+    assert.deepEqual(securityOf({ authenticated: true, optional: false }), [
+      { cookieAuth: [] },
+    ])
+    assert.isUndefined(securityOf({ authenticated: false, optional: false }))
   })
 })

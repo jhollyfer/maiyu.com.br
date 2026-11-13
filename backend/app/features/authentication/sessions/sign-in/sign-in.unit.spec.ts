@@ -1,11 +1,8 @@
 import hash from '@adonisjs/core/services/hash'
 import { test } from '@japa/runner'
 
-import { left, right } from '@maiyu/shared'
-
 import AuthenticationSessionSignInUseCase from './sign-in.use-case.ts'
 
-import RepositoryFailure from '#core/repository-failure'
 import { User } from '#domain/user/user.entity'
 import { SessionRepository } from '#repositories/session/session.repository'
 import { UserRepository } from '#repositories/user/user.repository'
@@ -40,7 +37,7 @@ async function setupWithScrypt() {
   const rehashed: Array<readonly [string, string, string]> = []
   context.users.rehashPassword = async (id, stored, password) => {
     rehashed.push([id, stored, password])
-    return right(true)
+    return true
   }
 
   return { ...context, legacyHash, rehashed }
@@ -56,10 +53,36 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     await seedUser(users)
 
     const tokens = rightOf(
-      await useCase.execute({ email: 'ana@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'ana@mail.com', password: PASSWORD }),
     )
 
     assert.isString(tokens.accessToken)
+    assert.deepEqual(sessions.issued, [USER_ID])
+  })
+
+  test('when the login is a phone, with or without mask, issues the token pair', async ({
+    assert,
+  }) => {
+    const { users, sessions, useCase } = await setup()
+    await seedUser(users, { email: null, phone: '+5597991234567' })
+
+    for (const login of ['(97) 99123-4567', '+5597991234567', '97991234567']) {
+      rightOf(await useCase.execute({ login, password: PASSWORD }))
+    }
+
+    assert.deepEqual(sessions.issued, [USER_ID, USER_ID, USER_ID])
+  })
+
+  test('when the login is an email in another case, finds the account', async ({
+    assert,
+  }) => {
+    const { users, sessions, useCase } = await setup()
+    await seedUser(users)
+
+    rightOf(
+      await useCase.execute({ login: ' ANA@mail.com ', password: PASSWORD }),
+    )
+
     assert.deepEqual(sessions.issued, [USER_ID])
   })
 
@@ -74,10 +97,18 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
       inactive: true,
     })
 
+    await seedUser(users, {
+      id: '5e6f7a8b-9c0d-4e1f-8a2b-3c4d5e6f7a8b',
+      email: null,
+      phone: '+5597991234567',
+    })
+
     const results = [
-      await useCase.execute({ email: 'ana@mail.com', password: 'Errada@123' }),
-      await useCase.execute({ email: 'ninguem@mail.com', password: PASSWORD }),
-      await useCase.execute({ email: 'off@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'ana@mail.com', password: 'Errada@123' }),
+      await useCase.execute({ login: '97991234567', password: 'Errada@123' }),
+      await useCase.execute({ login: '97998887766', password: PASSWORD }),
+      await useCase.execute({ login: 'ninguem@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'off@mail.com', password: PASSWORD }),
     ]
 
     for (const result of results) {
@@ -99,7 +130,7 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     }
 
     const result = await useCase.execute({
-      email: 'ana@mail.com',
+      login: 'ana@mail.com',
       password: PASSWORD,
     })
 
@@ -115,7 +146,7 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     const { sessions, legacyHash, rehashed, useCase } = await setupWithScrypt()
 
     rightOf(
-      await useCase.execute({ email: 'ana@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'ana@mail.com', password: PASSWORD }),
     )
 
     assert.deepEqual(rehashed, [[USER_ID, legacyHash, PASSWORD]])
@@ -128,11 +159,11 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     const rehashed: string[] = []
     users.rehashPassword = async (id) => {
       rehashed.push(id)
-      return right(true)
+      return true
     }
 
     rightOf(
-      await useCase.execute({ email: 'ana@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'ana@mail.com', password: PASSWORD }),
     )
 
     assert.deepEqual(rehashed, [])
@@ -144,7 +175,7 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     const { rehashed, useCase } = await setupWithScrypt()
 
     const result = await useCase.execute({
-      email: 'ana@mail.com',
+      login: 'ana@mail.com',
       password: 'Errada@123',
     })
 
@@ -159,11 +190,12 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     assert,
   }) => {
     const { users, sessions, useCase } = await setupWithScrypt()
-    users.rehashPassword = async () =>
-      left(RepositoryFailure.of(new Error('database down')))
+    users.rehashPassword = async () => {
+      throw new Error('database down')
+    }
 
     rightOf(
-      await useCase.execute({ email: 'ana@mail.com', password: PASSWORD }),
+      await useCase.execute({ login: 'ana@mail.com', password: PASSWORD }),
     )
 
     assert.deepEqual(sessions.issued, [USER_ID])
