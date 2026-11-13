@@ -183,6 +183,32 @@ export class PatternRules {
     return out
   }
 
+  /**
+   * Lines that name MinIO where production reads them (tooling.md §8.4). MinIO is the local test
+   * bucket of `backend/docker-compose.yml`, built from `backend/infra/minio/`; production is S3 or R2
+   * behind `STORAGE_ENDPOINT`, so code that names MinIO depends on the test bucket. A
+   * `Dockerfile-production` never names it, comment included. In code, a comment about the local
+   * environment ("MinIO in dev and in the e2e") is allowed: a line that opens with `//`, `/*` or `*`,
+   * and the ` // ...` that ends a line, are left out. JSON has no comment, so any mention counts.
+   * shortcut: the comment is found per line, not by the TS AST; a block comment whose lines do not
+   * open with `*` escapes, upgrade to the AST when one does.
+   */
+  static minioMentions(file: SourceFile): ReadonlyArray<number> {
+    // Letter boundaries, not `\b`: `_` and digits stay boundaries (`MINIO_ENDPOINT`), while a
+    // word that merely contains the letters ("dominio", Spanish for domain) is not a mention.
+    const name = /(?<!\p{L})minio(?!\p{L})/iu
+    if (file.path.endsWith('Dockerfile-production'))
+      return PatternRules.matching(file.text, name)
+    const out: number[] = []
+    file.text.split('\n').forEach((line, index) => {
+      // `(^|\s)` keeps the `//` of a URL (`http://minio:9000`), which is code, in the line.
+      const code = line.replace(/(^|\s)\/\/.*$/, '')
+      if (/^\s*(\/\*|\*)/.test(code)) return
+      if (name.test(code)) out.push(index + 1)
+    })
+    return out
+  }
+
   static readonly CATALOG: ReadonlyArray<Rule> = [
     {
       id: 'index-barrel',
@@ -384,6 +410,20 @@ export class PatternRules {
       scope: /^backend\/app\/(validators\/.+|core\/validator)\.ts$/,
       exclude: SPEC,
       lines: (file) => PatternRules.untrimmedStrings(file.text),
+    },
+    {
+      id: 'minio-outside-local',
+      section: 'tooling.md §8.4 (DECISIONS.md #771)',
+      message:
+        'MinIO is the local test bucket (`backend/docker-compose.yml`, `backend/infra/minio/`): production code and `Dockerfile-production` reach S3 or R2 through `STORAGE_*` and never name MinIO; only a comment about the local environment may',
+      // What runs or ships in production: the three packages, the Dockerfiles included (`PatternCheck.read`).
+      // Out by definition, because they are test or local tooling and never serve production: specs,
+      // `backend/tests/`, `frontend/e2e/`, the `scripts/` of each app (this rule names MinIO to find
+      // it) and the compose with `infra/minio/`, which are where MinIO lives.
+      scope: /^(backend|frontend|shared)\//,
+      exclude:
+        /\.spec\.tsx?$|\.test\.tsx?$|^backend\/(tests|scripts|infra\/minio)\/|^frontend\/(e2e|scripts)\/|^backend\/docker-compose\.yml$/,
+      lines: (file) => PatternRules.minioMentions(file),
     },
   ]
 }

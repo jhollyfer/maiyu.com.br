@@ -24,7 +24,7 @@ import { useSessionExpiryRedirect } from './-use-session-expiry-redirect'
  *
  * `SessionGuard.require` põe a conta em `context.account`: toda tela descendente a lê por
  * `useRouteContext()`, sem consulta nova. Papel por área não é daqui, é do `layout.tsx` de cada área
- * (`AreaCapability.require(context.account, AREAS.<área>)`, `frontend.md` §3.4).
+ * (`SessionGuard.requireArea(context.account, AREAS.<área>)`, `frontend.md` §3.4).
  *
  * O que o projeto muda: `ssr`, o `PANEL_MENU` de `lib/panel.ts`, os `badges` do menu e os `children`
  * do cabeçalho (um sino de avisos), e o provedor próprio que as telas precisarem

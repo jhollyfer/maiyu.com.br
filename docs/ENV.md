@@ -125,7 +125,7 @@ Docker Hub.
 | Ambiente | De onde vêm os valores | Observação |
 |---|---|---|
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
-| Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `maiyu_test` e bucket `maiyu-test` |
+| Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `app_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
 | Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
 

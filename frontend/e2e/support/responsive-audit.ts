@@ -1,5 +1,8 @@
 import type { Page } from '@playwright/test'
 
+import { RepeatedNames } from './repeated-names'
+import type { NamedNode } from './repeated-names'
+
 /** The house touch target, in CSS pixels, charged on every screen (`docs/DESIGN.md` §4). */
 export const TOUCH_TARGET = 44
 
@@ -65,6 +68,11 @@ export class ResponsiveAudit {
    * Out, as in WCAG 2.2 SC 2.5.8: an inline link inside a paragraph. Also out: what is not for the
    * pointer (the visually hidden skip link, the controls taken out of the tab order). It is the
    * plain size check of the 44 px goal, with no spacing exception.
+   *
+   * In, besides the controls: the `InputGroup` root (`[data-slot=input-group]`). Its border is
+   * what the finger aims at, and the input inside keeps its own 44 px even when the root shrinks
+   * back to the dense `h-7`, so measuring only the control let that regression through (seen on
+   * the manganga; `_standards/frontend.md` §10.2, DECISIONS.md #461).
    */
   async smallTouchTargets(minimum: number): Promise<string[]> {
     await this.settle()
@@ -82,6 +90,7 @@ export class ResponsiveAudit {
           '[role=tab]',
           '[role=menuitem]',
           '[role=combobox]',
+          '[data-slot=input-group]',
         ].join(',')
         const targets: { element: Element; rect: DOMRect }[] = []
 
@@ -205,5 +214,65 @@ export class ResponsiveAudit {
 
       return [...offenders].slice(0, 12)
     })
+  }
+
+  /**
+   * A list, region or landmark named like the labelled container around it (`Rail` in `rail.tsx`,
+   * the `TableGrid` wrapper): the screen reader says the name twice. Only the structural kinds are
+   * compared (`ul`, `ol`, `section`, `nav`, `form`, `table`, the matching roles and `dialog`), not
+   * controls: a button may repeat the name of its group on purpose, a list may not. The name is
+   * `aria-label`, or the text of what `aria-labelledby` points to.
+   */
+  async repeatedNames(): Promise<string[]> {
+    const nodes: NamedNode[] = await this.page.evaluate(() => {
+      const kinds =
+        'ul, ol, section, nav, form, table, dialog, [role=list], [role=region], [role=navigation], [role=group], [role=form], [role=search], [role=table], [role=dialog]'
+      const nameOf = (element: Element): string => {
+        const label = element.getAttribute('aria-label')?.trim()
+
+        if (label) return label
+
+        const ids = element.getAttribute('aria-labelledby')?.split(/\s+/) ?? []
+
+        return ids
+          .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
+          .join(' ')
+          .trim()
+      }
+      const found: {
+        tag: string
+        name: string
+        ancestorName: string | null
+      }[] = []
+
+      for (const element of document.querySelectorAll(kinds)) {
+        if (element.closest('[aria-hidden=true], [inert]')) continue
+
+        const name = nameOf(element)
+
+        if (!name) continue
+
+        let ancestorName: string | null = null
+
+        for (
+          let ancestor = element.parentElement?.closest(kinds);
+          ancestor;
+          ancestor = ancestor.parentElement?.closest(kinds)
+        ) {
+          const ancestorLabel = nameOf(ancestor)
+
+          if (!ancestorLabel) continue
+
+          ancestorName = ancestorLabel
+          break
+        }
+
+        found.push({ tag: element.tagName.toLowerCase(), name, ancestorName })
+      }
+
+      return found
+    })
+
+    return RepeatedNames.of(nodes)
   }
 }

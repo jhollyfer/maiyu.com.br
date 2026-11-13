@@ -17,7 +17,7 @@ import {
 import { FieldDescription, FieldGroup } from '#/components/ui/field'
 import { useMutationForm } from '#/hooks/use-mutation-form'
 import { AppField } from '#/integrations/react-hook-form/app-field'
-import { useAccountProfileUpdate } from '#/integrations/tanstack-query/mutations/account'
+import { useAccountProfileUpdateMutation } from '#/integrations/tanstack-query/mutations/account'
 import { m } from '#/paraglide/messages'
 import type {
   AccountProfileShowResponse,
@@ -71,7 +71,7 @@ export function AccountProfileForm({
       currentPassword: '',
     },
     fields: FIELDS,
-    mutation: useAccountProfileUpdate,
+    mutation: useAccountProfileUpdateMutation,
     success: m.kit_profile_saved(),
     payload: (values) => AccountProfilePayload.of(values),
     async onSuccess(_profile, sent) {

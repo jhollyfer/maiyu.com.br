@@ -17,6 +17,7 @@
  * `fetch` trocado pelo cliente do Tuyau.
  */
 
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { createTuyau } from '@tuyau/core/client'
 
@@ -143,6 +144,16 @@ export class HTTPError extends Error {
     })
   }
 }
+
+/**
+ * As opções que um hook de mutation aceita de quem chama: tudo do `useMutation` menos o
+ * `mutationFn`, que é do hook (`frontend.md` §2.3, `DECISIONS.md` #356). O erro é sempre
+ * `HTTPError`, porque nenhum outro sai deste arquivo.
+ */
+export type MutationProps<TData, TPayload> = Omit<
+  UseMutationOptions<TData, HTTPError, TPayload>,
+  'mutationFn'
+>
 
 type TuyauErrorShape = {
   kind: string

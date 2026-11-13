@@ -669,6 +669,13 @@ Commit que já entrou com a marca é corrigido reescrevendo o histórico da bran
   commit de merge com `defaultIgnores: true`, o padrão (_doc-lib/commitlint.md#reference/configuration,
   https://commitlint.js.org/reference/configuration; a lista dos ignorados, com `Merge branch` e
   `Merge pull request`, está em `@commitlint/is-ignored/src/defaults.ts`).
+- **PR empilhado entra de baixo para cima** (`DECISIONS.md` #767). Quando um PR tem como base a branch
+  de outro PR, o primeiro merge é o da base. Antes do próximo, o PR de cima precisa estar apontando
+  para a `main` (ou para a `develop`): o GitHub faz essa troca sozinho quando a branch mergeada é
+  apagada, e senão o agente troca a base à mão. Merge de cima para baixo leva o conteúdo para uma
+  branch já mergeada, e ele nunca chega à `main` (aconteceu no manganga: backend #37, frontend #38,
+  #39 e #46). O corpo de cada PR da pilha diz a ordem *(opinião da casa; comportamento do GitHub,
+  página oficial não conferida, não coberto pelo `_doc-lib`)*.
 
 **`pre-commit`, por app, filtrado por pasta, com o alvo rápido** (X1, `DECISIONS.md` #113 C9): roda
 o `check` e a suíte **unitária** só do app que o commit toca; o `commit-msg` roda o commitlint. É o
@@ -767,7 +774,7 @@ com `=== 'true'` não liga com `CI=1` (`DECISIONS.md` #350).
 os passos abaixo apontam para cá.
 
 ```
-backend  = build:deps + format:check + lint + typecheck + openapi:check + pattern:check
+backend  = build:deps + format:check + lint + typecheck + adonisjs:check (Adonis) + openapi:check + pattern:check
            + authz:check (+ validators:check no Adonis) + test:unit
 frontend = build:deps + i18n:compile + i18n:check + lint + typecheck + format:check + test:unit
 shared   = lint + typecheck + test:unit
@@ -779,12 +786,17 @@ e num clone ou worktree novo `pnpm --filter ./frontend build` falha sem ele comp
 `build` do app não chama `build:deps`, para o Dockerfile não compilar o `shared/` duas vezes. Achado
 no jhollyfer.com.br.
 
-**`.adonisjs/` em dia** (Adonis): `scripts/adonisjs-check.mjs` do upstream roda o gerador do projeto
-e reprova se `routes.d.ts` ou `client/` mudaram, como o `openapi:check` faz com o `openapi.json`:
-`node <maiyu-pattern>/scripts/adonisjs-check.mjs backend --cmd "node ace build"`. O comando do
-gerador é o que o `hooks.init` do `adonisrc.ts` dispara (`indexEntities`, `generateRegistry`;
-_doc-lib/adonisjs.md, _doc-lib/tuyau.md); página oficial não conferida para um comando que gere sem
-compilar. `openapi:generate` e `authz:check --write` bootam o app, e o `start/env.ts` do kit exige
+**`.adonisjs/` em dia** (Adonis, `DECISIONS.md` #753): o registro do Tuyau (`.adonisjs/client/registry`)
+e o `routes.d.ts` são versionados e o frontend lê o `client/` no tsc. O hook `generateRegistry()` do
+`adonisrc.ts` só roda no `node ace serve`; `node ace build` e o test runner não rodam os hooks de
+rota. O comando oficial que os roda sem servidor é `node ace codegen` (a tabela de hooks do
+Assembler lista `CodeGen` em `init`, `routesCommitted`, `routesScanning` e `routesScanned`; _doc-lib/adonisjs.md,
+"Decisões que a doc impõe", e _doc-lib/tuyau.md). No backend do kit: `pnpm codegen` gera (regrave e
+faça o commit quando uma rota entrar, por sync ou à mão) e `pnpm adonisjs:check`
+(`scripts/adonisjs-check.ts`, no `check`) roda o mesmo comando e reprova se `.adonisjs/` mudou, como o
+`openapi:check` faz com o `openapi.json`. Rota nova do kit que chega pelo sync pede `pnpm codegen`
+antes do tsc do frontend. Página lida: https://docs.adonisjs.com/guides/concepts/assembler-hooks.
+`openapi:generate` e `authz:check --write` bootam o app, e o `start/env.ts` do kit exige
 `NODE_ENV` (enum sem default): o valor vem do `.env` ou do shell, e o carregador de ambiente do
 Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_ENV=test` na frente
 (`NODE_ENV=test node ace openapi:generate`); o kit não força o valor nesses comandos.
@@ -808,7 +820,8 @@ Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_
    devDependency (tradução, variável e plural faltando, mensagem sem uso, `i18n.md` §4); o typecheck
    (`tsc --noEmit`) inclui `e2e/`, porque o runner do Playwright não checa tipo
    (_doc-lib/playwright.md#docs/test-typescript); o `format:check` é o `prettier --check .`; o
-   `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` (`architecture.md` §8). O compilador do Paraglide baixa os plugins
+   `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` e `scripts/**/*.test.ts` (`architecture.md` §8), que inclui
+   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6). O compilador do Paraglide baixa os plugins
    declarados em `modules` do `project.inlang/settings.json`, que são URLs do jsDelivr com a versão
    fixada, nunca `@latest` (_doc-lib/paraglide.md#/file-formats): quem roda precisa de rede para
    `cdn.jsdelivr.net`
@@ -1094,35 +1107,46 @@ conferida). Isso só funciona se
 
 ### 8.4 `docker-compose.yml`
 
-Só infraestrutura local (banco, Redis, MinIO, SMTP de teste), em `backend/`. A aplicação roda
-fora dele (`pnpm dev`). Portas próprias por projeto, pela tabela abaixo, para dois projetos subirem juntos na mesma
-máquina, sempre com bind em `127.0.0.1` (`127.0.0.1:5433:5432`), nunca na rede toda; nome de container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta
-ou sem tag de versão).
-Postgres é o 18 (`postgres:18-alpine`).
+Só infraestrutura local (banco, MinIO e, com a fila, Redis), em `backend/`. A aplicação roda fora
+dele (`pnpm dev`). **O kit traz o arquivo** (`_templates/code/backend/docker-compose.yml`, ponto de
+extensão, `DECISIONS.md` #769): o sync o cria se faltar, com as portas do projeto, e nunca o reescreve.
 
-**Portas da casa** (`DECISIONS.md` #355). Projeto novo pega a próxima linha livre; interclasse e
-curupira mudam de porta, porque colidiam com academy e aporta:
-
-| Projeto | Banco | Storage (S3) | Console | Redis ou outro |
-|---|---|---|---|---|
-| simple-hub | 5432 | 9000 | 9001 | Redis 6379 |
-| adacaibs | 5433 | 9002 | 9003 | |
-| academy | 5434 | 9004 | 9005 | Redis 6382 |
-| aporta | 5435 | 9006 | 9007 | |
-| curupira | 5436 | 9010 | 9011 | |
-| interclasse | 5437 | 9008 | 9009 | |
-| matiscraft | 5438 | 9012 | 9013 | |
-| manganga | 5439 | 9014 | 9015 | |
-| maiyu.com.br | 5440 | 9016 | 9017 | |
-| lowcodejs | Postgres 5532 | 9100 | 9101 | Mongo 27117 |
+- **Serviços:** `database` (`postgres:18-alpine`, volume em `/var/lib/postgresql`, que é onde a
+  imagem 18 guarda o `PGDATA`), `minio` (compilado de `backend/infra/minio/`) e `minio-setup`; `redis`
+  (`redis:8-alpine`) só onde o bloco opcional `mail` está ligado (o trecho `# --- optional: mail ---`
+  sai do arquivo sem ele). O banco da suíte, `app_test`, nasce de `backend/infra/postgres/` montado em
+  `/docker-entrypoint-initdb.d`, na primeira subida do volume vazio.
+- **Credencial do banco local:** `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_DB` são literais no
+  compose, `app`/`app`/`app`, iguais ao padrão do `DATABASE_URL` do `.env.example`
+  (`postgres://app:app@localhost:<porta>/app`). É credencial só desta máquina, publicada só em
+  `127.0.0.1`, nunca segredo de produção: não ganha chave no catálogo de ENV (#417). Nada de `trust`
+  (`POSTGRES_HOST_AUTH_METHOD` fica sem valor; a imagem só confia no socket de dentro do container),
+  porque o bind em loopback não substitui a senha. Página da imagem: Docker Hub `postgres`, conferida
+  pela fonte que o Hub publica (`github.com/docker-library/docs`, `postgres/content.md`) em 2026-11-13;
+  `hub.docker.com` não abriu na sessão.
+- **Portas:** toda porta com bind em `127.0.0.1` (`127.0.0.1:5433:5432`), nunca na rede toda; nome de
+  container e volume prefixado com o projeto; imagem mantida (nada de imagem extinta ou sem tag de
+  versão).
+- **Portas da casa** (`DECISIONS.md` #355 e #769): a tabela é dado, numa cópia só, `PROJECT_PORTS` em
+  `scripts/kit-manifest.mjs` do upstream, chaveada pelo escopo do `shared/` (`@<projeto>/shared`).
+  O sync troca `__PORT_DATABASE__`, `__PORT_STORAGE__`, `__PORT_CONSOLE__` e `__PORT_REDIS__` no
+  compose e nos `.env.example` que cria (`DATABASE_URL`, `STORAGE_ENDPOINT`, `STORAGE_PUBLIC_URL`
+  comentada); depois de criados, os valores são do projeto. Projeto sem linha não recebe nenhum dos
+  três (`falta:`), porque porta chutada colide com a de outro projeto na mesma máquina: projeto novo
+  pega a próxima linha livre, no upstream, antes do primeiro sync.
 
 **MinIO só para teste; produção é S3 ou R2** *(decisão do dono; `DECISIONS.md` #209 e #210)*
 
 - **MinIO jamais vai para produção.** Ele existe só no `backend/docker-compose.yml`, para dev e para
   os testes e2e (máquina e sessão de agente). Produção usa **S3** ou **R2**, pelo driver da
   FlyDrive (`_doc-lib/flydrive.md#services/s3`, `#services/r2`). `Dockerfile-production`, compose de
-  produção, workflow de deploy e `docs/ENV.md` de produção nunca citam MinIO; o `pattern:check`
-  reprova `minio` fora de `backend/docker-compose.yml` e `backend/infra/minio/`.
+  produção, workflow de deploy e `docs/ENV.md` de produção nunca citam MinIO. O `pattern:check` do
+  kit (`minio-outside-local`, `DECISIONS.md` #771) reprova `minio` em `backend/`, `frontend/` e
+  `shared/`: em qualquer linha do `Dockerfile-production` e de JSON, e no código TypeScript fora de
+  comentário. Fica fora o que é teste ou ferramenta local por definição e nunca serve produção:
+  `backend/docker-compose.yml`, `backend/infra/minio/`, specs (`*.spec.ts`, `*.test.tsx`),
+  `backend/tests/`, `frontend/e2e/` e o `scripts/` de cada app. O comentário que descreve o ambiente
+  local ("MinIO no dev e no e2e") passa; o código que depende de MinIO, não.
 - **Agente e teste sobem o compose antes dos e2e**: `docker compose -f backend/docker-compose.yml up -d`
   e só então `test:e2e` do backend e do frontend; os endpoints de upload (`create`, `parts`,
   `complete`, leitura assinada) são exercitados contra ele. Na sessão de nuvem o `scripts/cloud-setup.sh`
@@ -1152,30 +1176,8 @@ COPY --from=build /out/minio /out/mc /usr/local/bin/
 ENTRYPOINT ["minio"]
 ```
 
-```yaml
-# backend/docker-compose.yml (trecho)
-services:
-  minio:
-    build: ./infra/minio
-    image: <projeto>-minio-test:2025-10-15
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_API_CORS_ALLOW_ORIGIN: ${CORS_ORIGINS:-http://localhost:3000}
-      MINIO_API_STALE_UPLOADS_EXPIRY: 24h            # multipart abandonado some sozinho
-      MINIO_API_STALE_UPLOADS_CLEANUP_INTERVAL: 6h
-    healthcheck:
-      test: ['CMD', 'wget', '-q', '-O', '/dev/null', 'http://127.0.0.1:9000/minio/health/live']
-      interval: 5s
-      retries: 10
-  minio-setup:
-    image: <projeto>-minio-test:2025-10-15
-    depends_on: { minio: { condition: service_healthy } }
-    entrypoint: ['/bin/sh', '/setup/minio-setup.sh']
-    env_file: .env
-    volumes: ['./infra/minio:/setup:ro']
-```
+O `minio` e o `minio-setup` estão no modelo do kit (`_templates/code/backend/docker-compose.yml`); o
+setup lê o `.env` do backend (`env_file`).
 
 `backend/infra/minio/minio-setup.sh` (rodado e conferido em 2026-10-14; a limpeza de multipart do MinIO
 é por ENV, `MINIO_API_STALE_UPLOADS_*` em `internal/config/api/api.go`, não por `mc ilm`):

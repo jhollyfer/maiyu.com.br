@@ -10,6 +10,8 @@ import {
 import { SignInForm } from '#/components/common/sign-in-form/sign-in-form'
 import { m } from '#/paraglide/messages'
 
+import { SignInFooter } from './-sign-in-footer'
+
 export const Route = createLazyFileRoute('/_authentication/sign-in/')({
   component: RouteComponent,
 })
@@ -25,6 +27,7 @@ function RouteComponent(): React.JSX.Element {
       </AuthShellHeader>
       <AuthShellContent>
         <SignInForm />
+        <SignInFooter />
       </AuthShellContent>
     </>
   )

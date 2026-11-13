@@ -1,6 +1,3 @@
-import { redirect } from '@tanstack/react-router'
-
-import { homeOf } from '#/lib/areas'
 import type { PlatformRole, UserRole } from '@maiyu/shared'
 
 /**
@@ -25,23 +22,15 @@ export type AreaAccount = {
 }
 
 /**
- * A guarda de área do painel (`_standards/frontend.md` §3).
+ * A regra de área do painel (`_standards/frontend.md` §3.4): quem entra em cada área.
  *
- * O `layout.tsx` de `_private` cobre só a sessão: qualquer conta logada passa. Cada
- * área declara quem entra no `beforeLoad` do próprio layout, e quem não pode volta
- * para a casa da própria conta antes de a rota carregar dado. Sem isso um comprador
- * abria a tela de categorias do administrador e só o 403 da API, tela a tela, o
- * barrava. O backend continua sendo quem autoriza; aqui só se redireciona.
+ * `allows` é a tabela lida pela guarda de área (`SessionGuard.requireArea`, `lib/session-guard.ts`) e
+ * pelo menu (`PanelMenu.visible`): o link nunca leva a uma tela que devolveria quem clicou.
  *
- * `allows` é a mesma tabela lida pelo menu (`PanelMenu.visible`): o link nunca leva a uma tela
- * que devolveria quem clicou.
- *
- * Ponto de extensão: `#/lib/areas.ts` do projeto exporta `AREAS` (área para `AreaRule`) e
- * `homeOf(account)`, o destino de quem não pode entrar.
- *
- * ```ts
- * beforeLoad: ({ context }) => AreaCapability.require(context.account, AREAS.administrator)
- * ```
+ * Puro de propósito: não importa nada de `#/lib/areas`. O `homeOf` do projeto pode decidir a casa por
+ * papel com `AreaCapability.allows`, e um import de volta daqui fecharia um ciclo em runtime
+ * (`area-capability.test.ts` cobra). O redirect de quem não entra mora em `SessionGuard.requireArea`,
+ * que já dependia de `homeOf`.
  *
  * Base: `simple-hub/frontend/src/lib/area-capability.ts`.
  */
@@ -50,11 +39,5 @@ export class AreaCapability {
     if (rule.platform?.includes(account.platformRole)) return true
 
     return Boolean(account.tenant && rule.tenant?.includes(account.tenant.role))
-  }
-
-  static require(account: AreaAccount, rule: AreaRule): void {
-    if (AreaCapability.allows(account, rule)) return
-
-    redirect({ ...homeOf(account), throw: true })
   }
 }

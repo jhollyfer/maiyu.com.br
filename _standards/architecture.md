@@ -304,6 +304,7 @@ frontend/
 ├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4
 ├── messages/{pt-BR,es,en}.json      # chaves kit_* fundidas pelo sync (DECISIONS #343)
 ├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
+├── scripts/{check-ui-patches.mjs, check-ui-patches.test.ts, ui-patches.json}   # kit: cobrança dos patches // casa: de ui/ (frontend.md §6)
 ├── e2e/                             # árvore abaixo
 └── src/
     ├── router.tsx            # getRouter(); getContext() por chamada; declare module Register { router }
@@ -324,7 +325,7 @@ frontend/
     │   └── _private/
     │       ├── layout.tsx  -use-session-expiry-redirect.ts  profile/{index,index.lazy}.tsx   # [painel] portão único: sessão (esqueleto do projeto, monta PanelShell); perfil e hook do kit
     │       └── <área>/
-    │           ├── layout.tsx              # guard da área: AreaCapability.require(context.account, AREAS.<área>)
+    │           ├── layout.tsx              # guard da área: SessionGuard.requireArea(context.account, AREAS.<área>)
     │           └── <recurso>/
     │               ├── layout.tsx          # opcional: só quando não há área e o papel muda por recurso (DECISIONS #356)
     │               ├── index.tsx  index.lazy.tsx  -search.ts   # -search.ts: validateSearch e to<Recurso>Params (nunca inline)

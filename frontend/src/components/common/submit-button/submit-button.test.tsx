@@ -8,6 +8,7 @@ import {
   UploadingProvider,
   useRegisterUpload,
 } from '#/components/common/uploading-context/uploading-context'
+import { m } from '#/paraglide/messages'
 
 function Uploading(): null {
   useRegisterUpload(true)
@@ -29,6 +30,13 @@ describe('SubmitButton', () => {
     expect(
       screen.getByRole('button', { name: /Salvar/ }).hasAttribute('disabled'),
     ).toBe(true)
+  })
+
+  it('when the mutation is pending, the spinner is named in the locale, not "Loading"', () => {
+    render(<SubmitButton isPending>Salvar</SubmitButton>)
+
+    expect(screen.getByRole('status', { name: m.kit_loading() })).toBeTruthy()
+    expect(screen.queryByRole('status', { name: 'Loading' })).toBeNull()
   })
 
   it('when it is disabled by the caller, it stays disabled', () => {

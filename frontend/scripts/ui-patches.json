@@ -1,0 +1,65 @@
+{
+  "source": "_standards/frontend.md §6 and §10.2, DECISIONS.md #461",
+  "patches": [
+    {
+      "file": "button.tsx",
+      "anchor": "^h-\\d",
+      "add": ["max-sm:min-h-11"],
+      "reason": "44px touch target below sm, dense height kept"
+    },
+    {
+      "file": "button.tsx",
+      "anchor": "^size-\\d",
+      "add": ["max-sm:min-h-11", "max-sm:min-w-11"],
+      "reason": "44px touch target below sm, dense icon size kept"
+    },
+    {
+      "file": "toggle.tsx",
+      "anchor": "^h-\\d",
+      "add": ["max-sm:min-h-11", "max-sm:min-w-11"],
+      "reason": "44px touch target below sm, inside the cva so ToggleGroupItem gets it too"
+    },
+    {
+      "file": "input.tsx",
+      "anchor": "^h-\\d",
+      "add": ["max-sm:min-h-11", "max-sm:text-base"],
+      "reason": "44px touch target and 16px text below sm (iOS zooms under 16px)"
+    },
+    {
+      "file": "textarea.tsx",
+      "anchor": "^field-sizing-content$",
+      "add": ["max-sm:text-base"],
+      "reason": "16px text below sm (iOS zooms under 16px)"
+    },
+    {
+      "file": "native-select.tsx",
+      "anchor": "^h-\\d",
+      "add": ["max-sm:min-h-11", "max-sm:text-base"],
+      "reason": "44px touch target and 16px text below sm (iOS zooms under 16px)"
+    },
+    {
+      "file": "select.tsx",
+      "anchor": "^data-\\[size=default\\]:h-",
+      "add": ["max-sm:min-h-11"],
+      "reason": "44px touch target below sm on the trigger, dense height kept"
+    },
+    {
+      "file": "tabs.tsx",
+      "anchor": "^h-[\\d[]",
+      "add": ["max-sm:min-h-11"],
+      "reason": "44px touch target below sm on the trigger, dense height kept"
+    },
+    {
+      "file": "input-group.tsx",
+      "anchor": "^group/input-group$",
+      "add": ["max-sm:min-h-11"],
+      "reason": "44px floor on the group root, so the input inside does not overflow the border"
+    },
+    {
+      "file": "input-group.tsx",
+      "anchor": "^size-\\d",
+      "add": ["max-sm:min-w-11"],
+      "reason": "44px width below sm on icon sizes, the Button height floor already applies"
+    }
+  ]
+}

@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-12 | Migração para a régua (régua na leva 8, `maiyu-pattern` em 1a9a636) | 7 de 47 itens | Em desenvolvimento |
+| 2026-11-13 | Pausa para deploy (régua `maiyu-pattern` em 7092226) | 7 de 47 itens | Pausado após o deploy |
 
 ## Já feito
 
@@ -17,6 +17,10 @@
 - Copy pt-BR, en e es do novo posicionamento e `areaServed` do JSON-LD (Brasil, Peru, Colômbia).
 
 ## Parou em
+
+**Pausa para deploy (2026-11-13, régua `maiyu-pattern` 7092226).** O dono pediu o projeto pronto para deploy e funcional, e depois a pausa; feature nova está parada. A PR de sync de deploy (`chore/regua-sync-7092226`, base `main`) leva à `main` a #29, a #30 e a #32, que no merge de 12/11 ficaram em branches intermediárias, mais o sync da régua 7092226 (#78 a #95). Com ela vêm o `codegen` do Tuyau, o `adonisjs:check` no `check`, o `#jobs/*`, o compose do kit com as credenciais `app/app` e o banco `app_test` criado pelo `infra/postgres` (portas 5440, 9016 e 9017 em 127.0.0.1) e o toque de 44 px reaplicado pelo `check-ui-patches.mjs --fix` em 8 arquivos de `components/ui/`. O painel de contatos (#31) está pausado, à espera da aprovação da spec.
+
+Sync da régua 7092226 para o deploy (frontend, sobre a #32): os pontos `lib/areas.ts` e `_private/layout.tsx` receberam só a mudança de comentário do modelo (a área é guardada por `SessionGuard.requireArea`; `homeOf` pode usar `AreaCapability.allows`, #764) e foram confirmados com `--ack-extension`. O `-sign-in-footer.tsx` novo fica vazio como o modelo, porque o site não tem cadastro público. O `check-ui-patches.mjs --fix` reaplicou o toque de 44 px em 8 arquivos de `components/ui/`. Os hooks de conta renomeados (#89) não pediram mudança fora do kit: typecheck limpo, unitário 578/578 e build verde. A feature nova está parada por ordem do dono, então o painel de contatos (#31) espera.
 
 R3.9 (bloco `painel` do kit, frontend): o sync da régua 9cb5ffd (bloco trazido pela 289c070, #68) com `--com=painel` trouxe `PanelShell`, `AuthShell`, `/sign-in`, `/profile`, `SessionGuard` e `PANEL_MENU`. Os pontos de extensão `lib/areas.ts` (`homeOf` devolve `{ to }`, todo papel vai a `/profile`; `AREAS.administrator` usa `STAFF_USER_ROLES`), `styles.css` (só o `@utility rail`, tema intacto) e `e2e/support/pages.md` (`/sign-in`) foram fundidos à mão e confirmados com `--ack-extension`. `lib/panel.ts` e `_private/layout.tsx` ficaram iguais ao modelo (o menu só tem o perfil). Próximo: o item de contatos no `PANEL_MENU` e a casa de cada papel em `homeOf` entram com a PR do painel de contatos; `backend/database/schema.ts` e `backend/start/routes.ts` seguem com a sessão do backend.
 
@@ -114,6 +118,13 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 
 ## Próximos passos
 
+0. Deploy, nesta ordem:
+   1. O dono faz o merge da PR de sync de deploy na `main`; ela já traz a #29, a #30 e a #32.
+   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu`, os `SEED_TENANT_*`, `SEED_OWNER_*` e `SITE_ENV=production`). Ligar o *Auto Deploy* dos dois apps.
+   3. Conferir o `/health-check` da API e o site em produção nos três idiomas.
+   4. Agendar o `node ace contacts:prune`.
+   5. Depois da pausa, retomar a #31 (painel de contatos) com o comentário do dono aprovando a spec: rebase sobre a `main` e sync com `--sem=pix --com=table --com=painel`.
+   6. Dev local com volume antigo do compose (usuário `maiyu`): `docker compose down -v` uma vez.
 1. PR do contato e da conta do dono (#25) em revisão; depois do merge dela, o lote multi-tenant
    (`chore/backend-multi-tenant`), com o painel de contatos no escopo `platform`.
 2. Agendar no Coolify a tarefa `node ace contacts:prune` (`ARCHITECTURE.md` §9.1) antes de o
@@ -147,6 +158,7 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 | 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge | todo projeto |
 | 2026-11-04 | Merge feito pelo agente | o merge é do dono; o agente abre o PR verificado e para | todo projeto |
 | 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados) | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu" | todo projeto |
+| 2026-11-13 | Pilha de PRs mergeada com a base ainda na branch de baixo: a #29, a #30 e a #32 ficaram fora da `main` (12/11) | depois do merge da PR de baixo, a de cima é reapontada para a `main` na hora, ou o merge cai na branch já mergeada | todo PR empilhado |
 | 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`) | todo projeto com rota lazy |
 
 ## Problemas conhecidos

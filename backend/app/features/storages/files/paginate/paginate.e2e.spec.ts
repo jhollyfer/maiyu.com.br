@@ -148,6 +148,45 @@ test.group('storages > listagem', (group) => {
     assert.property(body(response, ErrorEnvelope).errors, 'sort')
   })
 
+  // The ceilings of `Rule.pageFields()` (#382): without them `perPage=100000` reads the whole
+  // table in one response and `page=1e308` reaches the offset.
+  test('?perPage and ?page above the ceiling respond 422 pointing at the field', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+
+    for (const [query, field] of [
+      ['perPage=101', 'perPage'],
+      ['perPage=0', 'perPage'],
+      ['perPage=1.5', 'perPage'],
+      ['page=10001', 'page'],
+      ['page=0', 'page'],
+      ['page=1e308', 'page'],
+    ] as const) {
+      // In the URL itself, like `?sort=path`: the value exists to be refused.
+      const response = await client.get(`/storages?${query}`).cookies(session)
+
+      response.assertStatus(422)
+      assert.property(body(response, ErrorEnvelope).errors, field, query)
+    }
+  })
+
+  test('?perPage and ?page at the ceiling are accepted', async ({
+    client,
+    assert,
+  }) => {
+    const session = await authenticateAsAdministrator(client)
+
+    const response = await client
+      .get('/storages?perPage=100&page=10000')
+      .cookies(session)
+
+    response.assertStatus(200)
+    assert.equal(body(response, StoragesPage).meta.perPage, 100)
+    assert.lengthOf(body(response, StoragesPage).data, 0)
+  })
+
   // The cost of the listing is locked (#382): two rows or twenty, the count is the same, and a
   // refused query stops before the page is read.
   test('the listing costs 6 queries, whatever the number of rows', async ({

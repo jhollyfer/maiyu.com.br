@@ -457,7 +457,9 @@ export const AdministratorPostUpdateValidator = vine.create(Rule.partial(postFie
 - **Todo texto tem teto** (`maxLength`). **Quem não filtra por `search` não o aceita**:
   parâmetro aceito e ignorado promete no OpenAPI um filtro que não existe. A listagem sem busca usa
   `Rule.pageFields()` (`page`, `perPage`) e o global `PageValidator`; `Rule.paginationFields()` é ele
-  mais `search`.
+  mais `search`. Os tetos (`perPage` de 1 a 100, `page` de 1 a 10.000, inteiros) têm spec de borda na
+  listagem do kit (`GET /storages`: acima, abaixo e fracionário dá 422 no campo; no teto, 200)
+  (`DECISIONS.md` #770).
 - **Regra que serve a mais de um campo tem nome próprio** (`cpfLength`, `phone`): a chave do
   provider é `campo.regra`, e `cpf.fixedLength` não é chave de campo nenhum. Regra que valida
   formato de value object chama o predicado do VO (`Email.isValid`, `domain.md` §3).
@@ -544,6 +546,10 @@ na fronteira do `Paginated<T>` declarado.
   de posse e devolve linha que não deveria.
 - **Ordenação por tupla fechada**: `<RECURSO>_SORT_COLUMNS` (`as const`) no arquivo do validator do
   recurso, lida por `Rule.sortFields(tupla)`; a coluna nunca é string livre do cliente.
+- **Filtro de sim ou não** é `Rule.queryBoolean()` no `shared/` e `vine.boolean().optional()` no
+  backend: aceita o booleano do router e o texto da query string, com as mesmas grafias do VineJS
+  (`DECISIONS.md` #766). Ex.: `available: Rule.queryBoolean()` /
+  `available: vine.boolean().optional()`.
 - O default (`PAGINATION`) mora junto de `Rule.paginationFields()` em `shared/src/validator.ts`; não há
   `const PAGE`/`PER_PAGE` por caso de uso.
 
@@ -832,7 +838,10 @@ refresh apaga-o e emite outro, e o `DELETE` do token antigo é a seção crític
 concorrentes com o mesmo token: um ganha, o outro recebe 401) (`_doc-lib/adonisjs.md#guides/auth/access-tokens-guard`).
 Refresh já consumido que volta é reuso: revoga a família inteira da sessão (detecção de reuso, RFC 6819,
 opinião da casa fora da `_doc-lib`), e o limite do refresh conta pelo hash do token, não pelo usuário
-(`DECISIONS.md` #363).
+(`DECISIONS.md` #363). O spec do refresh cobre, além da rotação e do reuso, o mesmo 401 para refresh
+expirado, refresh depois do sign-out, access token no cookie de refresh (recusado pelo nome do token na
+leitura e de novo no `DELETE` do consumo, sem gastar a sessão) e token forjado com formato válido (sem
+revogar a família: forjar não é reuso) (`DECISIONS.md` #770).
 *(Fastify)* JWT assinado com RS256 e `algorithms: ['RS256']` fixo na verificação, refresh como
 registro revogável no banco (`backend-fastify.md`).
 
@@ -1455,9 +1464,16 @@ export abstract class PaymentGatewayContract {
 
 ### 5.5 Log
 
-- **Redação configurada no boot** (`config/logger.ts`): `password`, `*.password`, `token`,
-  `*.token`, `refreshToken`, `headers.authorization`, `headers.cookie`, `set-cookie`, documento
-  (CPF/CNPJ) (`_doc-lib/adonisjs.md#guides/digging-deeper/logger`). Nunca o body inteiro.
+- **Redação configurada no boot** (`config/logger.ts`, lista em `app/core/log-redact.ts`):
+  `password`, `currentPassword`, `passwordConfirmation`, `token`, `accessToken`, `refreshToken`,
+  `authorization`, `cookie`, `["set-cookie"]`, `cpf` e `cnpj`, cada uma na raiz e sob um, dois e
+  três níveis de qualquer chave (`*.`, `*.*.`, `*.*.*.`): o Pino não tem `**`, e `*.password`
+  sozinho deixava `a.b.password` passar. Três níveis alcançam `req.headers.cookie` e
+  `res.headers["set-cookie"]`; mais fundo a rede não pega, e por isso se loga o identificador,
+  nunca o objeto. Prova em `log-redact.unit.spec.ts`, pelo Pino do logger configurado
+  (`_doc-lib/adonisjs.md#guides/digging-deeper/logger`; sintaxe dos caminhos em
+  https://github.com/pinojs/pino/blob/main/docs/redaction.md, "Path Syntax"; `DECISIONS.md` #770).
+  Nunca o body inteiro.
 - **Log registra decisão e resultado com identificadores** (`order=… amount=… reason=…`), não
   narra passo. Nível: `info` resultado normal, `warn` sucesso anômalo ou recusa relevante, `error`
   quebra.
@@ -1931,8 +1947,9 @@ opcional: chave que o projeto não usa fica no lugar dela, com valor vazio, nunc
 
 **Fora do leitor de ENV**: `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`, lidas por `infra/minio/minio-setup.sh`
 (o leitor delas está no kit). As portas do `docker-compose.yml` (`DB_PORT`, `STORAGE_PORT`,
-`STORAGE_CONSOLE_PORT`) não são chave do catálogo: o kit não tem compose, e o número da porta é o da
-tabela de `tooling.md` §8.1, escrito no compose do projeto. O CORS do MinIO local sai de `CORS_ORIGINS`. **Não existe chave de domínio do projeto**: o que o catálogo não cobre entra primeiro
+`STORAGE_CONSOLE_PORT`) não são chave do catálogo: o compose é do kit, e o número da porta é o da
+linha do projeto em `PROJECT_PORTS`, que o sync escreve no compose e nos `.env.example` que cria
+(`tooling.md` §8.4, `DECISIONS.md` #769). A senha do Postgres local também não: é literal no compose. O CORS do MinIO local sai de `CORS_ORIGINS`. **Não existe chave de domínio do projeto**: o que o catálogo não cobre entra primeiro
 aqui e no modelo (§6, `DECISIONS.md` #271).
 
 ### 6.3 Migração dos nomes antigos
@@ -2019,7 +2036,8 @@ HTTP.
 | `core/validator.unit.spec.ts` | as quatro checagens de §4.4 |
 | `core/openapi/openapi.e2e.spec.ts` | rota fora do documento, operação sem resposta, id duplicado |
 | `middleware/<nome>.middleware.e2e.spec.ts` | matriz de papéis, cookie, CORS, origem (CSRF), idioma |
-| `core/response-leak.e2e.spec.ts` | resposta de `GET` que contém chave proibida (`password`, hash de token) ou valor com cara de hash, em qualquer nível da árvore, para cada papel e sem sessão |
+| `middleware/role.middleware.unit.spec.ts` (kit) | papel fora da lista, papel não staff num grupo staff e conta sem tenant ativo que não recebem `403 ACCESS_DENIED` ou chegam ao handler; a matriz de qual grupo admite qual papel continua no `role.middleware.e2e.spec.ts` do projeto, porque as rotas são dele (`DECISIONS.md` #770) |
+| `core/response-leak.e2e.spec.ts` | resposta de `GET` (de qualquer status, a de erro incluída) e resposta de erro de sondas fixas (rota inexistente, corpo recusado, senha errada, refresh sem cookie e com lixo) que contém chave proibida (`password`, hash de token, `stack`), valor com cara de hash ou de stack trace, em qualquer nível da árvore, cabeçalho `X-Powered-By` ou `Set-Cookie` que emite cookie de sessão fora do sign-in e do refresh (limpar o cookie não conta), para cada papel e sem sessão; as chaves do mapa `errors` da validação são nomes de campo e não contam (`DECISIONS.md` #770) |
 | coluna qualificada | join com coluna ambígua |
 | SDK só no adaptador | import de SDK de fornecedor fora de `services/<nome>/<nome>.service.ts` |
 | vitrine só leitura | rota pública que não é `GET` sem estar na lista declarada |
@@ -2118,6 +2136,7 @@ novas:
 | `spec-name` | `architecture.md` §3.4 |
 | `index-barrel`, `kit-import`, `boolean-layout-prop` | `architecture.md` §4, `frontend.md` §6 |
 | `query-exact-version` | `tooling.md` §0.1 |
+| `minio-outside-local` | `tooling.md` §8.4 (MinIO só no compose e em `infra/minio/`, `DECISIONS.md` #771) |
 | `common-prefix` | `i18n.md` §4 |
 
 **Formato de saída de todo `scripts/<nome>-check.ts`** *(opinião da casa)*: cada achado é

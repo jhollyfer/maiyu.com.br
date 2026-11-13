@@ -8,7 +8,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from '#/components/ui/dropdown-menu'
-import { useSelectTenant } from '#/integrations/tanstack-query/mutations/account'
+import { useAuthenticationTenantSelectMutation } from '#/integrations/tanstack-query/mutations/account'
 import { accountTenantsQueryOptions } from '#/integrations/tanstack-query/queries/account'
 import { m } from '#/paraglide/messages'
 
@@ -24,7 +24,9 @@ import { m } from '#/paraglide/messages'
 export function TenantSwitcher(): React.JSX.Element | null {
   const router = useRouter()
   const tenants = useQuery(accountTenantsQueryOptions())
-  const select = useSelectTenant({ onSuccess: () => router.invalidate() })
+  const select = useAuthenticationTenantSelectMutation({
+    onSuccess: () => router.invalidate(),
+  })
 
   if (!tenants.data || tenants.data.data.length < 2) return null
 

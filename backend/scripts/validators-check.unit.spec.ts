@@ -1,6 +1,6 @@
 import { test } from '@japa/runner'
 
-import { z } from '@maiyu/shared'
+import { Rule, z } from '@maiyu/shared'
 
 import { ValidatorsCheck } from './validators-check.ts'
 
@@ -40,6 +40,19 @@ test.group('validators:check > pair comparison', () => {
       name: 'StoragesFileCreateValidator',
       vine: vine.create({ pinned: vine.boolean() }),
       zod: z.object({ pinned: z.boolean() }),
+    })
+
+    assert.deepEqual(findings, [])
+  })
+
+  test('vine.boolean().optional() and Rule.queryBoolean() are the same rule', ({
+    assert,
+  }) => {
+    const findings = check.compare({
+      file,
+      name: 'StoragesFileCreateValidator',
+      vine: vine.create({ available: vine.boolean().optional() }),
+      zod: z.object({ available: Rule.queryBoolean() }),
     })
 
     assert.deepEqual(findings, [])

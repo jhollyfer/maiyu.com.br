@@ -1,5 +1,7 @@
-import { isRedirect } from '@tanstack/react-router'
-import { expect, test, vi } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
+import { expect, test } from 'vitest'
 
 import { PLATFORM_ROLES, STAFF_USER_ROLES } from '@maiyu/shared'
 import type { PlatformRole } from '@maiyu/shared'
@@ -13,12 +15,6 @@ if (!staff) throw new Error('STAFF_USER_ROLES has no member')
 const [platform] = PLATFORM_ROLES
 if (!platform) throw new Error('PLATFORM_ROLES has no member')
 
-vi.mock('#/lib/areas', () => ({
-  homeOf: (account: { platformRole: string }) => ({
-    to: `/home-${account.platformRole.toLowerCase()}`,
-  }),
-}))
-
 const member = (platformRole: PlatformRole): AreaAccount => ({
   platformRole,
   tenant: { role: staff },
@@ -28,50 +24,7 @@ const customer = (platformRole: PlatformRole): AreaAccount => ({
   tenant: null,
 })
 
-function thrownBy(run: () => void): unknown {
-  try {
-    run()
-  } catch (error) {
-    return error
-  }
-  return undefined
-}
-
-test('o papel no tenant da área passa sem desvio', () => {
-  expect(() =>
-    AreaCapability.require(member(platform), { tenant: [staff] }),
-  ).not.toThrow()
-})
-
-test('o papel de plataforma da área passa, com ou sem vínculo', () => {
-  expect(() =>
-    AreaCapability.require(customer(platform), { platform: [platform] }),
-  ).not.toThrow()
-})
-
-test('papel de fora volta para a casa da própria conta', () => {
-  const thrown = thrownBy(() =>
-    AreaCapability.require(member(platform), { tenant: [] }),
-  )
-
-  // Um `redirect` do router, e não um erro qualquer: é o que o `beforeLoad`
-  // transforma em navegação antes de a rota carregar.
-  expect(isRedirect(thrown)).toBe(true)
-  if (isRedirect(thrown))
-    expect(thrown.options.to).toBe(`/home-${platform.toLowerCase()}`)
-})
-
-test('o cliente final, sem vínculo, não entra em área só de papel de tenant', () => {
-  expect(
-    isRedirect(
-      thrownBy(() =>
-        AreaCapability.require(customer(platform), { tenant: [staff] }),
-      ),
-    ),
-  ).toBe(true)
-})
-
-test('allows lê a mesma tabela que a guarda, sem redirecionar', () => {
+test('allows lê a tabela da área: papel no tenant ou papel de plataforma', () => {
   expect(AreaCapability.allows(member(platform), { tenant: [staff] })).toBe(
     true,
   )
@@ -81,5 +34,17 @@ test('allows lê a mesma tabela que a guarda, sem redirecionar', () => {
   expect(AreaCapability.allows(customer(platform), { tenant: [staff] })).toBe(
     false,
   )
+  expect(AreaCapability.allows(member(platform), { tenant: [] })).toBe(false)
   expect(AreaCapability.allows(member(platform), {})).toBe(false)
+})
+
+test('não importa nada de #/lib/areas: o homeOf do projeto usa AreaCapability sem ciclo', () => {
+  // O `homeOf` do projeto pode decidir a casa com `AreaCapability.allows`; um import de volta,
+  // mesmo de tipo, convida o ciclo em runtime que a régua proíbe (DECISIONS.md #764).
+  const source = readFileSync(
+    join(import.meta.dirname, 'area-capability.ts'),
+    'utf8',
+  )
+
+  expect(source).not.toMatch(/from\s+['"](?:#\/lib\/areas|\.\/areas)['"]/)
 })

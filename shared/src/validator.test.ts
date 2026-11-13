@@ -296,6 +296,35 @@ describe('Rule.email', () => {
   })
 })
 
+describe('Rule.queryBoolean', () => {
+  const Schema = z.object({ trashed: Rule.queryBoolean() })
+
+  it('when it is a spelling of vine.boolean(), gives the boolean', () => {
+    for (const raw of [true, 1, '1', 'true', 'on'])
+      expect(Schema.parse({ trashed: raw })).toEqual({ trashed: true })
+    for (const raw of [false, 0, '0', 'false'])
+      expect(Schema.parse({ trashed: raw })).toEqual({ trashed: false })
+  })
+
+  it('when it is absent or blank, stays absent', () => {
+    expect(Schema.parse({})).toEqual({})
+    expect(Schema.parse({ trashed: '' })).toEqual({ trashed: undefined })
+  })
+
+  it('when it is another spelling, refuses it with the boolean message', () => {
+    for (const raw of ['maybe', 'TRUE', 'yes', 'off', 2]) {
+      expect(
+        ValidationFixture.messages(Schema.safeParse({ trashed: raw })),
+      ).toEqual([
+        {
+          field: 'trashed',
+          message: 'Marque se o filtro de arquivados vale ou não',
+        },
+      ])
+    }
+  })
+})
+
 describe('Rule.anyPhone', () => {
   const MOBILE = '+5597991234567'
   const LANDLINE = '+559734123456'

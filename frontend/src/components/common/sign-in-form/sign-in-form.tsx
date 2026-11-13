@@ -10,7 +10,7 @@ import { FieldGroup } from '#/components/ui/field'
 import { useMutationForm } from '#/hooks/use-mutation-form'
 import { AppField } from '#/integrations/react-hook-form/app-field'
 import { HTTPErrorCode, HTTPStatus } from '#/integrations/tanstack-query/http'
-import { useSignIn } from '#/integrations/tanstack-query/mutations/account'
+import { useAuthenticationSignInMutation } from '#/integrations/tanstack-query/mutations/account'
 import { m } from '#/paraglide/messages'
 import {
   AuthenticationSessionSignInValidator,
@@ -45,7 +45,7 @@ export function SignInForm(): React.JSX.Element {
     // Sem isto os campos nascem `undefined` e o input monta sem controle.
     defaults: { login: '', password: '' },
     fields: FIELDS,
-    mutation: useSignIn,
+    mutation: useAuthenticationSignInMutation,
     payload: (values) => values,
     onSuccess: () => router.invalidate(),
   })

@@ -3,6 +3,7 @@ import type * as React from 'react'
 import { useIsUploading } from '#/components/common/uploading-context/uploading-context'
 import { Button } from '#/components/ui/button'
 import { Spinner } from '#/components/ui/spinner'
+import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
 
 type SubmitButtonProps = Merge<
@@ -40,7 +41,7 @@ export function SubmitButton({
       disabled={disabled || isPending || isUploading}
       {...props}
     >
-      {isPending && <Spinner className="size-4" />}
+      {isPending && <Spinner aria-label={m.kit_loading()} className="size-4" />}
       {children}
     </Button>
   )

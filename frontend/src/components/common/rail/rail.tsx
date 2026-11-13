@@ -38,6 +38,9 @@ type RailProps = Merge<
  * when the caller turns the list into a grid that no longer scrolls: one extra stop on wide screens is
  * the accepted cost, because removing it would mean measuring the overflow in JavaScript on every
  * resize.
+ *
+ * The rule is charged, not trusted: `responsive.spec.ts` runs `ResponsiveAudit.repeatedNames` on every
+ * page of the project and fails when a list, region or landmark has the name of its labelled container.
  */
 export function Rail({
   label,

@@ -18,3 +18,6 @@ playwright/.auth/
 # Saídas de cada rodada do Playwright (relatório, rastros, capturas): nunca versionadas.
 test-results/
 playwright-report/
+
+# Cache do plugin do Paraglide/inlang que o build escreve: regenerado a cada build, nunca versionado.
+project.inlang/cache/

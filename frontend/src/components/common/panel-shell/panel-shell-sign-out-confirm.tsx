@@ -14,7 +14,7 @@ import {
   ConfirmDialogMedia,
   ConfirmDialogTitle,
 } from '#/components/common/confirm-dialog/confirm-dialog-header'
-import { useSignOut } from '#/integrations/tanstack-query/mutations/account'
+import { useAuthenticationSignOutMutation } from '#/integrations/tanstack-query/mutations/account'
 import type { ConfirmHandle } from '#/lib/dialog-handle'
 import { m } from '#/paraglide/messages'
 
@@ -30,7 +30,7 @@ type PanelShellSignOutConfirmProps = Readonly<{
  * `destructive`: sair não apaga nada, e o vermelho continua valendo o que vale em arquivar e excluir.
  *
  * Irmã do menu de conta, não filha do conteúdo dele: o conteúdo desmonta ao fechar e levaria a
- * confirmação junto. Depois de sair, a conta já está fora do cache (`useSignOut`) e a tela vai para a
+ * confirmação junto. Depois de sair, a conta já está fora do cache (`useAuthenticationSignOutMutation`) e a tela vai para a
  * entrada, sem `?redirect=`: quem saiu não quer voltar para onde estava.
  */
 export function PanelShellSignOutConfirm({
@@ -39,7 +39,7 @@ export function PanelShellSignOutConfirm({
   const router = useRouter()
   // `mutate` e não `mutateAsync`: ninguém espera o resultado aqui, e a promise de `mutateAsync`
   // rejeitaria sem tratador. Quem trata o fim é o `onSettled` do hook.
-  const signOut = useSignOut({
+  const signOut = useAuthenticationSignOutMutation({
     leave: () => router.navigate({ to: '/sign-in' }),
   })
 

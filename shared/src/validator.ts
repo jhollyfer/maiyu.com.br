@@ -954,6 +954,52 @@ export class Rule {
     }
   }
 
+  /**
+   * The spellings `vine.boolean()` turns into a boolean, the same list and the same case
+   * (`helpers.isTrue`/`isFalse` of `@vinejs/vine` 4.4; _doc-lib/vinejs.md#types/boolean,
+   * https://vinejs.dev/docs/types/boolean). Anything else stays as it came and fails `z.boolean()`.
+   */
+  static readonly BOOLEAN_SPELLINGS: ReadonlyMap<unknown, boolean> = new Map<
+    unknown,
+    boolean
+  >([
+    [true, true],
+    [1, true],
+    ['1', true],
+    ['true', true],
+    ['on', true],
+    [false, false],
+    [0, false],
+    ['0', false],
+    ['false', false],
+  ])
+
+  /**
+   * A yes-or-no filter of a listing (`available`, `pinned`): the router may hand a boolean or
+   * a number and the query string hands text, and the result is `boolean | undefined`. The pair
+   * on the API is `vine.boolean().optional()` (DECISIONS.md #766).
+   *
+   * It accepts exactly what `vine.boolean()` accepts: `true`, `1`, `'1'`, `'true'`, `'on'` and
+   * `false`, `0`, `'0'`, `'false'`, case-sensitive. Not `z.stringbool()`
+   * (_doc-lib/zod.md#api, https://zod.dev/api#stringbool): its defaults also take `yes`, `no`,
+   * `y`, `n`, `off`, `enabled`, `disabled` in any case and refuse the number, and the union with
+   * `z.boolean()` fails as `invalid_union`, which has no house message. Here a wrong value fails
+   * `z.boolean()` with the same `boolean` message as the API. The one difference from VineJS:
+   * only spaces is absent here (`Rule.optional`), and VineJS, which turns only `''` into `null`,
+   * refuses it.
+   */
+  static queryBoolean(): BlankableField<
+    z.ZodPreprocess<z.ZodBoolean, boolean | number | string>
+  > {
+    return Rule.optional(
+      z.preprocess(
+        (value: boolean | number | string) =>
+          Rule.BOOLEAN_SPELLINGS.get(value) ?? value,
+        z.boolean(),
+      ),
+    )
+  }
+
   /** The bodyparser's `convertEmptyStringsToNull` on the top fields of an object. */
   private static blankFieldsAsNull<TValue>(value: TValue): TValue | object {
     if (typeof value !== 'object' || value === null || Array.isArray(value))

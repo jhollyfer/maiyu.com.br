@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { UseMutationOptions } from '@tanstack/react-query'
 
-import type { HTTPError } from '#/integrations/tanstack-query/http'
+import type {
+  HTTPError,
+  MutationProps,
+} from '#/integrations/tanstack-query/http'
 import { request, send } from '#/integrations/tanstack-query/http'
 import { accountKeys } from '#/integrations/tanstack-query/queries/account'
 import {
@@ -11,19 +13,14 @@ import {
   type AuthenticationTenantSelectPayload,
 } from '@maiyu/shared'
 
-type Options<TRecord, TPayload> = Omit<
-  UseMutationOptions<TRecord, HTTPError, TPayload>,
-  'mutationFn'
->
-
 /**
  * Entrar (`POST /authentication/sign-in`, 204 e cookies `httpOnly`). A conta que o guard inverso
  * leu antes do login (ou a falha dele) não vale mais: sai do cache antes de a tela navegar, ou o
  * painel abriria com a leitura anterior. A credencial errada é `401 INVALID_CREDENTIALS`, que o
  * `request` não confunde com sessão vencida (sem refresh).
  */
-export function useSignIn(
-  options?: Options<void, AuthenticationSessionSignInPayload>,
+export function useAuthenticationSignInMutation(
+  options?: MutationProps<void, AuthenticationSessionSignInPayload>,
 ) {
   const queryClient = useQueryClient()
 
@@ -49,7 +46,7 @@ type SignOutOptions = {
  * Sair (`POST /authentication/sign-out`). Quem clica quer sair mesmo que o servidor responda erro
  * (sessão que já venceu devolve 401): o `onSettled` limpa a conta e leva para fora nos dois casos.
  */
-export function useSignOut({ leave }: SignOutOptions) {
+export function useAuthenticationSignOutMutation({ leave }: SignOutOptions) {
   const queryClient = useQueryClient()
 
   return useMutation<void, HTTPError, void>({
@@ -69,8 +66,11 @@ export function useSignOut({ leave }: SignOutOptions) {
  * (`isStaleByTime`), então só a remoção faz o `router.invalidate()` da tela reler a conta. Trocar
  * senha ou celular derruba as sessões: essa releitura devolve 401 e a guarda leva à entrada.
  */
-export function useAccountProfileUpdate(
-  options?: Options<AccountProfileUpdateResponse, AccountProfileUpdatePayload>,
+export function useAccountProfileUpdateMutation(
+  options?: MutationProps<
+    AccountProfileUpdateResponse,
+    AccountProfileUpdatePayload
+  >,
 ) {
   const queryClient = useQueryClient()
 
@@ -90,10 +90,10 @@ export function useAccountProfileUpdate(
 /**
  * Trocar o vínculo ativo (`PUT /authentication/tenants/active`). O tenant escopa todo dado do
  * painel: a conta sai do cache (a guarda a relê pelo `router.invalidate()` da tela, ver
- * `useAccountProfileUpdate`) e o resto é invalidado.
+ * `useAccountProfileUpdateMutation`) e o resto é invalidado.
  */
-export function useSelectTenant(
-  options?: Options<void, AuthenticationTenantSelectPayload>,
+export function useAuthenticationTenantSelectMutation(
+  options?: MutationProps<void, AuthenticationTenantSelectPayload>,
 ) {
   const queryClient = useQueryClient()
 

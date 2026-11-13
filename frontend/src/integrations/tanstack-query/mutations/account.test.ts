@@ -14,10 +14,10 @@ import type { Api, ApiCall } from '#/integrations/tanstack-query/http'
 import { accountKeys } from '#/integrations/tanstack-query/queries/account'
 
 import {
-  useAccountProfileUpdate,
-  useSelectTenant,
-  useSignIn,
-  useSignOut,
+  useAccountProfileUpdateMutation,
+  useAuthenticationSignInMutation,
+  useAuthenticationSignOutMutation,
+  useAuthenticationTenantSelectMutation,
 } from './account'
 
 const request = vi.fn<(schema: unknown, call: ApiCall) => unknown>()
@@ -63,7 +63,9 @@ async function calledWith(call: ApiCall | undefined, method: 'post' | 'put') {
 test('entrar posta a credencial e tira a conta do cache antes de a tela navegar', async () => {
   send.mockResolvedValue(undefined)
   const { client, wrapper } = setup()
-  const { result } = renderHook(() => useSignIn(), { wrapper })
+  const { result } = renderHook(() => useAuthenticationSignInMutation(), {
+    wrapper,
+  })
 
   result.current.mutate({ login: 'ana@mail.com', password: 'segredo' })
   await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -83,7 +85,10 @@ test('sair limpa a conta e leva para fora, com o cache já limpo', async () => {
   const leave = vi.fn(() => {
     accountOnLeave = client.getQueryData(accountKeys.profile())
   })
-  const { result } = renderHook(() => useSignOut({ leave }), { wrapper })
+  const { result } = renderHook(
+    () => useAuthenticationSignOutMutation({ leave }),
+    { wrapper },
+  )
 
   result.current.mutate()
   await waitFor(() => expect(leave).toHaveBeenCalled())
@@ -99,7 +104,10 @@ test('sair leva para fora mesmo quando o servidor recusa (sessão que já venceu
   send.mockRejectedValue(new Error('401'))
   const { wrapper } = setup()
   const leave = vi.fn()
-  const { result } = renderHook(() => useSignOut({ leave }), { wrapper })
+  const { result } = renderHook(
+    () => useAuthenticationSignOutMutation({ leave }),
+    { wrapper },
+  )
 
   result.current.mutate()
 
@@ -110,7 +118,9 @@ test('trocar o perfil tira a conta do cache: a guarda a lê como estática e só
   const profile = { id: 'x', name: 'Ana Maria' }
   request.mockResolvedValue(profile)
   const { client, wrapper } = setup()
-  const { result } = renderHook(() => useAccountProfileUpdate(), { wrapper })
+  const { result } = renderHook(() => useAccountProfileUpdateMutation(), {
+    wrapper,
+  })
 
   result.current.mutate({ name: 'Ana Maria', currentPassword: 'segredo' })
   await waitFor(() => expect(result.current.data).toEqual(profile))
@@ -125,7 +135,9 @@ test('trocar o perfil tira a conta do cache: a guarda a lê como estática e só
 test('trocar o vínculo tira a conta e invalida o resto do painel', async () => {
   send.mockResolvedValue(undefined)
   const { client, wrapper } = setup()
-  const { result } = renderHook(() => useSelectTenant(), { wrapper })
+  const { result } = renderHook(() => useAuthenticationTenantSelectMutation(), {
+    wrapper,
+  })
 
   result.current.mutate({ tenantId: '0f1e2d3c-4b5a-4987-8a6b-5c4d3e2f1a01' })
   await waitFor(() => expect(result.current.isSuccess).toBe(true))

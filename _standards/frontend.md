@@ -24,7 +24,7 @@ código e de texto: `typescript.md` §12. Texto que o usuário vê sai sempre de
 | Pasta | Regra |
 |---|---|
 | `routes/_public/` | vitrine: SSR completo, indexável (§9.2, §9.7) |
-| `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel) e `noindex`. No bloco `painel` o `layout.tsx` e o `sign-in/` (URL `/sign-in`, a mesma em todo projeto) são do kit; cadastro e recuperação são do projeto, montados em `AuthShell` (`DECISIONS.md` #491) |
+| `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel) e `noindex`. No bloco `painel` o `layout.tsx` e o `sign-in/` (URL `/sign-in`, a mesma em todo projeto) são do kit; cadastro e recuperação são do projeto, montados em `AuthShell` (`DECISIONS.md` #491). O caminho para o cadastro ("Ainda não tem conta? Crie") é o `sign-in/-sign-in-footer.tsx`, esqueleto do projeto que o sync cria vazio e nunca reescreve (#763) |
 | `routes/_private/layout.tsx` | portão único de sessão (§1.3); declara `ssr` (§9.2) e `noindex`. Esqueleto do projeto que chama `SessionGuard.require` e monta `PanelShell` com o `PANEL_MENU` de `lib/panel.ts`; menu, sidebar, cabeçalho e confirmação de saída **não** moram em `-components/` (`DECISIONS.md` #491) |
 | `routes/_private/profile/` | o perfil da própria conta, `/profile`, do kit (`AccountProfileForm`) |
 | `routes/_private/<área>/layout.tsx` | guard de capacidade da área (§3.4) |
@@ -426,12 +426,23 @@ O guard de capacidade de uma área mora no `layout.tsx` da área (`_private/<ár
 nunca num middleware central nem repetido em cada rota *(opinião da casa)*: a área que exige a
 capacidade é a que declara o guard. O `_private/layout.tsx` cobre a sessão; o da área, a permissão.
 
-O guard é `AreaCapability.require(context.account, AREAS.<área>)` (`lib/area-capability.ts`, do kit; o
-nome `requireAreaCapability` era a função solta do simple-hub e não existe mais). `context.account` é
+O guard é `SessionGuard.requireArea(context.account, AREAS.<área>)` (`lib/session-guard.ts`, do kit;
+`requireAreaCapability`, a função solta do simple-hub, e `AreaCapability.require` não existem mais,
+`DECISIONS.md` #764). A regra pura mora em `lib/area-capability.ts` (`AreaCapability.allows`), que não
+importa nada de `lib/areas.ts`: o `homeOf` do projeto pode usar `AreaCapability.allows` sem ciclo, e o
+redirect fica com quem já dependia de `homeOf`. `context.account` é
 o `AccountProfileShowResponse` que o portão pôs ali, com `platformRole` e o vínculo ativo `tenant`
 (`GET /account/profile`, `DECISIONS.md` #491), e `AREAS`/`homeOf` são do projeto (`lib/areas.ts`). O
 menu lê a mesma tabela: `PanelMenu.visible` filtra os itens por `AreaCapability.allows`, e o link nunca
 leva a uma tela que devolveria quem clicou.
+
+**Área de quem não tem papel** (o entregador, o vendedor aprovado: uma conta comum com uma linha
+de domínio, nem `PlatformRole` nem `UserRole`) fica fora de `AREAS` e do `PANEL_MENU`
+(`DECISIONS.md` #765). O layout da área carrega o recurso que prova o vínculo
+(`context.queryClient.query(<recurso>MeQueryOptions)`, ex. `GET /courier/me`) e, no 403/404, manda a
+conta para `homeOf`. O backend continua sendo quem autoriza, por policy sobre a mesma linha. O link
+para a área mora onde o vínculo já foi lido, por exemplo o perfil ou o fluxo de cadastro. Não sai no
+menu por regra de papel, e o `AccountProfileShowResponse` do kit não ganha campo de domínio.
 
 O que decide **o que renderizar dentro** de uma rota já carregada (esconder botão, desabilitar
 célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel espalhado pela tela.
@@ -637,6 +648,15 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   `calendar` é transitivo do `react-day-picker` e o código da casa não o importa (`tooling.md` §0.1).
 - **Não pode**: hook do app, regra de negócio, fetch, componente que não veio do registry (vai
   para `common/`).
+- **Patch exigido é cobrado, não só escrito** (`DECISIONS.md` #772). A lista dos patches
+  obrigatórios (arquivo, classe âncora, classes que faltam e motivo) mora num lugar só, como dado:
+  `frontend/scripts/ui-patches.json` do kit. `scripts/check-ui-patches.test.ts` roda no `test:unit`
+  (portanto no `check` e no `pre-commit`) e reprova o `ui/` do projeto sem o patch: arquivo, linha,
+  classe que falta e esta seção. `node scripts/check-ui-patches.mjs --fix` aplica o que falta logo
+  depois da classe âncora, com a linha `// casa:`, e formata com o Prettier; rodar de novo não muda
+  nada. Arquivo que o projeto não tem é pulado; âncora que não casa com nada reprova (o registry mudou
+  de forma e o patch precisa ser revisto). Patch obrigatório novo entra no JSON, e a régua aponta
+  para ele em vez de repetir a lista.
 - **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
   sai" da #146): `shadcn add --all` sem `--overwrite`, que é o padrão da CLI, para não apagar
   arquivo que já tem linha `// casa:`. Antes, `--dry-run` mostra o que entra; depois, o arquivo marcado que o
@@ -661,7 +681,8 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   2. reverter o que a CLI trouxe contra a régua: `date-fns` (transitivo do `react-day-picker`, nunca
      direto), `next-themes` (patch `// casa:` do `sonner`, acima), `recharts` de volta à versão do
      `kit.deps.json`, e aspas simples e sem ponto e vírgula (`pnpm format`);
-  3. `shadcn add <nome> --diff` e reaplicar à mão os arquivos com `// casa:`.
+  3. `shadcn add <nome> --diff` e reaplicar à mão os arquivos com `// casa:`; os da lista exigida
+     voltam com `node scripts/check-ui-patches.mjs --fix` (acima).
   `sync-to-project.mjs --check` reprova o que sobrar: `cn-import:` (import de `cn` em `ui/`) e
   `cn-pacote:` (`cn` no `package.json`).
   _doc-lib/shadcn.md#docs/components-json, https://ui.shadcn.com/docs/components-json, e
@@ -1414,6 +1435,8 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
   do `Rail`): o nome vai por `aria-label` e não se acrescenta `role`. É um `div` sem papel (o quadro
   da `TableGrid`): `aria-label` solto num `div` é proibido pelo ARIA, então leva `role="region"` com o
   nome, e a tabela dentro mantém o papel dela. `ui/table.tsx` não se edita: o quadro é da peça do kit.
+  O nome é da lista ou do quadro, nunca o do container rotulado que o envolve: o `responsive.spec.ts`
+  cobra isso em toda tela (`ResponsiveAudit.repeatedNames`).
 - **Nativo antes de ARIA**: `<button>` para ação, `<Link>` para navegação; nunca `<div onClick>`,
   nunca `<a><button>`.
 - **Nome acessível**: botão só de ícone leva `aria-label` por `m.*()`; ícone decorativo
@@ -1440,7 +1463,9 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
   em #461)*: os controles de `components/ui/` mantêm o tamanho denso do shadcn (`h-7`, `h-8`...) sem
   tocar no `h-*` original, e o patch `// casa:` só acrescenta `max-sm:min-h-11` (mais
   `max-sm:min-w-11` nos tamanhos de ícone, `size-*`). `max-sm:` vale só abaixo de `sm`, então de `sm`
-  para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos: `button`, `toggle`,
+  para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos, âncoras e classes:
+  `frontend/scripts/ui-patches.json` do kit, cobrado no `test:unit` (§6, `DECISIONS.md` #772): `button`, `toggle`
+  (com `max-sm:min-w-11`, porque o `min-w-7` do registry deixa o toggle só de ícone com 28 px de largura),
   `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`), `tabs` (o `TabsTrigger`) e `input-group`. O
   `ToggleGroupItem` monta a classe com `toggleVariants`: o patch do `toggle` vai dentro do `cva`
   (base e tamanhos), não no `className` do componente `Toggle`, senão o item do grupo fica de fora

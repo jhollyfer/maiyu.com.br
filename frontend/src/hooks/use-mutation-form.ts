@@ -1,9 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import type {
-  QueryKey,
-  UseMutationOptions,
-  UseMutationResult,
-} from '@tanstack/react-query'
+import type { QueryKey, UseMutationResult } from '@tanstack/react-query'
 import type * as React from 'react'
 import { useForm } from 'react-hook-form'
 import type {
@@ -15,7 +11,10 @@ import type {
 import { toast } from 'sonner'
 
 import { useUnsavedChangesBlocker } from '#/hooks/use-unsaved-changes-blocker'
-import type { HTTPError } from '#/integrations/tanstack-query/http'
+import type {
+  HTTPError,
+  MutationProps,
+} from '#/integrations/tanstack-query/http'
 import { useInvalidate } from '#/integrations/tanstack-query/invalidate'
 import { applyMutationError } from '#/lib/form-errors'
 import type { z } from '@maiyu/shared'
@@ -24,15 +23,12 @@ import type { z } from '@maiyu/shared'
  * The resource's mutation hook, as the form receives it.
  *
  * All the ones in `integrations/tanstack-query/mutations/` have this shape: they
- * accept `useMutation`'s options minus `mutationFn`, which they supply
- * themselves. That is what allows passing the hook as an argument instead of
+ * accept `MutationProps` (`useMutation`'s options minus `mutationFn`, which they
+ * supply themselves). That is what allows passing the hook as an argument instead of
  * calling it in the form's file.
  */
 export type ResourceMutation<TRecord, TPayload> = (
-  options?: Omit<
-    UseMutationOptions<TRecord, HTTPError, TPayload>,
-    'mutationFn'
-  >,
+  options?: MutationProps<TRecord, TPayload>,
 ) => UseMutationResult<TRecord, HTTPError, TPayload>
 
 export type UseMutationFormOptions<

@@ -3,6 +3,8 @@ import { redirect } from '@tanstack/react-router'
 
 import { HTTPError, HTTPStatus } from '#/integrations/tanstack-query/http'
 import { accountQueryOptions } from '#/integrations/tanstack-query/queries/account'
+import { AreaCapability } from '#/lib/area-capability'
+import type { AreaAccount, AreaRule } from '#/lib/area-capability'
 import { homeOf } from '#/lib/areas'
 import type { RedirectSearch } from '#/lib/redirect-search'
 import type { AccountProfileShowResponse } from '@maiyu/shared'
@@ -25,7 +27,7 @@ type LeaveOptions = GuardContext & {
 }
 
 /**
- * As duas guardas de sessão das rotas, no layout e não na tela, para que rota nova nasça coberta
+ * As guardas de sessão e de área das rotas, no layout e não na tela, para que rota nova nasça coberta
  * por estar no lugar certo (`frontend.md` §1.1, §1.3;
  * _doc-lib/tanstack-router.md#guide/authenticated-routes,
  * https://tanstack.com/router/latest/docs/framework/react/guide/authenticated-routes).
@@ -91,6 +93,27 @@ export class SessionGuard {
     // Fora do `try`: o `redirect` é lançado, e dentro dele o `catch` o engoliria e o sintoma seria
     // um login que aceita a senha e não sai da tela.
     if (search.redirect) redirect({ href: search.redirect, throw: true })
+
+    redirect({ ...homeOf(account), throw: true })
+  }
+
+  /**
+   * A guarda de área, no `beforeLoad` do `layout.tsx` de cada área (`frontend.md` §3.4). O
+   * `_private/layout.tsx` cobre só a sessão: qualquer conta logada passa. Cada área declara quem
+   * entra, e quem não pode volta para a casa da própria conta (`homeOf`) antes de a rota carregar
+   * dado. Sem isso um comprador abria a tela de categorias do administrador e só o 403 da API, tela a
+   * tela, o barrava. O backend continua sendo quem autoriza; aqui só se redireciona.
+   *
+   * Mora aqui e não em `AreaCapability`: o redirect depende de `homeOf`, e o `homeOf` do projeto pode
+   * usar `AreaCapability.allows`; a regra pura num arquivo e o redirect no outro não fecham ciclo.
+   *
+   * ```ts
+   * beforeLoad: ({ context }) =>
+   *   SessionGuard.requireArea(context.account, AREAS.administrator)
+   * ```
+   */
+  static requireArea(account: AreaAccount, rule: AreaRule): void {
+    if (AreaCapability.allows(account, rule)) return
 
     redirect({ ...homeOf(account), throw: true })
   }

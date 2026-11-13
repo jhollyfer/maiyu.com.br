@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 49 itens de migração para a régua (38 feitos, 2 em andamento, 4 bloqueados, 4 a fazer); atualizado 2026-11-12
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 51 itens de migração para a régua (40 feitos, 1 em andamento, 1 pausado, 4 bloqueados, 4 a fazer); atualizado 2026-11-13
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -119,7 +119,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
 | R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |
-| R3.9 | Bloco `painel` do kit (`--com=painel`, régua 9cb5ffd, #491): `PanelShell`, `AuthShell`, `/sign-in`, `/profile`, `SessionGuard` | G | Em andamento | `lib/areas.ts` no formato `homeOf` -> `{ to }` (todo papel em `/profile` até haver rota de área), `AREAS.administrator` com `STAFF_USER_ROLES`; `@utility rail` no `styles.css`; `/sign-in` na lista do E2E; `PANEL_MENU` só com o perfil (contatos é de outra PR) |
+| R3.8 | Painel de contatos (`/administrator/contacts`, #31) | G | Pausada | spec e design prontos; espera o comentário do dono aprovando a spec (Q1 a Q5); feature nova parada até depois do deploy |
+| R3.9 | Bloco `painel` do kit (`--com=painel`, régua 9cb5ffd, #491): `PanelShell`, `AuthShell`, `/sign-in`, `/profile`, `SessionGuard` | G | Feita | `lib/areas.ts` no formato `homeOf` -> `{ to }` (todo papel em `/profile` até haver rota de área), `AREAS.administrator` com `STAFF_USER_ROLES`; `@utility rail` no `styles.css`; `/sign-in` na lista do E2E; `PANEL_MENU` só com o perfil (contatos é de outra PR); sync da régua 7092226 para o deploy: comentários de `areas.ts` e `_private/layout.tsx` no guarda `SessionGuard.requireArea`, `-sign-in-footer.tsx` vazio (sem cadastro público) |
 
 ### Régua 4 · Testes e infra
 
@@ -130,6 +131,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R4.3 | `dependabot.yml` e `.editorconfig` do modelo | P | Feita | já iguais ao kit; `sync --check` sem linha de dependabot ou editorconfig; `tooling.md` §9 |
 | R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | Feita | `tooling.md` §10.6, `architecture.md` §8; nenhum teste lê código-fonte: a home, o cabeçalho, o layout, as cenas da visão, o `REVEAL` e as páginas de contato e carreiras são renderizados e conferidos pelo que aparece; "nada importa `motion`" não tem teste, porque o pacote não está no `package.json` e o import já quebra o typecheck e o build |
+| R4.7 | Sync de deploy: régua 7092226 levada à `main` com a #29, a #30 e a #32 | M | Feita | `chore/regua-sync-7092226`, base `main`; `sync --check` todo em 0; `codegen`, compose `app/app` com 5440, 9016 e 9017, `check-ui-patches --fix` em 8 arquivos |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | Feita | `tooling.md` §6, §7, §10.6; `check` pela fórmula (`build:deps` + `i18n:compile` + `i18n:check` + lint + typecheck + `format:check` + `test:unit`); o script `test` saiu; o `test:e2e` roda o Playwright pelo config da casa e depende do `setup` do dono que o R4.4 ainda resolve |
 
 ### Régua D · Documentação

@@ -26,17 +26,25 @@ const buttonVariants = cva(
       },
       size: {
         default:
-          "h-7 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
-        xs: "h-5 gap-1 rounded-sm px-2 text-[0.625rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
-        sm: "h-6 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
-        lg: "h-8 gap-1 px-2.5 text-xs/relaxed has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-4",
-        icon: "max-sm:min-w-11 size-7 [&_svg:not([class*='size-'])]:size-3.5",
+          // casa: 44px touch target below sm, dense height kept
+          "h-7 max-sm:min-h-11 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3.5",
+        // casa: 44px touch target below sm, dense height kept
+        xs: "h-5 max-sm:min-h-11 gap-1 rounded-sm px-2 text-[0.625rem] has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-2.5",
+        // casa: 44px touch target below sm, dense height kept
+        sm: "h-6 max-sm:min-h-11 gap-1 px-2 text-xs/relaxed has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_svg:not([class*='size-'])]:size-3",
+        // casa: 44px touch target below sm, dense height kept
+        lg: "h-8 max-sm:min-h-11 gap-1 px-2.5 text-xs/relaxed has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2 [&_svg:not([class*='size-'])]:size-4",
+        // casa: 44px touch target below sm, dense icon size kept
+        icon: "max-sm:min-w-11 size-7 max-sm:min-h-11 [&_svg:not([class*='size-'])]:size-3.5",
         'icon-xs':
-          "max-sm:min-w-11 size-5 rounded-sm [&_svg:not([class*='size-'])]:size-2.5",
+          // casa: 44px touch target below sm, dense icon size kept
+          "max-sm:min-w-11 size-5 max-sm:min-h-11 rounded-sm [&_svg:not([class*='size-'])]:size-2.5",
         'icon-sm':
-          "max-sm:min-w-11 size-6 [&_svg:not([class*='size-'])]:size-3",
+          // casa: 44px touch target below sm, dense icon size kept
+          "max-sm:min-w-11 size-6 max-sm:min-h-11 [&_svg:not([class*='size-'])]:size-3",
         'icon-lg':
-          "max-sm:min-w-11 size-8 [&_svg:not([class*='size-'])]:size-4",
+          // casa: 44px touch target below sm, dense icon size kept
+          "max-sm:min-w-11 size-8 max-sm:min-h-11 [&_svg:not([class*='size-'])]:size-4",
       },
     },
     defaultVariants: {

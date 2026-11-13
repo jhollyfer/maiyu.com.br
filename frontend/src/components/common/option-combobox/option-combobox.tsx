@@ -1,3 +1,4 @@
+import { XIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
 import {
@@ -7,8 +8,9 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
+  ComboboxTrigger,
 } from '#/components/ui/combobox'
-import { InputGroupAddon } from '#/components/ui/input-group'
+import { InputGroupAddon, InputGroupButton } from '#/components/ui/input-group'
 import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
@@ -56,7 +58,9 @@ export function OptionCombobox({
   const selected = options.find((option) => option.value === value) ?? null
 
   return (
-    <OptionComboboxContext value={{ selected, disabled }}>
+    <OptionComboboxContext
+      value={{ selected, disabled, clear: () => onValueChange('') }}
+    >
       <Combobox
         items={options}
         value={selected}
@@ -79,25 +83,68 @@ export function OptionCombobox({
 /**
  * The search field. `showClear` is the catalog `ComboboxInput` variant: the
  * × that clears, on for the filter and off for the required field.
+ *
+ * The open and clear buttons are drawn here, not by `ComboboxInput` (`showTrigger` and
+ * `showClear` off there): the shadcn component hands `props` only to the input, and its
+ * two icon buttons come out with no accessible name (axe `button-name`, critical). The
+ * Base UI demo names them with `aria-label` on `Combobox.Trigger` and `Combobox.Clear`
+ * (_doc-lib/base-ui.md#react/components/combobox, https://base-ui.com/react/components/combobox.md),
+ * and `ui/combobox` exports no `ComboboxClear`, so the kit supplies the name and
+ * `components/ui/` stays untouched. The clear is an `InputGroupButton` that empties the
+ * value through the root, shown only while there is a value (as `Combobox.Clear` does).
  */
 export function OptionComboboxInput({
   className,
   placeholder = m.kit_combobox_placeholder(),
+  showClear = false,
+  children,
   ...props
 }: Merge<
-  Omit<React.ComponentProps<typeof ComboboxInput>, 'disabled'>,
+  Omit<React.ComponentProps<typeof ComboboxInput>, 'disabled' | 'showTrigger'>,
   { readonly placeholder?: string }
 >): React.JSX.Element {
-  const { disabled } = useOptionComboboxContext('OptionComboboxInput')
+  const { selected, disabled, clear } = useOptionComboboxContext(
+    'OptionComboboxInput',
+  )
+  const clearable = showClear && selected !== null
 
   return (
     <ComboboxInput
       data-slot="option-combobox-input"
       placeholder={placeholder}
       disabled={disabled}
+      showTrigger={false}
+      showClear={false}
       className={cn('w-full', className)}
       {...props}
-    />
+    >
+      <InputGroupAddon align="inline-end">
+        {clearable && (
+          <InputGroupButton
+            size="icon-xs"
+            variant="ghost"
+            aria-label={m.kit_combobox_clear()}
+            data-slot="combobox-clear"
+            disabled={disabled}
+            onClick={clear}
+          >
+            <XIcon className="pointer-events-none" />
+          </InputGroupButton>
+        )}
+        {!clearable && (
+          <InputGroupButton
+            size="icon-xs"
+            variant="ghost"
+            render={<ComboboxTrigger />}
+            aria-label={m.kit_combobox_open()}
+            data-slot="input-group-button"
+            className="data-pressed:bg-transparent"
+            disabled={disabled}
+          />
+        )}
+      </InputGroupAddon>
+      {children}
+    </ComboboxInput>
   )
 }
 

@@ -440,6 +440,87 @@ test.group('pattern:check > catalog', () => {
   })
 })
 
+test.group('pattern:check > minio outside local', () => {
+  const lines = (files: ReadonlyArray<SourceFile>) =>
+    run(files).map((finding) => [finding.file, finding.rule, finding.line])
+
+  test('code, JSON and a production Dockerfile naming MinIO are refused', ({
+    assert,
+  }) => {
+    assert.deepEqual(
+      lines([
+        {
+          path: 'backend/config/drive.ts',
+          text: "const a = 1\nconst endpoint = 'http://minio:9000'\n",
+        },
+        {
+          path: 'backend/start/env.ts',
+          text: 'MINIO_ENDPOINT: Env.schema.string(),\n',
+        },
+        {
+          path: 'frontend/src/lib/storage.ts',
+          text: "const host = 'minio.local' // the bucket\n",
+        },
+        { path: 'backend/package.json', text: '{ "minio": "8.0.0" }\n' },
+        {
+          path: 'backend/Dockerfile-production',
+          text: 'FROM node:24\n# no MinIO here\n',
+        },
+      ]),
+      [
+        ['backend/config/drive.ts', 'minio-outside-local', 2],
+        ['backend/start/env.ts', 'minio-outside-local', 1],
+        ['frontend/src/lib/storage.ts', 'minio-outside-local', 1],
+        ['backend/package.json', 'minio-outside-local', 1],
+        ['backend/Dockerfile-production', 'minio-outside-local', 2],
+      ],
+    )
+  })
+
+  test('a word that only contains the letters is not a mention', ({
+    assert,
+  }) => {
+    const text = [
+      "const es = 'dominio del cuerpo'",
+      "const pt = 'domínio do condomínio'",
+      "const title = 'Dominio y CONDOMINIO'",
+    ].join('\n')
+    assert.deepEqual(rules([{ path: 'frontend/src/lib/items.ts', text }]), [])
+  })
+
+  test('a comment about the local environment is not refused', ({ assert }) => {
+    const text = [
+      '/**',
+      ' * One S3-compatible bucket, MinIO in dev and in the e2e.',
+      ' */',
+      '// and talks to Postgres and MinIO',
+      "const disk = 's3' // MinIO locally, R2 in production",
+      '/* MinIO swaps with S3 by STORAGE_ENDPOINT */',
+    ].join('\n')
+    assert.deepEqual(rules([{ path: 'backend/config/drive.ts', text }]), [])
+  })
+
+  test('where MinIO lives, specs, tests and scripts are out of the rule', ({
+    assert,
+  }) => {
+    const text = "const endpoint = 'http://minio:9000'\n"
+    assert.deepEqual(
+      rules(
+        [
+          'backend/docker-compose.yml',
+          'backend/infra/minio/minio-setup.ts',
+          'backend/app/services/multipart/multipart.e2e.spec.ts',
+          'backend/tests/bootstrap.ts',
+          'backend/scripts/pattern-check.rules.ts',
+          'frontend/e2e/upload.spec.ts',
+          'frontend/src/components/common/upload/upload.test.tsx',
+        ].map((path) => ({ path, text })),
+      ),
+      [],
+    )
+  })
+})
+
 test.group('pattern:check > exceptions and baseline', () => {
   const file = {
     path: 'backend/app/repositories/post/post.lucid.repository.ts',
