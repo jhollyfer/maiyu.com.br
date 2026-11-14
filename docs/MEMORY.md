@@ -118,6 +118,8 @@ frontend. Os formulários estão desligados com aviso (`DECISIONS.md` #17). Falt
 
 ## Próximos passos
 
+Na retomada: recriar as sub-sessões de backend, frontend e shared em Sonnet 5.5 (create_session com model claude-sonnet-5-5; subagente com model sonnet). A regente planeja e revisa em Opus 5.5 e não escreve código (AGENTS.md, Modo de trabalho, item 0; DECISIONS #228). O contexto está neste MEMORY.md e nos PRs.
+
 0. Deploy, nesta ordem:
    1. O dono faz o merge da PR de sync de deploy na `main`; ela já traz a #29, a #30 e a #32.
    2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu`, os `SEED_TENANT_*`, `SEED_OWNER_*` e `SITE_ENV=production`). Ligar o *Auto Deploy* dos dois apps.
