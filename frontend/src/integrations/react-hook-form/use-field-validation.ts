@@ -17,22 +17,28 @@ type FieldBinding<TValue> = {
 
 type UseFieldValidationResult<TValue> = {
   field: FieldBinding<TValue>
+  /**
+   * The control `id` and its label `htmlFor`: `useId()` plus the `name`. Two forms on the same
+   * page with a field of the same name (checkout and newsletter e-mail) would share the `id`
+   * from the `name` alone, and each label would point at the first field
+   * (https://react.dev/reference/react/useId, stable between SSR and hydration).
+   */
+  controlId: string
   isInvalid: boolean
   /** The shadcn `FieldError` `errors` shape, passed straight through. */
   errors: Array<{ message: string }>
-  /** The `FieldError` `id`, from the `name` (already prefixed). */
+  /** The `FieldError` `id`, from `controlId`. */
   errorId: string
   /** The control `aria-describedby`: the error, only when invalid. */
   describedBy: string | undefined
 }
 
 /**
- * `name` prefix the fields use as `id` and `htmlFor`.
+ * `name` prefix of a form opened on top of another (the "Novo registro em <tabela>" sheet).
  *
- * Row fields build the `id` from the slug. A form opened on top of another
- * (the "Novo registro em <tabela>" sheet) repeated the ids of the one behind,
- * and the sheet label pointed to the wrong field. Whoever stacks a form
- * declares a prefix; the main form has none.
+ * It once kept the `id` of the stacked form apart from the one behind; the `id` now comes from
+ * `useId()` (`controlId`), unique per instance, and the prefix only reaches the `name`. The main
+ * form has none.
  */
 const FieldIdPrefixContext = React.createContext('')
 
@@ -52,24 +58,35 @@ export function useFieldValidation<TValue = unknown>(
   // which component was left out.
   const context = useFieldContext<TValue>(consumer)
   const prefix = React.use(FieldIdPrefixContext)
+  const reactId = React.useId()
 
   const result = buildFromReactHookForm<TValue>(context)
   // Only `name` changes: the binding (value, onChange, ref) stays the
-  // `Controller` one, and `name` serves the fields for `id`/`htmlFor`/`name`.
+  // `Controller` one, and `name` serves the fields for `name`.
   let field = result.field
   if (prefix) field = { ...field, name: prefix.concat(field.name) }
+  const controlId = `${reactId}-${field.name}`
 
   const { 'aria-describedby': describedBy } = invalidProps(
     result.isInvalid,
-    field.name,
+    controlId,
   )
 
-  return { ...result, field, errorId: errorId(field.name), describedBy }
+  return {
+    ...result,
+    field,
+    controlId,
+    errorId: errorId(controlId),
+    describedBy,
+  }
 }
 
 function buildFromReactHookForm<TValue>(
   context: FieldContextValue<TValue>,
-): Omit<UseFieldValidationResult<TValue>, 'errorId' | 'describedBy'> {
+): Omit<
+  UseFieldValidationResult<TValue>,
+  'controlId' | 'errorId' | 'describedBy'
+> {
   const errors: Array<{ message: string }> = []
   if (context.fieldState.error?.message) {
     errors.push({ message: context.fieldState.error.message })

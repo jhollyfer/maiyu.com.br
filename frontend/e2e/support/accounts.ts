@@ -5,38 +5,44 @@ import { dirname, resolve } from 'node:path'
 import { z } from 'zod'
 
 import { E2eEnv } from './env'
-import { PROJECT_E2E_ACCOUNT_NAMES } from './project-accounts'
+import {
+  PROJECT_E2E_ACCOUNT_NAMES,
+  PROJECT_E2E_OWNER_ACCOUNT,
+  PROJECT_E2E_ROLE_NAMES,
+} from './project-accounts'
 
 const Account = z.object({ login: z.string(), password: z.string() })
 
-const Accounts = z.object({
-  platformOwner: Account,
-  platformAdministrator: Account,
-  staff: Account,
-  /** `null` no projeto de um papel só: não existe conta que a regra recuse. */
-  nonStaff: Account.nullable(),
-  customer: Account,
-  /** As contas de domínio do projeto (`backend/tests/e2e-project-accounts.ts`), por nome. */
-  project: z.record(z.string(), Account),
-})
+/**
+ * A linha que o comando imprime (DECISIONS.md #778): o grupo `project` e uma chave por nome do mapa
+ * de papéis (`PROJECT_E2E_ROLE_NAMES`), cada uma anulável: `null` é o papel que o projeto não tem
+ * nesta execução, e o `setup` pula a conta. Os nomes do mapa não são fixos: o projeto de tenant tem
+ * `staff` e `platformOwner`, o de só administrador e operador tem os dois.
+ */
+const Printed = z
+  .object({
+    /** As contas de domínio do projeto (`backend/tests/e2e-project-accounts.ts`), por nome. */
+    project: z.record(z.string(), Account),
+  })
+  .catchall(Account.nullable())
+
+const Roles = z.record(z.string(), Account.nullable())
 
 export type E2eAccount = z.infer<typeof Account>
-export type E2eAccounts = z.infer<typeof Accounts>
+/** As contas desta execução: os papéis do mapa e as de domínio do projeto, cada um por nome. */
+export type E2eAccounts = {
+  readonly roles: Readonly<Record<string, E2eAccount | null>>
+  readonly project: Readonly<Record<string, E2eAccount>>
+}
 
-/** Os papéis que o comando cria, na ordem em que o `setup` entra com cada um. */
-const BASE_ROLES = [
-  'platformOwner',
-  'platformAdministrator',
-  'staff',
-  'nonStaff',
-  'customer',
-] as const satisfies ReadonlyArray<keyof E2eAccounts>
+/** Os papéis do mapa do projeto, na ordem em que o `setup` entra com cada um. */
+const BASE_ROLES = PROJECT_E2E_ROLE_NAMES
 
 /**
  * O que um nome de conta do projeto não pode ser (DECISIONS.md #611): cada nome é um arquivo em
  * `playwright/.auth/` (_doc-lib/playwright.md#docs/auth, "Multiple signed in roles"), então repetir
- * um papel do kit faria o `setup` sobrescrever a sessão dele (`platformOwner` é a de todos os
- * projetos do `playwright.config.ts`); `project` é a chave do grupo e `accounts` o arquivo das contas.
+ * um papel do mapa faria o `setup` sobrescrever a sessão dele; `project` é a chave do grupo e
+ * `accounts` o arquivo das contas.
  */
 const RESERVED_NAMES = [...BASE_ROLES, 'project', 'accounts'] as const
 
@@ -46,13 +52,13 @@ export type KitNameCollision<TNames extends string> = Extract<
   (typeof RESERVED_NAMES)[number]
 >
 
-/** A checagem em tipo: um nome do projeto igual a um papel do kit faz este `{}` deixar de compilar. */
+/** A checagem em tipo: um nome do projeto igual a um papel do mapa faz este `{}` deixar de compilar. */
 export const PROJECT_NAMES_FREE_OF_KIT_ROLES: Record<
   KitNameCollision<(typeof PROJECT_E2E_ACCOUNT_NAMES)[number]>,
   never
 > = {}
 
-/** Os papéis do esqueleto e os nomes das contas de domínio do projeto. */
+/** Os papéis do mapa e os nomes das contas de domínio do projeto. */
 export type E2eRole = [
   ...typeof BASE_ROLES,
   ...typeof PROJECT_E2E_ACCOUNT_NAMES,
@@ -85,9 +91,17 @@ export class E2eAccountsStore {
     if (!line)
       throw new Error(`e2e:accounts não imprimiu as contas:\n${output}`)
 
-    const accounts = Accounts.parse(
+    const printed = Printed.parse(
       JSON.parse(line.trimStart().slice(MARKER.length)),
     )
+    const accounts: E2eAccounts = {
+      project: printed.project,
+      roles: Roles.parse(
+        Object.fromEntries(
+          Object.entries(printed).filter(([key]) => key !== 'project'),
+        ),
+      ),
+    }
     const declared: ReadonlyArray<string> = PROJECT_E2E_ACCOUNT_NAMES
     const reserved: ReadonlyArray<string> = RESERVED_NAMES
     const repeated = [...declared, ...Object.keys(accounts.project)].filter(
@@ -97,14 +111,46 @@ export class E2eAccountsStore {
       throw new Error(
         `conta do projeto repete um papel do kit ou outro nome (${[...repeated, ...declared].join(', ')}): cada nome é um arquivo de sessão`,
       )
-    const printed = Object.keys(accounts.project).sort().join(',')
-    const listed = [...declared].sort().join(',')
-    if (printed !== listed)
+    const owner = E2eAccountsStore.owner()
+    if (!E2eAccountsStore.entries(accounts).some((each) => each.role === owner))
       throw new Error(
-        `project-accounts.ts (${listed}) difere das contas do projeto que o comando criou (${printed})`,
+        `a conta ${owner}, de quem é a sessão padrão (${E2eEnv.storageState}), não foi criada: sem o esqueleto multi-tenant o projeto nomeia a sua em PROJECT_E2E_OWNER_ACCOUNT, e o nome é de uma conta que o comando imprime`,
+      )
+    const printedNames = Object.keys(accounts.project).sort().join(',')
+    const listed = [...declared].sort().join(',')
+    if (printedNames !== listed)
+      throw new Error(
+        `project-accounts.ts (${listed}) difere das contas do projeto que o comando criou (${printedNames})`,
+      )
+    const printedRoles = Object.keys(accounts.roles).sort().join(',')
+    const listedRoles = [...BASE_ROLES].sort().join(',')
+    if (printedRoles !== listedRoles)
+      throw new Error(
+        `PROJECT_E2E_ROLE_NAMES (${listedRoles}) difere dos papéis que o comando imprimiu (${printedRoles}): o mapa do backend (E2eSkeletonAccounts.roleNames) e o do frontend são o mesmo`,
       )
 
     return accounts
+  }
+
+  /**
+   * A conta cuja sessão é a padrão dos projetos do `playwright.config.ts` (`E2eEnv.storageState`): o
+   * dono da plataforma, ou, no projeto sem o esqueleto, a que ele nomeia em `PROJECT_E2E_OWNER_ACCOUNT`.
+   */
+  static owner(): string {
+    return PROJECT_E2E_OWNER_ACCOUNT ?? 'platformOwner'
+  }
+
+  /** A conta de um papel, ou o erro que diz qual falta: o papel que o projeto não tem vem `null`. */
+  static accountOf(accounts: E2eAccounts, role: E2eRole): E2eAccount {
+    const found = E2eAccountsStore.entries(accounts).find(
+      (each) => each.role === role,
+    )
+    if (!found)
+      throw new Error(
+        `o projeto não tem a conta ${role} (o e2e:accounts a imprimiu null)`,
+      )
+
+    return found.account
   }
 
   /** Cria as contas no backend desta execução e as guarda para os specs. */
@@ -145,8 +191,8 @@ export class E2eAccountsStore {
     accounts: E2eAccounts,
   ): ReadonlyArray<{ role: E2eRole; account: E2eAccount }> {
     const base = E2eAccountsStore.roles.flatMap((role) => {
-      const account = accounts[role]
-      if (account === null) return []
+      const account = accounts.roles[role]
+      if (!account) return []
 
       return [{ role, account }]
     })
@@ -162,19 +208,21 @@ export class E2eAccountsStore {
 
   /** As contas que o `setup` desta execução gravou. */
   static read(): E2eAccounts {
-    return Accounts.parse(
-      JSON.parse(readFileSync(E2eAccountsStore.file, 'utf8')),
-    )
+    const stored = z
+      .object({ roles: Roles, project: z.record(z.string(), Account) })
+      .parse(JSON.parse(readFileSync(E2eAccountsStore.file, 'utf8')))
+
+    return stored
   }
 
   /**
    * A sessão gravada de um papel ou de uma conta de domínio do projeto:
    * `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`.
-   * A do dono da plataforma é a de `E2eEnv.storageState`, a que os projetos do
+   * A de `E2eAccountsStore.owner()` é a de `E2eEnv.storageState`, a que os projetos do
    * `playwright.config.ts` já usam.
    */
   static stateOf(role: E2eRole): string {
-    if (role === 'platformOwner') return E2eEnv.storageState
+    if (role === E2eAccountsStore.owner()) return E2eEnv.storageState
 
     return `playwright/.auth/${role}.json`
   }

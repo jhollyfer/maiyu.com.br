@@ -36,9 +36,8 @@ export function FieldDate({
   onValueChange,
   slot = 'field-date',
 }: FieldDateProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldDate')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldDate')
   const { ref: fieldRef } = field
   return (
     <Field
@@ -46,13 +45,13 @@ export function FieldDate({
       data-testid={`${slot}-input`}
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
       <DatePicker
         ref={fieldRef}
-        id={field.name}
+        id={controlId}
         value={field.value}
         placeholder={placeholder}
         disabled={disabled}

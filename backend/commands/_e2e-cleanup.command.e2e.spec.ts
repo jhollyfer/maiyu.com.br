@@ -263,7 +263,10 @@ test.group('e2e > cleanup', (group) => {
     ;(await exec(E2eAccounts)).assertSucceeded()
     const before = (await User.query()).length
 
-    for (const table of E2eGuard.KIT_TABLES) {
+    for (const table of [
+      ...E2eGuard.KIT_TABLES,
+      ...ProjectE2eCleanup.skeletonTables,
+    ]) {
       const command = await withMarkers([{ table, column: 'name' }], () =>
         exec(E2eCleanup),
       )

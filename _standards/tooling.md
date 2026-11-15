@@ -816,15 +816,17 @@ Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_
 **Frontend**, na ordem:
 
 1. `pnpm --filter ./frontend check`: a fórmula acima. O `i18n:compile` é o Paraglide compilando as
-   mensagens (`src/paraglide/` não é versionado, `i18n.md`); o `i18n:check` é o `inlang check` pela
+   mensagens (`src/paraglide/` não é versionado, `i18n.md`) e, logo depois, `node scripts/check-i18n-compile.mjs`
+   (`paraglide-js compile --project ./project.inlang && node scripts/check-i18n-compile.mjs`): o compilador só
+   avisa quando o plugin do inlang não carrega e sai com 0, então o script é o código de saída (§8.2, #780); o `i18n:check` é o `inlang check` pela
    devDependency (tradução, variável e plural faltando, mensagem sem uso, `i18n.md` §4); o typecheck
    (`tsc --noEmit`) inclui `e2e/`, porque o runner do Playwright não checa tipo
    (_doc-lib/playwright.md#docs/test-typescript); o `format:check` é o `prettier --check .`; o
    `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` e `scripts/**/*.test.ts` (`architecture.md` §8), que inclui
-   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6). O compilador do Paraglide baixa os plugins
-   declarados em `modules` do `project.inlang/settings.json`, que são URLs do jsDelivr com a versão
-   fixada, nunca `@latest` (_doc-lib/paraglide.md#/file-formats): quem roda precisa de rede para
-   `cdn.jsdelivr.net`
+   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6). Os plugins declarados em `modules` do
+   `project.inlang/settings.json` são devDependencies de versão exata lidas de `./node_modules/@inlang/<plugin>/dist/index.js`
+   (o SDK do inlang lê do disco o módulo cujo caminho não começa com `http`; _doc-lib/paraglide.md#/file-formats):
+   o compile e o `inlang check` não usam rede. URL de CDN em `modules` é reprovada pelo `check-i18n-compile.mjs` (#780)
 2. `build`, depois `git diff --exit-code src/routeTree.gen.ts` e `node scripts/check-chunk-cycles.mjs`,
    que lê `.output/server` e reprova ciclo de chunk que quebra o SSR
 3. **Playwright** (`test:e2e`) *(teste)* com o backend do passo 3 de pé:
@@ -971,7 +973,7 @@ e empacota tudo, sem depender de `.output/`, `build/` ou `dist/` vindos de fora 
 
 - Multi-stage sobre `node:24-alpine`, fixado por digest (`node:24-alpine@sha256:<digest>`) e atualizado
   pelo Dependabot (§9), porque tag móvel muda o que foi auditado sem commit (skill `security-audit`,
-  SUPPLY-CHAIN-AND-RELEASE.md); o pnpm entra por `npm install -g pnpm`, como no academy
+  SUPPLY-CHAIN-AND-RELEASE.md); o pnpm entra por `npm install -g pnpm@12` (major fixado, #779), como no academy
   (#395), sem Corepack (o do Node 24 não acha o binário do pnpm 12), e troca para a versão de
   `devEngines.packageManager` no primeiro uso, a mesma do hook local (_doc-lib/pnpm.md#installation,
   #docker). A doc também aceita partir da imagem
@@ -1018,8 +1020,8 @@ e empacota tudo, sem depender de `.output/`, `build/` ou `dist/` vindos de fora 
   config de produção.
 - Frontend: Nitro com preset node (_doc-lib/nitro.md#deploy/runtimes/node). O estágio de build
   faz o mesmo que o backend com `{./frontend}...`: `pnpm install --frozen-lockfile`, o build do
-  `shared/`, `i18n:compile` (o compilador do Paraglide baixa os plugins do jsDelivr: o servidor do
-  Coolify precisa alcançar `cdn.jsdelivr.net`, §7) e o `build` do app. O estágio final leva só o
+  `shared/`, `i18n:compile` (os plugins do inlang vêm do `node_modules`, sem rede, e o script
+  `check-i18n-compile.mjs` derruba a imagem se um plugin não carregou, §7, #780) e o `build` do app. O estágio final leva só o
   `.output/`, com `USER node` e o `HEALTHCHECK` acima.
 - **`VITE_*` de produção vêm do `frontend/.env.production` versionado**, só com valor público
   (`backend.md` §6, `frontend.md`): o Vite lê o arquivo no build em modo `production`
@@ -1276,10 +1278,16 @@ Processo das etapas 5 a 7 do `AGENTS.md`. As skills (`systematic-debugging`,
   ou confere os E2E de caracterização dos fluxos críticos que o plano toca (cadastro, login,
   dinheiro, permissão, webhook) e registra o resultado como linha de base. As fases do meio seguem
   só com unitário; a final roda tudo e compara com a linha de base. Fora de plano, toda branch roda as suítes uma vez antes do PR (§7).
-- **E2E local não usa a API de produção**: o `pnpm build` do frontend lê o `.env.production`
-  versionado e embute os `VITE_*` de produção; o build do E2E local passa `VITE_API_URL` e
-  `VITE_SITE_URL` do ambiente local na linha de comando, ou a suíte falha por CORS contra produção
-  (relato do academy, 2026-11-11: 30 falhas falsas).
+- **E2E nunca chama a API de produção** (`DECISIONS.md` #775): o `pnpm build` do frontend lê o
+  `.env.production` versionado e embute os `VITE_*` de produção, e a SSR da rodada chamaria a API
+  real (academy, 2026-11-11: 30 falhas falsas por CORS; curupira: todos os specs). Por isso o build
+  faz parte da rodada: o `webServer` do app no `e2e/playwright.config.ts` do kit roda
+  `pnpm run build && node .output/server/index.mjs` com `VITE_API_URL=http://localhost:3333` e
+  `VITE_SITE_URL=http://localhost:3000` no env (`E2eEnv.localBuild`). O env do processo vence os
+  `.env.*` (_doc-lib/vitejs.md#env-and-mode, https://vite.dev/guide/env-and-mode). Ninguém passa
+  esses valores à mão e nenhum `.output/` antigo é reaproveitado. A exceção é um servidor que já
+  esteja de pé na porta 3000 fora do CI (`reuseExistingServer`): ele precisa ter sido subido pela
+  própria rodada ou com o mesmo env.
 - **Critério atrás de ENV, sem instância real que se possa exercitar com segurança** (produção, por
   exemplo): prova-se pelo mecanismo de gating já exercitado em outro ambiente, e o relatório diz
   que é evidência indireta, não execução direta.
@@ -1423,6 +1431,15 @@ Como se cobra:
   em Opus, que é o desejado.
 - Sem `opusplan` disponível, o agente diz qual modelo está rodando antes de planejar e pede a troca
   (`/model`) em vez de planejar no modelo de execução.
+- **Sessões orquestradas (§10.7, `DECISIONS.md` #776):** a regente geral e a regente de cada projeto
+  rodam em **Opus 5.5** e só planejam, decidem, distribuem e revisam: nunca escrevem código. Toda
+  sub-sessão (shared, backend, frontend) nasce em **Sonnet 5.5**, com `create_session` e
+  `model: "claude-sonnet-5-5"` explícito, porque, sem o campo, a sessão herda o Opus de quem a criou.
+  Todo subagente que implementa, corrige ou verifica é chamado com `model: "sonnet"`; só o subagente
+  de plano ou de revisão final recebe `model: "opus"`. Sub-sessão que esteja em Opus é recriada em
+  Sonnet: o contexto passa pelo brief, que traz o `docs/MEMORY.md`, as branches e os PRs. A antiga só
+  é arquivada depois de conferido que não tem nada só local. A regente confere o modelo de cada
+  sub-sessão pelo `get_session` (`session_context.model` e `external_metadata.last_served_model`).
 
 Conferido em 2026-10-26: `_doc-lib`-equivalente ainda não existe para o Claude Code; as páginas
 usadas foram `https://code.claude.com/docs/en/model-config.md` (aliases, `opusplan`, versões, fixar

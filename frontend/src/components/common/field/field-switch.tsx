@@ -32,7 +32,7 @@ export function FieldSwitch({
   disabled,
   required,
 }: FieldSwitchProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } =
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
     useFieldValidation<boolean>('FieldSwitch')
   const { ref: fieldRef } = field
 
@@ -43,7 +43,7 @@ export function FieldSwitch({
       orientation="horizontal"
     >
       <FieldContent>
-        <FieldLabel htmlFor={field.name}>
+        <FieldLabel htmlFor={controlId}>
           {label}
           {required && <FieldRequiredMark />}
         </FieldLabel>
@@ -54,7 +54,7 @@ export function FieldSwitch({
         nativeButton
         render={<button type="button" />}
         ref={fieldRef}
-        id={field.name}
+        id={controlId}
         name={field.name}
         disabled={disabled}
         // RHF default values come as `undefined` before the first edit.

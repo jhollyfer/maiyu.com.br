@@ -52,7 +52,7 @@ export function FieldFiles({
   upload,
   discard,
 }: FieldFilesProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } =
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
     useFieldValidation<Array<string> | null>('FieldFiles')
   const { ref: fieldRef } = field
 
@@ -73,7 +73,7 @@ export function FieldFiles({
   return (
     <Field data-slot="field-files" data-invalid={isInvalid}>
       <MultiFileUpload<{ readonly id: string }>
-        controlId={field.name}
+        controlId={controlId}
         accept={accept?.join(',')}
         maxConcurrent={maxConcurrent}
         onUpload={upload}

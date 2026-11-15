@@ -54,19 +54,18 @@ export function FieldImage({
   upload,
   discard,
 }: FieldImageProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldImage')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldImage')
   const { ref: fieldRef } = field
 
   return (
     <Field data-slot="field-image" data-invalid={isInvalid}>
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
       <ImageField
-        id={field.name}
+        id={controlId}
         value={field.value ?? null}
         onValueChange={(storageId) => {
           field.onChange(storageId)

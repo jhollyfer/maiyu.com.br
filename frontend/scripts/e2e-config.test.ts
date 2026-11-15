@@ -55,4 +55,23 @@ describe('e2e/playwright.config.ts', () => {
     for (const project of projects)
       expect(String(project.testIgnore)).not.toMatch(/panel-shell/)
   })
+
+  // A `.output/` built by a plain `pnpm build` carries the `VITE_*` of the versioned
+  // `.env.production`: the app server builds again with the local addresses (DECISIONS.md #775).
+  it.each(['', 'http://localhost:3333'])(
+    'the app is built for the run with the local API and site (E2E_API_URL "%s")',
+    async (apiUrl) => {
+      const config = await loadConfig(apiUrl)
+      const servers = [config.webServer ?? []].flat()
+      const app = servers.find((server) =>
+        server.command.includes('.output/server/index.mjs'),
+      )
+
+      expect(app?.command).toMatch(/^pnpm run build && node /)
+      expect(app?.env).toMatchObject({
+        VITE_API_URL: 'http://localhost:3333',
+        VITE_SITE_URL: 'http://localhost:3000',
+      })
+    },
+  )
 })

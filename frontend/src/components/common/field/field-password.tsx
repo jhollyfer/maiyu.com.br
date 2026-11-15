@@ -29,7 +29,7 @@ export function FieldPassword({
   disabled,
   required,
 }: FieldPasswordProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } =
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
     useFieldValidation<string>('FieldPassword')
   return (
     <Field
@@ -37,7 +37,7 @@ export function FieldPassword({
       data-testid="field-password-input"
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label} {required && <FieldRequiredMark />}
       </FieldLabel>
       <SecretInput
@@ -45,7 +45,7 @@ export function FieldPassword({
         toggleLabel={() => m.kit_toggle_password()}
         toggleTestId="field-password-toggle-btn"
         disabled={disabled}
-        id={field.name}
+        id={controlId}
         name={field.name}
         autoComplete={autoComplete}
         placeholder={placeholder}

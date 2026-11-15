@@ -46,9 +46,8 @@ export function FieldText({
   testId,
   autoComplete,
 }: FieldTextProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldText')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldText')
   let wrapperTestId: string | undefined = `${slot}-input`
   if (testId) wrapperTestId = undefined
   const { ref: inputRef } = field
@@ -58,7 +57,7 @@ export function FieldText({
       data-testid={wrapperTestId}
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
@@ -67,7 +66,7 @@ export function FieldText({
           data-testid={testId ?? `${slot}-input`}
           ref={inputRef}
           disabled={disabled}
-          id={field.name}
+          id={controlId}
           name={field.name}
           type={type}
           placeholder={placeholder}

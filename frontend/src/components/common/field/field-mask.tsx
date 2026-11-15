@@ -67,9 +67,8 @@ export function FieldMask({
   required,
   autoComplete,
 }: FieldMaskProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldMask')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldMask')
   const maskRef = useMaskInput({
     mask,
     register: field.ref,
@@ -78,7 +77,7 @@ export function FieldMask({
 
   return (
     <Field data-slot="field-mask" data-invalid={isInvalid}>
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
@@ -86,7 +85,7 @@ export function FieldMask({
         <InputGroupInput
           ref={maskRef}
           disabled={disabled}
-          id={field.name}
+          id={controlId}
           name={field.name}
           inputMode={INPUT_MODE[mask]}
           placeholder={placeholder}

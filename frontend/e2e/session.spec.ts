@@ -32,7 +32,7 @@ test.describe('sem sessão', () => {
   test('credencial errada mostra a mensagem, sem dizer qual campo falhou, e fica na entrada', async ({
     page,
   }) => {
-    const { staff } = E2eAccountsStore.read()
+    const staff = E2eAccountsStore.accountOf(E2eAccountsStore.read(), 'staff')
     await SessionPage.openSignIn(page)
 
     await SessionPage.submit(page, { ...staff, password: 'senha errada' })
@@ -46,7 +46,10 @@ test.describe('sem sessão', () => {
   test('entra pelo formulário e chega ao destino de ?redirect=', async ({
     page,
   }) => {
-    const { platformAdministrator } = E2eAccountsStore.read()
+    const platformAdministrator = E2eAccountsStore.accountOf(
+      E2eAccountsStore.read(),
+      'platformAdministrator',
+    )
     await SessionPage.openSignIn(page, '/pt-br/profile')
 
     await SessionPage.submit(page, platformAdministrator)
@@ -60,7 +63,10 @@ test.describe('sem sessão', () => {
   test('um ?redirect= para outro site é recusado: entra e fica no próprio site', async ({
     page,
   }) => {
-    const { platformAdministrator } = E2eAccountsStore.read()
+    const platformAdministrator = E2eAccountsStore.accountOf(
+      E2eAccountsStore.read(),
+      'platformAdministrator',
+    )
     await SessionPage.openSignIn(page, '//evil.example/x')
 
     await SessionPage.submit(page, platformAdministrator)
@@ -73,7 +79,10 @@ test.describe('sem sessão', () => {
   test('sair pede confirmação, encerra a sessão e fecha o painel para a próxima visita', async ({
     page,
   }) => {
-    const { platformAdministrator } = E2eAccountsStore.read()
+    const platformAdministrator = E2eAccountsStore.accountOf(
+      E2eAccountsStore.read(),
+      'platformAdministrator',
+    )
     await SessionPage.openSignIn(page, '/pt-br/profile')
     await SessionPage.submit(page, platformAdministrator)
     await expect(page).toHaveURL(/\/pt-br\/profile$/)
@@ -89,7 +98,10 @@ test.describe('sem sessão', () => {
     page,
     context,
   }) => {
-    const { platformAdministrator } = E2eAccountsStore.read()
+    const platformAdministrator = E2eAccountsStore.accountOf(
+      E2eAccountsStore.read(),
+      'platformAdministrator',
+    )
     await SessionPage.openSignIn(page, '/pt-br/profile')
     await SessionPage.submit(page, platformAdministrator)
     await expect(page).toHaveURL(/\/pt-br\/profile$/)

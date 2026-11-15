@@ -4,18 +4,19 @@ import { promisify } from 'node:util'
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
-import { PLATFORM_ROLE, z } from '@maiyu/shared'
+import { ACTIVE_STATUS, PLATFORM_ROLE, z } from '@maiyu/shared'
 
 import E2eAccounts, {
   E2E_ACCOUNTS_MARKER,
-  E2E_KIT_ACCOUNT_NAMES,
 } from '#commands/e2e-accounts.command'
 import type { KitAccountNameCollision } from '#commands/e2e-accounts.command'
 import { TenantConfig } from '#config/tenant'
 import Tenant from '#models/tenant'
 import TenantMembership from '#models/tenant-membership'
 import User from '#models/user'
+import { E2eIdentities } from '#tests/e2e-identity'
 import { ProjectE2eAccounts } from '#tests/e2e-project-accounts'
+import { E2eSkeletonAccounts } from '#tests/e2e-skeleton-accounts'
 import { authenticate, resetDatabase } from '#tests/http-fixtures'
 import { ROLE_FIXTURES } from '#tests/role-fixtures'
 import { DEFAULT_TENANT_SLUG, Tenants } from '#tests/tenants-fixtures'
@@ -146,6 +147,117 @@ test.group('e2e > accounts', (group) => {
     }
   })
 
+  /**
+   * Swaps the skeleton's role map and its `create` for one run: a project whose roles are not the
+   * tenant's (DECISIONS.md #778). `create` makes one user per name, with no tenant.
+   */
+  async function withRoleMap<T>(
+    names: ReadonlyArray<string>,
+    body: () => Promise<T>,
+  ) {
+    const originalNames = Object.getOwnPropertyDescriptor(
+      E2eSkeletonAccounts,
+      'roleNames',
+    )
+    const originalCreate = Object.getOwnPropertyDescriptor(
+      E2eSkeletonAccounts,
+      'create',
+    )
+    Object.defineProperty(E2eSkeletonAccounts, 'roleNames', {
+      value: names,
+      configurable: true,
+    })
+    Object.defineProperty(E2eSkeletonAccounts, 'create', {
+      value: async () => {
+        const roles: Record<string, { login: string; password: string }> = {}
+        const users = new Map<string, User>()
+        for (const name of names) {
+          const identity = E2eIdentities.of(name)
+          users.set(
+            name,
+            await User.create({
+              name: identity.name,
+              email: identity.login,
+              password: identity.password,
+              platformRole: PLATFORM_ROLE.USER,
+              status: ACTIVE_STATUS.ACTIVE,
+            }),
+          )
+          roles[name] = { login: identity.login, password: identity.password }
+        }
+
+        return {
+          roles,
+          project: {},
+          userOf: (name: string) => {
+            const user = users.get(name)
+            if (!user) throw new Error(`no account ${name}`)
+
+            return user
+          },
+        }
+      },
+      configurable: true,
+    })
+    try {
+      return await body()
+    } finally {
+      if (originalNames)
+        Object.defineProperty(E2eSkeletonAccounts, 'roleNames', originalNames)
+      if (originalCreate)
+        Object.defineProperty(E2eSkeletonAccounts, 'create', originalCreate)
+    }
+  }
+
+  test('a project whose roles are only administrator and operator: the line has those keys, no tenant is touched and each signs in (DECISIONS.md #778)', async ({
+    client,
+    assert,
+  }) => {
+    const tenants = (await Tenant.query()).length
+    const command = await withRoleMap(['administrator', 'operator'], () =>
+      run(),
+    )
+    command.assertSucceeded()
+    const line = printedOf(command)
+
+    assert.sameMembers(Object.keys(line), [
+      'project',
+      'administrator',
+      'operator',
+    ])
+    assert.lengthOf(await Tenant.query(), tenants)
+    for (const name of ['administrator', 'operator']) {
+      const account = line[name]
+      if (!account || !('login' in account))
+        throw new Error(`${name} was not printed`)
+      await authenticate(client, account.login, account.password)
+    }
+  })
+
+  test('the reserved names follow the role map: `staff` is free where the map has no `staff`, `operator` is not', async ({
+    assert,
+  }) => {
+    const before = (await User.query()).length
+    const refused = await withRoleMap(['administrator', 'operator'], () =>
+      withProject(
+        { operator: { tenantRole: ROLE_FIXTURES.staff } },
+        () => Promise.resolve(),
+        () => run(),
+      ),
+    )
+
+    refused.assertFailed()
+    assert.isFalse(printed(refused))
+    assert.lengthOf(await User.query(), before)
+    const reserved = await withRoleMap(['administrator', 'operator'], () =>
+      Promise.resolve(E2eAccounts.reservedNames()),
+    )
+    assert.sameMembers(
+      [...reserved],
+      ['administrator', 'operator', 'project', 'accounts'],
+    )
+  })
+
   test('the project accounts are created, linked after every account exists, and print under `project`', async ({
     client,
     assert,
@@ -199,7 +311,7 @@ test.group('e2e > accounts', (group) => {
     assert,
   }) => {
     const before = (await User.query()).length
-    for (const name of E2E_KIT_ACCOUNT_NAMES) {
+    for (const name of E2eAccounts.reservedNames()) {
       const command = await withProject(
         { [name]: { tenantRole: ROLE_FIXTURES.staff } },
         () => Promise.resolve(),

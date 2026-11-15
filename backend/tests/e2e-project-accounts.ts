@@ -2,7 +2,11 @@ import type { PlatformRole, UserRole } from '@maiyu/shared'
 
 import type User from '#models/user'
 
-/** How the command creates one extra account: a member of the fallback tenant, or a platform-only user. */
+/**
+ * How the skeleton creates one extra account: a member of the fallback tenant, or a platform-only
+ * user. It is read only by `tests/e2e-skeleton-accounts.ts`: a project without the multi-tenant
+ * skeleton declares the spec its own version of that file understands (DECISIONS.md #778).
+ */
 export type ProjectE2eAccountSpec =
   { readonly tenantRole: UserRole } | { readonly platformRole: PlatformRole }
 

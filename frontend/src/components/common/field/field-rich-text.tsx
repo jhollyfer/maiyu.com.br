@@ -35,9 +35,9 @@ export function FieldRichText({
   required,
   children,
 }: FieldRichTextProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } =
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
     useFieldValidation<RichTextDocument | null>('FieldRichText')
-  const labelId = `${field.name}-label`
+  const labelId = `${controlId}-label`
 
   return (
     <Field data-slot="field-rich-text" data-invalid={isInvalid}>
@@ -56,7 +56,7 @@ export function FieldRichText({
         aria-labelledby={labelId}
       >
         {children}
-        <RichEditorContent id={field.name} />
+        <RichEditorContent id={controlId} />
         <FieldRichTextBinding focusRef={field.ref} onBlur={field.onBlur} />
       </RichEditor>
       {description && <FieldDescription>{description}</FieldDescription>}

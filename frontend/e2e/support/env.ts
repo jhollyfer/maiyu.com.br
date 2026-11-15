@@ -46,6 +46,15 @@ export class E2eEnv {
     return [...items]
   }
 
+  /**
+   * Os `VITE_*` do build da rodada, fixos no local: o env do processo vence o `.env.production`
+   * versionado, que levaria a SSR do E2E à API de produção (tooling.md §10.1, DECISIONS.md #775).
+   */
+  static readonly localBuild = {
+    VITE_API_URL: 'http://localhost:3333',
+    VITE_SITE_URL: 'http://localhost:3000',
+  } as const
+
   /** A sessão do dono, gravada pelo `setup` (`playwright/.auth` está no `.gitignore`). */
   static readonly storageState = 'playwright/.auth/owner.json'
 

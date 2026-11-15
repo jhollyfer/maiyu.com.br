@@ -33,7 +33,7 @@ export function FieldCheckbox({
   disabled,
   required,
 }: FieldCheckboxProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } =
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
     useFieldValidation<boolean>('FieldCheckbox')
   const { ref: fieldRef } = field
 
@@ -47,7 +47,7 @@ export function FieldCheckbox({
         nativeButton
         render={<button type="button" />}
         ref={fieldRef}
-        id={field.name}
+        id={controlId}
         name={field.name}
         disabled={disabled}
         // RHF default values come as `undefined` before the first edit.
@@ -59,7 +59,7 @@ export function FieldCheckbox({
         aria-describedby={describedBy}
       />
       <FieldContent>
-        <FieldLabel htmlFor={field.name}>
+        <FieldLabel htmlFor={controlId}>
           {label}
           {required && <FieldRequiredMark />}
         </FieldLabel>

@@ -1,64 +1,33 @@
-import { randomBytes, randomUUID } from 'node:crypto'
-
 import { BaseCommand } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 
-import { ACTIVE_STATUS, PLATFORM_ROLE } from '@maiyu/shared'
-import type { PlatformRole } from '@maiyu/shared'
-
-import { TenantConfig } from '#config/tenant'
-import User from '#models/user'
 import { E2eGuard } from '#tests/e2e-guard'
 import { ProjectE2eAccounts } from '#tests/e2e-project-accounts'
-import type {
-  ProjectE2eAccountName,
-  ProjectE2eAccountSpec,
-} from '#tests/e2e-project-accounts'
-import { ROLE_FIXTURES } from '#tests/role-fixtures'
-import { Tenants } from '#tests/tenants-fixtures'
+import type { ProjectE2eAccountName } from '#tests/e2e-project-accounts'
+import { E2eSkeletonAccounts } from '#tests/e2e-skeleton-accounts'
 
 /** The prefix of the line the Playwright setup reads: the app also logs to the same stream. */
 export const E2E_ACCOUNTS_MARKER = 'E2E_ACCOUNTS='
 
-/**
- * The names a project account cannot have (DECISIONS.md #611): the kit's own accounts, the `project`
- * group they are printed in and `accounts`, the file the setup keeps them in. The setup writes one
- * `playwright/.auth/<name>.json` per name, so a repeated name would overwrite another session.
- */
-export const E2E_KIT_ACCOUNT_NAMES = [
-  'platformOwner',
-  'platformAdministrator',
-  'staff',
-  'nonStaff',
-  'customer',
-  'project',
-  'accounts',
-] as const
+/** The groups of the printed line that no account can be named after: `project`, and `accounts`, the file the setup keeps them in. */
+export const E2E_GROUP_NAMES = ['project', 'accounts'] as const
+
+/** The names a project account cannot have, as a type. */
+export type ReservedAccountName =
+  | (typeof E2eSkeletonAccounts.roleNames)[number]
+  | (typeof E2E_GROUP_NAMES)[number]
 
 /** The names of `TNames` that repeat a reserved one: it must be `never`, or the check below stops compiling. */
 export type KitAccountNameCollision<TNames extends string> = Extract<
   TNames,
-  (typeof E2E_KIT_ACCOUNT_NAMES)[number]
+  ReservedAccountName
 >
 
-/** The compile-time check: a project name equal to a kit one stops this `{}` from compiling. */
+/** The compile-time check: a project name equal to a reserved one stops this `{}` from compiling. */
 export const PROJECT_ACCOUNT_NAMES_FREE_OF_KIT: Record<
   KitAccountNameCollision<ProjectE2eAccountName>,
   never
 > = {}
-
-/**
- * The e-mail `e2e:accounts` gives every account it creates (`e2e-<label>-<8 hex>@example.com`) and
- * the prefix of its name, so `e2e:cleanup` finds them again and nothing else (DECISIONS.md #713).
- * The label is the role or the project's account name, which may have capitals; hence the
- * case-insensitive match on the e-mail.
- */
-export const E2E_ACCOUNT_EMAIL_PATTERN =
-  '^e2e-[a-z0-9-]+-[0-9a-f]{8}@example\\.com$'
-export const E2E_ACCOUNT_NAME_PREFIX = 'E2E '
-
-/** What the setup needs to sign an account in. */
-type E2eAccount = { readonly login: string; readonly password: string }
 
 /**
  * Creates, for one E2E run, an account for each role of the project and prints them
@@ -68,9 +37,11 @@ type E2eAccount = { readonly login: string; readonly password: string }
  * `development` and `test` refuses to run: an account with a known login and a password nobody
  * chose has no place there.
  *
- * Roles are not named here: `tests/role-fixtures.ts` (the project's file) says which tenant roles
- * the specs sign in with, and the platform roles are the kit's own. A project with a single role
- * has no `nonStaff`, and the setup skips it.
+ * The command has no tenant in it (DECISIONS.md #778): it keeps the guard, the random password, the
+ * `E2E-` marker, the printed line and the order of the link step. The roles and the rows behind
+ * them come from `tests/e2e-skeleton-accounts.ts` (the project's file, with the tenant model of the
+ * kit as its skeleton), and the domain accounts from `tests/e2e-project-accounts.ts`. A role the
+ * project does not have is printed as `null`, and the setup skips it.
  */
 export default class E2eAccounts extends BaseCommand {
   static override commandName = 'e2e:accounts'
@@ -78,6 +49,15 @@ export default class E2eAccounts extends BaseCommand {
     'Creates one account per role for the E2E run (development and test only) and prints them as JSON'
 
   static override options: CommandOptions = { startApp: true }
+
+  /**
+   * The names a project account cannot have (DECISIONS.md #611, #778): the roles of the skeleton's
+   * map and the groups above. The setup writes one `playwright/.auth/<name>.json` per name, so a
+   * repeated name would overwrite another session. Read when the command runs, from the skeleton.
+   */
+  static reservedNames(): ReadonlyArray<string> {
+    return [...E2eSkeletonAccounts.roleNames, ...E2E_GROUP_NAMES]
+  }
 
   override async run() {
     // An allow list, not a deny list: any environment that is not one of these two (production,
@@ -99,8 +79,9 @@ export default class E2eAccounts extends BaseCommand {
       return
     }
 
-    const reserved: ReadonlyArray<string> = E2E_KIT_ACCOUNT_NAMES
-    const repeated = Object.keys(ProjectE2eAccounts.accounts).filter((name) =>
+    const reserved = E2eAccounts.reservedNames()
+    const specs = ProjectE2eAccounts.accounts
+    const repeated = Object.keys(specs).filter((name) =>
       reserved.includes(name),
     )
     if (repeated.length > 0) {
@@ -111,105 +92,13 @@ export default class E2eAccounts extends BaseCommand {
       return
     }
 
-    // The tenant the public anonymous writes land in: in the single-client mode the one of
-    // `SINGLE_TENANT_SLUG` (DECISIONS.md #711), the same config the middleware reads.
-    const config = await this.app.container.make(TenantConfig)
-    const tenant = await Tenants.forE2e(config.singleSlug)
-    const { nonStaff } = ROLE_FIXTURES
-
-    const project = await this.projectAccounts(tenant)
-
-    const accounts = {
-      project: project.accounts,
-      platformOwner: await this.account('platform-owner', PLATFORM_ROLE.OWNER),
-      platformAdministrator: await this.account(
-        'platform-administrator',
-        PLATFORM_ROLE.ADMINISTRATOR,
-      ),
-      staff: await this.member(tenant, 'staff', ROLE_FIXTURES.staff),
-      nonStaff: await this.optionalMember(tenant, 'non-staff', nonStaff),
-      customer: await this.account('customer', PLATFORM_ROLE.USER),
-    }
+    const created = await E2eSkeletonAccounts.create(specs)
 
     // After every account exists and before anything is printed: a failing link prints no account.
-    await ProjectE2eAccounts.link(project.userOf)
+    await ProjectE2eAccounts.link(created.userOf)
 
-    this.logger.log(`${E2E_ACCOUNTS_MARKER}${JSON.stringify(accounts)}`)
-  }
-
-  /** The extra accounts of `tests/e2e-project-accounts.ts` (DECISIONS.md #611), by the name the project gave them. */
-  private async projectAccounts(
-    tenant: Awaited<ReturnType<typeof Tenants.forE2e>>,
-  ) {
-    const users = new Map<string, User>()
-    const accounts: Record<string, E2eAccount> = {}
-    const specs: ReadonlyArray<[string, ProjectE2eAccountSpec]> =
-      Object.entries(ProjectE2eAccounts.accounts)
-
-    for (const [name, spec] of specs) {
-      let platformRole: PlatformRole = PLATFORM_ROLE.USER
-      if ('platformRole' in spec) platformRole = spec.platformRole
-      const created = await this.create(name, platformRole)
-      if ('tenantRole' in spec)
-        await Tenants.addMember(created.user, tenant, spec.tenantRole)
-      users.set(name, created.user)
-      accounts[name] = created.account
-    }
-
-    const userOf = (name: string): User => {
-      const user = users.get(name)
-      if (!user) throw new Error(`no project account named ${name}`)
-
-      return user
-    }
-
-    return { userOf, accounts }
-  }
-
-  /** `null` when the project has no role of that kind: the case does not exist, and the setup skips it. */
-  private async optionalMember(
-    tenant: Awaited<ReturnType<typeof Tenants.forE2e>>,
-    label: string,
-    role: Parameters<typeof Tenants.addMember>[2] | null,
-  ): Promise<E2eAccount | null> {
-    if (role === null) return null
-
-    return this.member(tenant, label, role)
-  }
-
-  private async member(
-    tenant: Awaited<ReturnType<typeof Tenants.forE2e>>,
-    label: string,
-    role: Parameters<typeof Tenants.addMember>[2],
-  ): Promise<E2eAccount> {
-    const created = await this.create(label, PLATFORM_ROLE.USER)
-    await Tenants.addMember(created.user, tenant, role)
-
-    return created.account
-  }
-
-  private async account(
-    label: string,
-    platformRole: PlatformRole,
-  ): Promise<E2eAccount> {
-    return (await this.create(label, platformRole)).account
-  }
-
-  private async create(
-    label: string,
-    platformRole: PlatformRole,
-  ): Promise<{ user: User; account: E2eAccount }> {
-    const login = `e2e-${label}-${randomUUID().slice(0, 8)}@example.com`
-    // 12 random characters plus one of each class the password policy asks for.
-    const password = `${randomBytes(9).toString('base64url')}aA1!`
-    const user = await User.create({
-      name: `${E2E_ACCOUNT_NAME_PREFIX}${label}`,
-      email: login,
-      password,
-      platformRole,
-      status: ACTIVE_STATUS.ACTIVE,
-    })
-
-    return { user, account: { login, password } }
+    this.logger.log(
+      `${E2E_ACCOUNTS_MARKER}${JSON.stringify({ project: created.project, ...created.roles })}`,
+    )
   }
 }

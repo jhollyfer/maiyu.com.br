@@ -35,6 +35,11 @@ type DocumentHeadersInput = Readonly<{
   apiOrigin: string
   /** Origin of the bucket (`STORAGE_PUBLIC_URL`); absent, only the API is open. */
   storageOrigin: string | undefined
+  /**
+   * Third-party image origins the project needs (`PROJECT_IMAGE_ORIGINS`, `lib/csp-project.ts`),
+   * e.g. map tiles. They open `img-src` only: an image host never needs `connect-src`.
+   */
+  imageOrigins: ReadonlyArray<string>
   /** `SITE_ENV` is `production` (`lib/server-env.ts`). */
   indexable: boolean
 }>
@@ -64,7 +69,7 @@ function contentSecurityPolicy(input: DocumentHeadersInput): string {
     "default-src 'self'",
     scriptSource(input.nonce),
     "style-src 'self' 'unsafe-inline'",
-    `img-src ${origins} data: blob:`,
+    `img-src ${[origins, ...input.imageOrigins].join(' ')} data: blob:`,
     "font-src 'self' data:",
     `connect-src ${origins}`,
     "frame-ancestors 'none'",
