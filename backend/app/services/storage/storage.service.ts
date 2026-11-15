@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 import drive from '@adonisjs/drive/services/main'
 
@@ -37,8 +37,10 @@ export default class StorageService extends StorageContract {
    * the URL is signed with, so what the bucket accepts and what the key says
    * cannot diverge.
    */
-  key(mimetype: StorageMimetype): string {
-    return `${randomUUID()}.${STORAGE_EXTENSIONS[mimetype]}`
+  key(mimetype: StorageMimetype, tenantId: string | null): string {
+    const prefix = tenantId ?? 'platform'
+
+    return `${prefix}/${randomUUID()}.${STORAGE_EXTENSIONS[mimetype]}`
   }
 
   /**
@@ -76,6 +78,24 @@ export default class StorageService extends StorageContract {
     }
 
     return Buffer.concat(chunks).subarray(0, STORAGE_SIGNATURE_BYTES)
+  }
+
+  /**
+   * The SHA-256 of the object, streamed through the hash: the bytes pass through memory a chunk at a
+   * time and are never held whole. Meant for small files (a receipt), since it reads all of it.
+   */
+  async sha256(path: string): Promise<string> {
+    const stream = await drive.use().getStream(path)
+    const hash = createHash('sha256')
+
+    for await (const chunk of stream) {
+      const piece: unknown = chunk
+      if (!(piece instanceof Uint8Array))
+        throw new TypeError(`object ${path} streamed a non-binary chunk`)
+      hash.update(piece)
+    }
+
+    return hash.digest('hex')
   }
 
   /**

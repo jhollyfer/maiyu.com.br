@@ -11,6 +11,12 @@
 await import('reflect-metadata')
 const { Ignitor, prettyPrintError } = await import('@adonisjs/core')
 
+// The committed `openapi.json` must not depend on whose environment generated it (DECISIONS.md
+// #406): the upload ceiling is the only ENV value the document carries, so the generator fixes it.
+// A value already in `process.env` wins over the `.env` files, and this runs before `#start/env`.
+if (process.argv[2] === 'openapi:generate')
+  process.env.UPLOAD_MAX_SIZE = '1073741824'
+
 const APP_ROOT = new URL('../', import.meta.url)
 
 // Relative paths resolve against the application root, not this file, so the

@@ -2,6 +2,8 @@ import type { Locale } from '../src/paraglide/runtime'
 import { LocalizedPath, PagesList } from './support/pages-list'
 import { expect, test } from './support/test'
 
+test.use({ storageState: PagesList.anonymous })
+
 /**
  * Toda página pública, nos três idiomas e nas três larguras dos projetos: a
  * rota responde o status certo, tem um `h1`, não loga erro (o fixture reprova

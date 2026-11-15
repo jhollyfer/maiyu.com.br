@@ -155,10 +155,16 @@ const FORBIDDEN: IRegularForbiddenRuleType[] = [
   },
   {
     name: 'middleware-without-feature-rule',
-    comment: 'middleware/ imports core and contracts (architecture.md §2)',
+    comment:
+      'middleware/ imports core and contracts (architecture.md §2): a repository contract (the tenant membership the scope reads) yes, its Lucid or memory implementation no',
     severity: 'error',
     from: { path: '^app/middleware/', pathNot: SPEC },
-    to: { path: '^app/(features|models|repositories|domain)/' },
+    to: {
+      path: [
+        '^app/(features|models|domain)/',
+        '^app/repositories/.*\\.(?:lucid|memory)\\.repository\\.ts$',
+      ],
+    },
   },
   {
     name: 'exceptions-import-only-core',

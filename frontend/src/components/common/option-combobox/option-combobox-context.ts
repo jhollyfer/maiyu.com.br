@@ -10,6 +10,7 @@ export type OptionComboboxItem = {
 type OptionComboboxContextValue = {
   readonly selected: OptionComboboxItem | null
   readonly disabled: boolean | undefined
+  readonly clear: () => void
 }
 
 export const OptionComboboxContext =

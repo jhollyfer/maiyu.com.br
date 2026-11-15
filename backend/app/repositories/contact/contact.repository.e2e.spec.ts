@@ -1,6 +1,8 @@
 import app from '@adonisjs/core/services/app'
 import { test } from '@japa/runner'
 
+import { PLATFORM_ROLE } from '@maiyu/shared'
+
 import { ContactLucidRepository } from './contact.lucid.repository.ts'
 import { ContactMemoryRepository } from './contact.memory.repository.ts'
 import type {
@@ -8,9 +10,13 @@ import type {
   ContactRepository,
 } from './contact.repository.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { Contact } from '#domain/contact/contact.entity'
+import { scopedHttpContext } from '#tests/http-context-fixtures'
 import { resetDatabase } from '#tests/http-fixtures'
 import { QueryCount } from '#tests/query-count-fixtures'
+import { ROLE_FIXTURES } from '#tests/role-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
  * The same contract in both implementations (`_standards/domain.md` §5.4): it is what
@@ -36,12 +42,39 @@ const PAGE = {
   direction: 'desc',
 } as const
 
+/** The tenant the specs' contacts belong to: a real row, since the column has a foreign key. */
+const tenant = { id: '' }
+
+/** A member of `tenantId` with the staff role: the scope the panel's requests carry. */
+function staffOf(tenantId: string): TenantScope {
+  return TenantScope.ofAccess(
+    {
+      id: '9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a',
+      platformRole: PLATFORM_ROLE.USER,
+      tenant: {
+        id: tenantId,
+        cityId: 'city',
+        role: ROLE_FIXTURES.staff,
+        childIds: [],
+      },
+    },
+    true,
+  )
+}
+
 function contact(
   id: string,
-  overrides: { name?: string; email?: string; createdAt?: Date } = {},
+  overrides: {
+    name?: string
+    email?: string
+    createdAt?: Date
+    tenantId?: string
+  } = {},
 ): Contact {
   return Contact.create({
     id,
+    tenantId: overrides.tenantId ?? tenant.id,
+    customerId: null,
     name: overrides.name ?? 'Ana Souza',
     email: overrides.email ?? 'ana@exemplo.com',
     message: 'Quero conversar sobre um projeto.',
@@ -72,7 +105,13 @@ function criteria(overrides: Partial<ContactListCriteria> = {}) {
 
 for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
   test.group(`ContactRepository (${name})`, (group) => {
-    group.each.setup(() => resetDatabase())
+    group.each.setup(async () => {
+      const teardown = await resetDatabase()
+      tenant.id = (await Tenants.fallback()).id
+
+      return teardown
+    })
+    const within = scopedHttpContext(group)
 
     test('create and findById return the same contact', async ({ assert }) => {
       const repository = await make()
@@ -205,6 +244,48 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
       assert.isNull(await repository.findById(FIRST))
     })
 
+    test('a staff member reads, lists, answers and deletes only the contacts of its own tenant', async ({
+      assert,
+    }) => {
+      const repository = await make()
+      const other = await Tenants.create()
+      await repository.create(contact(FIRST))
+      await repository.create(contact(SECOND, { tenantId: other.id }))
+      await within(staffOf(tenant.id))
+
+      assert.isNotNull(await repository.findById(FIRST))
+      assert.isNull(await repository.findById(SECOND))
+      assert.deepEqual(ids(await repository.paginate(criteria())), [FIRST])
+
+      const foreign = Contact.restore({
+        ...contact(SECOND, { tenantId: other.id }).snapshot(),
+        answeredAt: NOW,
+      })
+      assert.isFalse(await repository.claimAnswer(foreign))
+      await repository.delete(foreign)
+
+      await within(staffOf(other.id))
+      const stored = await repository.findById(SECOND)
+      assert.isNotNull(stored)
+      assert.isNull(stored?.snapshot().answeredAt)
+    })
+
+    test('the retention sweep runs with no scope and reaches every tenant', async ({
+      assert,
+    }) => {
+      const repository = await make()
+      const other = await Tenants.create()
+      const old = new Date('2025-01-01T00:00:00Z')
+      await repository.create(contact(FIRST, { createdAt: old }))
+      await repository.create(
+        contact(SECOND, { createdAt: old, tenantId: other.id }),
+      )
+      const cutoff = new Date('2026-01-01T00:00:00Z')
+
+      assert.equal(await repository.countCreatedBefore(cutoff), 2)
+      assert.equal(await repository.deleteCreatedBefore(cutoff), 2)
+    })
+
     test('deleteCreatedBefore deletes only what is older than the cutoff and says how many', async ({
       assert,
     }) => {
@@ -234,7 +315,12 @@ for (const [name, make] of Object.entries(IMPLEMENTATIONS)) {
 }
 
 test.group('ContactRepository (queries)', (group) => {
-  group.each.setup(() => resetDatabase())
+  group.each.setup(async () => {
+    const teardown = await resetDatabase()
+    tenant.id = (await Tenants.fallback()).id
+
+    return teardown
+  })
 
   test('paginate runs a fixed number of queries', async ({ assert }) => {
     const repository = await app.container.make(ContactLucidRepository)

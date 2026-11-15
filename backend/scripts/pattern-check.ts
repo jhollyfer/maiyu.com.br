@@ -35,7 +35,8 @@ type Input = {
 }
 
 const SECTION = 'backend.md §10'
-const READ = /\.(ts|tsx|json)$/
+// `Dockerfile-production` too: `minio-outside-local` reads what the image is built from (tooling.md §8.4).
+const READ = /\.(ts|tsx|json)$|(^|\/)Dockerfile-production$/
 
 /**
  * The single `pattern:check` engine (KIT.md §5): runs the catalog over the repository files,

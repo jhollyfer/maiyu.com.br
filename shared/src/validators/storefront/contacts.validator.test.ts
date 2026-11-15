@@ -124,4 +124,14 @@ describe('StorefrontContactCreateValidator', () => {
 
     expect(result.success).toBe(true)
   })
+
+  it('when the honeypot is blank or only spaces, it reads as empty (null), not as a robot', () => {
+    const result = StorefrontContactCreateValidator.safeParse({
+      ...VALID,
+      website: '   ',
+    })
+
+    expect(result.success).toBe(true)
+    expect(result.data?.website).toBeNull()
+  })
 })

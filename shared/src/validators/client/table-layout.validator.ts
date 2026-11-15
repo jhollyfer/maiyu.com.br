@@ -19,9 +19,9 @@ export const TABLE_COLUMN_MAX_SIZE = 640
  * pinning - as the frontend saves it in `localStorage` (`lib/local-store.ts`).
  * It is not a request body: it is the validator of the outside data that the client keeps
  * (`_standards/typescript.md` §2), under `validators/client/` (`architecture.md` §9). Its
- * transforms and catches cannot become a JSON Schema, and it has no field label or OpenAPI,
- * so the label and JSON Schema sweep in `validator.test.ts` skips the `Client*Validator`
- * names by prefix.
+ * transforms and catches cannot become a JSON Schema and it has no OpenAPI, so the label
+ * and message sweeps of `validator.test.ts` skip the `Client*Validator` names by prefix; a
+ * project label may still name one of its fields, and the orphan check counts them.
  *
  * Each field is tolerant: what lacks the expected shape vanishes, and the rest of the
  * layout holds. An anchor is not left invisible, and a width outside the plausible range

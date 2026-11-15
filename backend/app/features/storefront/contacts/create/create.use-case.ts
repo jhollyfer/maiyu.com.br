@@ -11,6 +11,7 @@ import {
 
 import { ContactPresenter } from '../contacts.presenter.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { Contact } from '#domain/contact/contact.entity'
 import HTTPException from '#exceptions/http.exception'
 import { ContactRepository } from '#repositories/contact/contact.repository'
@@ -29,6 +30,8 @@ type Response = Either<HTTPException, StorefrontContactCreateResponse>
  * saved for it, and there is no notice to send (the e-mail to the owner is out of this
  * delivery).
  *
+ * The message is stored under the tenant of the public route and read only by that tenant's staff.
+ *
  * One write only, so there is no unit of work: a single insert is already atomic.
  */
 @inject()
@@ -41,9 +44,23 @@ export default class StorefrontContactCreateUseCase {
   ) {}
 
   async execute(payload: Payload): Promise<Response> {
+    // The row belongs to the client whose form this is (DECISIONS.md #397), owned by nobody: the
+    // visitor is anonymous. The public route names the tenant (`SINGLE_TENANT_SLUG` here); with
+    // no target there is nowhere to write, and the answer is the kit's `TENANT_REQUIRED`.
+    const target = TenantScope.customerTargetOf()
+    if (!target?.tenantId)
+      return left(
+        HTTPException.Forbidden(
+          this.i18n.t('errors.access_denied'),
+          'TENANT_REQUIRED',
+        ),
+      )
+
     try {
       const contact = Contact.create({
         id: this.ids.uuid(),
+        tenantId: target.tenantId,
+        customerId: target.customerId,
         name: payload.name,
         email: payload.email,
         message: payload.message,

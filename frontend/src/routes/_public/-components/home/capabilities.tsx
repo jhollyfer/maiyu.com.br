@@ -7,7 +7,7 @@ import {
   ItemGroup,
   ItemTitle,
 } from '#/components/ui/item'
-import { cn } from '#/lib/utils'
+import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../photo'

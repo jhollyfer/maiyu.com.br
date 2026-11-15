@@ -3,26 +3,7 @@ import adacaibsShot from '#/assets/projects/adacaibs.webp'
 import aportaShot from '#/assets/projects/aporta.webp'
 import curupiraShot from '#/assets/projects/curupira.webp'
 import interclasseShot from '#/assets/projects/interclasse.webp'
-import type { LocalizedText } from '@maiyu/shared'
-
-/**
- * Where each project stands: live for the public, or still in validation with whoever will use it.
- * The portfolio says so on screen so as not to sell as finished what the city hall, the school or
- * the resident is still testing.
- *
- * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
- * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
- * and the `shared/` session is the one that moves it. After that this file imports the triplet from
- * `@maiyu/shared`.
- */
-export const PROJECT_STATUS = {
-  PRODUCTION: 'production',
-  VALIDATION: 'validation',
-} as const
-
-export type ProjectStatus = (typeof PROJECT_STATUS)[keyof typeof PROJECT_STATUS]
-
-export const PROJECT_STATUSES = Object.values(PROJECT_STATUS)
+import type { LocalizedText, ProjectStatus } from '@maiyu/shared'
 
 /**
  * Maiyu's live projects, in the order they appear on the home and in the portfolio. Content in

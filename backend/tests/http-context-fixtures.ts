@@ -2,6 +2,8 @@ import { HttpContext } from '@adonisjs/core/http'
 import testUtils from '@adonisjs/core/services/test_utils'
 import type { Group } from '@japa/runner/core'
 
+import type { TenantScope } from '#core/tenant-scope'
+
 /**
  * Runs every test of the group inside a test `HttpContext`, so a use case that logs
  * through `HttpContext.getOrFail().logger` (`DECISIONS.md` #314) reaches the 500 path
@@ -26,4 +28,29 @@ export function insideHttpContext(group: Group): void {
       HttpContext.getOrFail = original
     }
   })
+}
+
+/**
+ * Lets a spec run its code as a given request scope: `TenantScope.current()` reads
+ * `HttpContext.get()`, set only inside `server.handle`, so the spec hands it a test context carrying
+ * the scope under test (`await within(TenantScope.ofCustomer(...))`), and the original comes back in
+ * the cleanup. Without a call to `within`, the code runs as a system process, with no scope.
+ * shortcut: stubs `get` like `insideHttpContext` stubs `getOrFail`, same upgrade path.
+ */
+export function scopedHttpContext(
+  group: Group,
+): (scope: TenantScope) => Promise<void> {
+  group.each.setup(() => {
+    const original = HttpContext.get.bind(HttpContext)
+
+    return () => {
+      HttpContext.get = original
+    }
+  })
+
+  return async (scope) => {
+    const context = await testUtils.createHttpContext()
+    context.tenantScope = scope
+    HttpContext.get = () => context
+  }
 }

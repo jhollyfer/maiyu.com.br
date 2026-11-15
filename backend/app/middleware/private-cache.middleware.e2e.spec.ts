@@ -5,6 +5,7 @@ import {
   authenticateAsAdministrator,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { loginOf } from '#tests/users-fixtures'
 
 const PRIVATE = 'private, no-store'
 
@@ -32,10 +33,10 @@ test.group('private-cache middleware', (group) => {
     client,
     assert,
   }) => {
-    const user = await UserFactory.apply('administrator').create()
+    const user = await UserFactory.create()
     const response = await client
       .post('/authentication/sign-in')
-      .json({ email: user.email, password: FACTORY_PASSWORD })
+      .json({ login: loginOf(user), password: FACTORY_PASSWORD })
 
     response.assertStatus(204)
     assert.equal(response.header('cache-control'), PRIVATE)

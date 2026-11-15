@@ -1,8 +1,8 @@
 import { ArrowDownIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
+import { cn } from '#/lib/cn'
 import { TALENT_AREAS } from '#/lib/jobs'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { ChannelsNotice } from '../../-components/channels-notice'

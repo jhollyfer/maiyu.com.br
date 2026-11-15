@@ -1,6 +1,7 @@
 import { defineConfig, syncDestination, targets } from '@adonisjs/core/logger'
 import app from '@adonisjs/core/services/app'
 
+import LogRedact from '#core/log-redact'
 import env from '#start/env'
 
 /**
@@ -41,35 +42,17 @@ const loggerConfig = defineConfig({
       level: env.get('LOG_LEVEL'),
 
       /**
-       * What never goes into the log, even if someone passes the whole object.
+       * What never goes into the log, even if someone passes the whole object: the list and
+       * why it goes three levels deep are in `LogRedact` (`app/core/log-redact.ts`).
        *
        * Today nothing here logs body, header or cookie: the use cases'
        * `logger.error({ err })` carries only the error. This list does not fix an
        * existing leak: it is the net for the first `logger.info({ payload })` that
        * someone writes, which is when the leak is born silently.
-       *
-       * Explicit `censor` so the field shows up redacted instead of vanishing: an
-       * absent field reads as "did not come", not as "was hidden".
        */
       redact: {
-        paths: [
-          'password',
-          'currentPassword',
-          'passwordConfirmation',
-          '*.password',
-          '*.currentPassword',
-          'token',
-          'accessToken',
-          'refreshToken',
-          '*.token',
-          'authorization',
-          'cookie',
-          'req.headers.authorization',
-          'req.headers.cookie',
-          'headers.authorization',
-          'headers.cookie',
-        ],
-        censor: '[redigido]',
+        paths: LogRedact.paths(),
+        censor: LogRedact.CENSOR,
       },
 
       /**

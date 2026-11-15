@@ -44,12 +44,17 @@ e se corrige, não se documenta como escolha. Regra que não serve ao projeto mu
 
 Nome fixo, conteúdo deste projeto (o resto vem do kit e não se edita):
 
-- `shared/`: `src/enums/user-role.ts` (`USER_ROLE`, `STAFF_USER_ROLES`) e `src/records/demo-accounts.ts`
-  (`DEMO_ACCOUNTS`);
-- backend: `providers/repository.provider.ts`, `start/routes.ts`, `start/limiter.ts`, `config/openapi.ts`,
-  `scripts/pattern-check.config.ts`, `app/core/openapi/authz-baseline.json`, `app/core/openapi/response.ts`
+- `shared/`: `src/enums/user-role.ts` (`USER_ROLE`, `STAFF_USER_ROLES`), `src/records/field-labels.ts` (`PROJECT_FIELD_LABELS`, o rótulo de campo dos
+  recursos do projeto; obrigatório mesmo vazio, porque o `validator.ts` do kit o importa),
+  `src/records/rule-messages.ts` (`PROJECT_RULE_MESSAGES`, a mensagem das regras próprias do projeto;
+  idem) e
+  `src/records/list-limits.ts` (`LIST_LIMITS`, o teto de cada lista do domínio);
+- backend: `resources/lang/<l>/validator/shared/fields.json` e `messages.json` (os rótulos de
+  `PROJECT_FIELD_LABELS` e as mensagens de `PROJECT_RULE_MESSAGES` para o VineJS), `providers/repository.provider.ts`, `start/routes.ts`, `start/limiter.ts`, `config/openapi.ts`,
+  `scripts/pattern-check.config.ts`, `app/core/openapi/authz-baseline.json`, `app/core/openapi/public-routes.ts` (escrita anônima e
+  prefixo público só de leitura do projeto), `app/core/openapi/response.ts`
   e os blocos opcionais ligados em `start/env.ts`;
-- frontend: `src/lib/areas.ts`, `src/lib/labels.ts`, `invalidate.ts`, `_query-keys.ts`, `queries/`,
+- frontend: `src/lib/areas.ts`, `src/lib/labels.ts`, `_query-keys.ts`, `queries/`,
   `mutations/`, o tema (`src/styles.css`, `src/assets/brand/*`, `public/*`) e as chaves de
   `messages/<locale>.json` fora de `kit_*`.
 

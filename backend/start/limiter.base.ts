@@ -1,8 +1,17 @@
 import { createHash } from 'node:crypto'
 
+import type { HttpContext } from '@adonisjs/core/http'
+import type { errors } from '@adonisjs/limiter'
 import limiter from '@adonisjs/limiter/services/main'
 
+import { LoginIdentity } from '@maiyu/shared'
+
 import { SESSION_TOKEN } from '#config/session-token'
+import { Credential } from '#core/credential'
+import { UserRepository } from '#repositories/user/user.repository'
+
+/** What the limiter answers when the ceiling is reached: the 429 the framework renders. */
+type Throttled = InstanceType<typeof errors.E_TOO_MANY_REQUESTS>
 
 /**
  * The house rate limits (DECISIONS.md #130, backend.md §4.10), the same in every project.
@@ -23,18 +32,47 @@ import { SESSION_TOKEN } from '#config/session-token'
  */
 export class LimiterKey {
   /**
-   * The sign-in account, by the normalized e-mail, so case and spacing do not open new
-   * buckets. `null` without a usable e-mail: inventing a key would put every malformed
-   * request in one bucket, and twenty of them would lock the sign-in of someone else.
+   * The sign-in account, by the normalized login (e-mail or phone, DECISIONS.md #396), so case,
+   * spacing and the phone mask do not open new buckets. `null` without a usable login: inventing
+   * a key would put every malformed request in one bucket, and twenty of them would lock the
+   * sign-in of someone else.
    */
-  static account(email: unknown): string | null {
-    if (typeof email !== 'string') return null
+  static account(login: unknown): string | null {
+    if (typeof login !== 'string') return null
 
-    const normalized = email.trim().toLowerCase()
+    const normalized = LoginIdentity.of(login).value
 
     if (normalized.length === 0) return null
 
     return `signin:${LimiterKey.digest(normalized)}`
+  }
+
+  /**
+   * The sign-in account by the account's own id, once the login names one: an account with an
+   * e-mail and a phone is one bucket, not one per identity (DECISIONS.md #409).
+   */
+  static accountOf(userId: string): string {
+    return `signin-user:${userId}`
+  }
+
+  /**
+   * The second level of key: when the login names an account, the bucket is the account's id, so
+   * its e-mail and its phone share it. A login that names nobody keeps the digest of the text.
+   */
+  static async accountBucket(
+    context: HttpContext,
+    login: string,
+    fallback: string,
+  ): Promise<string> {
+    const identity = LoginIdentity.of(login)
+    const users = await context.containerResolver.make(UserRepository)
+    const finders = {
+      email: (value: string) => users.findByEmail(value),
+      phone: (value: string) => users.findByPhone(value),
+    }
+    const user = await finders[identity.kind](identity.value)
+
+    return (user && LimiterKey.accountOf(user.id)) || fallback
   }
 
   /**
@@ -57,6 +95,23 @@ export class LimiterKey {
     return `${scope}:${user.id}`
   }
 
+  /**
+   * A public credential (a class code, an invite token, a protocol), by the hash of its locator (the
+   * code, or the first half of a token: never the secret), with the kind in front so a code and a
+   * token never share a bucket (DECISIONS.md #583). Normalized like the middleware reads it, so case
+   * and spacing open no new bucket. `null` without a usable value: inventing a key would put every
+   * malformed request in one bucket.
+   */
+  static credential(kind: string, locator: unknown): string | null {
+    if (typeof locator !== 'string') return null
+
+    const normalized = Credential.normalize(locator)
+
+    if (normalized.length === 0) return null
+
+    return `credential:${kind}:${LimiterKey.digest(normalized)}`
+  }
+
   private static digest(value: string): string {
     return createHash('sha256').update(value).digest('hex')
   }
@@ -70,24 +125,31 @@ export const signInThrottle = limiter.define('signIn', function () {
   return limiter.allowRequests(5).every('1 minute').blockFor('10 mins')
 })
 
+/** What `limiter.define` accepts back, named because the builder may not be `async` and return `null`. */
+type AccountPolicy = ReturnType<typeof limiter.allowRequests>
+
 /**
- * The same door, by account. A second policy and not an `ip:email` key: the joint key
- * would give each IP five attempts per e-mail, making enumeration cheaper. Looser than
+ * The same door, by account. A second policy and not an `ip:login` key: the joint key
+ * would give each IP five attempts per account, making enumeration cheaper. Looser than
  * the IP one because this is the ceiling a person who forgot the password runs into.
  */
 export const signInAccountThrottle = limiter.define(
   'signInAccount',
-  function (context) {
+  function (context): Promise<AccountPolicy> | null {
     // Read before the validator runs, hence the normalization inside the key.
-    const key = LimiterKey.account(context.request.input('email'))
+    const login: unknown = context.request.input('login')
+    const key = LimiterKey.account(login)
 
     if (!key) return null
 
-    return limiter
-      .allowRequests(20)
-      .every('1 hour')
-      .blockFor('10 mins')
-      .usingKey(key)
+    return LimiterKey.accountBucket(context, String(login), key).then(
+      (bucket) =>
+        limiter
+          .allowRequests(20)
+          .every('1 hour')
+          .blockFor('10 mins')
+          .usingKey(bucket),
+    )
   },
 )
 
@@ -143,3 +205,67 @@ export const uploadThrottle = limiter.define('upload', function (context) {
 
   return throttle.usingKey(key)
 })
+
+/**
+ * The doors that resolve a tenant from a public credential, by IP (DECISIONS.md #583). A short code
+ * a person types is guessable, so the ceiling is what makes it safe: few tries a minute, and
+ * `blockFor` turns the ceiling into a cost. The tries on one credential are counted apart
+ * (`CredentialAttempts`), so many addresses cannot hammer one code either.
+ */
+export const credentialThrottle = limiter.define('credential', function () {
+  return limiter.allowRequests(10).every('1 minute').blockFor('15 mins')
+})
+
+/**
+ * The same doors, by credential, and counting only the miss (DECISIONS.md #583): the room code of a
+ * class is shared by thirty students and every right one is a request, so a ceiling that counted
+ * them all would lock the eleventh student out, and anyone in the class could lock the code for the
+ * rest. The ceiling is the `penalize` of the limiter
+ * (_doc-lib/adonisjs.md#guides/security/rate-limiting, https://docs.adonisjs.com/guides/security/rate-limiting,
+ * "Preventing brute-force login attacks"): the callback runs while requests are left, a failure
+ * consumes one, and the key blocks when they are gone. The middleware runs it, because only it knows
+ * whether the credential resolved; the IP policy above still counts every request.
+ *
+ * The project names one per kind and gives it to the route (`attempts`):
+ *
+ * ```ts
+ * export const classCodeAttempts = new CredentialAttempts('classCode')
+ * ```
+ *
+ * The key is the locator only, never the secret of a token (`<locator>.<secret>`): guesses at the
+ * secret of one locator are one bucket, however many secrets were tried, and the secret is not in
+ * the store.
+ */
+export class CredentialAttempts {
+  static readonly REQUESTS = 10
+  static readonly DURATION = '10 minutes'
+  static readonly BLOCK = '10 mins'
+
+  /** `manager` is the house limiter; a spec hands one with the memory store. */
+  constructor(
+    readonly name: string,
+    private readonly manager: Pick<typeof limiter, 'use'> = limiter,
+  ) {}
+
+  /**
+   * Runs `lookup`: a throw from it (the 404) counts one failure, a return resets the count, and
+   * with the ceiling reached it answers the limiter's 429 without running it. A locator that is
+   * not usable has no key, so it is not counted (it names nothing, and the IP policy holds it).
+   */
+  async penalize<T>(
+    locator: string,
+    lookup: () => Promise<T>,
+  ): Promise<[null, T] | [Throttled, null]> {
+    const key = LimiterKey.credential(this.name, locator)
+
+    if (!key) return [null, await lookup()]
+
+    return this.manager
+      .use({
+        requests: CredentialAttempts.REQUESTS,
+        duration: CredentialAttempts.DURATION,
+        blockDuration: CredentialAttempts.BLOCK,
+      })
+      .penalize(key, lookup)
+  }
+}

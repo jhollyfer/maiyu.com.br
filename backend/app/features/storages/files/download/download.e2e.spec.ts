@@ -10,6 +10,7 @@ import {
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { NO_NON_STAFF_ROLE, ROLE_FIXTURES } from '#tests/role-fixtures'
 import { uploadFile } from '#tests/storages-fixtures'
 
 /**
@@ -91,7 +92,7 @@ test.group('storages > download', (group) => {
       .redirects(0)
 
     response.assertStatus(404)
-  })
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
 
   test('responds 404 for a nonexistent id', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)

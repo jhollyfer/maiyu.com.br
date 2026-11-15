@@ -17,6 +17,7 @@
  * `fetch` trocado pelo cliente do Tuyau.
  */
 
+import type { UseMutationOptions } from '@tanstack/react-query'
 import { createIsomorphicFn } from '@tanstack/react-start'
 import { createTuyau } from '@tuyau/core/client'
 
@@ -90,7 +91,10 @@ export class HTTPError extends Error {
 
   constructor(body: HTTPErrorBody) {
     super(body.message)
-    this.name = 'HTTPError'
+    // O status vai no `name`, e não no `message` (que a tela lê): o `console.error` do router no
+    // erro de um `loader` imprime `<name>: <message>`, e é por esse prefixo que o E2E casa o log com
+    // o 5xx que o spec declarou (`e2e/support/expected-api-errors.ts`), sem corpo nem dado do usuário.
+    this.name = `HTTPError ${body.status}`
     this.status = body.status
     this.code = body.code
     this.errors = body.errors
@@ -140,6 +144,16 @@ export class HTTPError extends Error {
     })
   }
 }
+
+/**
+ * As opções que um hook de mutation aceita de quem chama: tudo do `useMutation` menos o
+ * `mutationFn`, que é do hook (`frontend.md` §2.3, `DECISIONS.md` #356). O erro é sempre
+ * `HTTPError`, porque nenhum outro sai deste arquivo.
+ */
+export type MutationProps<TData, TPayload> = Omit<
+  UseMutationOptions<TData, HTTPError, TPayload>,
+  'mutationFn'
+>
 
 type TuyauErrorShape = {
   kind: string

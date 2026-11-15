@@ -64,3 +64,12 @@ test('the refusal overwrites the raw value when the router merges the search', (
     redirect: undefined,
   })
 })
+
+test('refuses a destination past the ceiling', () => {
+  expect(
+    validateRedirectSearch({ redirect: `/${'a'.repeat(512)}` }),
+  ).toStrictEqual({ redirect: undefined })
+  expect(
+    validateRedirectSearch({ redirect: `/${'a'.repeat(511)}` }),
+  ).toStrictEqual({ redirect: `/${'a'.repeat(511)}` })
+})

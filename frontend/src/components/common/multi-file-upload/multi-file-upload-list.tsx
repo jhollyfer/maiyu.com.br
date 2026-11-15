@@ -79,7 +79,7 @@ export function MultiFileUploadList(
             )}
           >
             <AttachmentMedia>
-              {inFlight && <Spinner />}
+              {inFlight && <Spinner aria-label={m.kit_loading()} />}
               {failed && <WarningIcon className="text-destructive" />}
               {item.status === 'complete' && getFileIcon(item.mime)}
             </AttachmentMedia>

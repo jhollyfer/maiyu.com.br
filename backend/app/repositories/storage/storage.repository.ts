@@ -24,19 +24,51 @@ export type StorageListCriteria = {
 }
 
 /**
- * The file persistence, by intent (`_standards/domain.md` §5.1). The
+ * The file persistence, by intent (`_standards/domain.md` §5.1). A customer table
+ * (`CustomerScoped`, DECISIONS.md #397): the end customer reaches the files it uploaded, in any
+ * tenant, and the tenant's members every file of the tenant. The
  * single writer of the `storages` table; it reads the columns that point to it only
  * to say where the file is in use.
  */
 export abstract class StorageRepository {
-  /** The live file, in any upload state. */
+  /**
+   * The live file, in any upload state, among the ones the request reads: a file of another
+   * tenant reads as absent (DECISIONS.md #390).
+   */
   abstract findById(id: string): Promise<Storage | null>
+  /**
+   * The same file, only when the request writes it: its own tenant, never a child tenant the
+   * parent reads. Deleting and confirming go through here.
+   */
+  abstract findWritable(id: string): Promise<Storage | null>
+  /**
+   * The file a public route may serve (DECISIONS.md #582): live, confirmed (`UPLOADED`), a row of a
+   * tenant (`tenant_id` never null) owned by nobody (`customer_id` null), among the ones the
+   * request reads. The global catalog's files are the platform's rows and read as absent here
+   * for every caller, the platform owner and a system process included: the 404 of a missing file.
+   */
+  abstract findPublic(id: string): Promise<Storage | null>
   /** Lightweight read: the record in the response shape, without the URL. */
   abstract detail(id: string): Promise<StorageFileRead | null>
   /** The same record for several ids at once; an id without a live file is left out. */
   abstract detailsOf(ids: ReadonlyArray<string>): Promise<StorageFileRead[]>
-  /** All the ids are live, already confirmed (`UPLOADED`) files: only those attach. */
-  abstract areAttachable(ids: ReadonlyArray<string>): Promise<boolean>
+  /**
+   * All the ids are live, confirmed (`UPLOADED`) files the request writes and that `uploadedBy`
+   * itself uploaded: a parent never attaches a child's file, and a member never wears another
+   * member's (or a customer's) file.
+   */
+  abstract areAttachable(
+    ids: ReadonlyArray<string>,
+    uploadedBy: string,
+  ): Promise<boolean>
+  /**
+   * All the ids are live, confirmed (`UPLOADED`) files that belong to the TENANT of the session
+   * itself: the tenant writes them (never a child's) and `customer_id` is null, so a file an end
+   * customer sent (a Pix proof) is never one of them, even in the same tenant. For what the store
+   * owns, not what an account owns: a product photo. A file of one's own account is
+   * `areAttachable`.
+   */
+  abstract areAttachableByTenant(ids: ReadonlyArray<string>): Promise<boolean>
   /** Where the file is in use, in readable labels; empty means orphan. */
   abstract usedBy(id: string): Promise<string[]>
   abstract save(storage: Storage): Promise<void>

@@ -1,11 +1,9 @@
 // @vitest-environment jsdom
 
-import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import { describe, expect, it } from 'vitest'
 
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
-
-afterEach(cleanup)
 
 describe('MaiyuCredit', () => {
   it('opens the Maiyu link in another tab without leaking the opener', () => {

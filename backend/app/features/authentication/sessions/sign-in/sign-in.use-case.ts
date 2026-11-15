@@ -3,9 +3,16 @@ import { HttpContext } from '@adonisjs/core/http'
 import hash from '@adonisjs/core/services/hash'
 import { I18n } from '@adonisjs/i18n'
 
-import { left, right, type Either } from '@maiyu/shared'
+import {
+  left,
+  LoginIdentity,
+  right,
+  type Either,
+  type LoginIdentityValue,
+} from '@maiyu/shared'
 
 import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
+import type { User } from '#domain/user/user.entity'
 import HTTPException from '#exceptions/http.exception'
 import {
   SessionRepository,
@@ -37,10 +44,10 @@ export default class AuthenticationSessionSignInUseCase {
     try {
       // Whether it gets in is decided by the account (`canSignIn`), after the password is
       // checked.
-      const user = await this.users.findByEmail(payload.email)
+      const user = await this.find(LoginIdentity.of(payload.login))
 
       // A nonexistent account also spends the time of a hash, so the response
-      // does not reveal by the clock that the email is not registered.
+      // does not reveal by the clock that the login is not registered.
       if (!user) {
         await hash.make(payload.password)
 
@@ -86,22 +93,31 @@ export default class AuthenticationSessionSignInUseCase {
     }
   }
 
+  /** The login is an e-mail or a phone (DECISIONS.md #396); each has its own unique column. */
+  private find(identity: LoginIdentityValue): Promise<User | null> {
+    if (identity.kind === 'email') return this.users.findByEmail(identity.value)
+
+    return this.users.findByPhone(identity.value)
+  }
+
   /**
    * A failed rehash must not refuse a right password: the next sign-in tries again, so the
-   * failure is only logged (`_standards/backend.md` §5.6 item 6, named exception to §4.2).
+   * failure is caught here and only logged (`_standards/backend.md` §5.6 item 6, named
+   * exception to §4.2: the repository lets the I/O error rise, as in `DECISIONS.md` #352).
    */
   private async rehash(
     userId: string,
     stored: string,
     password: string,
   ): Promise<void> {
-    const result = await this.users.rehashPassword(userId, stored, password)
-    if (result.isRight()) return
-
-    HttpContext.getOrFail().logger.warn(
-      { err: result.value.cause },
-      '[authentication/sessions > sign-in][rehash-error]',
-    )
+    try {
+      await this.users.rehashPassword(userId, stored, password)
+    } catch (error) {
+      HttpContext.getOrFail().logger.warn(
+        { err: error },
+        '[authentication/sessions > sign-in][rehash-error]',
+      )
+    }
   }
 
   private invalidCredentials(): HTTPException {

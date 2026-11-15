@@ -7,13 +7,15 @@ import {
   ResponseRule,
 } from '@maiyu/shared'
 
-import { ContactFactory } from '#database/factories/contact.factory'
+import { contactRow } from '#tests/contacts-fixtures'
 import {
   authenticateAsAdministrator,
   authenticateAsNonStaff,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 const ContactsPage = ResponseRule.paginated(AdministratorContactShowResponse)
 
@@ -34,9 +36,9 @@ test.group('administrator/contacts > paginate', (group) => {
 
   test('lists 20 per page from the newest', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    const rows = await ContactFactory.merge(
-      Array.from({ length: 25 }, (_, index) => createdAt(index)),
-    ).createMany(25)
+    const rows = []
+    for (let index = 0; index < 25; index += 1)
+      rows.push(await contactRow(createdAt(index)))
     const newestFirst = rows.toReversed().map((row) => row.id)
 
     const first = await client.get('/administrator/contacts').cookies(session)
@@ -64,8 +66,8 @@ test.group('administrator/contacts > paginate', (group) => {
 
   test('status pending lists only unanswered', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    const pending = await ContactFactory.create()
-    await ContactFactory.merge({ answeredAt: DateTime.now() }).create()
+    const pending = await contactRow()
+    await contactRow({ answeredAt: DateTime.now() })
 
     const response = await client
       .get('/administrator/contacts')
@@ -81,10 +83,10 @@ test.group('administrator/contacts > paginate', (group) => {
 
   test('status answered lists only answered', async ({ client, assert }) => {
     const session = await authenticateAsAdministrator(client)
-    await ContactFactory.create()
-    const answered = await ContactFactory.merge({
+    await contactRow()
+    const answered = await contactRow({
       answeredAt: DateTime.now(),
-    }).create()
+    })
 
     const response = await client
       .get('/administrator/contacts')
@@ -103,18 +105,18 @@ test.group('administrator/contacts > paginate', (group) => {
     assert,
   }) => {
     const session = await authenticateAsAdministrator(client)
-    const byName = await ContactFactory.merge({
+    const byName = await contactRow({
       name: 'Beatriz Lima',
       email: 'bia@exemplo.com',
-    }).create()
-    const byEmail = await ContactFactory.merge({
+    })
+    const byEmail = await contactRow({
       name: 'Carlos Dias',
       email: 'beatriz.dias@exemplo.com',
-    }).create()
-    await ContactFactory.merge({
+    })
+    await contactRow({
       name: 'Diego Reis',
       email: 'diego@exemplo.com',
-    }).create()
+    })
 
     const response = await client
       .get('/administrator/contacts')
@@ -144,8 +146,26 @@ test.group('administrator/contacts > paginate', (group) => {
     assert.property(body(response, ErrorEnvelope).errors, 'status')
   })
 
+  test('an administrator of another tenant lists none of the contacts of this one', async ({
+    client,
+    assert,
+  }) => {
+    await contactRow()
+    const other = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', other)
+
+    const response = await client
+      .get('/administrator/contacts')
+      .cookies(session)
+
+    response.assertStatus(200)
+    const page = body(response, ContactsPage)
+    assert.deepEqual(page.data, [])
+    assert.equal(page.meta.total, 0)
+  })
+
   test('without a session answers 401', async ({ client, assert }) => {
-    await ContactFactory.create()
+    await contactRow()
 
     const response = await client.get('/administrator/contacts')
 
@@ -155,7 +175,7 @@ test.group('administrator/contacts > paginate', (group) => {
 
   test('a member answers 403', async ({ client, assert }) => {
     const session = await authenticateAsNonStaff(client)
-    await ContactFactory.create()
+    await contactRow()
 
     const response = await client
       .get('/administrator/contacts')

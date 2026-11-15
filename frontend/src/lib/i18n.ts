@@ -2,7 +2,8 @@ import { DateTime } from 'luxon'
 import type { Locale as DayPickerLocale } from 'react-day-picker'
 import { enUS, es, ptBR } from 'react-day-picker/locale'
 
-import { getLocale } from '#/paraglide/runtime'
+import { env } from '#/env'
+import { getLocale, locales, localizeUrl } from '#/paraglide/runtime'
 import type { Locale, MessagePart } from '#/paraglide/runtime'
 import type { LocalizedText } from '@maiyu/shared'
 
@@ -34,7 +35,7 @@ export function dayPickerLocale(): DayPickerLocale {
  * browser's time zone or UTC: the page renders on SSR, and the same time in
  * two zones diverges at hydration - besides showing 1pm for a 9am match.
  */
-// Western Amazonas (Benjamin Constant, Atalaia do Norte, Tabatinga) is UTC-5 (DECISIONS.md #390).
+// Every system of the house runs in America/Eirunepe, process and database (DECISIONS.md #393).
 export const TIME_ZONE = 'America/Eirunepe'
 
 /** The product's currency: the `formatCurrency` of a Brazilian product. */
@@ -79,11 +80,15 @@ export function formatCurrency(value: number): string {
 
 /**
  * The API instant on the local clock and in the current language (`frontend.md` §3.5):
- * explicit `setZone` and `setLocale` of the URL's language. The browser's time zone would make
- * SSR and hydration render different strings.
+ * explicit `setZone` and `setLocale` of the URL's language. The zone defaults to `TIME_ZONE`
+ * (#393); a city registered in another zone passes its own (`CityResponse.timeZone`, read from
+ * `useCity()`). Never the browser's: SSR and hydration would render different strings.
  */
-export function localDateTime(value: string): DateTime {
-  return DateTime.fromISO(value).setZone(TIME_ZONE).setLocale(getLocale())
+export function localDateTime(
+  value: string,
+  timeZone: string = TIME_ZONE,
+): DateTime {
+  return DateTime.fromISO(value).setZone(timeZone).setLocale(getLocale())
 }
 
 /**
@@ -91,21 +96,25 @@ export function localDateTime(value: string): DateTime {
  * render: `new Date()` in render diverges between SSR and hydration at the turn of the
  * year (`frontend.md` §3.2).
  */
-export function currentLocalYear(): number {
-  return DateTime.now().setZone(TIME_ZONE).year
+export function currentLocalYear(timeZone: string = TIME_ZONE): number {
+  return DateTime.now().setZone(timeZone).year
 }
 
 /** The API date formatted on the local clock and in the current language. */
 export function formatLocalDate(
   value: string,
   options: Intl.DateTimeFormatOptions,
+  timeZone: string = TIME_ZONE,
 ): string {
-  return localDateTime(value).toLocaleString(options)
+  return localDateTime(value, timeZone).toLocaleString(options)
 }
 
 /** `2026-12-14T08:30` on the local clock to ISO in UTC. */
-export function localInputToIso(value: string): string {
-  return DateTime.fromISO(value, { zone: TIME_ZONE }).toUTC().toISO() ?? ''
+export function localInputToIso(
+  value: string,
+  timeZone: string = TIME_ZONE,
+): string {
+  return DateTime.fromISO(value, { zone: timeZone }).toUTC().toISO() ?? ''
 }
 
 /**
@@ -118,4 +127,44 @@ export function partsText(parts: MessagePart[]): string {
     if (part.type === 'text') result += part.value
   }
   return result
+}
+
+/** The `og:locale` of each house language (`language_TERRITORY`). */
+const OG_LOCALES = {
+  'pt-BR': 'pt_BR',
+  es: 'es_ES',
+  en: 'en_US',
+} satisfies Record<Locale, string>
+
+/** The `og:locale` of `locale`, the request's language when absent. */
+export function ogLocale(locale: Locale = getLocale()): string {
+  return OG_LOCALES[locale]
+}
+
+/** The page's absolute URL in the requested language (`localizeUrl` returns `URL`). */
+export function localizedUrl(pathname: string, locale: Locale): string {
+  const url = localizeUrl(new URL(pathname, env.VITE_SITE_URL), { locale })
+  // `/es/` and `/es` are the same address, and the site answers in the form without a slash.
+  if (url.pathname.length > 1 && url.pathname.endsWith('/'))
+    url.pathname = url.pathname.slice(0, -1)
+
+  return url.href
+}
+
+/** A reciprocal alternate of a page: the `hreflang` and the absolute URL. */
+export type AlternateLink = Readonly<{ hrefLang: string; href: string }>
+
+/**
+ * The `hreflang` set of a page: one per language plus the `x-default` (the `pt-BR` one). Head
+ * `links` and sitemap `xhtml:link` come from here, so the two never diverge
+ * (`frontend.md` §9.7; _doc-lib/paraglide.md#/runtime, `localizeUrl`).
+ */
+export function alternateLinks(pathname: string): Array<AlternateLink> {
+  return [
+    ...locales.map((locale) => ({
+      hrefLang: locale,
+      href: localizedUrl(pathname, locale),
+    })),
+    { hrefLang: 'x-default', href: localizedUrl(pathname, 'pt-BR') },
+  ]
 }

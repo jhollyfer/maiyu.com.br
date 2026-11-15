@@ -9,8 +9,8 @@ import { column, scope } from '@adonisjs/lucid/orm'
 import {
   TRASHED_MODE,
   type ActiveStatus,
+  type PlatformRole,
   type TrashedMode,
-  type UserRole,
 } from '@maiyu/shared'
 
 import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
@@ -27,10 +27,18 @@ export const ACCESS_TOKEN_TABLE = 'auth_access_tokens'
  * Hashing before save and `verifyCredentials` (lookup by uid, hash checked in constant
  * time) come together from the mixin: split, they leave a creation path that saves the
  * plain-text password. The mixin takes one hasher, so it gets the one that still reads the
- * legacy scrypt hashes (DECISIONS.md #370).
+ * legacy scrypt hashes (DECISIONS.md #370). The account has two identities, e-mail and phone
+ * (DECISIONS.md #396), and both are uids: the doc says "if you assign a user a username or phone
+ * number, you can also use them as a UID"
+ * (_doc-lib/adonisjs.md#guides/auth/verifying-user-credentials,
+ * https://docs.adonisjs.com/guides/auth/verifying-user-credentials).
+ *
+ * The kit's sign-in does not go through `User.verifyCredentials`: that lookup skips the soft
+ * delete, the status that may sign in and the login normalization. The sign-in use-case reads
+ * the account through the repository and checks the hash itself; do not call it from a feature.
  */
 const AuthFinder = withAuthFinder(() => LegacyAwareHashDriver.hasher(), {
-  uids: ['email'],
+  uids: ['email', 'phone'],
   passwordColumnName: 'password',
 })
 
@@ -75,7 +83,7 @@ export default class User extends compose(UserSchema, AuthFinder) {
    * `string`, and a wrong role literal would compile and only fail when Postgres refused it.
    */
   @column()
-  declare role: UserRole
+  declare platformRole: PlatformRole
 
   @column()
   declare status: ActiveStatus

@@ -347,6 +347,8 @@ function deriveSummary(
 
 type Protection = {
   authenticated: boolean
+  /** `silentAuth` and no `auth`: answers anyone, personalizes for whoever has a session. */
+  optional: boolean
   roles: string[]
   /** A limiter (`start/limiter.ts`) sits on the route: the 429 is part of the contract. */
   throttled: boolean
@@ -373,11 +375,12 @@ function toRoles(args: unknown): string[] {
  * must pass, so who can call is the intersection of the lists, not the
  * last one.
  */
-async function readProtection(
+export async function readProtection(
   middleware: Iterable<MiddlewareEntry>,
 ): Promise<Protection> {
   const protection: Protection = {
     authenticated: false,
+    optional: false,
     roles: [],
     throttled: false,
   }
@@ -392,6 +395,7 @@ async function readProtection(
     if (info.type === 'closure' && info.name.endsWith('Throttle'))
       protection.throttled = true
     if (info.name === 'auth') protection.authenticated = true
+    if (info.name === 'silentAuth') protection.optional = true
     if (info.name !== 'role') continue
     if (!('args' in info)) continue
 
@@ -405,6 +409,8 @@ async function readProtection(
   }
 
   protection.roles = allowed ?? []
+  // A required session beats an optional one, whatever the order of the two on the route.
+  if (protection.authenticated) protection.optional = false
 
   return protection
 }
@@ -763,6 +769,19 @@ export function requestShape(
   return { parameters, body: body.rest }
 }
 
+/**
+ * The `security` of an operation. The empty alternative (`{}`) is OpenAPI's way to say the
+ * session is optional; `authz:check` reads it back as `optional`.
+ */
+export function securityOf(
+  protection: Pick<Protection, 'authenticated' | 'optional'>,
+): OpenAPIOperation['security'] {
+  if (protection.authenticated) return [{ [SECURITY_SCHEME]: [] }]
+  if (protection.optional) return [{ [SECURITY_SCHEME]: [] }, {}]
+
+  return undefined
+}
+
 function buildOperation(
   contract: Contract,
   input: {
@@ -793,7 +812,8 @@ function buildOperation(
 
   if (contract.description) operation.description = contract.description
   if (contract.deprecated) operation.deprecated = true
-  if (protection.authenticated) operation.security = [{ [SECURITY_SCHEME]: [] }]
+  const security = securityOf(protection)
+  if (security) operation.security = security
 
   // Who can call, in its own field and not only in the 403 sentence. It is what
   // `authz:check` compares against the baseline: opening a route by accident is one

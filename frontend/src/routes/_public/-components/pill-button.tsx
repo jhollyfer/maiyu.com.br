@@ -1,23 +1,28 @@
+import { Link } from '@tanstack/react-router'
+import type { LinkProps } from '@tanstack/react-router'
 import { cva } from 'class-variance-authority'
-import type { VariantProps } from 'class-variance-authority'
 import type * as React from 'react'
 
-import { Button } from '#/components/ui/button'
-import { cn } from '#/lib/utils'
+import { buttonVariants } from '#/components/ui/button'
+import { cn } from '#/lib/cn'
 import type { Merge } from '@maiyu/shared'
 
 /**
  * The site's pill: the round button of the hero, of the end of the home and of the inner
  * pages.
  *
- * The same piece as academy's, and for the same reason: it lives outside
- * `components/ui/button.tsx` because that directory is what `shadcn`
- * delivers, and `shadcn add button` rewrites the whole file. What belongs to Maiyu
- * **composes** the stock button, which keeps handling focus, `disabled`,
- * `render` and icon.
+ * It follows the aporta's `PillButton` piece (same name and same API, which goes to the kit):
+ * `PillButton` IS a TanStack `Link` wearing the pill classes, and `pillVariants` returns the
+ * class string. Never `Button render={<Link />}`: Base UI forces `role="button"` and wipes
+ * out the link (#440, `frontend.md`). The tones live in the cva below, and not in
+ * `ui/button.tsx`, because `ui/` is not edited here; they sit on top of `buttonVariants()`
+ * with its default variant and size, the ones that interfere least (no dark-only classes,
+ * and every tone sets `bg-*`, `hover:bg-*`, `h-*`, `px-*` and `gap-*`, which `cn` resolves in
+ * the pill's favor).
  *
- * In the public shell and not in `components/common/`, which is where academy
- * keeps it: there the panel uses it too, and here only the storefront does.
+ * An external link is not a `Link`: use `<a className={pillVariants(...)}>`.
+ *
+ * In the public shell and not in `components/common/`: there the panel does not use it.
  *
  * The tone names are academy's; the colors are Maiyu's:
  *
@@ -28,7 +33,11 @@ import type { Merge } from '@maiyu/shared'
  *                 inside the navy band as well
  *   neon-outline  the secondary inside the navy band
  */
-const pillVariants = cva(
+export type PillTone = 'ink' | 'outline' | 'neon' | 'neon-outline'
+export type PillScale = 'md' | 'lg'
+export type PillStyle = { tone?: PillTone; scale?: PillScale }
+
+const pillToneVariants = cva(
   "rounded-full border-[1.5px] font-medium transition-[background-color,border-color,color,transform] duration-300 ease-out-expo active:scale-[0.98] motion-reduce:transition-none [&_svg:not([class*='size-'])]:size-4",
   {
     variants: {
@@ -52,41 +61,29 @@ const pillVariants = cva(
   },
 )
 
-/**
- * The rest of the props goes to `Button`, and `variant`/`size` stay out: whoever
- * decides both is this component. Without the `Omit`, a forgotten `variant="link"`
- * would pass through the type and silently take the pill apart.
- */
-type PillButtonProps = Merge<
-  Omit<React.ComponentProps<typeof Button>, 'variant' | 'size'>,
-  VariantProps<typeof pillVariants>
->
-
-function PillButton({
-  className,
-  tone = 'ink',
-  scale = 'lg',
-  render,
-  nativeButton,
-  ...props
-}: PillButtonProps): React.JSX.Element {
-  /*
-    Almost every pill here is a link. Base UI's `Button` assumes
-    `nativeButton` true and warns in the console on every render when the
-    final element is not a `<button>`; with `render` present the default becomes
-    `false`, and whoever wants the opposite still says so in the call.
-  */
-  let isNativeButton = nativeButton
-  if (isNativeButton === undefined) isNativeButton = !render
-
-  return (
-    <Button
-      {...props}
-      render={render}
-      nativeButton={isNativeButton}
-      className={cn(pillVariants({ tone, scale }), className)}
-    />
-  )
+/** The classes of a pill, for the `PillButton` and for the external `<a>`. */
+export function pillVariants({ tone, scale }: PillStyle): string {
+  return cn(buttonVariants(), pillToneVariants({ tone, scale }))
 }
 
-export { PillButton, pillVariants }
+type PillButtonProps = Merge<
+  LinkProps,
+  PillStyle & {
+    className?: string
+    children: React.ReactNode
+  }
+>
+
+export function PillButton({
+  tone,
+  scale,
+  className,
+  children,
+  ...link
+}: PillButtonProps): React.JSX.Element {
+  return (
+    <Link {...link} className={cn(pillVariants({ tone, scale }), className)}>
+      {children}
+    </Link>
+  )
+}

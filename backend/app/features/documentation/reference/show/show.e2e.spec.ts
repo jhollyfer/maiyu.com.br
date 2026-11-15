@@ -3,12 +3,14 @@ import { test } from '@japa/runner'
 import { ErrorEnvelope } from '@maiyu/shared'
 
 import { DOCUMENTATION_CSP } from '#core/openapi/scalar'
+import { FACTORY_PASSWORD, UserFactory } from '#database/factories/user.factory'
 import {
-  authenticateAsAdministrator,
-  authenticateAsNonStaff,
+  authenticateAsPlatformOwner,
+  authenticate,
   body,
   resetDatabase,
 } from '#tests/http-fixtures'
+import { loginOf } from '#tests/users-fixtures'
 
 /**
  * `GET /documentation`: the browsable reference over `/openapi.json`. Same
@@ -21,7 +23,7 @@ test.group('reference > show', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const session = await authenticateAsPlatformOwner(client)
     const response = await client.get('/documentation').cookies(session)
 
     response.assertStatus(200)
@@ -33,7 +35,7 @@ test.group('reference > show', (group) => {
     client,
     assert,
   }) => {
-    const session = await authenticateAsAdministrator(client)
+    const session = await authenticateAsPlatformOwner(client)
     const response = await client.get('/documentation').cookies(session)
 
     response.assertStatus(200)
@@ -61,11 +63,16 @@ test.group('reference > show', (group) => {
     response.assertStatus(404)
   })
 
-  test('whoever does not operate the installation also gets 404', async ({
+  test('a signed-in account that does not operate the installation also gets 404', async ({
     client,
     assert,
   }) => {
-    const session = await authenticateAsNonStaff(client)
+    const account = await UserFactory.create()
+    const session = await authenticate(
+      client,
+      loginOf(account),
+      FACTORY_PASSWORD,
+    )
     const response = await client.get('/documentation').cookies(session)
 
     response.assertStatus(404)

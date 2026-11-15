@@ -1,7 +1,6 @@
-import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import { cn } from '#/lib/utils'
+import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../photo'
@@ -48,15 +47,12 @@ export function Hero(): React.JSX.Element {
               {m.home_hero_description()}
             </p>
             <div className="flex flex-wrap gap-2">
-              <PillButton
-                className="rounded-xl"
-                render={<Link to="/contact">{m.home_start_project()}</Link>}
-              />
-              <PillButton
-                tone="outline"
-                className="rounded-xl"
-                render={<Link to="/portfolio">{m.home_view_work()}</Link>}
-              />
+              <PillButton className="rounded-xl" to="/contact">
+                {m.home_start_project()}
+              </PillButton>
+              <PillButton tone="outline" className="rounded-xl" to="/portfolio">
+                {m.home_view_work()}
+              </PillButton>
             </div>
           </div>
         </div>

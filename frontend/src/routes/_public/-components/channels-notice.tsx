@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { CALL_URL, CONTACT } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
-import { PillButton } from './pill-button'
+import { pillVariants } from './pill-button'
 
 /**
  * The notice in place of the contact and application forms: it says the form is offline and
@@ -21,23 +21,22 @@ export function ChannelsNotice(): React.JSX.Element {
       <AlertDescription className="mt-2 text-body">
         <p>{m.channels_notice_body()}</p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <PillButton
-            render={
-              <a href={'mailto:'.concat(CONTACT.email)}>
-                <EnvelopeSimpleIcon aria-hidden="true" />
-                {m.channels_notice_email()}
-              </a>
-            }
-          />
-          <PillButton
-            tone="outline"
-            render={
-              <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
-                <WhatsappLogoIcon aria-hidden="true" />
-                {m.channels_notice_whatsapp()}
-              </a>
-            }
-          />
+          <a
+            href={'mailto:'.concat(CONTACT.email)}
+            className={pillVariants({})}
+          >
+            <EnvelopeSimpleIcon aria-hidden="true" />
+            {m.channels_notice_email()}
+          </a>
+          <a
+            href={CALL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={pillVariants({ tone: 'outline' })}
+          >
+            <WhatsappLogoIcon aria-hidden="true" />
+            {m.channels_notice_whatsapp()}
+          </a>
         </div>
       </AlertDescription>
     </Alert>

@@ -1,9 +1,17 @@
 import {
   AccountProfileShowResponse,
+  AccountProfileUpdateResponse,
   AdministratorContactPaginateResponse,
   AdministratorContactShowResponse,
-  StoragesFileShowResponse,
+  AuthenticationTenantsResponse,
+  CitiesListResponse,
+  CityResponse,
+  CityTenantsResponse,
+  PlatformMemberResponse,
+  PlatformOverviewResponse,
+  PlatformTenantResponse,
   StorefrontContactCreateResponse,
+  StoragesFileShowResponse,
   StoragesFileUploadResponse,
 } from '@maiyu/shared'
 
@@ -24,9 +32,17 @@ import type { FeatureResponse } from '#core/openapi/types'
  */
 export const RESPONSES: Record<string, FeatureResponse> = {
   'account/profile': AccountProfileShowResponse,
+  'account/profile/update': AccountProfileUpdateResponse,
   'administrator/contacts': AdministratorContactShowResponse,
   'administrator/contacts/paginate': AdministratorContactPaginateResponse,
+  'authentication/tenants/list': AuthenticationTenantsResponse,
+  'platform/cities': CityResponse,
+  'platform/members/save': PlatformMemberResponse,
+  'platform/overview/show': PlatformOverviewResponse,
+  'platform/tenants': PlatformTenantResponse,
+  'storefront/cities/list': CitiesListResponse,
   'storefront/contacts/create': StorefrontContactCreateResponse,
+  'storefront/tenants/list': CityTenantsResponse,
   'storages/files': StoragesFileShowResponse,
   'storages/files/create': StoragesFileUploadResponse,
   'storages/files/parts': StoragesFileUploadResponse,

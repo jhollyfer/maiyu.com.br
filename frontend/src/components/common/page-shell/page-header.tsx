@@ -3,7 +3,7 @@ import { Link } from '@tanstack/react-router'
 import type { LinkProps } from '@tanstack/react-router'
 import * as React from 'react'
 
-import { Button } from '#/components/ui/button'
+import { buttonVariants } from '#/components/ui/button'
 import { ButtonGroup } from '#/components/ui/button-group'
 import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
@@ -58,19 +58,18 @@ export function PageHeaderBack({
   params,
 }: PageHeaderBackProps): React.JSX.Element {
   return (
-    <Button
+    <Link
+      to={to}
+      params={params}
       data-slot="page-header-back"
-      variant="ghost"
-      size="icon"
-      type="button"
       aria-label={m.kit_back()}
-      className="col-start-1 row-span-2 row-start-1 self-center"
-      render={
-        <Link to={to} params={params}>
-          <ArrowLeftIcon />
-        </Link>
-      }
-    />
+      className={cn(
+        buttonVariants({ variant: 'ghost', size: 'icon' }),
+        'col-start-1 row-span-2 row-start-1 self-center',
+      )}
+    >
+      <ArrowLeftIcon />
+    </Link>
   )
 }
 

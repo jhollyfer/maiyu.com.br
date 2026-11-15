@@ -4,7 +4,7 @@ import type { HttpContext } from '@adonisjs/core/http'
 import AuthenticationSessionRefreshUseCase from './refresh.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
-import { SessionCookie } from '#features/authentication/_shared.session-cookie'
+import { SessionCookie } from '#features/_shared.session-cookie'
 
 @inject()
 export default class AuthenticationSessionRefreshController {

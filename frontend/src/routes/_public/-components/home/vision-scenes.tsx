@@ -1,6 +1,6 @@
 import type * as React from 'react'
 
-import { cn } from '#/lib/utils'
+import { cn } from '#/lib/cn'
 
 /**
  * The three illustrations of the "The vision" section, one per step, swapped with a fade

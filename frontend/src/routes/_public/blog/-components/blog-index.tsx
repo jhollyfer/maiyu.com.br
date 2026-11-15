@@ -3,13 +3,14 @@ import { Link, getRouteApi } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { Badge } from '#/components/ui/badge'
-import { ARTICLE_CATEGORIES, articles, featuredArticle } from '#/lib/articles'
-import type { ArticleCategory } from '#/lib/articles'
+import { articles, featuredArticle } from '#/lib/articles'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { ARTICLE_CATEGORY_LABELS } from '#/lib/labels'
 import { localizedDate } from '#/lib/site-i18n'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
+import { ARTICLE_CATEGORIES } from '@maiyu/shared'
+import type { ArticleCategory } from '@maiyu/shared'
 
 import { PageHero } from '../../-components/page-hero'
 import { Photo } from '../../-components/photo'
@@ -126,6 +127,11 @@ export function BlogIndex(): React.JSX.Element {
               {FILTERS.map((filter) => {
                 const active = filter.category === category
 
+                /*
+                  `min-h-11` on every width: a Badge is not covered by the `ui/` touch
+                  patch (#461), and the chip keeps 44px on the desktop as well, so the
+                  layout does not move between widths.
+                */
                 return (
                   <Badge
                     key={String(filter.category)}

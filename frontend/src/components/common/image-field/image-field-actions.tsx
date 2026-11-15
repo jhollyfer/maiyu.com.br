@@ -65,7 +65,9 @@ export function ImageFieldUpload({
         onClick={openPicker}
         {...rest}
       >
-        {isPending && <Spinner className="size-4" />}
+        {isPending && (
+          <Spinner aria-label={m.kit_loading()} className="size-4" />
+        )}
         {!isPending && <UploadSimpleIcon />}
         {children}
       </Button>

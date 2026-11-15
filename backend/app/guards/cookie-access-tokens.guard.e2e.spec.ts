@@ -57,7 +57,7 @@ test.group('guards > cookie-access-tokens', (group) => {
   test('a deactivated account loses access on the next request', async ({
     client,
   }) => {
-    const { user, session } = await signInWithFactory(client, 'administrator')
+    const { user, session } = await signInWithFactory(client, 'staff')
     user.status = 'INACTIVE'
     await user.save()
 

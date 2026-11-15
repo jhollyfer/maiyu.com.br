@@ -4,14 +4,14 @@ import type * as React from 'react'
 import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { featuredProject, projects } from '#/lib/projects'
 import type { Project } from '#/lib/projects'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { PageHero } from '../../-components/page-hero'
-import { PillButton } from '../../-components/pill-button'
+import { pillVariants } from '../../-components/pill-button'
 import { ProjectStatusBadge } from '../../-components/project-status'
 import { REVEAL, STAGGER } from '../../-components/reveal'
 
@@ -73,16 +73,16 @@ function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
 /** The link to the live site, which opens in another tab. */
 function VisitLink({ project }: ProjectProps): React.JSX.Element {
   return (
-    <PillButton
-      className="self-start"
-      render={
-        <a href={project.url} target="_blank" rel="noopener noreferrer">
-          {m.portfolio_visit_site()}
-          <ArrowUpRightIcon />
-          <span className="sr-only">{project.title}</span>
-        </a>
-      }
-    />
+    <a
+      href={project.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cn(pillVariants({}), 'self-start')}
+    >
+      {m.portfolio_visit_site()}
+      <ArrowUpRightIcon />
+      <span className="sr-only">{project.title}</span>
+    </a>
   )
 }
 

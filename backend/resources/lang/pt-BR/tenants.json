@@ -1,0 +1,13 @@
+{
+  "not_found": "Cliente não encontrado",
+  "invalid": "Cliente inválido",
+  "parent_nested_field": "O cliente pai precisa estar no primeiro nível, e um cliente com filhos não ganha pai.",
+  "parent_not_found_field": "Nenhum cliente com este identificador.",
+  "city_not_found_field": "Nenhuma cidade com este identificador.",
+  "slug_taken": "Slug em uso",
+  "slug_taken_field": "Outro cliente da cidade já usa este slug.",
+  "member_not_found": "Vínculo não encontrado",
+  "user_not_found_field": "Nenhuma conta com este identificador.",
+  "parent_elsewhere_field": "O cliente pai precisa ser um cliente ativo da mesma cidade.",
+  "has_children_field": "Um cliente com filhos não muda de cidade: mova os filhos antes."
+}

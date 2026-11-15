@@ -1,17 +1,15 @@
 import { useQueryClient } from '@tanstack/react-query'
-import type { QueryKey } from '@tanstack/react-query'
 import { useRouter } from '@tanstack/react-router'
 import * as React from 'react'
 
 import { HTTPError, HTTPStatus } from '#/integrations/tanstack-query/http'
+import { accountKeys } from '#/integrations/tanstack-query/queries/account'
 
 type SessionExpiryRedirectOptions = {
-  /** The account's cache key (`queryKeys.account.all` of the project). */
-  readonly accountKey: QueryKey
   /**
-   * The way to the sign-in screen with the current screen as `redirect`: the route is the
-   * project's, so it comes in here instead of a `to` the kit would type against routes it does
-   * not have (`KIT.md`, I/O of the project by prop).
+   * The way to the sign-in screen with the current screen as `redirect`. It is a prop and not a
+   * `navigate` inside the hook so the test hands it a double; the `_private` layout passes
+   * `router.navigate({ to: '/sign-in', search: { redirect } })` (DECISIONS.md #491).
    */
   readonly signIn: (redirect: string) => Promise<void>
 }
@@ -37,13 +35,11 @@ type SessionExpiryRedirectOptions = {
  *
  * ```ts
  * useSessionExpiryRedirect({
- *   accountKey: queryKeys.account.all,
  *   signIn: (redirect) => router.navigate({ to: '/sign-in', search: { redirect } }),
  * })
  * ```
  */
 export function useSessionExpiryRedirect({
-  accountKey,
   signIn,
 }: SessionExpiryRedirectOptions): void {
   const queryClient = useQueryClient()
@@ -58,12 +54,18 @@ export function useSessionExpiryRedirect({
     function leaveOn(error: unknown): void {
       if (leaving) return
       if (HTTPError.from(error)?.status !== HTTPStatus.UNAUTHORIZED) return
+      // Navegação em curso: quem decide é a guarda da rota (`SessionGuard`), que redireciona sozinha. Sem isto, sair
+      // mandava a conta recém-removida do cache para a leitura da guarda inversa da entrada, o 401 dela chegava aqui
+      // antes de o painel desmontar, e a entrada abria com `?redirect=` apontando para ela mesma.
+      if (router.state.status === 'pending') return
 
       leaving = true
       // Sem tirar a conta do cache, o guard inverso de `/sign-in` leria
       // a sessão antiga e devolveria para o painel.
-      queryClient.removeQueries({ queryKey: accountKey })
-      void signIn(router.state.location.href)
+      queryClient.removeQueries({ queryKey: accountKeys.all })
+      // `publicHref` and not `href`: with the language rewrite, `href` is the internal path
+      // without `/pt-br`, and the saved destination would lose the language (relato do manganga).
+      void signIn(router.state.location.publicHref)
     }
 
     const stopQueries = queryClient.getQueryCache().subscribe((event) => {
@@ -81,5 +83,5 @@ export function useSessionExpiryRedirect({
       stopQueries()
       stopMutations()
     }
-  }, [queryClient, router, accountKey, signIn])
+  }, [queryClient, router, signIn])
 }

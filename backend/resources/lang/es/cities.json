@@ -1,0 +1,8 @@
+{
+  "not_found": "Ciudad no encontrada",
+  "invalid": "Ciudad inválida",
+  "bounds_invalid_field": "Los límites necesitan el sur debajo del norte, el oeste antes del este y el centro dentro de ellos.",
+  "slug_taken": "Slug en uso",
+  "slug_taken_field": "Otra ciudad ya usa este slug.",
+  "in_use": "Una ciudad con clientes no se puede eliminar"
+}

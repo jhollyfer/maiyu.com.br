@@ -47,12 +47,17 @@ export type RedirectSearch = {
  */
 const REFUSED: RedirectSearch = { redirect: undefined }
 
+const MAX_REDIRECT_LENGTH = 512
+
 export function validateRedirectSearch(
   search: Record<string, unknown>,
 ): RedirectSearch {
   const value = search.redirect
 
   if (typeof value !== 'string') return REFUSED
+  // A ceiling: a destination is a path of this site, and an endless one only feeds the URL
+  // parser and the logs (relato do manganga).
+  if (value.length > MAX_REDIRECT_LENGTH) return REFUSED
 
   // Internal paths only. `https://evil.com` is obvious, but `//evil.com` is also
   // external navigation: the browser reads it as "same protocol, other host".

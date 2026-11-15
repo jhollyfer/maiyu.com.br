@@ -2,7 +2,7 @@
 import { formatWithMask, unformatWithMask } from 'use-mask-input'
 import { describe, expect, it } from 'vitest'
 
-import { MASK_ALIASES, QUIET_MASK } from './mask'
+import { MASK_ALIASES, QUIET_MASK, digitsOnly, maskCpf, maskDate } from './mask'
 
 /**
  * O alias muda de forma entre versões e o site não avisa
@@ -36,5 +36,31 @@ describe('QUIET_MASK', () => {
       showMaskOnHover: false,
       showMaskOnFocus: false,
     })
+  })
+})
+
+describe('digitsOnly', () => {
+  it('keeps only the digits', () => {
+    expect(digitsOnly('123.456.789-09')).toBe('12345678909')
+    expect(digitsOnly('(97) 99123-4567')).toBe('97991234567')
+    expect(digitsOnly('abc')).toBe('')
+  })
+})
+
+describe('maskCpf', () => {
+  it('formats while typing, with or without punctuation, and cuts at 11 digits', () => {
+    expect(maskCpf('123')).toBe('123')
+    expect(maskCpf('1234')).toBe('123.4')
+    expect(maskCpf('12345678909')).toBe('123.456.789-09')
+    expect(maskCpf('123.456.789-0999')).toBe('123.456.789-09')
+  })
+})
+
+describe('maskDate', () => {
+  it('formats as DD/MM/YYYY while typing and cuts at 8 digits', () => {
+    expect(maskDate('1')).toBe('1')
+    expect(maskDate('1203')).toBe('12/03')
+    expect(maskDate('12032026')).toBe('12/03/2026')
+    expect(maskDate('1203202699')).toBe('12/03/2026')
   })
 })

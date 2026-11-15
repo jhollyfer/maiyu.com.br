@@ -231,6 +231,17 @@ export default defineConfig([
       ],
       // Raw HTML is XSS: rich text renders through the single `components/common/rich-text/`.
       'react/no-danger': 'error',
+      // The Tailwind preflight strips the list marker and VoiceOver then stops announcing the
+      // list, so the doc asks for `role="list"` on it (_doc-lib/tailwindcss.md, "Decisões que a
+      // doc impõe", https://tailwindcss.com/docs/preflight). The doc wins over the lint rule.
+      'jsx-a11y/no-redundant-roles': ['error', { ul: ['list'], ol: ['list'] }],
+      // A region that scrolls takes the keyboard focus, or axe `scrollable-region-focusable` fails
+      // (WCAG 2.1.1; https://dequeuniversity.com/rules/axe/4.10/scrollable-region-focusable), so
+      // `region` joins `tabpanel` in the roles that may carry `tabIndex` (`frontend.md` §10.2, #722).
+      'jsx-a11y/no-noninteractive-tabindex': [
+        'error',
+        { roles: ['tabpanel', 'region'], tags: [] },
+      ],
     },
   },
   {

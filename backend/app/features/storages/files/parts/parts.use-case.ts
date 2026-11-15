@@ -57,7 +57,7 @@ export default class StoragesFilePartsUseCase {
 
   async execute(payload: Payload): Promise<Response> {
     try {
-      const storage = await this.storages.findById(payload.id)
+      const storage = await this.storages.findWritable(payload.id)
 
       if (!storage)
         return left(

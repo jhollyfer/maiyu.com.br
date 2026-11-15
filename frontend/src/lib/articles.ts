@@ -1,25 +1,6 @@
-import type { LocalizedText } from '@maiyu/shared'
+import type { ArticleCategory, LocalizedText } from '@maiyu/shared'
 
 import type { PhotoKey } from './photos'
-
-/**
- * The journal's categories. "All" is not a category: it is the absence of a filter.
- *
- * The home of this triplet is `shared/src/enums/` (`_standards/typescript.md` §4). It stays here only
- * until the kit's batch 10A sync: the export goes through `shared/src/index.ts`, which 10A changes,
- * and the `shared/` session is the one that moves it. After that this file imports the triplet from
- * `@maiyu/shared`.
- */
-export const ARTICLE_CATEGORY = {
-  TECH: 'tech',
-  DESIGN: 'design',
-  MARKETING: 'marketing',
-} as const
-
-export type ArticleCategory =
-  (typeof ARTICLE_CATEGORY)[keyof typeof ARTICLE_CATEGORY]
-
-export const ARTICLE_CATEGORIES = Object.values(ARTICLE_CATEGORY)
 
 /**
  * The journal's articles.

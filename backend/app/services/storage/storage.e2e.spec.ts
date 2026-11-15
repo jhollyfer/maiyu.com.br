@@ -1,3 +1,5 @@
+import { createHash } from 'node:crypto'
+
 import app from '@adonisjs/core/services/app'
 import drive from '@adonisjs/drive/services/main'
 import { test } from '@japa/runner'
@@ -22,14 +24,14 @@ test.group('services > storage > bucket real', (group) => {
   })
 
   test('the key carries the type extension and never repeats', ({ assert }) => {
-    const first = storage.key('image/png')
+    const first = storage.key('image/png', null)
 
-    assert.match(first, /^[0-9a-f-]{36}\.png$/)
-    assert.notEqual(first, storage.key('image/png'))
+    assert.match(first, /^platform\/[0-9a-f-]{36}\.png$/)
+    assert.notEqual(first, storage.key('image/png', null))
   })
 
   test('metadata and head read the stored object', async ({ assert }) => {
-    const path = storage.key('image/png')
+    const path = storage.key('image/png', null)
     written.push(path)
     await drive.use().put(path, pngBytes(2048), { contentType: 'image/png' })
 
@@ -40,8 +42,22 @@ test.group('services > storage > bucket real', (group) => {
     assert.lengthOf(head, 12)
   })
 
+  test('sha256 digests the whole object, not only its head', async ({
+    assert,
+  }) => {
+    const path = storage.key('image/png', null)
+    const content = pngBytes(4096)
+    written.push(path)
+    await drive.use().put(path, content, { contentType: 'image/png' })
+
+    assert.equal(
+      await storage.sha256(path),
+      createHash('sha256').update(content).digest('hex'),
+    )
+  })
+
   test('the signed read URL delivers the object', async ({ assert }) => {
-    const path = storage.key('image/png')
+    const path = storage.key('image/png', null)
     written.push(path)
     await drive.use().put(path, pngBytes(512), { contentType: 'image/png' })
 
@@ -56,7 +72,7 @@ test.group('services > storage > bucket real', (group) => {
   test('the signed download carries the original name in Content-Disposition', async ({
     assert,
   }) => {
-    const path = storage.key('image/png')
+    const path = storage.key('image/png', null)
     written.push(path)
     await drive.use().put(path, pngBytes(256), { contentType: 'image/png' })
 
@@ -75,7 +91,7 @@ test.group('services > storage > bucket real', (group) => {
   })
 
   test('discard deletes the binary from the bucket', async ({ assert }) => {
-    const path = storage.key('image/png')
+    const path = storage.key('image/png', null)
     await drive.use().put(path, pngBytes(128), { contentType: 'image/png' })
 
     await storage.discard(path)

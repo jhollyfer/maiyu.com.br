@@ -17,7 +17,7 @@ export const StorefrontContactCreateValidator = vine.create({
   email: Rule.email(),
   message: vine.string().trim().minLength(10).maxLength(5000),
   locale: vine.enum(LOCALES),
-  website: vine.string().maxLength(2048).optional(),
+  website: Rule.optionalText(2048),
 })
 
 export type StorefrontContactCreatePayload = Infer<

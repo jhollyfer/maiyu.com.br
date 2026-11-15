@@ -1,6 +1,6 @@
 import { baseLocale } from '#/paraglide/runtime'
 
-import { localizedUrl } from './page-head'
+import { localizedUrl } from './i18n'
 import { CONTACT, SITE_IMAGE, SITE_TITLE, SOCIALS } from './site'
 
 /**

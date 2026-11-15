@@ -269,12 +269,15 @@ test.group('messages > validation provider', () => {
       'max',
       'positive',
       'withoutDecimals',
+      'array.minLength',
       'array.maxLength',
       'password.regex',
       'password.minLength',
       'password.maxLength',
       'passwordConfirmation.confirmed',
       'fileName.regex',
+      'phone',
+      'anyPhone',
     ]
 
     for (const locale of LOCALES) {
@@ -356,5 +359,141 @@ test.group('validator > Rule', () => {
       'perPage',
       'search',
     ])
+  })
+})
+
+test.group('validator > Rule.optionalText', () => {
+  const validator = core.vine.create({ note: core.Rule.optionalText(10) })
+
+  test('when the text is blank or only spaces, it is null; absent stays absent', async ({
+    assert,
+  }) => {
+    assert.deepEqual(await validator.validate({ note: '   ' }), { note: null })
+    assert.deepEqual(await validator.validate({ note: '' }), { note: null })
+    assert.deepEqual(await validator.validate({ note: null }), { note: null })
+    assert.deepEqual(await validator.validate({}), {})
+  })
+
+  test('when the text has a value, it is trimmed and keeps the ceiling', async ({
+    assert,
+  }) => {
+    assert.deepEqual(await validator.validate({ note: ' oi ' }), { note: 'oi' })
+    await assert.rejects(() => validator.validate({ note: 'x'.repeat(11) }))
+  })
+})
+
+test.group('validator > Rule.anyPhone', () => {
+  const AnyPhoneValidator = core.vine.create({ phone: core.Rule.anyPhone() })
+
+  test('when it is a mobile or a landline, it gives the E.164', async ({
+    assert,
+  }) => {
+    assert.deepEqual(
+      await AnyPhoneValidator.validate({ phone: '(97) 99123-4567' }),
+      { phone: '+5597991234567' },
+    )
+    assert.deepEqual(
+      await AnyPhoneValidator.validate({ phone: '+55 97 3412-3456' }),
+      { phone: '+559734123456' },
+    )
+  })
+
+  test('when it is neither, is `anyPhone`', async ({ assert }) => {
+    for (const raw of [
+      'abc',
+      '979912345',
+      '(97) 1234-5678',
+      'ligue 97991234567',
+      12345,
+    ]) {
+      const error = await AnyPhoneValidator.validate({ phone: raw }).catch(
+        (caught: unknown) => caught,
+      )
+
+      assert.instanceOf(error, core.errors.E_VALIDATION_ERROR)
+      if (!(error instanceof core.errors.E_VALIDATION_ERROR)) return
+      const messages: unknown = error.messages
+      assert.containSubset(messages, [{ field: 'phone' }])
+    }
+  })
+})
+
+test.group('validator > Rule.phone', () => {
+  test('when the text is longer than a formatted number, is `maxLength`', async ({
+    assert,
+  }) => {
+    for (const rule of [core.Rule.phone(), core.Rule.anyPhone()]) {
+      const error = await core.vine
+        .create({ phone: rule })
+        .validate({ phone: '9'.repeat(30) })
+        .catch((caught: unknown) => caught)
+
+      assert.instanceOf(error, core.errors.E_VALIDATION_ERROR)
+      if (!(error instanceof core.errors.E_VALIDATION_ERROR)) return
+      const messages: unknown = error.messages
+      assert.containSubset(messages, [{ field: 'phone', rule: 'maxLength' }])
+    }
+  })
+
+  const PhoneValidator = core.vine.create({ phone: core.Rule.phone() })
+
+  test('when the number has a mask, spaces or the +55, it gives the same E.164', async ({
+    assert,
+  }) => {
+    for (const raw of [
+      '(97) 99123-4567',
+      '97991234567',
+      '+55 97 99123-4567',
+      '55 (97) 99123-4567',
+      ' +5597991234567 ',
+    ])
+      assert.deepEqual(await PhoneValidator.validate({ phone: raw }), {
+        phone: '+5597991234567',
+      })
+  })
+
+  test('when the area code is 55, the country code is not read twice', async ({
+    assert,
+  }) => {
+    assert.deepEqual(await PhoneValidator.validate({ phone: '55991234567' }), {
+      phone: '+5555991234567',
+    })
+  })
+
+  test('when it is not a Brazilian mobile, is `phone`', async ({ assert }) => {
+    for (const raw of [
+      'abc',
+      '9799123456',
+      '(97) 3412-3456',
+      '+1 202 555 0100',
+      'ligue 97991234567',
+      12345,
+    ]) {
+      const error = await PhoneValidator.validate({ phone: raw }).catch(
+        (caught: unknown) => caught,
+      )
+
+      assert.instanceOf(error, core.errors.E_VALIDATION_ERROR)
+      if (!(error instanceof core.errors.E_VALIDATION_ERROR)) return
+      const messages: unknown = error.messages
+      assert.containSubset(messages, [{ field: 'phone' }])
+    }
+  })
+})
+
+/**
+ * `Rule.optionalText()` is absent-or-text-or-null: the key must stay optional in the type VineJS
+ * infers. A `transform` that does not name `undefined` in its return makes the key required, and
+ * every payload that leaves the field out stops compiling (the failure here is `tsc`, not Japa).
+ */
+test.group('Rule.optionalText', () => {
+  test('when the field is left out, the inferred payload does not ask for it', async ({
+    assert,
+  }) => {
+    const validator = core.vine.create({ note: core.Rule.optionalText(10) })
+    const absent: core.Infer<typeof validator> = {}
+
+    assert.deepEqual(await validator.validate({}), absent)
+    assert.deepEqual(await validator.validate({ note: '  ' }), { note: null })
   })
 })

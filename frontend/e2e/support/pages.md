@@ -12,6 +12,7 @@ mede os alvos de toque de cada uma no celular. Uma rota por item, sem o prefixo 
 - /blog/software-que-funciona-com-internet-lenta
 - /career
 - /contact
+- /sign-in
 
 ## 404
 

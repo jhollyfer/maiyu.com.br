@@ -10,6 +10,7 @@ import {
 import { TransactionContext } from '#core/transaction-context'
 import { Contact } from '#domain/contact/contact.entity'
 import ContactModel from '#models/contact'
+import CustomerScoped from '#repositories/shared/customer-scoped'
 import LucidMapping from '#repositories/shared/lucid-mapping'
 
 @inject()
@@ -19,7 +20,9 @@ export class ContactLucidRepository extends ContactRepository {
   }
 
   async findById(id: string): Promise<Contact | null> {
-    const row = await ContactModel.query({ client: this.transaction.client() })
+    const row = await CustomerScoped.readable(
+      ContactModel.query({ client: this.transaction.client() }),
+    )
       .where('id', id)
       .first()
     if (!row) return null
@@ -28,6 +31,11 @@ export class ContactLucidRepository extends ContactRepository {
   }
 
   /**
+   * Every read and write goes through `CustomerScoped` (DECISIONS.md #397), so a contact of another
+   * tenant is simply not found. `deleteCreatedBefore` and `countCreatedBefore` stay unscoped on
+   * purpose: the retention sweep is a system process (no request, so no scope) and reaches every
+   * tenant, as the declared 12 months ask.
+   *
    * Insert only: a contact is born once and never rewritten (the one later write is
    * `claimAnswer`). `createdAt` and `updatedAt` come from the entity, so the instant the
    * clock gave is the one stored.
@@ -49,7 +57,9 @@ export class ContactLucidRepository extends ContactRepository {
   }
 
   async paginate(criteria: ContactListCriteria): Promise<Paginated<Contact>> {
-    const query = ContactModel.query({ client: this.transaction.client() })
+    const query = CustomerScoped.readable(
+      ContactModel.query({ client: this.transaction.client() }),
+    )
 
     if (criteria.status === CONTACT_STATUS.PENDING)
       query.whereNull('answeredAt')
@@ -78,9 +88,9 @@ export class ContactLucidRepository extends ContactRepository {
    */
   async claimAnswer(contact: Contact): Promise<boolean> {
     const { id, answeredAt, updatedAt } = contact.snapshot()
-    const claimed: ReadonlyArray<unknown> = await ContactModel.query({
-      client: this.transaction.client(),
-    })
+    const claimed: ReadonlyArray<unknown> = await CustomerScoped.writable(
+      ContactModel.query({ client: this.transaction.client() }),
+    )
       .where('id', id)
       .whereNull('answeredAt')
       .update({ answeredAt, updatedAt })
@@ -90,7 +100,9 @@ export class ContactLucidRepository extends ContactRepository {
   }
 
   async delete(contact: Contact): Promise<void> {
-    await ContactModel.query({ client: this.transaction.client() })
+    await CustomerScoped.writable(
+      ContactModel.query({ client: this.transaction.client() }),
+    )
       .where('id', contact.id)
       .delete()
   }
@@ -119,6 +131,8 @@ export class ContactLucidRepository extends ContactRepository {
   private toEntity(row: ContactModel): Contact {
     return Contact.restore({
       id: row.id,
+      tenantId: row.tenantId,
+      customerId: row.customerId,
       name: row.name,
       email: row.email,
       message: row.message,

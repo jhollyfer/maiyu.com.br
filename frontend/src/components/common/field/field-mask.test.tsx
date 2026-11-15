@@ -1,14 +1,8 @@
 // @vitest-environment jsdom
-import {
-  cleanup,
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { useForm } from 'react-hook-form'
 import type { Resolver, ResolverResult } from 'react-hook-form'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
 import { AppField } from '#/integrations/react-hook-form/app-field'
 
@@ -53,8 +47,6 @@ function Form({
     </form>
   )
 }
-
-afterEach(cleanup)
 
 describe('FieldMask', () => {
   it('o submit inválido foca o campo mascarado: o ref do Controller chega ao input', async () => {

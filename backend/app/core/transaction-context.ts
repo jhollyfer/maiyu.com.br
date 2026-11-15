@@ -23,6 +23,21 @@ export class TransactionContext {
     return TransactionContext.storage.getStore() ?? db.connection()
   }
 
+  /** The transaction in progress, or `null` outside one: what a lock that lives with it needs. */
+  open(): TransactionClientContract | null {
+    return TransactionContext.storage.getStore() ?? null
+  }
+
+  /**
+   * Runs `work` inside the transaction in progress, or opens one for it: a repository write and
+   * the revocation it motivates land together whoever calls (_standards/backend.md §4.2).
+   */
+  atomic<T>(work: () => Promise<T>): Promise<T> {
+    if (TransactionContext.storage.getStore()) return work()
+
+    return db.transaction((trx) => this.run(trx, work))
+  }
+
   /** Runs `work` with `trx` as the transaction in progress. */
   run<T>(trx: TransactionClientContract, work: () => Promise<T>): Promise<T> {
     return TransactionContext.storage.run(trx, work)

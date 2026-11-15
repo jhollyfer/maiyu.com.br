@@ -7,8 +7,8 @@ import {
 import type { Icon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
+import { cn } from '#/lib/cn'
 import { CALL_URL, CONTACT } from '#/lib/site'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { ChannelsNotice } from '../../-components/channels-notice'

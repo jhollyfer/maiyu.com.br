@@ -65,5 +65,14 @@ router.use([
 export const middleware = router.named({
   documentation: () => import('#middleware/documentation.middleware'),
   auth: () => import('#middleware/auth.middleware'),
+  /**
+   * Marks the route whose session is optional (answers anyone, personalizes for whoever signed
+   * in). The check itself already ran in the global `silent-auth`; this name is what
+   * `authz:check` reads to class the route as `optional` (DECISIONS.md #561).
+   */
+  silentAuth: () => import('#middleware/silent-auth.middleware'),
   role: () => import('#middleware/role.middleware'),
+  platform: () => import('#middleware/platform.middleware'),
+  publicTenant: () => import('#middleware/public-tenant.middleware'),
+  credentialTenant: () => import('#middleware/credential-tenant.middleware'),
 })

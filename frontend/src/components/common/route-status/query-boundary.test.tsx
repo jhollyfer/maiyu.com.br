@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import type * as Router from '@tanstack/react-router'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { QueryBoundary } from '#/components/common/route-status/query-boundary'
@@ -13,7 +13,6 @@ vi.mock('@tanstack/react-router', async (importOriginal) => ({
 }))
 
 afterEach(() => {
-  cleanup()
   vi.restoreAllMocks()
 })
 

@@ -4,6 +4,10 @@ import type { ContactError } from './contact.errors.ts'
 
 export type ContactProps = {
   readonly id: string
+  /** The client whose form was filled in (DECISIONS.md #390): the panel reads only its own. */
+  readonly tenantId: string
+  /** The end customer who sent it; `null` when anonymous, which the public form always is. */
+  readonly customerId: string | null
   readonly name: string
   readonly email: string
   readonly message: string
@@ -16,6 +20,8 @@ export type ContactProps = {
 /** What the storefront form writes: the visitor creates, nobody edits a message. */
 export type ContactCreateInput = {
   readonly id: string
+  readonly tenantId: string
+  readonly customerId: string | null
   readonly name: string
   readonly email: string
   readonly message: string
@@ -38,6 +44,8 @@ export class Contact {
   static create(input: ContactCreateInput): Contact {
     return new Contact({
       id: input.id,
+      tenantId: input.tenantId,
+      customerId: input.customerId,
       name: input.name,
       email: input.email,
       message: input.message,

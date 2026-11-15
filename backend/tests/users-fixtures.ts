@@ -9,3 +9,14 @@ export function findUserByEmail(email: string): Promise<User> {
 export async function userExists(id: string): Promise<boolean> {
   return (await User.find(id)) !== null
 }
+
+/**
+ * What the account signs in with: its e-mail, or its phone when it has none (DECISIONS.md #396).
+ * An account with neither cannot exist (`users_contact_required`), so the throw is a broken fixture.
+ */
+export function loginOf(user: Pick<User, 'email' | 'phone'>): string {
+  const login = user.email ?? user.phone
+  if (login === null) throw new Error('account with no e-mail and no phone')
+
+  return login
+}

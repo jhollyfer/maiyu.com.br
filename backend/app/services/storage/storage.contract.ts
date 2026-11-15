@@ -23,8 +23,12 @@ export type StorageDownload = {
  * It only talks about objects, by `path`. The `storages` row belongs to the `StorageRepository`.
  */
 export abstract class StorageContract {
-  /** The key under which the object will live in the bucket. */
-  abstract key(mimetype: StorageMimetype): string
+  /**
+   * The key under which the object will live in the bucket, under the owner tenant's prefix
+   * (`platform/` without one, DECISIONS.md #390): a tenant's files are listed, copied or
+   * removed by prefix, and a key never crosses tenants.
+   */
+  abstract key(mimetype: StorageMimetype, tenantId: string | null): string
   /** What the bucket knows about the object: size and `ETag`. */
   abstract metadata(path: string): Promise<StorageMetadata>
   /**
@@ -32,6 +36,11 @@ export abstract class StorageContract {
    * content and not by what the client declared.
    */
   abstract head(path: string): Promise<Uint8Array>
+  /**
+   * The SHA-256 of the whole object, in lowercase hex: what tells two uploads of the same file apart
+   * from two different files (a payment receipt pays one charge only, DECISIONS.md #400).
+   */
+  abstract sha256(path: string): Promise<string>
   /** Deletes the binary from the bucket. */
   abstract discard(path: string): Promise<void>
   /** The signed read URL, derived from `path` on every read of the record. */

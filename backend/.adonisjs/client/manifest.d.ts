@@ -12,3 +12,4 @@
 /// <reference path="../../config/logger.ts" />
 /// <reference path="../../config/openapi.ts" />
 /// <reference path="../../config/session-token.ts" />
+/// <reference path="../../config/tenant.ts" />

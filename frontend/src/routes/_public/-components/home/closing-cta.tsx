@@ -2,12 +2,12 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { cn } from '#/lib/cn'
 import { CALL_URL } from '#/lib/site'
-import { cn } from '#/lib/utils'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../photo'
-import { PillButton } from '../pill-button'
+import { PillButton, pillVariants } from '../pill-button'
 import { REVEAL } from '../reveal'
 
 /**
@@ -31,20 +31,18 @@ export function ClosingCta(): React.JSX.Element {
               {m.home_cta_desc()}
             </p>
             <div className="mt-8 flex flex-wrap gap-2">
-              <PillButton
-                className="rounded-xl"
-                render={
-                  <a href={CALL_URL} target="_blank" rel="noopener noreferrer">
-                    {m.home_start_project()}
-                    <ArrowUpRightIcon />
-                  </a>
-                }
-              />
-              <PillButton
-                tone="outline"
-                className="rounded-xl"
-                render={<Link to="/portfolio">{m.home_view_work()}</Link>}
-              />
+              <a
+                href={CALL_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(pillVariants({}), 'rounded-xl')}
+              >
+                {m.home_start_project()}
+                <ArrowUpRightIcon />
+              </a>
+              <PillButton tone="outline" className="rounded-xl" to="/portfolio">
+                {m.home_view_work()}
+              </PillButton>
             </div>
             <Link
               to="/contact"

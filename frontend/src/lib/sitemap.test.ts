@@ -27,6 +27,18 @@ describe('sitemapXml', () => {
     )
   })
 
+  it('when an entry has priority, writes it after lastmod; the others have none', () => {
+    const withPriority = sitemapXml([
+      { pathname: '/', lastModified: '2026-10-01', priority: 1 },
+      { pathname: '/about' },
+    ])
+
+    expect(withPriority).toContain(
+      '<lastmod>2026-10-01</lastmod><priority>1.0</priority>',
+    )
+    expect(withPriority.match(/<priority>/g)).toHaveLength(3)
+  })
+
   it('when only one page has updatedAt, writes lastmod only for it', () => {
     expect(xml.match(/<lastmod>/g)).toHaveLength(3)
   })

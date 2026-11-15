@@ -57,7 +57,7 @@ export function FilterSegmented({
             variant="outline"
             className={cn(
               'focus-ring h-10 flex-1 rounded-control text-xs font-medium',
-              !active && 'text-sea-ink-soft',
+              !active && 'text-muted-foreground',
               active && 'border-primary text-primary',
             )}
           >

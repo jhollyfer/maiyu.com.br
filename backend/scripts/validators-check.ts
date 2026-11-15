@@ -250,9 +250,21 @@ export class ValidatorsCheck {
     const zodRequired = zod.required.filter(
       (field) => !this.#isConfirmation(field, vine, zod),
     )
+    // VineJS leaves a `nullable()` field out of `required` in its JSON Schema, though it refuses a
+    // missing key ("must be defined"). A nullable field Zod requires counts as required on both.
+    // shortcut: `vine...nullable().optional()` exports the same shape and passes too; upgrade when
+    // VineJS's export tells the two apart.
+    const vineRequired = [
+      ...vine.required,
+      ...zodRequired.filter(
+        (field) =>
+          !vine.required.includes(field) &&
+          (vine.properties[field]?.types.includes('null') ?? false),
+      ),
+    ].sort()
     if (
       Object.keys(vine.properties).length > 0 &&
-      !this.#same(vine.required, zodRequired)
+      !this.#same(vineRequired, zodRequired)
     )
       found.push(
         `${where}: required [${vine.required.join(', ')}] in the backend, [${zod.required.join(', ')}] in shared`,

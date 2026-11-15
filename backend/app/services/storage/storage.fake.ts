@@ -1,3 +1,7 @@
+import { createHash } from 'node:crypto'
+
+import type { StorageMimetype } from '@maiyu/shared'
+
 import {
   StorageContract,
   type StorageDownload,
@@ -43,10 +47,21 @@ export class StorageFake extends StorageContract {
     return Promise.resolve(head)
   }
 
-  key(): string {
+  /** The digest of what `put` stored as the start of the object, the whole content of a test file. */
+  sha256(path: string): Promise<string> {
+    const head = this.heads.get(path)
+    if (!head)
+      return Promise.reject(
+        new Error(`object missing from the bucket: ${path}`),
+      )
+
+    return Promise.resolve(createHash('sha256').update(head).digest('hex'))
+  }
+
+  key(_mimetype: StorageMimetype, tenantId: string | null): string {
     this.keys += 1
 
-    return `fake-${this.keys}.bin`
+    return `${tenantId ?? 'platform'}/fake-${this.keys}.bin`
   }
 
   metadata(path: string): Promise<StorageMetadata> {

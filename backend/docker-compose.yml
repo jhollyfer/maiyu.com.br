@@ -1,32 +1,41 @@
-# Local infrastructure only (database and test bucket); the application runs outside of
-# here, with `pnpm dev` (`_standards/tooling.md` §8.4). Own ports (5440, 9016, 9017), the
-# next free line of the house table, to coexist with another project on the same machine,
-# always bound to 127.0.0.1.
+# Local infrastructure only (database, test bucket and, with the queue, Redis); the
+# application runs outside of it, with `pnpm dev` (`_standards/tooling.md` §8.4).
+# Extension point: the sync creates it once, with this project's ports from the
+# house table (`PROJECT_PORTS` in the upstream `scripts/kit-manifest.mjs`), and
+# never rewrites it. Every port is bound to 127.0.0.1, never to the whole network.
 name: maiyu-backend
 
 services:
+  # User, password and database are literals equal to the default DATABASE_URL of
+  # `.env.example` (`postgres://app:app@localhost:<port>/app`): a credential of this
+  # machine only, reachable only from 127.0.0.1, never a production secret, so it
+  # needs no key of its own in the ENV catalog (DECISIONS.md #417). The password is
+  # checked on every TCP connection (no `trust`, POSTGRES_HOST_AUTH_METHOD unset).
   database:
     image: postgres:18-alpine
     container_name: maiyu-backend-database
     restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: maiyu
-      POSTGRES_DB: maiyu
-      POSTGRES_USER: maiyu
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
     ports:
-      - '127.0.0.1:${DB_PORT:-5440}:5432'
+      - '127.0.0.1:5440:5432'
     volumes:
-      # Postgres 18 keeps the data in a versioned folder under this path.
+      # From 18 on the image keeps PGDATA under /var/lib/postgresql/18/docker and
+      # declares the volume at /var/lib/postgresql: the mount goes there.
       - maiyu-backend-database-volume:/var/lib/postgresql
+      # `app_test`, the suite database, on the first start of an empty volume.
+      - ./infra/postgres:/docker-entrypoint-initdb.d:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U maiyu -d maiyu']
+      test: ['CMD-SHELL', 'pg_isready -U app -d app']
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # S3-compatible bucket for dev and e2e: the upload is presigned multipart, an S3 API
-  # that the local disk does not have. Never goes to production, which uses S3 or R2.
-  # The image is built from source at a pinned release (`infra/minio/`).
+  # S3-compatible bucket for dev and e2e: the upload is presigned multipart, an S3
+  # API that the local disk does not have. Never goes to production, which uses S3
+  # or R2. The image is built from source at a pinned release (`infra/minio/`).
   minio:
     build: ./infra/minio
     image: maiyu-minio-test:2025-10-15
@@ -36,15 +45,15 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      # The browser sends each part straight here: without CORS, the PUT preflight dies
-      # before any byte leaves.
+      # The browser sends each part straight here: without CORS, the PUT
+      # preflight dies before any byte leaves.
       MINIO_API_CORS_ALLOW_ORIGIN: ${CORS_ORIGINS:-http://localhost:3000}
       # An abandoned multipart upload disappears on its own.
       MINIO_API_STALE_UPLOADS_EXPIRY: 24h
       MINIO_API_STALE_UPLOADS_CLEANUP_INTERVAL: 6h
     ports:
-      - '127.0.0.1:${STORAGE_PORT:-9016}:9000'
-      - '127.0.0.1:${STORAGE_CONSOLE_PORT:-9017}:9001'
+      - '127.0.0.1:9016:9000'
+      - '127.0.0.1:9017:9001'
     volumes:
       - maiyu-backend-minio-volume:/data
     healthcheck:

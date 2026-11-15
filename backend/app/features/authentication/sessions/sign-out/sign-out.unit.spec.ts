@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 
+import { PLATFORM_ROLE, type Actor } from '@maiyu/shared'
+
 import AuthenticationSessionSignOutUseCase from './sign-out.use-case.ts'
 
 import { SessionRepository } from '#repositories/session/session.repository'
@@ -7,12 +9,14 @@ import { makeWithMemory } from '#tests/container-fixtures'
 import { insideHttpContext } from '#tests/http-context-fixtures'
 import { identityDoubles, USER_ID } from '#tests/identity-unit-fixtures'
 
-const ACTOR = {
+const ACTOR: Actor = {
   id: USER_ID,
   email: 'ana@mail.com',
-  role: 'ADMINISTRATOR',
+  phone: null,
+  platformRole: PLATFORM_ROLE.USER,
+  tenant: null,
   avatarId: null,
-} as const
+}
 
 async function setup() {
   const doubles = identityDoubles()

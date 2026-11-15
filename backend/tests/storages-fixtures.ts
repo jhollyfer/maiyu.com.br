@@ -10,10 +10,13 @@ import {
 } from '@maiyu/shared'
 import type { StorageMimetype } from '@maiyu/shared'
 
+import City from '#models/city'
 import Storage from '#models/storage'
+import type Tenant from '#models/tenant'
 import { body } from '#tests/http-fixtures'
 import type { Session } from '#tests/http-fixtures'
 import { PNG_HEAD } from '#tests/storages-unit-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
  * A PNG body of the requested size, for the specs that really upload a file: the
@@ -33,12 +36,15 @@ export function pngBytes(size: number, fill = 66): Uint8Array {
  * Separate from the `record(status)` above because that one fixes `originalName` and
  * `mimetype`, which are precisely the columns the search and filters cut by.
  * `filename` comes out random so the same bucket key does not repeat on two
- * rows.
+ * rows. The row belongs to the default tenant, the one the spec's session works in, unless the
+ * spec says which (DECISIONS.md #390).
  */
-export function storageRow(attributes: Partial<Storage> = {}) {
+export async function storageRow(attributes: Partial<Storage> = {}) {
   const filename = `${randomUUID()}.png`
+  const tenant = await Tenants.fallback()
 
   return Storage.create({
+    tenantId: tenant.id,
     filename,
     originalName: 'capa.png',
     mimetype: 'image/png',
@@ -66,13 +72,24 @@ export async function ageStorage(id: string, hours: number): Promise<void> {
     .update({ created_at: past, updated_at: past })
 }
 
-/** Opens an upload through the real endpoint and returns the envelope. */
+/** The end customer's upload route into `tenant` (DECISIONS.md #397). */
+export async function customerUploadPath(tenant: Tenant): Promise<string> {
+  const city = await City.findOrFail(tenant.cityId)
+
+  return `/storages/cities/${city.slug}/tenants/${tenant.slug}`
+}
+
+/**
+ * Opens an upload through the real endpoint and returns the envelope. `path` is the end customer's
+ * route (`/storages/cities/:city/tenants/:tenant`, DECISIONS.md #397) when the spec needs it.
+ */
 export async function openUpload(
   client: ApiClient,
   session: Session,
   payload: { fileName: string; mimetype: StorageMimetype; size: number },
+  path = '/storages',
 ): Promise<StoragesFileUploadResponse> {
-  const response = await client.post('/storages').cookies(session).json(payload)
+  const response = await client.post(path).cookies(session).json(payload)
 
   response.assertStatus(201)
 
@@ -110,17 +127,22 @@ export async function putPart(
   return response.headers.get('etag') ?? ''
 }
 
-/** The whole path, from zero to `UPLOADED`, for a single-part file. */
+/**
+ * The whole path, from zero to `UPLOADED`, for a single-part file; `path` as in `openUpload`, and
+ * `content` when the spec needs files with different bytes.
+ */
 export async function uploadFile(
   client: ApiClient,
   session: Session,
+  path = '/storages',
+  content: Uint8Array = pngBytes(1024),
 ): Promise<StoragesFileShowResponse> {
-  const content = pngBytes(1024)
-  const opened = await openUpload(client, session, {
-    fileName: 'capa.png',
-    mimetype: 'image/png',
-    size: content.byteLength,
-  })
+  const opened = await openUpload(
+    client,
+    session,
+    { fileName: 'capa.png', mimetype: 'image/png', size: content.byteLength },
+    path,
+  )
 
   await putPart(partUrl(opened), content)
 

@@ -4,8 +4,20 @@ import type { Locator, Page } from '@playwright/test'
 
 import { ClientAddress } from './client-address'
 import { E2eEnv } from './env'
+import { ExpectedApiErrors } from './expected-api-errors'
+import type { ExpectedApiError } from './expected-api-errors'
+import { ResponsiveAudit } from './responsive-audit'
 
 type Fixtures = {
+  /**
+   * Opção do teste: o erro de servidor que o spec espera e não reprova (status e endereço da
+   * resposta), com o `console.error` que o navegador loga por ela. Só para o que o backend não
+   * produz sob demanda (`frontend.md` §11.2); o resto continua reprovando, e declarar sem a
+   * resposta vir reprova também. Valor de lista leva o escopo, como a doc manda
+   * (_doc-lib/playwright.md#docs/test-fixtures, "Array as an option value"):
+   * `test.use({ expectedApiErrors: [[{ status: 503, url: /\/members/ }], { scope: 'test' }] })`.
+   */
+  expectedApiErrors: readonly ExpectedApiError[]
   /** O IP deste teste no `X-Forwarded-For` (`client-address.ts`). */
   clientAddress: string
   /**
@@ -30,6 +42,8 @@ type Fixtures = {
  * ninguém os vê sem esta rede.
  */
 export const test = base.extend<Fixtures>({
+  expectedApiErrors: [[], { option: true }],
+
   clientAddress: async ({}, provide) => {
     await provide(ClientAddress.random())
   },
@@ -39,8 +53,9 @@ export const test = base.extend<Fixtures>({
     await provide(context)
   },
 
-  watch: async ({ baseURL }, provide) => {
+  watch: async ({ baseURL, expectedApiErrors }, provide) => {
     const seen: string[] = []
+    const expected = new ExpectedApiErrors(expectedApiErrors)
 
     await provide((page) => {
       page.on('pageerror', (error) => seen.push(`pageerror: ${error.message}`))
@@ -54,6 +69,8 @@ export const test = base.extend<Fixtures>({
         // (o 401 de quem não entrou, o 422 do código errado) loga o
         // "Failed to load resource" com o endereço dela.
         if (url && baseURL && !url.startsWith(baseURL)) return
+        // O "Failed to load resource" do 5xx que o spec declarou.
+        if (expected.acceptsConsole(message.text(), url)) return
         // O próprio documento respondendo 404: é o que o spec da página que não
         // existe pede, e ele confere o status pela resposta do `goto`.
         if (url === page.url() && message.text().includes('status of 404'))
@@ -62,8 +79,9 @@ export const test = base.extend<Fixtures>({
         seen.push(`console: ${message.text()}`)
       })
       page.on('response', (response) => {
-        if (!response.url().startsWith(E2eEnv.apiUrl)) return
+        if (!E2eEnv.apiUrl || !response.url().startsWith(E2eEnv.apiUrl)) return
         if (response.status() < 500) return
+        if (expected.acceptsResponse(response.status(), response.url())) return
 
         seen.push(
           `api ${response.status()}: ${response.request().method()} ${response.url()}`,
@@ -71,7 +89,7 @@ export const test = base.extend<Fixtures>({
       })
     })
 
-    expect(seen).toEqual([])
+    expect([...seen, ...expected.unmet()]).toEqual([])
   },
 
   page: async ({ page, watch }, provide) => {
@@ -82,33 +100,8 @@ export const test = base.extend<Fixtures>({
   expectNoBlockingViolations: async ({ page }, provide) => {
     await provide(async () => {
       // Animação finita ainda rodando mistura o texto com o fundo e simula uma
-      // falha de `color-contrast`: mede só depois que elas terminam. A que é
-      // cancelada no meio (o React troca a classe da entrada ao hidratar)
-      // rejeita o `finished` com `AbortError`: terminou do mesmo jeito, e
-      // reprovar por ela fazia a home falhar uma vez a cada tantas execuções.
-      await page.evaluate(() =>
-        Promise.all(
-          document
-            .getAnimations()
-            .filter(
-              (animation) =>
-                animation.effect?.getComputedTiming().iterations !== Infinity,
-            )
-            // Só as animações de tempo. A ligada à rolagem (`animation-timeline:
-            // scroll()`, o `scroll-fade` do `CodeBlock`) avança com o scroll e
-            // nunca termina sozinha: esperar por ela travava a aula até o
-            // tempo do teste acabar.
-            .filter(
-              (animation) => animation.timeline instanceof DocumentTimeline,
-            )
-            .map((animation) =>
-              animation.finished.then(
-                () => undefined,
-                () => undefined,
-              ),
-            ),
-        ),
-      )
+      // falha de `color-contrast`: mede só depois que elas terminam.
+      await new ResponsiveAudit(page).settle()
 
       const results = await new AxeBuilder({ page })
         .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])

@@ -1,5 +1,7 @@
 import { Env } from '@adonisjs/core/env'
 
+import EnvBlocks from '#core/env-blocks'
+
 /**
  * The single environment reader (`_standards/backend.md` §6). Every key read by
  * `env.get()` is declared here, and `pattern:check` enforces that every declared key is read
@@ -12,10 +14,16 @@ import { Env } from '@adonisjs/core/env'
  *
  * The blocks follow the standard's order, the same as `.env.example`.
  *
- * Extension point (KIT.md §3.4): the project switches on the optional blocks of the
- * catalog (`mail`, `queue`, `jwt`) and leaves the rest as the model has it.
+ * `sync-to-project.mjs --check` holds this file to the model: `EnvBlocks.assert` stays, and a key
+ * the model declares as required is never made optional here.
+ *
+ * One catalog for every project (DECISIONS.md #417): every key of `.env.example` the application
+ * reads is declared here (`MINIO_ROOT_*` are read by `infra/minio/minio-setup.sh`), and the ones of a block the project does not use are optional, because empty is the right value
+ * of a block that is off. A block that is on must be complete: `EnvBlocks.assert` below stops the
+ * boot naming the empty key (_doc-lib/adonisjs.md#configuration,
+ * https://docs.adonisjs.com/configuration: `Env.schema.string.optional()`).
  */
-export default await Env.create(new URL('../', import.meta.url), {
+const env = await Env.create(new URL('../', import.meta.url), {
   /*
   |----------------------------------------------------------------------------
   | Node
@@ -24,8 +32,8 @@ export default await Env.create(new URL('../', import.meta.url), {
   | `PORT` and `HOST` are read from `process.env` by the framework itself, and
   | `NODE_ENV` by the loader, before the env service exists. `TZ` is read
   | by Node: when absent, the process inherits the host time zone, and the same query
-  | answers different dates depending on the machine. `UTC` in every environment; whoever
-  | converts to the reader's time zone is the presentation layer.
+  | answers different dates depending on the machine. `America/Eirunepe` in every
+  | environment, the zone of every Maiyu system and of the database session (#393).
   */
   NODE_ENV: Env.schema.enum(['development', 'production', 'test'] as const),
   PORT: Env.schema.number(),
@@ -130,10 +138,45 @@ export default await Env.create(new URL('../', import.meta.url), {
   | seed with one log line and the rest of `node ace db:seed` runs. The application boots
   | without these: only whoever seeds needs them.
   |
-  | The first administrator: the password goes with the e-mail. The demo: one account per role
-  | sharing `SEED_DEMO_PASSWORD`, plus the sample content.
+  | The first administrator: the password goes with the e-mail.
   */
   SEED_OWNER_EMAIL: Env.schema.string.optional(),
   SEED_OWNER_PASSWORD: Env.schema.string.optional(),
-  SEED_DEMO_PASSWORD: Env.schema.string.optional(),
+  /*
+  | The first tenant (DECISIONS.md #390): the client the existing data migrates to. No default:
+  | a name or a city written here would seed the wrong client in every project. The four go
+  | together; the city is the slug of one of the seeded cities, the type one of `TENANT_TYPES`.
+  */
+  SEED_TENANT_NAME: Env.schema.string.optional(),
+  SEED_TENANT_SLUG: Env.schema.string.optional(),
+  SEED_TENANT_CITY: Env.schema.string.optional(),
+  SEED_TENANT_TYPE: Env.schema.string.optional(),
+  /*
+  | Single-client mode (DECISIONS.md #399): the slug of the one tenant of a product that by nature
+  | has one client. Set, the public routes carry no city or tenant segment and resolve this tenant
+  | (404 when it does not exist or is inactive); absent, the segments of #390 apply. No default.
+  */
+  SINGLE_TENANT_SLUG: Env.schema.string.optional(),
+
+  /*
+  |----------------------------------------------------------------------------
+  | Mail and queue
+  |----------------------------------------------------------------------------
+  |
+  | The block is on when `SMTP_HOST` has a value, and then `MAIL_FROM` and `SMTP_PORT` are
+  | required (`EnvBlocks`). Empty `SMTP_HOST` skips every send (`config/mail.ts`); without
+  | `REDIS_URL` the queue uses the database. The code of the block (`@adonisjs/mail`,
+  | `@adonisjs/queue`, `@adonisjs/redis`) only reaches the project that has the dependencies;
+  | the keys are declared in every one.
+  */
+  MAIL_FROM: Env.schema.string.optional(),
+  SMTP_HOST: Env.schema.string.optional(),
+  SMTP_PORT: Env.schema.number.optional(),
+  SMTP_USERNAME: Env.schema.string.optional(),
+  SMTP_PASSWORD: Env.schema.string.optional(),
+  REDIS_URL: Env.schema.string.optional(),
 })
+
+EnvBlocks.assert((key) => env.get(key))
+
+export default env

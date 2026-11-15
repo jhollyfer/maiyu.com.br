@@ -16,8 +16,12 @@ export class DatabaseGuard {
     return new URL(url).pathname.replace(/^\//, '')
   }
 
-  /** Throws if the URL does not point to a `_test` database on loopback. */
-  static assertTestDatabase(url: string | undefined): void {
+  /**
+   * Throws if the URL is missing or its host is not loopback. The one check the E2E commands
+   * (`e2e:accounts`, `e2e:cleanup`) share with the suite: they run against the development
+   * database, whose name has no `_test`, but never against someone else's machine.
+   */
+  static assertLoopback(url: string | undefined): void {
     if (!url)
       throw new Error(
         'DATABASE_URL missing: the suite does not know which database to run on.',
@@ -29,6 +33,12 @@ export class DatabaseGuard {
         `The suite refuses to start: host "${host}" is not loopback. ` +
           'It drops the tables between tests; point DATABASE_URL of .env.test to the local test database.',
       )
+  }
+
+  /** Throws if the URL does not point to a `_test` database on loopback. */
+  static assertTestDatabase(url: string | undefined): void {
+    DatabaseGuard.assertLoopback(url)
+    if (!url) return
 
     const name = DatabaseGuard.databaseName(url)
 

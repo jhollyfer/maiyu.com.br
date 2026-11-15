@@ -1,16 +1,13 @@
 import logo512 from '#/assets/brand/logo-512.png'
 import { env } from '#/env'
-import { localDateTime } from '#/lib/i18n'
+import {
+  alternateLinks,
+  localDateTime,
+  localizedUrl,
+  ogLocale,
+} from '#/lib/i18n'
 import { m } from '#/paraglide/messages'
-import { getLocale, locales, localizeUrl } from '#/paraglide/runtime'
-import type { Locale } from '#/paraglide/runtime'
-
-/** The `og:locale` of each house language (`language_TERRITORY`). */
-const OG_LOCALES = {
-  'pt-BR': 'pt_BR',
-  es: 'es_ES',
-  en: 'en_US',
-} satisfies Record<Locale, string>
+import { getLocale } from '#/paraglide/runtime'
 
 /** The link card image: the games logo. */
 const OG_IMAGE = new URL(logo512, env.VITE_SITE_URL).href
@@ -22,6 +19,10 @@ type PageHeadInput = Readonly<{
   description?: string
   /** The path without language prefix and without query, as the router sees it (`/matches`). */
   pathname: string
+  /** The link card image of this page: a path or an absolute URL. The brand logo when absent. */
+  image?: string
+  /** The `og:type`: `article` for a news item or post, `website` (default) for the rest. */
+  type?: 'website' | 'article'
   /** A page outside the search engines' index (404). */
   noindex?: boolean
   /** JSON-LD blocks already serialized by `jsonLd()` (`BreadcrumbList`, domain type). */
@@ -39,22 +40,15 @@ export type SportsEventInput = Readonly<{
   pathname: string
   /** Each match's time, ISO 8601; the earliest becomes `startDate`, and without any the field is omitted. */
   scheduledAt: ReadonlyArray<string | null>
+  /** The city's IANA zone (`CityResponse.timeZone`), `TIME_ZONE` by default: `startDate` carries its offset. */
+  timeZone?: string
 }>
-
-/** The page's absolute URL in the requested language (`localizeUrl` returns `URL`). */
-export function localizedUrl(pathname: string, locale: Locale): string {
-  const url = localizeUrl(new URL(pathname, env.VITE_SITE_URL), { locale })
-  // `/es/` and `/es` are the same address, and the site answers in the form without a slash.
-  if (url.pathname.length > 1 && url.pathname.endsWith('/'))
-    url.pathname = url.pathname.slice(0, -1)
-
-  return url.href
-}
 
 /**
  * A public page's `head` (`_standards/frontend.md` §9.7): title with the site
- * suffix, description, canonical of the current language, reciprocal `hreflang`
- * of the three versions plus `x-default` (the `pt-BR` one) and Open Graph.
+ * suffix (`title | site`, the house separator, `DECISIONS.md`), description, canonical of the
+ * current language, reciprocal `hreflang` of the three versions plus `x-default` (the `pt-BR` one),
+ * Open Graph (`og:type` and `og:image` per page) and the Twitter card.
  *
  * Title and description already arrive translated from the route (`m.*()`), and the language is
  * the request's: `head` runs on SSR inside the `paraglideMiddleware` context.
@@ -66,6 +60,8 @@ export function pageHead({
   title,
   description = m.site_description(),
   pathname,
+  image,
+  type = 'website',
   noindex = false,
   structuredData = [],
 }: PageHeadInput) {
@@ -75,30 +71,32 @@ export function pageHead({
 
   const locale = getLocale()
   const canonical = localizedUrl(pathname, locale)
+  let cardImage = OG_IMAGE
+  let twitterCard = 'summary'
+  if (image) {
+    cardImage = new URL(image, env.VITE_SITE_URL).href
+    twitterCard = 'summary_large_image'
+  }
 
   const meta = [
     { title: fullTitle },
     { name: 'description', content: description },
     { property: 'og:title', content: fullTitle },
     { property: 'og:description', content: description },
-    { property: 'og:image', content: OG_IMAGE },
+    { property: 'og:type', content: type },
+    { property: 'og:image', content: cardImage },
     { property: 'og:url', content: canonical },
-    { property: 'og:locale', content: OG_LOCALES[locale] },
+    { property: 'og:locale', content: ogLocale(locale) },
+    { name: 'twitter:card', content: twitterCard },
+    { name: 'twitter:title', content: fullTitle },
+    { name: 'twitter:description', content: description },
+    { name: 'twitter:image', content: cardImage },
   ]
   if (noindex) meta.push(...noindexMeta(false))
 
-  const links = [
+  const links: Array<{ rel: string; href: string; hrefLang?: string }> = [
     { rel: 'canonical', href: canonical },
-    ...locales.map((item) => ({
-      rel: 'alternate',
-      hrefLang: item,
-      href: localizedUrl(pathname, item),
-    })),
-    {
-      rel: 'alternate',
-      hrefLang: 'x-default',
-      href: localizedUrl(pathname, 'pt-BR'),
-    },
+    ...alternateLinks(pathname).map((link) => ({ rel: 'alternate', ...link })),
   ]
 
   const scripts = structuredData.map((children) => ({
@@ -157,6 +155,7 @@ export function sportsEventJsonLd({
   sport,
   pathname,
   scheduledAt,
+  timeZone,
 }: SportsEventInput): string {
   const event: Record<string, unknown> = {
     '@context': 'https://schema.org',
@@ -171,7 +170,7 @@ export function sportsEventJsonLd({
     .flatMap((value) => {
       if (value === null) return []
 
-      return [localDateTime(value)]
+      return [localDateTime(value, timeZone)]
     })
     .sort((a, b) => a.toMillis() - b.toMillis())
   if (first) event.startDate = first.toISO()

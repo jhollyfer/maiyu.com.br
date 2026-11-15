@@ -1,9 +1,9 @@
 import type * as React from 'react'
 
 import { Badge } from '#/components/ui/badge'
+import { cn } from '#/lib/cn'
 import { PROJECT_STATUS_LABELS } from '#/lib/labels'
-import type { ProjectStatus } from '#/lib/projects'
-import { cn } from '#/lib/utils'
+import type { ProjectStatus } from '@maiyu/shared'
 
 /**
  * The dot color per status: forest for what is live, annatto for what

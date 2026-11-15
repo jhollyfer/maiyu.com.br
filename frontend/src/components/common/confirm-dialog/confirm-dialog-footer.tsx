@@ -75,7 +75,9 @@ export function ConfirmDialogConfirm({
       onClick={confirm}
       {...rest}
     >
-      {isPending && <Spinner data-icon="inline-start" />}
+      {isPending && (
+        <Spinner aria-label={m.kit_loading()} data-icon="inline-start" />
+      )}
       {children}
     </AlertDialogAction>
   )

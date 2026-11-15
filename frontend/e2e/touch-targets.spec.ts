@@ -2,6 +2,8 @@ import { LocalizedPath, PagesList } from './support/pages-list'
 import { ResponsiveAudit, TOUCH_TARGET } from './support/responsive-audit'
 import { expect, test } from './support/test'
 
+test.use({ storageState: PagesList.anonymous })
+
 /**
  * The touch targets of every public page on the phone (`mobile` project only, see
  * `playwright.config.ts`), charged the house goal, 44 px (`docs/DESIGN.md` §4), with no spacing

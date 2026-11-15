@@ -86,6 +86,188 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/sessions/refresh/refresh.controller').default['handle']>>>
     }
   }
+  'account.profile.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/account/profile'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#features/account/profile/show/show.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/account/profile/show/show.controller').default['handle']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/account/profile/show/show.controller').default['handle']>>>
+    }
+  }
+  'account.profile.update': {
+    methods: ["PUT"]
+    pattern: '/account/profile'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/account/profile.validator').AccountProfileUpdateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/account/profile.validator').AccountProfileUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/account/profile/update/update.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/account/profile/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/account/profile/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'authentication.tenants.list': {
+    methods: ["GET","HEAD"]
+    pattern: '/authentication/tenants'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#features/authentication/tenants/list/list.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/authentication/tenants/list/list.controller').default['handle']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/tenants/list/list.controller').default['handle']>>>
+    }
+  }
+  'authentication.tenants.select': {
+    methods: ["PUT"]
+    pattern: '/authentication/tenants/active'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/authentication/tenants.validator').AuthenticationTenantSelectValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/authentication/tenants.validator').AuthenticationTenantSelectValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/authentication/tenants/select/select.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/authentication/tenants/select/select.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/authentication/tenants/select/select.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'storefront.cities.list': {
+    methods: ["GET","HEAD"]
+    pattern: '/storefront/cities'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#features/storefront/cities/list/list.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storefront/cities/list/list.controller').default['handle']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storefront/cities/list/list.controller').default['handle']>>>
+    }
+  }
+  'storefront.tenants.list': {
+    methods: ["GET","HEAD"]
+    pattern: '/storefront/cities/:city/tenants'
+    types: {
+      body: {}
+      paramsTuple: [ParamValue]
+      params: { city: ParamValue }
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#features/storefront/tenants/list/list.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storefront/tenants/list/list.controller').default['handle']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storefront/tenants/list/list.controller').default['handle']>>>
+    }
+  }
+  'platform.cities.create': {
+    methods: ["POST"]
+    pattern: '/platform/cities'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/cities/cities.validator').CitiesCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/cities/cities.validator').CitiesCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/cities/create/create.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/cities/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/cities/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.cities.update': {
+    methods: ["PUT"]
+    pattern: '/platform/cities/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>|InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>|InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.cities.delete': {
+    methods: ["DELETE"]
+    pattern: '/platform/cities/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/cities/delete/delete.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/cities/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/cities/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.overview.show': {
+    methods: ["GET","HEAD"]
+    pattern: '/platform/overview'
+    types: {
+      body: {}
+      paramsTuple: []
+      params: {}
+      query: {}
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/overview/show/show.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/overview/show/show.controller').default['handle']>>>
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/overview/show/show.controller').default['handle']>>>
+    }
+  }
+  'platform.tenants.create': {
+    methods: ["POST"]
+    pattern: '/platform/tenants'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsCreateValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/tenants/create/create.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/tenants/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/tenants/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.tenants.update': {
+    methods: ["PUT"]
+    pattern: '/platform/tenants/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsUpdateValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsUpdateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/tenants/update/update.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/tenants/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/tenants/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.members.save': {
+    methods: ["PUT"]
+    pattern: '/platform/tenants/:id/members'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsMemberSaveValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#validators/tenants/tenants.validator').TenantsMemberSaveValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/members/save/save.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/members/save/save.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/members/save/save.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'platform.members.delete': {
+    methods: ["DELETE"]
+    pattern: '/platform/members/:id'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      paramsTuple: [ParamValue]
+      params: { id: ParamValue }
+      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/platform/members/delete/delete.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/members/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/members/delete/delete.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'storages.files.paginate': {
     methods: ["GET","HEAD"]
     pattern: '/storages'
@@ -106,6 +288,19 @@ export interface Registry {
       body: ExtractBody<InferInput<(typeof import('#validators/storages/files.validator').StoragesFileCreateValidator)>>
       paramsTuple: []
       params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/storages/files.validator').StoragesFileCreateValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
+  'storages.files.create-for-tenant': {
+    methods: ["POST"]
+    pattern: '/storages/cities/:city/tenants/:tenant'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/storages/files.validator').StoragesFileCreateValidator)>>
+      paramsTuple: [ParamValue, ParamValue]
+      params: { city: ParamValue; tenant: ParamValue }
       query: ExtractQuery<InferInput<(typeof import('#validators/storages/files.validator').StoragesFileCreateValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/storages/files/create/create.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
