@@ -18,9 +18,10 @@ WORKDIR /app
 # pnpm by npm, as in the academy (DECISIONS.md #395), and not by Corepack: pnpm 12 changed
 # the package layout and the Corepack bundled with Node 24 looks for the binary at the old
 # path and fails with MODULE_NOT_FOUND. On first use pnpm switches to the
-# `devEngines.packageManager` version of the root, so the version lives in one place
-# (_doc-lib/pnpm.md#installation, https://pnpm.io/installation).
-RUN npm install -g pnpm
+# `devEngines.packageManager` version of the root, so the exact version lives in one place
+# (_doc-lib/pnpm.md#installation, https://pnpm.io/installation). The major is pinned here:
+# unpinned, npm installed pnpm 11, older than the lockfile (seen in the adacaibs, DECISIONS.md #779).
+RUN npm install -g pnpm@12
 
 # Manifests before the code, so the install stays cached while only the
 # code changes. `pnpm-workspace.yaml` carries `allowBuilds`: without it the install
