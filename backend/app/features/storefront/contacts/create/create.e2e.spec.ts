@@ -18,7 +18,7 @@ const VALID = {
   locale: 'pt-BR',
 } as const
 
-/** The tenant of `SINGLE_TENANT_SLUG` (`.env.test`), seeded with the owner as its administrator. */
+/** The tenant of `TENANT_PROJECT.singleSlug` (`config/tenant.project.ts`), seeded with the owner as its administrator. */
 const SINGLE_SLUG = 'maiyu'
 
 /**

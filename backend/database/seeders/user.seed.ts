@@ -1,8 +1,10 @@
+import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
 import { ACTIVE_STATUS, PLATFORM_ROLE, USER_ROLE } from '@maiyu/shared'
 
+import { TenantConfig } from '#config/tenant'
 import City from '#models/city'
 import Tenant from '#models/tenant'
 import TenantMembership from '#models/tenant-membership'
@@ -45,14 +47,13 @@ export default class extends BaseSeeder {
       },
     )
 
-    const slug = env.get('SEED_TENANT_SLUG')
-    const citySlug = env.get('SEED_TENANT_CITY')
-    if (!slug || !citySlug) return
+    const { seed } = await app.container.make(TenantConfig)
+    if (!seed) return
 
     // The slug is unique per city, so the city goes in the lookup.
     const tenant = await Tenant.query()
-      .where('slug', slug)
-      .whereIn('cityId', City.query().select('id').where('slug', citySlug))
+      .where('slug', seed.slug)
+      .whereIn('cityId', City.query().select('id').where('slug', seed.city))
       .first()
     if (!tenant) return
 

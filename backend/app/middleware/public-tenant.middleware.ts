@@ -35,7 +35,7 @@ type Access =
  * route has it, the tenant segment (`/:city/:tenant/...`), the same segments the frontend puts after
  * the language. No subdomain, so no wildcard DNS nor a certificate per client. A city or tenant that
  * does not exist answers 404, the same as any unknown address; with the city alone the request reads
- * every tenant of it. A product with one client by nature sets `SINGLE_TENANT_SLUG` and its public
+ * every tenant of it. A product with one client by nature sets `TENANT_PROJECT.singleSlug` and its public
  * URL keeps neither segment (`/pt-br/agenda`).
  *
  * A public route only reads, unless it declares a write (`{ access: 'insert' }`, DECISIONS.md #397):
@@ -90,7 +90,7 @@ export default class PublicTenantMiddleware {
   }
 
   /**
-   * Single-client mode (`SINGLE_TENANT_SLUG`, DECISIONS.md #399): the route carries no segment and
+   * Single-client mode (`TENANT_PROJECT.singleSlug`, DECISIONS.md #399): the route carries no segment and
    * the configured tenant is the address, whatever the params say. Otherwise the segments.
    */
   private async resolve(params: HttpContext['params']) {

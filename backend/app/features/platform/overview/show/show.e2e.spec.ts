@@ -25,7 +25,7 @@ test.group('platform/overview > show', (group) => {
 
     response.assertStatus(200)
     const overview = body(response, PlatformOverviewResponse)
-    // Its own fixture, by slug: a seeded tenant (`SEED_TENANT_*`) must not change the count.
+    // Its own fixture, by slug: a seeded tenant (`TENANT_PROJECT.seed`) must not change the count.
     const mine = overview.tenants.find(
       (tenant) => tenant.slug === DEFAULT_TENANT_SLUG,
     )

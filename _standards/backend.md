@@ -1090,9 +1090,10 @@ evento ou fila, ou o fluxo é idempotente para poder repetir.
      precisa do tenant que o seed cria, então não é migration que roda no mesmo `migration:run` antes
      do seed; é um comando `ace` do projeto (`node ace tenant:backfill`, idempotente) chamado depois
      do seed, ou uma migration de dado que entra só no deploy seguinte (relatos do curupira e do
-     adacaibs). O seeder de cidades e o de tenant rodam com `SEED_TENANT_NAME`,
-     `SEED_TENANT_SLUG`, `SEED_TENANT_CITY=benjamin-constant` e `SEED_TENANT_TYPE`, **sem default**
-     (#329: um nome escrito no código semearia o cliente errado em todo projeto); o backfill copia o id
+     adacaibs). O seeder de cidades e o de tenant rodam com o `TENANT_PROJECT.seed` do
+     `config/tenant.project.ts` (nome, slug, cidade `benjamin-constant` e tipo), `null` por padrão e
+     **sem default no kit** (#329: um nome escrito no kit semearia o cliente errado em todo projeto;
+     não é chave de ENV, #782); o backfill copia o id
      desse tenant para toda linha com `tenant_id` nulo, em lote, cria um vínculo por
      conta com o papel que a conta tinha em `users.role` e põe `OWNER` em `platform_role` só da
      conta do dono. Lê e escreve por `this.db`, nunca por model.
@@ -1145,8 +1146,8 @@ regra mora no kit, em três peças, e nenhum use-case escreve `where tenant_id` 
   (`actor.tenant.role`), e `role.middleware.ts` lê dali; acima dos tenants, `platform.middleware.ts`
   deixa entrar só o dono da plataforma (`actor.platformRole`).
 
-**Cliente único (#399).** Produto que por natureza tem um cliente só liga `SINGLE_TENANT_SLUG`
-(`config/tenant.ts`, sem default): o `public-tenant.middleware.ts` resolve esse tenant sem segmento
+**Cliente único (#399).** Produto que por natureza tem um cliente só liga `TENANT_PROJECT.singleSlug`
+(`config/tenant.project.ts`, lido só em `config/tenant.ts`, `null` por padrão e fora do ENV, #782): o `public-tenant.middleware.ts` resolve esse tenant sem segmento
 na URL, com o mesmo `TenantScope.ofPublic`, só leitura, e 404 se ele não existe ou está inativo.
 Slug de cidade e de tenant não iguala rota fixa do frontend: `Rule.RESERVED_SLUGS` do `shared`.
 
@@ -1847,6 +1848,14 @@ unitário, `DRIVE_DISK` escolhe o disco, `supportsACL: false` no R2; `DECISIONS.
 | `SEED_OWNER_EMAIL` | api | junto com a senha | não | e-mail do primeiro administrador criado pelo seeder; senha sem e-mail para o seeder |
 | `SEED_OWNER_PASSWORD` | api | não | sim | **liga** o seed do dono; vazia, o seed do dono é pulado com uma linha de log |
 
+**O que não é chave de ENV** (`DECISIONS.md` #782): valor que não é segredo e não muda entre ambientes é
+configuração do produto e vai versionado, não para o catálogo. O primeiro tenant do seed e o modo cliente
+único são o `TENANT_PROJECT` de `config/tenant.project.ts`, ponto de extensão do projeto: `seed`
+(nome, slug, cidade, tipo) e `singleSlug`, `null` desligado, lidos só pelo `config/tenant.ts`
+(`TenantConfig`) e pelos seeders; o spec troca o `TenantConfig`, não o ENV. A doc manda o ENV para
+segredo e para o que muda por ambiente, e o `config/` para o resto
+(_doc-lib/adonisjs.md#configuration, https://docs.adonisjs.com/configuration).
+
 **Seed ligado pela chave.** Cada seed liga pela presença do valor da sua chave, em qualquer ambiente,
 nunca por flag à parte (`SEED_ENABLED`, `SEED_DEMO=true`) nem pelo `NODE_ENV`: o `static environment`
 do seeder não restringe o seed do dono, e o de conteúdo de exemplo só o exclui de produção (abaixo). Dado de referência que o app precisa
@@ -1916,10 +1925,10 @@ O E2E não tem chave por papel (`E2E_ADMIN_*`, `E2E_ADVISOR_*`) **nem de senha**
 nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.command.ts`), que o
 `e2e/auth.setup.ts` chama. Ele cria uma conta para o dono da plataforma, o administrador da plataforma, o
 `staff`, o `nonStaff` (quando o projeto tem papel fora do staff) e o cliente final, lendo os papéis de
-`tests/role-fixtures.ts` e sem literal de enum, e põe `staff` e `nonStaff` no tenant que `SINGLE_TENANT_SLUG` nomeia no modo cliente único (onde a escrita anônima pública grava) e no `cliente-de-teste` no multi-tenant (`DECISIONS.md` #711); sorteia a senha a cada execução, a imprime só na saída do
+`tests/role-fixtures.ts` e sem literal de enum, e põe `staff` e `nonStaff` no tenant que `TENANT_PROJECT.singleSlug` nomeia no modo cliente único (onde a escrita anônima pública grava) e no `cliente-de-teste` no multi-tenant (`DECISIONS.md` #711); sorteia a senha a cada execução, a imprime só na saída do
 comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. As contas de domínio com vínculo (o conselheiro de uma turma, outro da mesma categoria, o representante) são o ponto de extensão `tests/e2e-project-accounts.ts`, que o sync cria vazio e nunca reescreve: `ProjectE2eAccounts.accounts` declara nome e papel de cada conta extra, e `ProjectE2eAccounts.link` recebe as contas criadas (`userOf('<nome>')`) e monta o dado de domínio pelos use cases e repositories do projeto, idempotente. O `link` roda depois de todas as contas e antes da impressão, então falha nele não imprime conta nenhuma, e nome que repete papel do kit (`staff`, `platformOwner`...) é recusado em tipo e em runtime, sem criar conta; `platformRole: OWNER` numa extra é aceito; a saída leva as extras em `project` no mesmo `E2E_ACCOUNTS=` (`DECISIONS.md` #611). Nada disso é chave de ambiente: não há
 `SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
-com 35 chaves no backend e 10 no frontend (`DECISIONS.md` #443). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `SINGLE_TENANT_SLUG` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
+com 30 chaves no backend e 10 no frontend (`DECISIONS.md` #443, #782). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `TENANT_PROJECT.singleSlug` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
 O spec de papel pede a sessão com
 `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`, e o de uma conta de domínio pelo nome que o projeto declarou em `frontend/e2e/support/project-accounts.ts` (`stateOf('councilorA')`). Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no

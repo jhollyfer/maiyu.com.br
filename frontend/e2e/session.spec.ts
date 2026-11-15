@@ -9,10 +9,13 @@ import { expect, test } from './support/test'
  * que só aceita caminho interno, a guarda inversa, a saída e a sessão que vence no meio do uso.
  * Roda nos três tamanhos de tela, contra a API de verdade.
  *
- * Cada entrada pelo formulário conta no limite da conta, então só os testes em que o formulário é o
- * assunto entram por ele, todos com o administrador da plataforma (a conta do `auth.setup.ts` que
- * entra no painel em qualquer projeto), e a saída revoga a sessão: ela usa a sessão que o próprio
- * teste abriu, nunca o `storageState` do dono que os outros specs compartilham. O bloco `painel` só
+ * Cada entrada pelo formulário conta no limite da conta (20 por hora, `signInAccountThrottle`), e os
+ * três projetos gastam o mesmo balde. Só entra pelo formulário o teste em que a entrada é o assunto
+ * (credencial, `?redirect=`, saída), com o administrador da plataforma (a conta do `auth.setup.ts`
+ * que entra no painel em qualquer projeto); a saída revoga a sessão, então usa a que o próprio teste
+ * abriu, nunca o `storageState` do dono que os outros specs compartilham. O teste da sessão que vence
+ * já nasce com a sessão do dono (`auth.setup.ts`) e só limpa o cookie, sem gastar tentativa nem
+ * revogar nada (DECISIONS.md #712). O bloco `painel` só
  * existe em projeto com a API da sessão (`/authentication/*`), então o spec não pergunta se há backend.
  */
 test.describe('sem sessão', () => {
@@ -93,28 +96,27 @@ test.describe('sem sessão', () => {
     await page.goto('/pt-br/profile')
     await expect(page).toHaveURL(/\/pt-br\/sign-in\?redirect=/)
   })
+})
 
-  test('a sessão que vence no meio do uso leva à entrada, com a tela de agora em ?redirect=', async ({
-    page,
-    context,
-  }) => {
-    const platformAdministrator = E2eAccountsStore.accountOf(
-      E2eAccountsStore.read(),
-      'platformAdministrator',
-    )
-    await SessionPage.openSignIn(page, '/pt-br/profile')
-    await SessionPage.submit(page, platformAdministrator)
-    await expect(page).toHaveURL(/\/pt-br\/profile$/)
+test('a sessão que vence no meio do uso leva à entrada, com a tela de agora em ?redirect=', async ({
+  page,
+  context,
+  expectHydrated,
+}) => {
+  // A sessão do dono, gravada pelo setup: entrar pelo formulário aqui gastaria uma tentativa da
+  // conta por projeto, e o assunto do teste é o que acontece depois da entrada. Limpar o cookie não
+  // revoga nada no servidor, então a sessão gravada segue valendo para os outros specs.
+  await page.goto('/pt-br/profile')
+  await expectHydrated(page.getByRole('heading', { level: 1 }))
 
-    // Sem cookie nem o refresh renova: o próximo pedido à API é um 401 sem volta.
-    await context.clearCookies()
-    await SessionPage.openAccountMenu(page)
+  // Sem cookie nem o refresh renova: o próximo pedido à API é um 401 sem volta.
+  await context.clearCookies()
+  await SessionPage.openAccountMenu(page)
 
-    await expect(page).toHaveURL(/\/pt-br\/sign-in\?redirect=/)
-    expect(new URL(page.url()).searchParams.get('redirect')).toBe(
-      '/pt-br/profile',
-    )
-  })
+  await expect(page).toHaveURL(/\/pt-br\/sign-in\?redirect=/)
+  expect(new URL(page.url()).searchParams.get('redirect')).toBe(
+    '/pt-br/profile',
+  )
 })
 
 test('quem já tem sessão não vê a entrada: a guarda inversa o leva ao painel', async ({

@@ -40,7 +40,7 @@ export class Tenants {
   }
 
   /**
-   * The tenant of an E2E run (DECISIONS.md #711): in the single-client mode the one `SINGLE_TENANT_SLUG`
+   * The tenant of an E2E run (DECISIONS.md #711): in the single-client mode the one `TenantConfig.singleSlug`
    * names, because that is where the public anonymous writes land and the staff of the run must
    * see them; otherwise the default one. An existing tenant of that slug is reused as it is.
    */
