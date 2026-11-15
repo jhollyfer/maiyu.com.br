@@ -61,9 +61,8 @@ export function FieldCombobox({
   slot = 'field-combobox',
   testId,
 }: FieldComboboxProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldCombobox')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldCombobox')
   const { ref: fieldRef } = field
   let wrapperTestId: string | undefined = `${slot}-input`
   if (testId) wrapperTestId = undefined
@@ -77,7 +76,7 @@ export function FieldCombobox({
       data-testid={wrapperTestId}
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
@@ -93,7 +92,7 @@ export function FieldCombobox({
         <OptionComboboxInput
           data-testid={testId ?? `${slot}-input`}
           ref={fieldRef}
-          id={field.name}
+          id={controlId}
           name={field.name}
           placeholder={placeholder}
           showClear={!required}

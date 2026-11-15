@@ -26,7 +26,7 @@ código e de texto: `typescript.md` §12. Texto que o usuário vê sai sempre de
 | `routes/_public/` | vitrine: SSR completo, indexável (§9.2, §9.7) |
 | `routes/_authentication/` | login, cadastro, recuperação; `layout.tsx` é o guard inverso (sessão válida sai para o painel) e `noindex`. No bloco `painel` o `layout.tsx` e o `sign-in/` (URL `/sign-in`, a mesma em todo projeto) são do kit; cadastro e recuperação são do projeto, montados em `AuthShell` (`DECISIONS.md` #491). O caminho para o cadastro ("Ainda não tem conta? Crie") é o `sign-in/-sign-in-footer.tsx`, esqueleto do projeto que o sync cria vazio e nunca reescreve (#763) |
 | `routes/_private/layout.tsx` | portão único de sessão (§1.3); declara `ssr` (§9.2) e `noindex`. Esqueleto do projeto que chama `SessionGuard.require` e monta `PanelShell` com o `PANEL_MENU` de `lib/panel.ts`; menu, sidebar, cabeçalho e confirmação de saída **não** moram em `-components/` (`DECISIONS.md` #491) |
-| `routes/_private/profile/` | o perfil da própria conta, `/profile`, do kit (`AccountProfileForm`) |
+| `routes/_private/profile/` | o perfil da própria conta, `/profile`, do kit (`AccountProfileForm`). O que o projeto mostra abaixo do formulário (o link para a área de quem não tem papel, §3.4) é o `-profile-extra.tsx`, esqueleto do projeto que o sync cria vazio e nunca reescreve (#774) |
 | `routes/_private/<área>/layout.tsx` | guard de capacidade da área (§3.4) |
 | `routes/_private/<área>/<recurso>/` | molde de recurso (§1.2); `<recurso>/layout.tsx` só quando não há área e o papel muda por recurso (lowcodejs, `DECISIONS.md` #356) |
 | `routes/_setup/` | grupo de instalação (lowcodejs), opcional |
@@ -378,7 +378,9 @@ entrada.
   (`_doc-lib/nitro.md#config`) ou middleware em `src/server.ts` enviam `Content-Security-Policy` com
   `frame-ancestors 'none'` e `connect-src`/`img-src` só para a API e, com upload pré-assinado
   (`backend.md` §5.4), a origem pública do storage (`STORAGE_PUBLIC_URL`, lida por requisição em
-  `src/server.ts`, nunca fixada no build pelo `vite.config.ts`), nada além, `X-Content-Type-Options: nosniff`,
+  `src/server.ts`, nunca fixada no build pelo `vite.config.ts`), e o `img-src` também as origens de
+  imagem de terceiros que o projeto lista em `lib/csp-project.ts` (`PROJECT_IMAGE_ORIGINS`, ponto de
+  extensão vazio por padrão; ex. tile de mapa, `DECISIONS.md` #773), nada além, `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin` e HSTS sem `preload`. Sem `frame-ancestors`, a
   tela de login pode ser embutida em `iframe` por outro site (clickjacking).
 - **Endereço da API sem default de rede.** `src/env.ts` lê `VITE_API_URL` uma vez e o build falha
@@ -441,8 +443,12 @@ de domínio, nem `PlatformRole` nem `UserRole`) fica fora de `AREAS` e do `PANEL
 (`DECISIONS.md` #765). O layout da área carrega o recurso que prova o vínculo
 (`context.queryClient.query(<recurso>MeQueryOptions)`, ex. `GET /courier/me`) e, no 403/404, manda a
 conta para `homeOf`. O backend continua sendo quem autoriza, por policy sobre a mesma linha. O link
-para a área mora onde o vínculo já foi lido, por exemplo o perfil ou o fluxo de cadastro. Não sai no
-menu por regra de papel, e o `AccountProfileShowResponse` do kit não ganha campo de domínio.
+para a área mora no perfil, em `routes/_private/profile/-profile-extra.tsx` (bloco `painel`): esqueleto
+do projeto que o sync cria vazio e nunca reescreve, renderizado pelo `/profile` do kit logo abaixo do
+`AccountProfileForm`, com a conta da sessão em `account`. Ele carrega o recurso do vínculo e só mostra o
+link quando o vínculo existe (`DECISIONS.md` #774). O fluxo de cadastro do ator, que é do projeto, também
+pode levar à área. Não sai no menu por regra de papel, e o `AccountProfileShowResponse` do kit não ganha
+campo de domínio.
 
 O que decide **o que renderizar dentro** de uma rota já carregada (esconder botão, desabilitar
 célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel espalhado pela tela.
@@ -1391,6 +1397,30 @@ com `contain-intrinsic-size` antes. _doc-lib/tanstack-table.md#framework/react/g
   prefetch de link. O número vai no corpo do PR com a máquina e o que estava mockado (fonte, imagem
   externa). Laboratório compara; a meta de p75 de campo acima só se confere em produção.
 
+### 9.11 Build verde com mensagem indefinida *(achado no maiyu.com.br, #780)*
+
+O `pnpm build` e o `Dockerfile-production` saíam verdes com o compile do Paraglide quebrado: o
+compilador só **avisa** (`PluginImportError: fetch failed`) quando não baixa o plugin do inlang do
+jsDelivr e sai com 0; o catálogo vem vazio, o bundle sai com centenas de `IMPORT_IS_UNDEFINED`, todo
+`m.*` fica indefinido e o `/health-check` responde 200. Três travas, em camadas:
+
+- **Sem rede no caminho.** Os plugins são devDependencies de versão exata
+  (`@inlang/plugin-message-format`, `@inlang/plugin-m-function-matcher`, em `kit.deps.json`) e o
+  `project.inlang/settings.json` aponta para `./node_modules/@inlang/<plugin>/dist/index.js`. O SDK do
+  inlang lê do disco o módulo cujo caminho não começa com `http` (e é um bundle sem imports, por isso
+  funciona), então o compile e o `inlang check` não dependem do `cdn.jsdelivr.net`
+  (_doc-lib/paraglide.md#/file-formats, https://paraglidejs.com/file-formats; código do SDK
+  `project/directoryPlugins.js`, `importLocalPlugins`).
+- **O compile tem código de saída.** `i18n:compile` é `paraglide-js compile --project ./project.inlang &&
+  node scripts/check-i18n-compile.mjs`: o script sai com 1 se um `modules` for URL ou arquivo ausente, ou se
+  alguma chave do `pt-BR.json` não virou função em `src/paraglide/messages.js`
+  (_doc-lib/paraglide.md#/compiling-messages). É o que o `Dockerfile-production` e o `check` executam.
+- **O build reprova import indefinido.** `vite.config.ts` põe `lib/build-log.ts` em
+  `build.rolldownOptions.onLog`: log `IMPORT_IS_UNDEFINED` lança erro
+  (o `defaultHandler('error', log)` da doc do Rolldown não basta: o do Vite só imprime e o build termina verde, conferido no Vite 8.3.8; _doc-lib/vitejs.md#build, https://vite.dev/config/build-options#build-rolldownoptions;
+  https://rolldown.rs/reference/InputOptions.onLog). Cobre o caminho em que o plugin do Vite compila
+  sozinho, sem passar pelo `i18n:compile`.
+
 ---
 
 ## 10. UX e acessibilidade
@@ -1500,8 +1530,12 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 
 - Rótulo visível sempre, acima do campo; placeholder é exemplo, nunca rótulo.
 - Erro abaixo do campo, ligado por `aria-describedby`, com `aria-invalid`; nunca só a cor. O par
-  central `invalidProps(invalid, id)` + `errorId(id)` mora em `lib/form-a11y.ts`, e o `id` usa o
-  `idPrefix` da casca (§4). _doc-lib/react-hook-form.md#advanced-usage#AccessibilityA11y.
+  central `invalidProps(invalid, id)` + `errorId(id)` mora em `lib/form-a11y.ts`. O `id` dos campos
+  do `AppField` é o `controlId` do `useFieldValidation`: `useId()` do React mais o `name`, único por
+  instância. Só o `name` repetia o `id` quando dois formulários da página tinham campo de mesmo nome
+  (e-mail do checkout e da newsletter), e o `label for` de um apontava para o outro.
+  _doc-lib/react-hook-form.md#advanced-usage#AccessibilityA11y; `useId` não tem entrada em
+  `_doc-lib` (não coberto): https://react.dev/reference/react/useId.
 
 ```tsx
 <Field data-invalid={fieldState.invalid}>

@@ -46,20 +46,19 @@ export function FieldNumber({
   format,
   locale,
 }: FieldNumberProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    number | null
-  >('FieldNumber')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<number | null>('FieldNumber')
   const { ref: fieldRef } = field
 
   return (
     <Field data-slot="field-number" data-invalid={isInvalid}>
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
       <NumberField.Root
         render={<InputGroup />}
-        id={field.name}
+        id={controlId}
         name={field.name}
         disabled={disabled}
         min={min}

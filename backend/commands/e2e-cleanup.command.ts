@@ -2,11 +2,11 @@ import { BaseCommand } from '@adonisjs/core/ace'
 import type { CommandOptions } from '@adonisjs/core/types/ace'
 import db from '@adonisjs/lucid/services/db'
 
+import { E2eGuard } from '#tests/e2e-guard'
 import {
   E2E_ACCOUNT_EMAIL_PATTERN,
   E2E_ACCOUNT_NAME_PREFIX,
-} from '#commands/e2e-accounts.command'
-import { E2eGuard } from '#tests/e2e-guard'
+} from '#tests/e2e-identity'
 import { ProjectE2eCleanup } from '#tests/e2e-project-cleanup'
 import type { ProjectE2eMarker } from '#tests/e2e-project-cleanup'
 
@@ -47,7 +47,7 @@ export default class E2eCleanup extends BaseCommand {
         this.app.config.get<string | undefined>(
           'database.connections.pg.connection.connectionString',
         ),
-      ) ?? E2eGuard.markersRefusal(markers)
+      ) ?? E2eGuard.markersRefusal(markers, ProjectE2eCleanup.skeletonTables)
     if (refusal) {
       this.logger.error(refusal)
       this.exitCode = 1

@@ -40,16 +40,16 @@ describe('FieldSelect', () => {
   it('prints the item label in the trigger, not the raw value', () => {
     render(<Form status="INACTIVE" />)
 
-    const trigger = document.getElementById('status')
-    expect(trigger?.textContent).toContain('Inativo')
-    expect(trigger?.textContent).not.toContain('INACTIVE')
+    const trigger = screen.getByLabelText(/Situação/)
+    expect(trigger.textContent).toContain('Inativo')
+    expect(trigger.textContent).not.toContain('INACTIVE')
   })
 
   it('marks the trigger and the label when required', () => {
     render(<Form status="" required />)
 
     expect(
-      document.getElementById('status')?.getAttribute('aria-required'),
+      screen.getByLabelText(/Situação/).getAttribute('aria-required'),
     ).toBe('true')
     expect(
       document.querySelector('[data-slot="field-required-mark"]'),
@@ -61,7 +61,7 @@ describe('FieldSelect', () => {
     render(<Form status="" />)
 
     expect(
-      document.getElementById('status')?.hasAttribute('aria-required'),
+      screen.getByLabelText(/Situação/).hasAttribute('aria-required'),
     ).toBe(false)
     expect(
       document.querySelector('[data-slot="field-required-mark"]'),

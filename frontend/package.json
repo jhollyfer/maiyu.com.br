@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build:deps": "pnpm --filter \"{.}^...\" build",
-    "i18n:compile": "paraglide-js compile --project ./project.inlang --outdir ./src/paraglide --silent",
+    "i18n:compile": "paraglide-js compile --project ./project.inlang && node scripts/check-i18n-compile.mjs",
     "i18n:check": "inlang check --project ./project.inlang --source ./src",
     "dev": "vite dev --host --port 3000",
     "build": "vite build",
@@ -92,6 +92,8 @@
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@inlang/cli": "3.6.0",
     "@inlang/paraglide-js": "3.2.2",
+    "@inlang/plugin-m-function-matcher": "2.4.3",
+    "@inlang/plugin-message-format": "4.6.0",
     "@playwright/test": "1.65.0",
     "@rolldown/plugin-babel": "0.3.1",
     "@tailwindcss/node": "4.3.5",

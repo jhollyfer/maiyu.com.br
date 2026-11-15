@@ -304,6 +304,7 @@ frontend/
 ├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4
 ├── messages/{pt-BR,es,en}.json      # chaves kit_* fundidas pelo sync (DECISIONS #343)
 ├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
+├── scripts/{check-i18n-compile.mjs, check-i18n-compile.test.ts}   # kit: exit 1 se o plugin do inlang não carregou (frontend.md §9.11)
 ├── scripts/{check-ui-patches.mjs, check-ui-patches.test.ts, ui-patches.json}   # kit: cobrança dos patches // casa: de ui/ (frontend.md §6)
 ├── e2e/                             # árvore abaixo
 └── src/

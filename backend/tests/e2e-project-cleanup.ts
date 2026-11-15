@@ -23,4 +23,16 @@ export class ProjectE2eCleanup {
   static readonly markers = [
     { table: 'contacts', column: 'name' },
   ] as const satisfies ReadonlyArray<ProjectE2eMarker>
+
+  /**
+   * The tables of the multi-tenant skeleton the project has (DECISIONS.md #778): `markers` cannot
+   * name them, so a marker never deletes a tenant by accident. The model has the kit's own; a
+   * project without the skeleton leaves this empty and may list a table of its own with those
+   * names, like `cities`.
+   */
+  static readonly skeletonTables: ReadonlyArray<string> = [
+    'tenants',
+    'cities',
+    'tenant_memberships',
+  ]
 }

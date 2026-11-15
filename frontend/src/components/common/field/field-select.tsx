@@ -68,7 +68,9 @@ export function FieldSelect({
   triggerClassName,
   valueType = 'text',
 }: FieldSelectProps): React.JSX.Element {
-  const { field, isInvalid, errors } = useFieldValidation<string | number>(slot)
+  const { field, controlId, isInvalid, errors } = useFieldValidation<
+    string | number
+  >(slot)
   // The `Select` works with text; a number field keeps the number the
   // contract takes.
   const selected = String(field.value)
@@ -81,7 +83,7 @@ export function FieldSelect({
       data-testid={wrapperTestId}
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
@@ -103,7 +105,7 @@ export function FieldSelect({
         <SelectTrigger
           data-testid={testId}
           aria-required={required || undefined}
-          id={field.name}
+          id={controlId}
           className={triggerClassName}
         >
           {icon}

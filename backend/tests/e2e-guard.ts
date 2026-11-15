@@ -10,14 +10,13 @@ export class E2eGuard {
   static readonly ENVIRONMENTS: ReadonlyArray<string> = ['development', 'test']
 
   /**
-   * The tables of the kit (accounts, sessions, memberships, tenants): `e2e:cleanup` reaches the
-   * accounts only by the rule of e-mail and name together, never through the project's list.
+   * The tables every project has (accounts, sessions, tokens): `e2e:cleanup` reaches the accounts
+   * only by the rule of e-mail and name together, never through the project's list. The tables of
+   * the multi-tenant skeleton are not here: a project without it may own a `cities` table, and a
+   * project with it lists its own in `ProjectE2eCleanup.skeletonTables` (DECISIONS.md #778).
    */
   static readonly KIT_TABLES: ReadonlyArray<string> = [
     'users',
-    'tenants',
-    'cities',
-    'tenant_memberships',
     'auth_access_tokens',
     'consumed_refresh_tokens',
     'rate_limits',
@@ -53,9 +52,13 @@ export class E2eGuard {
     return null
   }
 
-  /** The refusal for a project list that names a SQL fragment or a table of the kit, or `null`. */
+  /**
+   * The refusal for a project list that names a SQL fragment or a table of the kit or of the
+   * skeleton (`skeletonTables`, the project's own list), or `null`.
+   */
   static markersRefusal(
     markers: ReadonlyArray<ProjectE2eMarker>,
+    skeletonTables: ReadonlyArray<string>,
   ): string | null {
     const invalid = markers.filter(
       (each) =>
@@ -67,8 +70,10 @@ export class E2eGuard {
         .map((each) => `${each.table}.${each.column}`)
         .join(', ')}`
 
-    const kit = markers.filter((each) =>
-      E2eGuard.KIT_TABLES.includes(each.table),
+    const kit = markers.filter(
+      (each) =>
+        E2eGuard.KIT_TABLES.includes(each.table) ||
+        skeletonTables.includes(each.table),
     )
     if (kit.length > 0)
       return `E2E_CLEANUP_KIT_TABLE: table of the kit in tests/e2e-project-cleanup.ts: ${kit

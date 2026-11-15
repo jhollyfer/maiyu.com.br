@@ -130,15 +130,20 @@ export default defineConfig({
       },
     ]),
     {
-      command: 'node .output/server/index.mjs',
+      // The build is part of the run: a `.output/` left by a plain `pnpm build` carries the
+      // `VITE_*` of the versioned `.env.production`, and the SSR of the run would call the
+      // production API (curupira: every spec failed). The process env wins over the `.env.*`
+      // files (_doc-lib/vitejs.md#env-and-mode, https://vite.dev/guide/env-and-mode).
+      command: 'pnpm run build && node .output/server/index.mjs',
       // The default `cwd` is the config folder (`e2e/`); `.output/` lives at the app root.
       cwd: '..',
       // Nitro listens on the environment's `PORT`, and in the E2E job it is 3333,
       // the backend's port: without this the second server falls into EADDRINUSE.
-      env: { PORT: '3000' },
+      env: { PORT: '3000', ...E2eEnv.localBuild },
       url: 'http://localhost:3000/health-check',
       reuseExistingServer: !process.env.CI,
-      timeout: 120_000,
+      // Build plus boot.
+      timeout: 300_000,
     },
   ],
 })

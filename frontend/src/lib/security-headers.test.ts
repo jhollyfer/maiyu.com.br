@@ -10,6 +10,7 @@ const BASE = {
   nonce: 'abc123',
   apiOrigin: 'https://api.example.com',
   storageOrigin: undefined,
+  imageOrigins: [],
   indexable: true,
 } as const
 
@@ -52,6 +53,18 @@ describe('documentHeaders', () => {
     expect(policy).toContain(
       "img-src 'self' https://api.example.com https://storage.example.com data: blob:",
     )
+  })
+
+  it('when the project lists image origins, they open img-src and not connect-src', () => {
+    const policy = csp({
+      ...BASE,
+      imageOrigins: ['https://tile.openstreetmap.org'],
+    })
+
+    expect(policy).toContain(
+      "img-src 'self' https://api.example.com https://tile.openstreetmap.org data: blob:",
+    )
+    expect(policy).toContain("connect-src 'self' https://api.example.com;")
   })
 
   it('when it builds any response, it forbids framing and carries the static headers', () => {

@@ -27,9 +27,8 @@ export function FieldTextarea({
   testId,
   className,
 }: FieldTextareaProps): React.JSX.Element {
-  const { field, isInvalid, errors, errorId, describedBy } = useFieldValidation<
-    string | null
-  >('FieldTextarea')
+  const { field, controlId, isInvalid, errors, errorId, describedBy } =
+    useFieldValidation<string | null>('FieldTextarea')
   const { ref: inputRef } = field
   let wrapperTestId: string | undefined = 'field-textarea'
   if (testId) wrapperTestId = undefined
@@ -39,7 +38,7 @@ export function FieldTextarea({
       data-testid={wrapperTestId}
       data-invalid={isInvalid}
     >
-      <FieldLabel htmlFor={field.name}>
+      <FieldLabel htmlFor={controlId}>
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
@@ -48,7 +47,7 @@ export function FieldTextarea({
         ref={inputRef}
         className={className}
         disabled={disabled}
-        id={field.name}
+        id={controlId}
         name={field.name}
         placeholder={placeholder}
         value={field.value ?? ''}

@@ -8,6 +8,7 @@ import { defineConfig, loadEnv } from 'vite'
 
 // With the extension: Vite's native config loader does not resolve an extensionless import.
 import { readBuildEnv } from './src/lib/build-env.ts'
+import { failOnUndefinedImport } from './src/lib/build-log.ts'
 import { STATIC_SECURITY_HEADERS } from './src/lib/security-headers.ts'
 
 export default defineConfig(({ mode }) => {
@@ -20,6 +21,11 @@ export default defineConfig(({ mode }) => {
   return {
     // The tsconfig `paths` (`#/*`) through Vite itself (vite.dev/config/shared-options#resolve-tsconfigpaths).
     resolve: { tsconfigPaths: true },
+    build: {
+      // An import of a name the module does not export stops the build instead of warning: it is
+      // what a Paraglide compile without plugin looks like (`lib/build-log.ts`, `DECISIONS.md` #780).
+      rolldownOptions: { onLog: failOnUndefinedImport },
+    },
     plugins: [
       // Pinned preset: without it Nitro guesses the platform from the CI variables, and the
       // `Dockerfile-production` expects `node-server` (_doc-lib/nitro.md#deploy/runtimes/node).

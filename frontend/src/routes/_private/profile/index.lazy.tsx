@@ -14,6 +14,8 @@ import {
 } from '#/components/common/page-shell/page-shell'
 import { m } from '#/paraglide/messages'
 
+import { ProfileExtra } from './-profile-extra'
+
 // `getRouteApi` no escopo do módulo, nunca importar o `Route` do arquivo da rota: o ciclo de chunk
 // devolve `undefined` no primeiro SSR (`check-chunk-cycles.mjs`).
 const route = getRouteApi('/_private/profile/')
@@ -37,6 +39,7 @@ function RouteComponent(): React.JSX.Element {
       </PageShellHeader>
       <PageShellContent>
         <AccountProfileForm account={account} />
+        <ProfileExtra account={account} />
       </PageShellContent>
     </PageShell>
   )

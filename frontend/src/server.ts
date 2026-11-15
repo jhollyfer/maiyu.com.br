@@ -23,6 +23,7 @@ import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 
 import { env } from '#/env'
 import { runInRequestScope } from '#/integrations/tanstack-query/http.server'
+import { PROJECT_IMAGE_ORIGINS } from '#/lib/csp-project'
 import { createNonce, documentHeaders } from '#/lib/security-headers'
 import { readRuntimeEnv } from '#/lib/server-env'
 import { paraglideMiddleware } from '#/paraglide/server'
@@ -62,6 +63,7 @@ export default createServerEntry({
       nonce,
       apiOrigin: API_ORIGIN,
       storageOrigin: runtime.storageOrigin,
+      imageOrigins: PROJECT_IMAGE_ORIGINS,
       indexable: runtime.indexable,
     })
     for (const [name, value] of Object.entries(secure)) headers.set(name, value)

@@ -56,9 +56,12 @@ RUN set -eu; \
       esac; \
     done
 
-# Paraglide compiles the messages before the build; `src/paraglide/` is not versioned, and the
-# compiler downloads the plugins pinned in `project.inlang/settings.json` from jsDelivr, so the
-# Coolify server must reach `cdn.jsdelivr.net` (`tooling.md` §7, _doc-lib/paraglide.md#/file-formats).
+# Paraglide compiles the messages before the build; `src/paraglide/` is not versioned. The inlang
+# plugins are devDependencies read from `node_modules` (`project.inlang/settings.json`), so the
+# compile needs no network. `i18n:compile` also runs `scripts/check-i18n-compile.mjs`, which exits 1
+# when a plugin did not load: the compiler only warns, and without the guard the image would ship
+# with every message undefined and a green `/health-check` (`tooling.md` §8.2, `DECISIONS.md` #780,
+# _doc-lib/paraglide.md#/file-formats).
 # The `...` filter builds `shared/` before the app, in topological order; `!./backend` keeps
 # the backend's own build (`node ace build`, whose code is not in the image) out of it
 # (_doc-lib/pnpm.md#filtering, https://pnpm.io/filtering).

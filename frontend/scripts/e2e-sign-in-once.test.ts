@@ -46,6 +46,14 @@ describe('E2E sign-in happens once per account', () => {
     vi.stubEnv('E2E_BASE_URL', 'http://localhost:3000')
     vi.doMock('../e2e/support/project-accounts', () => ({
       PROJECT_E2E_ACCOUNT_NAMES: ['councilorA', 'councilorB'],
+      PROJECT_E2E_OWNER_ACCOUNT: null,
+      PROJECT_E2E_ROLE_NAMES: [
+        'platformOwner',
+        'platformAdministrator',
+        'staff',
+        'nonStaff',
+        'customer',
+      ],
     }))
     const { E2eAccountsStore } = await import('../e2e/support/accounts')
     const account = { login: 'a@example.com', password: 'secret' }
