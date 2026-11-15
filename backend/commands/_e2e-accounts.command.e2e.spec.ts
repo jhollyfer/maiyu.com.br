@@ -148,6 +148,22 @@ test.group('e2e > accounts', (group) => {
   })
 
   /**
+   * Role names for the simulated role map that no project account can have: they are derived from
+   * the project's own names, so a project with an `administrator` or an `operator` account does not
+   * make the command refuse the duplicate. The hyphen is also not a name a project writes as a key.
+   */
+  function simulatedRoles(): readonly [string, string] {
+    const taken = new Set(Object.keys(ProjectE2eAccounts.accounts))
+    const free = (base: string) => {
+      let name = base
+      while (taken.has(name)) name = `${name}-x`
+      return name
+    }
+
+    return [free('kit-spec-first'), free('kit-spec-second')]
+  }
+
+  /**
    * Swaps the skeleton's role map and its `create` for one run: a project whose roles are not the
    * tenant's (DECISIONS.md #778). `create` makes one user per name, with no tenant.
    */
@@ -209,24 +225,19 @@ test.group('e2e > accounts', (group) => {
     }
   }
 
-  test('a project whose roles are only administrator and operator: the line has those keys, no tenant is touched and each signs in (DECISIONS.md #778)', async ({
+  test('a project whose roles are only two of its own (neither is a project account name): the line has those keys, no tenant is touched and each signs in (DECISIONS.md #778)', async ({
     client,
     assert,
   }) => {
+    const [first, second] = simulatedRoles()
     const tenants = (await Tenant.query()).length
-    const command = await withRoleMap(['administrator', 'operator'], () =>
-      run(),
-    )
+    const command = await withRoleMap([first, second], () => run())
     command.assertSucceeded()
     const line = printedOf(command)
 
-    assert.sameMembers(Object.keys(line), [
-      'project',
-      'administrator',
-      'operator',
-    ])
+    assert.sameMembers(Object.keys(line), ['project', first, second])
     assert.lengthOf(await Tenant.query(), tenants)
-    for (const name of ['administrator', 'operator']) {
+    for (const name of [first, second]) {
       const account = line[name]
       if (!account || !('login' in account))
         throw new Error(`${name} was not printed`)
@@ -234,13 +245,14 @@ test.group('e2e > accounts', (group) => {
     }
   })
 
-  test('the reserved names follow the role map: `staff` is free where the map has no `staff`, `operator` is not', async ({
+  test('the reserved names follow the role map: `staff` is free where the map has no `staff`, the second role is not', async ({
     assert,
   }) => {
+    const [first, second] = simulatedRoles()
     const before = (await User.query()).length
-    const refused = await withRoleMap(['administrator', 'operator'], () =>
+    const refused = await withRoleMap([first, second], () =>
       withProject(
-        { operator: { tenantRole: ROLE_FIXTURES.staff } },
+        { [second]: { tenantRole: ROLE_FIXTURES.staff } },
         () => Promise.resolve(),
         () => run(),
       ),
@@ -249,13 +261,10 @@ test.group('e2e > accounts', (group) => {
     refused.assertFailed()
     assert.isFalse(printed(refused))
     assert.lengthOf(await User.query(), before)
-    const reserved = await withRoleMap(['administrator', 'operator'], () =>
+    const reserved = await withRoleMap([first, second], () =>
       Promise.resolve(E2eAccounts.reservedNames()),
     )
-    assert.sameMembers(
-      [...reserved],
-      ['administrator', 'operator', 'project', 'accounts'],
-    )
+    assert.sameMembers([...reserved], [first, second, 'project', 'accounts'])
   })
 
   test('the project accounts are created, linked after every account exists, and print under `project`', async ({
@@ -389,7 +398,7 @@ test.group('e2e > accounts', (group) => {
       )
   })
 
-  /** The tenant the staff of the run is a member of, with `SINGLE_TENANT_SLUG` set or not. */
+  /** The tenant the staff of the run is a member of, with a single-client slug in `TenantConfig` or not. */
   async function staffTenantSlug(singleSlug: string | null) {
     app.container.swap(TenantConfig, () => new TenantConfig(singleSlug))
     try {
@@ -410,7 +419,7 @@ test.group('e2e > accounts', (group) => {
     }
   }
 
-  test('single-client mode: the staff of the run is a member of the tenant of SINGLE_TENANT_SLUG, so it sees what a visitor writes (DECISIONS.md #711)', async ({
+  test('single-client mode: the staff of the run is a member of the tenant of `TenantConfig.singleSlug`, so it sees what a visitor writes (DECISIONS.md #711)', async ({
     assert,
   }) => {
     assert.equal(await staffTenantSlug('cliente-unico'), 'cliente-unico')

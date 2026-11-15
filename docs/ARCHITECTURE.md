@@ -108,7 +108,7 @@ Banco da API (`backend/database/migrations/`, as do kit e as de `contacts`):
 | `rate_limits` | contadores dos limites nomeados de `start/limiter.ts` |
 | `consumed_refresh_tokens` | refresh já usado, para detectar reuso e revogar a família da sessão |
 | `storages` | metadados do arquivo no bucket: nome, tipo, tamanho, estado do upload multipart |
-| `contacts` | a mensagem do formulário de contato, tabela de cliente (#397): `tenant_id` (obrigatório, o cliente do site, `SINGLE_TENANT_SLUG`), `customer_id` (nulo, o formulário é anônimo; `SET NULL` se a conta sair), nome (120), e-mail (254), mensagem, idioma, `answered_at` (nulo é pendente), `created_at`; índices em `created_at`, `answered_at` e `(tenant_id, created_at)` para a caixa de entrada; sem lixeira. A migration `1700000000110` acrescenta as colunas; o contrato do `shared/` não as expõe |
+| `contacts` | a mensagem do formulário de contato, tabela de cliente (#397): `tenant_id` (obrigatório, o cliente do site, o `singleSlug` de `config/tenant.project.ts`), `customer_id` (nulo, o formulário é anônimo; `SET NULL` se a conta sair), nome (120), e-mail (254), mensagem, idioma, `answered_at` (nulo é pendente), `created_at`; índices em `created_at`, `answered_at` e `(tenant_id, created_at)` para a caixa de entrada; sem lixeira. A migration `1700000000110` acrescenta as colunas; o contrato do `shared/` não as expõe |
 
 O conteúdo do site continua em constantes tipadas em `frontend/src/lib/` (`projects`, artigos de
 `articles.ts`, `JOBS`), com o tipo de cada um no próprio arquivo.

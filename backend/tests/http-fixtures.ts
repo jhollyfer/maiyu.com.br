@@ -178,7 +178,7 @@ export async function signInWithFactory(
  */
 export async function resetDatabase() {
   // The kit's specs address tenants by segment, so they run in the multi-tenant mode whatever
-  // `SINGLE_TENANT_SLUG` the project's `.env.test` sets (DECISIONS.md #410); the single-client
+  // `TENANT_PROJECT.singleSlug` the project sets (DECISIONS.md #410); the single-client
   // mode has its own specs, which swap the config again.
   app.container.swap(TenantConfig, () => new TenantConfig(null))
 

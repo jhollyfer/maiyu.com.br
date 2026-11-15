@@ -471,7 +471,7 @@ célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel e
   segmento; `CitySwitcher` e `PlatformOverview` são peças do kit comum e recebem os dados por prop.
   Sem DNS curinga nem certificado por cliente. O slug da cidade nunca colide com prefixo de idioma:
   o backend o recusa no cadastro, e a lista de segmentos fixos (`Rule.RESERVED_SLUGS`, `DECISIONS.md`
-  #399) vale também para o slug do cliente. Projeto de **cliente único** (`SINGLE_TENANT_SLUG` no
+  #399) vale também para o slug do cliente. Projeto de **cliente único** (`TENANT_PROJECT.singleSlug` no
   backend, `backend.md` §4.14) não monta a rota `$city` nem usa `CityPath`/`CitySwitcher`: a URL é
   `/pt-br/agenda`, sem segmento de cidade.
 
@@ -1343,8 +1343,8 @@ Mais:
 
 - `<html lang>` no `shellComponent` de `__root.tsx`: regra em `i18n.md` §2.
   _doc-lib/tanstack-router.md#guide/internationalization-i18n.
-- Recurso inexistente responde 404 de verdade (§5); slug público é estável, e trocar slug exige
-  redirect 301 no backend.
+- Recurso inexistente responde 404 de verdade (§5); slug público é estável, e trocar slug faz o
+  antigo responder 404, sem redirect (`DECISIONS.md` #383, #781).
 - **`sitemap.xml` e `robots.txt` são rotas de servidor** (`src/routes/sitemap[.]xml.ts`,
   `robots[.]txt.ts`), não arquivos de `public/`: a URL absoluta e o `Disallow: /` de staging
   dependem do ambiente. Sitemap só com URL canônica e indexável, `lastmod` do `updatedAt`, `priority`

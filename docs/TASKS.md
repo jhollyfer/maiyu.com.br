@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 51 itens de migração para a régua (40 feitos, 1 em andamento, 1 pausado, 4 bloqueados, 4 a fazer); atualizado 2026-11-13
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 52 itens de migração para a régua (40 feitos, 1 em andamento, 1 pausado, 4 bloqueados, 4 a fazer, 1 em revisão); atualizado 2026-11-15
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -91,7 +91,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RB.3 | Sessão do dono: seeder por `SEED_OWNER_*` (#329), revogação de sessão em update de conta | M | Feita | no que o kit traz: seeder do dono por `SEED_OWNER_*` (`firstOrCreate`) e sign-in, refresh e sign-out; revogação em update de conta entregue pela rota de conta (R2.10) |
 | RB.4 | `backend/.env.example` do modelo, `docs/ENV.md` e `Dockerfile-production` do backend | P | Feita | `.env.example` do modelo com os valores do projeto, `docs/ENV.md`, compose nas portas 5440, 9016 e 9017 e o `Dockerfile-production` do kit; e2e de storage rodou contra o MinIO local declarado, que não vale como prova de PR |
 | RB.5 | Tuyau dentro do `request()` no frontend | M | Feita | #324; depois de RB.1 |
-| RB.6 | Multi-tenant do backend: catálogo de ENV (#417), contato como tabela de cliente do tenant único (#397, #399), `SINGLE_TENANT_SLUG` e o seed do tenant, `TRUSTED_PROXIES` no Coolify | M | Em revisão | PR #30 (`chore/backend-multi-tenant`, sobre a #29), verificada: catálogo do kit com 35 chaves, contato no tenant único (migration `1700000000110`, `CustomerScoped`, `publicTenant({ access: 'insert' })`, painel só com o tenant da sessão), verificação independente com cinco mutações mortas, funcional 339/339 em banco novo; falta o merge do dono e, no Coolify, `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` na API, com o banco recriado antes do deploy |
+| RB.6 | Multi-tenant do backend: catálogo de ENV (#417), contato como tabela de cliente do tenant único (#397, #399), o tenant único e o seed do tenant, `TRUSTED_PROXIES` no Coolify | M | Em revisão | PR #30 (`chore/backend-multi-tenant`, sobre a #29), verificada: catálogo do kit com 35 chaves, contato no tenant único (migration `1700000000110`, `CustomerScoped`, `publicTenant({ access: 'insert' })`, painel só com o tenant da sessão), verificação independente com cinco mutações mortas, funcional 339/339 em banco novo; falta o merge do dono e, no Coolify, `TRUSTED_PROXIES=uniquelocal`, e o tenant único e o seed hoje vivem em `backend/config/tenant.project.ts` (R4.8), com o banco recriado antes do deploy |
 
 ### Régua 2 · Árvore e camadas
 
@@ -132,6 +132,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | Feita | `tooling.md` §10.6, `architecture.md` §8; nenhum teste lê código-fonte: a home, o cabeçalho, o layout, as cenas da visão, o `REVEAL` e as páginas de contato e carreiras são renderizados e conferidos pelo que aparece; "nada importa `motion`" não tem teste, porque o pacote não está no `package.json` e o import já quebra o typecheck e o build |
 | R4.7 | Sync de deploy: régua 7092226 levada à `main` com a #29, a #30 e a #32 | M | Feita | `chore/regua-sync-7092226`, base `main`; `sync --check` todo em 0; `codegen`, compose `app/app` com 5440, 9016 e 9017, `check-ui-patches --fix` em 8 arquivos |
+| R4.8 | Kit do tenant fora do ENV (`maiyu-pattern#108`, f7835ee, #782): `backend/config/tenant.project.ts`, backend com 30 chaves | P | Em revisão | PR #49 (`refactor/backend-tenant-fora-do-env`, base `main`, rascunho); `sync --check` todo em 0, hook verde; falta a verificação independente e o merge do dono |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | Feita | `tooling.md` §6, §7, §10.6; `check` pela fórmula (`build:deps` + `i18n:compile` + `i18n:check` + lint + typecheck + `format:check` + `test:unit`); o script `test` saiu; o `test:e2e` roda o Playwright pelo config da casa e depende do `setup` do dono que o R4.4 ainda resolve |
 
 ### Régua D · Documentação

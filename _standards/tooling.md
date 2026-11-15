@@ -958,7 +958,7 @@ com o mesmo número (hoje backend e frontend, contagem impressa pelo `--check`):
 `--check` lista `env-diverge: <arquivo>: <chave> a mais | a menos | fora de ordem` (a chave comentada não conta onde o modelo a tem ativa) e acusa o `backend/start/env.ts` que perdeu o `EnvBlocks.assert` ou afrouxou chave obrigatória, também para o
 `.env.test`, o `.env.production` e o `.env.e2e.example` (`fora do catálogo`), e imprime
 `env: <arquivo> N chaves (modelo M)`: N igual a M em todo projeto em dia. Chave nova entra no modelo
-do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave.
+do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave. Valor que não é segredo nem muda entre ambientes não é chave: vai versionado no ponto de extensão do projeto (o primeiro tenant e o cliente único, em `config/tenant.project.ts`, `backend.md` §6.2, `DECISIONS.md` #782); o catálogo do backend tem 30 chaves.
 
 - **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
 - **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,

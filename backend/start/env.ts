@@ -142,21 +142,6 @@ const env = await Env.create(new URL('../', import.meta.url), {
   */
   SEED_OWNER_EMAIL: Env.schema.string.optional(),
   SEED_OWNER_PASSWORD: Env.schema.string.optional(),
-  /*
-  | The first tenant (DECISIONS.md #390): the client the existing data migrates to. No default:
-  | a name or a city written here would seed the wrong client in every project. The four go
-  | together; the city is the slug of one of the seeded cities, the type one of `TENANT_TYPES`.
-  */
-  SEED_TENANT_NAME: Env.schema.string.optional(),
-  SEED_TENANT_SLUG: Env.schema.string.optional(),
-  SEED_TENANT_CITY: Env.schema.string.optional(),
-  SEED_TENANT_TYPE: Env.schema.string.optional(),
-  /*
-  | Single-client mode (DECISIONS.md #399): the slug of the one tenant of a product that by nature
-  | has one client. Set, the public routes carry no city or tenant segment and resolve this tenant
-  | (404 when it does not exist or is inactive); absent, the segments of #390 apply. No default.
-  */
-  SINGLE_TENANT_SLUG: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------------------------

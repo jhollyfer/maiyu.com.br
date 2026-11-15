@@ -33,7 +33,9 @@ test.describe('painel', () => {
     await page.goto('/pt-br/profile')
     await expectHydrated(page.getByRole('heading', { level: 1 }))
 
-    await page.getByLabel(ptBR.kit_locale_switcher_label).selectOption('en')
+    await page
+      .getByLabel(ptBR.kit_locale_switcher_label, { exact: true })
+      .selectOption('en')
 
     await expect(page).toHaveURL(/\/en\/profile$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(
@@ -49,7 +51,10 @@ test.describe('painel', () => {
       await expectHydrated(page.getByRole('heading', { level: 1 }))
 
       await expect(
-        page.getByRole('navigation', { name: ptBR.kit_panel_navigation }),
+        page.getByRole('navigation', {
+          name: ptBR.kit_panel_navigation,
+          exact: true,
+        }),
       ).toBeVisible()
     })
   })
@@ -64,7 +69,10 @@ test.describe('painel', () => {
       await page.goto('/pt-br/profile')
       await expectHydrated(page.getByRole('heading', { level: 1 }))
       await expect(
-        page.getByRole('navigation', { name: ptBR.kit_panel_navigation }),
+        page.getByRole('navigation', {
+          name: ptBR.kit_panel_navigation,
+          exact: true,
+        }),
       ).toBeHidden()
 
       await page.getByRole('button', { name: ptBR.kit_panel_open_menu }).click()

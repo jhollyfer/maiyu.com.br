@@ -38,7 +38,9 @@ export class SessionPage {
 
   /** Preenche o formulário e envia. */
   static async submit(page: Page, account: E2eAccount): Promise<void> {
-    await page.getByLabel(ptBR.kit_sign_in_login).fill(account.login)
+    await page
+      .getByLabel(ptBR.kit_sign_in_login, { exact: true })
+      .fill(account.login)
     await page
       .getByLabel(ptBR.kit_sign_in_password, { exact: true })
       .fill(account.password)

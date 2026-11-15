@@ -48,17 +48,16 @@ em development e test.
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
-| `SEED_TENANT_NAME` | api | sim com o tenant | não | nome do tenant único semeado (`_standards/DECISIONS.md` #390) | `Maiyu` |
-| `SEED_TENANT_SLUG` | api | sim com o tenant | não | slug do tenant; o mesmo de `SINGLE_TENANT_SLUG` | `maiyu` |
-| `SEED_TENANT_CITY` | api | sim com o tenant | não | slug da cidade semeada do tenant | `benjamin-constant` |
-| `SEED_TENANT_TYPE` | api | sim com o tenant | não | um dos `TENANT_TYPES` do shared | `ORGANIZATION` |
-| `SINGLE_TENANT_SLUG` | api | **sim** | não | modo cliente único (`_standards/DECISIONS.md` #399): a vitrine não leva cidade nem tenant na URL e resolve este tenant | `maiyu` |
 | `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | api | não | `SMTP_PASSWORD` sim | bloco de e-mail; vazio, o site não manda e-mail | vazio (`SMTP_PORT=587`) |
 | `REDIS_URL` | api | não | **sim** | fila e cache; vazio, a API usa o banco | vazio |
 
 As portas do `backend/docker-compose.yml` (5440, 9016, 9017) não são mais chaves do catálogo: o compose
 usa as dele por padrão, e quem precisa de outra porta exporta `DB_PORT`, `STORAGE_PORT` ou
 `STORAGE_CONSOLE_PORT` só no shell.
+
+O tenant único e o seed do primeiro tenant não são chaves de ENV: vivem em `backend/config/tenant.project.ts`
+(`singleSlug` e `seed`), versionados, porque nome, slug e cidade não são segredo nem mudam entre ambientes
+(`_standards/DECISIONS.md` #782 do upstream). O catálogo do backend tem 30 chaves.
 
 Em produção a API responde em `https://api.maiyu.com.br` (decisão do dono) e o site em
 `https://maiyu.com.br`, então os dois valores são `APP_SERVER_URL=https://api.maiyu.com.br` e
@@ -127,7 +126,7 @@ Docker Hub.
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
 | Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `app_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
-| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal`, `SINGLE_TENANT_SLUG=maiyu` e os `SEED_TENANT_*`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
+| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
 
 ## 5. Primeira configuração
 

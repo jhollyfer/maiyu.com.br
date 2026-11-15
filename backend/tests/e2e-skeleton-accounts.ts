@@ -54,7 +54,7 @@ export class E2eSkeletonAccounts {
     specs: Readonly<Record<string, ProjectE2eAccountSpec>>,
   ): Promise<E2eSkeletonRun> {
     // The tenant the public anonymous writes land in: in the single-client mode the one of
-    // `SINGLE_TENANT_SLUG` (DECISIONS.md #711), the same config the middleware reads.
+    // `TENANT_PROJECT.singleSlug` (DECISIONS.md #711), the same config the middleware reads.
     const config = await app.container.make(TenantConfig)
     const tenant = await Tenants.forE2e(config.singleSlug)
     const { nonStaff } = ROLE_FIXTURES

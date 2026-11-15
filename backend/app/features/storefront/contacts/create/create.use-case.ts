@@ -45,7 +45,7 @@ export default class StorefrontContactCreateUseCase {
 
   async execute(payload: Payload): Promise<Response> {
     // The row belongs to the client whose form this is (DECISIONS.md #397), owned by nobody: the
-    // visitor is anonymous. The public route names the tenant (`SINGLE_TENANT_SLUG` here); with
+    // visitor is anonymous. The public route names the tenant (`TENANT_PROJECT.singleSlug` here); with
     // no target there is nowhere to write, and the answer is the kit's `TENANT_REQUIRED`.
     const target = TenantScope.customerTargetOf()
     if (!target?.tenantId)
