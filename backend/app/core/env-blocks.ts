@@ -12,7 +12,7 @@ const BLOCKS = [
   {
     name: 'mail',
     trigger: 'SMTP_HOST',
-    required: ['MAIL_FROM', 'SMTP_PORT'],
+    required: ['SMTP_FROM', 'SMTP_PORT'],
   },
 ] as const
 

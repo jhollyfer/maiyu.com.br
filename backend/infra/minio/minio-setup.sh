@@ -4,8 +4,9 @@
 # anonymous reads, and the application user with minimum scope. The root only exists
 # for this script; the application comes in with STORAGE_KEY/STORAGE_SECRET.
 #
-# Usage: minio-setup.sh <endpoint>, with MINIO_ROOT_USER, MINIO_ROOT_PASSWORD,
-# STORAGE_KEY, STORAGE_SECRET and STORAGE_BUCKET in the environment.
+# Usage: minio-setup.sh <endpoint>. MINIO_ROOT_USER and MINIO_ROOT_PASSWORD are local
+# literals that `docker-compose.yml` (`x-minio-root`) passes in, not keys of `.env`
+# (DECISIONS.md #783); STORAGE_KEY, STORAGE_SECRET and STORAGE_BUCKET come from `.env`.
 set -eu
 
 endpoint="${1:-http://minio:9000}"

@@ -5,6 +5,15 @@
 # never rewrites it. Every port is bound to 127.0.0.1, never to the whole network.
 name: maiyu-backend
 
+# Root of the local MinIO: literals of this container, read by the server and by
+# `infra/minio/minio-setup.sh`. A credential of this machine only (127.0.0.1), like
+# the Postgres `app:app` below, and never a key of the ENV catalog: the running
+# application does not read it, it signs in with STORAGE_KEY/STORAGE_SECRET
+# (DECISIONS.md #783).
+x-minio-root: &minio-root
+  MINIO_ROOT_USER: minio-root
+  MINIO_ROOT_PASSWORD: minio-root-local
+
 services:
   # User, password and database are literals equal to the default DATABASE_URL of
   # `.env.example` (`postgres://app:app@localhost:<port>/app`): a credential of this
@@ -43,8 +52,7 @@ services:
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      <<: *minio-root
       # The browser sends each part straight here: without CORS, the PUT
       # preflight dies before any byte leaves.
       MINIO_API_CORS_ALLOW_ORIGIN: ${CORS_ORIGINS:-http://localhost:3000}
@@ -78,6 +86,8 @@ services:
         condition: service_healthy
     entrypoint: ['/bin/sh', '/setup/minio-setup.sh', 'http://minio:9000']
     env_file: .env
+    environment:
+      <<: *minio-root
     volumes:
       - ./infra/minio:/setup:ro
 

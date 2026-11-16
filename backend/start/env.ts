@@ -18,7 +18,8 @@ import EnvBlocks from '#core/env-blocks'
  * the model declares as required is never made optional here.
  *
  * One catalog for every project (DECISIONS.md #417): every key of `.env.example` the application
- * reads is declared here (`MINIO_ROOT_*` are read by `infra/minio/minio-setup.sh`), and the ones of a block the project does not use are optional, because empty is the right value
+ * reads in production or staging is declared here (dev-only and test-only values, such as the local
+ * MinIO root, are literals of the compose, DECISIONS.md #783), and the ones of a block the project does not use are optional, because empty is the right value
  * of a block that is off. A block that is on must be complete: `EnvBlocks.assert` below stops the
  * boot naming the empty key (_doc-lib/adonisjs.md#configuration,
  * https://docs.adonisjs.com/configuration: `Env.schema.string.optional()`).
@@ -148,13 +149,13 @@ const env = await Env.create(new URL('../', import.meta.url), {
   | Mail and queue
   |----------------------------------------------------------------------------
   |
-  | The block is on when `SMTP_HOST` has a value, and then `MAIL_FROM` and `SMTP_PORT` are
+  | The block is on when `SMTP_HOST` has a value, and then `SMTP_FROM` and `SMTP_PORT` are
   | required (`EnvBlocks`). Empty `SMTP_HOST` skips every send (`config/mail.ts`); without
   | `REDIS_URL` the queue uses the database. The code of the block (`@adonisjs/mail`,
   | `@adonisjs/queue`, `@adonisjs/redis`) only reaches the project that has the dependencies;
   | the keys are declared in every one.
   */
-  MAIL_FROM: Env.schema.string.optional(),
+  SMTP_FROM: Env.schema.string.optional(),
   SMTP_HOST: Env.schema.string.optional(),
   SMTP_PORT: Env.schema.number.optional(),
   SMTP_USERNAME: Env.schema.string.optional(),
