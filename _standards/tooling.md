@@ -954,11 +954,11 @@ passada não muda nada, e o `--check` lista `gitignore-falta: <arquivo>: <linha>
 
 **ENV: catálogo único de chaves** (`DECISIONS.md` #417, `backend.md` §6.2). Todo projeto tem exatamente
 as chaves de `_templates/backend/.env.example` e `_templates/frontend/.env.example`, na mesma ordem,
-com o mesmo número (hoje backend e frontend, contagem impressa pelo `--check`): nenhum bloco sai, e o recurso que o projeto não usa fica com valor vazio; só entra chave que o kit lê. O
+com o mesmo número (hoje backend e frontend, contagem impressa pelo `--check`): nenhum bloco sai, e o recurso que o projeto não usa fica com valor vazio; só entra chave que a aplicação em execução lê em produção ou em staging: valor só de dev ou de teste (credencial de container local, porta) é literal do compose ou do setup, nunca chave (`DECISIONS.md` #783), e cada bloco tem um prefixo só. O
 `--check` lista `env-diverge: <arquivo>: <chave> a mais | a menos | fora de ordem` (a chave comentada não conta onde o modelo a tem ativa) e acusa o `backend/start/env.ts` que perdeu o `EnvBlocks.assert` ou afrouxou chave obrigatória, também para o
 `.env.test`, o `.env.production` e o `.env.e2e.example` (`fora do catálogo`), e imprime
 `env: <arquivo> N chaves (modelo M)`: N igual a M em todo projeto em dia. Chave nova entra no modelo
-do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave. Valor que não é segredo nem muda entre ambientes não é chave: vai versionado no ponto de extensão do projeto (o primeiro tenant e o cliente único, em `config/tenant.project.ts`, `backend.md` §6.2, `DECISIONS.md` #782); o catálogo do backend tem 30 chaves.
+do upstream e chega a todos pelo sync; o projeto liga o bloco pelo valor, nunca pela chave. Valor que não é segredo nem muda entre ambientes não é chave: vai versionado no ponto de extensão do projeto (o primeiro tenant e o cliente único, em `config/tenant.project.ts`, `backend.md` §6.2, `DECISIONS.md` #782); o catálogo do backend tem 28 chaves.
 
 - **`main`**: o merge dispara o *Auto Deploy* do Coolify (§8.3).
 - **`develop`**: sem deploy. Se o projeto tiver homologação, ela é um recurso próprio no Coolify,
@@ -1179,7 +1179,7 @@ ENTRYPOINT ["minio"]
 ```
 
 O `minio` e o `minio-setup` estão no modelo do kit (`_templates/code/backend/docker-compose.yml`); o
-setup lê o `.env` do backend (`env_file`).
+setup lê o `.env` do backend (`env_file`) para `STORAGE_*`; o root do MinIO (`MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`) é literal de `x-minio-root` no compose, fora do `.env` (`DECISIONS.md` #783).
 
 `backend/infra/minio/minio-setup.sh` (rodado e conferido em 2026-10-14; a limpeza de multipart do MinIO
 é por ENV, `MINIO_API_STALE_UPLOADS_*` em `internal/config/api/api.go`, não por `mc ilm`):

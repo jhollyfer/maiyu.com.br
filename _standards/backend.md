@@ -1706,9 +1706,12 @@ O
 `--perfil=codigo`, e reprova o `start/env.ts` do projeto que tira o `EnvBlocks.assert` ou afrouxa para
 opcional uma chave que o modelo declara obrigatória.
 
-**Só entra no catálogo a chave que o kit lê** (código, `config/`, script, compose ou E2E de
-`_templates/code/`, `DECISIONS.md` #417): chave declarada sem leitor no kit é chave inventada e sai do
-modelo. O modelo Fastify (`_templates/code/backend.fastify`) ainda não tem leitor de ENV no kit nem
+**Só entra no catálogo a chave que a APLICAÇÃO EM EXECUÇÃO lê em produção ou em staging**
+(`config/`, `start/env.ts`, código de `app/`; `DECISIONS.md` #417, emendado pelo #783): chave sem leitor
+na aplicação é chave inventada e sai do modelo. Valor só de desenvolvimento ou de teste (credencial de
+container local, porta) mora como literal no compose ou no script de setup, nunca no `.env.example`.
+**Um prefixo por bloco**: o bloco de e-mail é `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`,
+`SMTP_PASSWORD`; o de storage, `STORAGE_*`; e assim cada bloco novo. O modelo Fastify (`_templates/code/backend.fastify`) ainda não tem leitor de ENV no kit nem
 catálogo próprio; a leva 10 o define (`DECISIONS.md` #417).
  Chave que o modelo não tem não existe: entra
 primeiro no catálogo abaixo e no modelo, depois no projeto (`DECISIONS.md` #271).
@@ -1724,7 +1727,7 @@ Regras:
 - **Chave opcional por instalação** (integração que só um cliente usa) é obrigatória onde a
   funcionalidade existe e opcional onde não existe.
 - **Segredo e credencial não têm default.** A aplicação para em vez de subir com um valor que
-  ninguém escolheu: `MAIL_FROM`, `SMTP_HOST`, chave de gateway de pagamento, chave de assinatura
+  ninguém escolheu: `SMTP_FROM`, `SMTP_HOST`, chave de gateway de pagamento, chave de assinatura
   de webhook. A senha de seed também não tem default, mas a ausência dela desliga o seed em vez de
   parar (§6.2, "Seed ligado pela chave").
 - **Default inseguro é declarado no comentário**, com o motivo. `DATABASE_SSL` ausente significa
@@ -1895,7 +1898,7 @@ projeto der a ele.
 
 | Nome | App | Obrigatória | Segredo | Significado |
 |---|---|---|---|---|
-| `MAIL_FROM` | api | onde há e-mail | não | remetente |
+| `SMTP_FROM` | api | onde há e-mail | não | remetente |
 | `SMTP_HOST` | api | onde há e-mail | não | servidor SMTP |
 | `SMTP_PORT` | api | onde há e-mail | não | porta do servidor SMTP: 587 com STARTTLS, 465 com TLS implícito (`DECISIONS.md` #286) |
 | `SMTP_USERNAME` | api | onde o relay pede login | não | usuário do relay autenticado (Resend, SES, Postmark); vazio onde o relay não pede, como o Mailpit local |
@@ -1928,7 +1931,7 @@ nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.com
 `tests/role-fixtures.ts` e sem literal de enum, e põe `staff` e `nonStaff` no tenant que `TENANT_PROJECT.singleSlug` nomeia no modo cliente único (onde a escrita anônima pública grava) e no `cliente-de-teste` no multi-tenant (`DECISIONS.md` #711); sorteia a senha a cada execução, a imprime só na saída do
 comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. As contas de domínio com vínculo (o conselheiro de uma turma, outro da mesma categoria, o representante) são o ponto de extensão `tests/e2e-project-accounts.ts`, que o sync cria vazio e nunca reescreve: `ProjectE2eAccounts.accounts` declara nome e papel de cada conta extra, e `ProjectE2eAccounts.link` recebe as contas criadas (`userOf('<nome>')`) e monta o dado de domínio pelos use cases e repositories do projeto, idempotente. O `link` roda depois de todas as contas e antes da impressão, então falha nele não imprime conta nenhuma, e nome que repete papel do kit (`staff`, `platformOwner`...) é recusado em tipo e em runtime, sem criar conta; `platformRole: OWNER` numa extra é aceito; a saída leva as extras em `project` no mesmo `E2E_ACCOUNTS=` (`DECISIONS.md` #611). Nada disso é chave de ambiente: não há
 `SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
-com 30 chaves no backend e 10 no frontend (`DECISIONS.md` #443, #782). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `TENANT_PROJECT.singleSlug` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
+com 28 chaves no backend e 10 no frontend (`DECISIONS.md` #443, #782, #783). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `TENANT_PROJECT.singleSlug` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
 O spec de papel pede a sessão com
 `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`, e o de uma conta de domínio pelo nome que o projeto declarou em `frontend/e2e/support/project-accounts.ts` (`stateOf('councilorA')`). Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no
@@ -1955,8 +1958,9 @@ opcional: chave que o projeto não usa fica no lugar dela, com valor vazio, nunc
 única, flag de funcionalidade só dele) não entra no catálogo: sai do projeto. O `.env.test`, o `.env.e2e.example` e o `.env.production` usam só chaves do catálogo, e o
 `sync-to-project.mjs --check` cobra (`DECISIONS.md` #276).
 
-**Fora do leitor de ENV**: `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD`, lidas por `infra/minio/minio-setup.sh`
-(o leitor delas está no kit). As portas do `docker-compose.yml` (`DB_PORT`, `STORAGE_PORT`,
+**Fora do leitor de ENV**: `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD` não são chave: o MinIO local é só de
+desenvolvimento e de teste (produção é S3 ou R2), e os dois valores são literais em `x-minio-root` do
+`docker-compose.yml`, que os passa ao servidor e ao `infra/minio/minio-setup.sh` (`DECISIONS.md` #783). As portas do `docker-compose.yml` (`DB_PORT`, `STORAGE_PORT`,
 `STORAGE_CONSOLE_PORT`) não são chave do catálogo: o compose é do kit, e o número da porta é o da
 linha do projeto em `PROJECT_PORTS`, que o sync escreve no compose e nos `.env.example` que cria
 (`tooling.md` §8.4, `DECISIONS.md` #769). A senha do Postgres local também não: é literal no compose. O CORS do MinIO local sai de `CORS_ORIGINS`. **Não existe chave de domínio do projeto**: o que o catálogo não cobre entra primeiro

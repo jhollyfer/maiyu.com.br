@@ -4,7 +4,7 @@ import EnvBlocks from '#core/env-blocks'
 
 const OFF = {
   SMTP_HOST: '',
-  MAIL_FROM: '',
+  SMTP_FROM: '',
   SMTP_PORT: undefined,
 } as const
 
@@ -26,7 +26,7 @@ test.group('core > env blocks', () => {
     assert.deepEqual(
       EnvBlocks.problems((key) => values[key]),
       [
-        'mail: SMTP_HOST is set, so MAIL_FROM is required',
+        'mail: SMTP_HOST is set, so SMTP_FROM is required',
         'mail: SMTP_HOST is set, so SMTP_PORT is required',
       ],
     )
@@ -36,7 +36,7 @@ test.group('core > env blocks', () => {
     const values = {
       ...OFF,
       SMTP_HOST: 'smtp.example.com',
-      MAIL_FROM: 'no-reply@example.com',
+      SMTP_FROM: 'no-reply@example.com',
       SMTP_PORT: 587,
     }
 
@@ -47,12 +47,12 @@ test.group('core > env blocks', () => {
   })
 
   test('a blank value counts as empty', ({ assert }) => {
-    const values = { ...OFF, SMTP_HOST: 'smtp.example.com', MAIL_FROM: '   ' }
+    const values = { ...OFF, SMTP_HOST: 'smtp.example.com', SMTP_FROM: '   ' }
 
     assert.deepEqual(
       EnvBlocks.problems((key) => values[key]),
       [
-        'mail: SMTP_HOST is set, so MAIL_FROM is required',
+        'mail: SMTP_HOST is set, so SMTP_FROM is required',
         'mail: SMTP_HOST is set, so SMTP_PORT is required',
       ],
     )
@@ -74,12 +74,12 @@ test.group('core > env blocks', () => {
 
     assert.throws(
       () => EnvBlocks.assert((key) => values[key]),
-      /Incomplete environment blocks.*MAIL_FROM.*SMTP_PORT/s,
+      /Incomplete environment blocks.*SMTP_FROM.*SMTP_PORT/s,
     )
   })
 
   test('a key without trigger set never fails the boot', ({ assert }) => {
-    const values = { ...OFF, MAIL_FROM: 'no-reply@example.com' }
+    const values = { ...OFF, SMTP_FROM: 'no-reply@example.com' }
 
     assert.doesNotThrow(() => EnvBlocks.assert((key) => values[key]))
   })

@@ -7,7 +7,7 @@
 
 | Atualizado | Fase atual | Progresso | Status |
 |---|---|---|---|
-| 2026-11-15 | Pausa para deploy (régua `maiyu-pattern` em f7835ee) | 7 de 47 itens | Pausado após o deploy |
+| 2026-11-16 | Pausa para deploy (régua `maiyu-pattern` em eedebc4) | 7 de 47 itens | Pausado após o deploy |
 
 ## Já feito
 
@@ -18,7 +18,9 @@
 
 ## Parou em
 
-**Tenant fora do ENV (2026-11-15, régua `maiyu-pattern` f7835ee).** A `main` está em 4f4c8dd, com a #46 e a #47. A PR do kit do tenant fora do ENV (#782 do upstream, a #49, base `main`, em rascunho) tira `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` do `.env.example` e do `.env.test` (o backend passa a 30 chaves) e põe o tenant único e o seed em `backend/config/tenant.project.ts`. Falta a verificação independente e o merge do dono; no Coolify essas 5 variáveis não precisam mais ser criadas. O painel de contatos (#31) segue pausado.
+**ENV só de produção (2026-11-16, régua `maiyu-pattern` eedebc4).** A `main` está em 21742b1, com a #46, a #47 e a #49. A PR do kit de ENV só de produção (#783 do upstream, base `main`, em rascunho) renomeia `MAIL_FROM` para `SMTP_FROM`, tira `MINIO_ROOT_USER` e `MINIO_ROOT_PASSWORD` do ENV (viram literais do `x-minio-root` do `backend/docker-compose.yml`) e leva o backend a 28 chaves; o frontend segue com 10. Falta a verificação independente e o merge do dono. No Coolify: renomear `MAIL_FROM` para `SMTP_FROM` na API, se existir; `MINIO_ROOT_*` não vai para produção. O painel de contatos (#31) segue pausado.
+
+**Tenant fora do ENV (2026-11-15, régua `maiyu-pattern` f7835ee).** Feito na #49 (#782 do upstream): `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` saíram do `.env.example` e do `.env.test`, e o tenant único e o seed vivem em `backend/config/tenant.project.ts`. No Coolify essas 5 variáveis não precisam mais ser criadas.
 
 **Pausa para deploy (2026-11-13, régua `maiyu-pattern` 7092226).** O dono pediu o projeto pronto para deploy e funcional, e depois a pausa; feature nova está parada. A PR de sync de deploy (`chore/regua-sync-7092226`, base `main`) leva à `main` a #29, a #30 e a #32, que no merge de 12/11 ficaram em branches intermediárias, mais o sync da régua 7092226 (#78 a #95). Com ela vêm o `codegen` do Tuyau, o `adonisjs:check` no `check`, o `#jobs/*`, o compose do kit com as credenciais `app/app` e o banco `app_test` criado pelo `infra/postgres` (portas 5440, 9016 e 9017 em 127.0.0.1) e o toque de 44 px reaplicado pelo `check-ui-patches.mjs --fix` em 8 arquivos de `components/ui/`. O painel de contatos (#31) está pausado, à espera da aprovação da spec.
 
@@ -124,7 +126,7 @@ Na retomada: recriar as sub-sessões de backend, frontend e shared em Sonnet 5.5
 
 0. Deploy, nesta ordem:
    1. O dono faz o merge da PR de sync de deploy na `main`; ela já traz a #29, a #30 e a #32.
-   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SEED_OWNER_*` e `SITE_ENV=production`; `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` não existem mais, e se já foram criadas no Coolify podem sair, #782). Ligar o *Auto Deploy* dos dois apps.
+   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SMTP_FROM` (era `MAIL_FROM`, renomear se existir; #783), `SEED_OWNER_*` e `SITE_ENV=production`; `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` não existem mais, e se já foram criadas no Coolify podem sair, #782). Ligar o *Auto Deploy* dos dois apps.
    3. Conferir o `/health-check` da API e o site em produção nos três idiomas.
    4. Agendar o `node ace contacts:prune`.
    5. Depois da pausa, retomar a #31 (painel de contatos) com o comentário do dono aprovando a spec: rebase sobre a `main` e sync com `--sem=pix --com=table --com=painel`.

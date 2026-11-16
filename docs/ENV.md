@@ -39,8 +39,6 @@ em development e test.
 | `DATABASE_SSL` | api | não | não | TLS na conexão; ausente é desligado | `false` |
 | `DRIVE_DISK` | api | sim | não | disco dos anexos: `s3` (o bucket abaixo, MinIO em dev e teste) ou `fs` (`tmp/uploads`, sem multipart nem URL assinada, então sem fluxo de upload); sem default | `s3` |
 | `UPLOAD_MAX_SIZE` | api | sim | não | teto por arquivo, em bytes | `1073741824` |
-| `MINIO_ROOT_USER` | compose | só em dev | não | root do MinIO local, usado pelo setup | `minio-root` |
-| `MINIO_ROOT_PASSWORD` | compose | só em dev | **sim** | senha do root do MinIO local | `<segredo>` |
 | `STORAGE_KEY` | api | sim | não | usuário do bucket, escopo mínimo | `maiyu` |
 | `STORAGE_SECRET` | api | sim | **sim** | segredo do usuário do bucket | `<segredo>` |
 | `STORAGE_BUCKET` | api | sim | não | bucket privado dos anexos | `maiyu` |
@@ -48,7 +46,7 @@ em development e test.
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
-| `MAIL_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | api | não | `SMTP_PASSWORD` sim | bloco de e-mail; vazio, o site não manda e-mail | vazio (`SMTP_PORT=587`) |
+| `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | api | não | `SMTP_PASSWORD` sim | bloco de e-mail; vazio, o site não manda e-mail | vazio (`SMTP_PORT=587`) |
 | `REDIS_URL` | api | não | **sim** | fila e cache; vazio, a API usa o banco | vazio |
 
 As portas do `backend/docker-compose.yml` (5440, 9016, 9017) não são mais chaves do catálogo: o compose
@@ -57,7 +55,12 @@ usa as dele por padrão, e quem precisa de outra porta exporta `DB_PORT`, `STORA
 
 O tenant único e o seed do primeiro tenant não são chaves de ENV: vivem em `backend/config/tenant.project.ts`
 (`singleSlug` e `seed`), versionados, porque nome, slug e cidade não são segredo nem mudam entre ambientes
-(`_standards/DECISIONS.md` #782 do upstream). O catálogo do backend tem 30 chaves.
+(`_standards/DECISIONS.md` #782 do upstream). O catálogo do backend tem 28 chaves.
+
+O usuário e a senha do root do MinIO local também não são chaves do catálogo: são
+literais do `backend/docker-compose.yml`, no anchor `x-minio-root`, valores só desta máquina (127.0.0.1) que a
+aplicação não lê (ela entra com `STORAGE_KEY` e `STORAGE_SECRET`) e que não vão para produção
+(`_standards/DECISIONS.md` #783 do upstream). O remetente de e-mail é `SMTP_FROM`.
 
 Em produção a API responde em `https://api.maiyu.com.br` (decisão do dono) e o site em
 `https://maiyu.com.br`, então os dois valores são `APP_SERVER_URL=https://api.maiyu.com.br` e
@@ -96,7 +99,7 @@ Regras (detalhe em `backend.md` §6):
 O `backend/.env.example` e o `frontend/.env.example` (versionados, só placeholder) são os modelos da
 casa, com os valores de exemplo deste projeto (portas 5440, 9016 e 9017). Para rodar só o site em
 desenvolvimento nenhuma variável é necessária; para a API, `backend/.env` copiado do exemplo, com
-`APP_KEY`, `MINIO_ROOT_PASSWORD` e `STORAGE_SECRET` preenchidos.
+`APP_KEY` e `STORAGE_SECRET` preenchidos.
 
 ## 3. Segredo fora do Git
 
