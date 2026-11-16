@@ -17,6 +17,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
+- O ENV da API fica só com o que a produção lê: o remetente de e-mail passa a se chamar `SMTP_FROM` e o root do MinIO local sai do ENV e vira literal do compose; no Coolify, a variável antiga do remetente deve ser renomeada para `SMTP_FROM`, se existir.
 - O cliente único e o primeiro tenant do site saem do ENV da API e passam para `backend/config/tenant.project.ts`; no Coolify, as cinco variáveis do tenant não precisam mais existir.
 - No celular, botões, campos, seletores e alternadores passam a ter 44 px de altura (e de largura nos ícones), o tamanho mínimo confortável para o toque; no computador nada muda.
 - Contato e carreiras deixam de ter formulário: as páginas avisam que o formulário está fora do ar por enquanto e levam ao e-mail e ao WhatsApp da Maiyu, sem prometer que algo foi enviado.

@@ -6,7 +6,7 @@
 > `.specs/features/<feature>/tasks.md`; aqui a linha aponta para lá.
 > Atualiza no mesmo commit em que a tarefa começa ou termina.
 
-**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 52 itens de migração para a régua (40 feitos, 1 em andamento, 1 pausado, 4 bloqueados, 4 a fazer, 1 em revisão); atualizado 2026-11-15
+**Resumo:** 9 tarefas de produto (7 feitas, 2 a fazer) e 53 itens de migração para a régua (41 feitos, 1 em andamento, 1 pausado, 4 bloqueados, 4 a fazer, 1 em revisão); atualizado 2026-11-16
 
 Status: `A fazer` · `Em andamento` · `Feita` · `Bloqueada` (com motivo nas notas).
 Prioridade: `Alta` · `Média` · `Baixa`.
@@ -132,7 +132,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | R4.4 | E2E Playwright dos fluxos públicos | G | Em andamento | `tooling.md` §7; `e2e/support/pages.md` com as rotas do site, 90 de 90 nos três projetos; o config do kit exige dono autenticado e o backend no ar, que o site público não usa (lacuna levada à régua) |
 | R4.5 | Unitários com nome e lugar canônicos; contratos por regex viram teste do que se vê | M | Feita | `tooling.md` §10.6, `architecture.md` §8; nenhum teste lê código-fonte: a home, o cabeçalho, o layout, as cenas da visão, o `REVEAL` e as páginas de contato e carreiras são renderizados e conferidos pelo que aparece; "nada importa `motion`" não tem teste, porque o pacote não está no `package.json` e o import já quebra o typecheck e o build |
 | R4.7 | Sync de deploy: régua 7092226 levada à `main` com a #29, a #30 e a #32 | M | Feita | `chore/regua-sync-7092226`, base `main`; `sync --check` todo em 0; `codegen`, compose `app/app` com 5440, 9016 e 9017, `check-ui-patches --fix` em 8 arquivos |
-| R4.8 | Kit do tenant fora do ENV (`maiyu-pattern#108`, f7835ee, #782): `backend/config/tenant.project.ts`, backend com 30 chaves | P | Em revisão | PR #49 (`refactor/backend-tenant-fora-do-env`, base `main`, rascunho); `sync --check` todo em 0, hook verde; falta a verificação independente e o merge do dono |
+| R4.8 | Kit do tenant fora do ENV (`maiyu-pattern#108`, f7835ee, #782): `backend/config/tenant.project.ts`, backend com 30 chaves | P | Feita | PR #49 (`refactor/backend-tenant-fora-do-env`), mergeada na `main` (21742b1) |
+| R4.9 | Kit de ENV só de produção (`maiyu-pattern#109`, eedebc4, #783): `SMTP_FROM` como remetente de e-mail, o root do MinIO local no `x-minio-root` do compose, backend com 28 chaves | P | Em revisão | PR em rascunho (`refactor/backend-env-so-producao`, base `main`); `sync --check` todo em 0, hook verde; falta a verificação independente e o merge do dono; no Coolify, renomear a variável antiga do remetente para `SMTP_FROM` na API, se existir (`MEMORY.md`) |
 | R4.6 | `check` com `test:unit`; `test:e2e` e `test:changed` | P | Feita | `tooling.md` §6, §7, §10.6; `check` pela fórmula (`build:deps` + `i18n:compile` + `i18n:check` + lint + typecheck + `format:check` + `test:unit`); o script `test` saiu; o `test:e2e` roda o Playwright pelo config da casa e depende do `setup` do dono que o R4.4 ainda resolve |
 
 ### Régua D · Documentação
