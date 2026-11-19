@@ -62,6 +62,12 @@ export default defineConfig({
     () => import('#providers/clock.provider'),
     () => import('#providers/id-generator.provider'),
     () => import('#providers/email-change.provider'),
+    // --- optional: mail ---
+    () => import('@adonisjs/redis/redis_provider'),
+    () => import('@adonisjs/queue/queue_provider'),
+    () => import('@adonisjs/mail/mail_provider'),
+    () => import('#providers/mail.provider'),
+    // --- end optional ---
   ],
 
   /*
@@ -79,6 +85,9 @@ export default defineConfig({
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
+    // --- optional: mail ---
+    () => import('#start/mail'),
+    // --- end optional ---
   ],
 
   /*

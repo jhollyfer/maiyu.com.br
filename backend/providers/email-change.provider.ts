@@ -2,6 +2,9 @@ import type { ApplicationService } from '@adonisjs/core/types'
 
 import { EmailChangeContract } from '#services/email-change/email-change.contract'
 import EmailChangeUnavailable from '#services/email-change/email-change.unavailable'
+// --- optional: mail ---
+import EmailChangeMailService from '#services/email-confirmation/email-change-mail.service'
+// --- end optional ---
 
 /**
  * Tells the container who answers for `EmailChangeContract` (DECISIONS.md #442): the "unavailable"
@@ -15,5 +18,10 @@ export default class EmailChangeProvider {
     this.app.container.bind(EmailChangeContract, () =>
       this.app.container.make(EmailChangeUnavailable),
     )
+    // --- optional: mail ---
+    this.app.container.bind(EmailChangeContract, () =>
+      this.app.container.make(EmailChangeMailService),
+    )
+    // --- end optional ---
   }
 }

@@ -1392,6 +1392,11 @@ export abstract class PaymentGatewayContract {
 - **Bucket privado por padrão**; leitura por URL assinada de expiração curta (`getSignedUrl`).
   Público só o prefixo de mídia de vitrine, declarado. Credencial do bucket com escopo mínimo e
   CORS do bucket com `ETag` exposto ficam em `docs/SECURITY.md` e `docs/ENV.md` do projeto.
+- **CORS do bucket R2: modelo `backend/infra/r2-cors.json`** (ponto de extensão do kit, nasce se faltar
+  e o projeto troca `https://example.com` pelo domínio do site). O dono aplica o JSON no bucket, pelo
+  painel do R2 ou por `wrangler r2 bucket cors set <bucket> --file backend/infra/r2-cors.json`. Sem
+  `ExposeHeaders: ["ETag"]` o navegador não lê o `ETag` de cada parte e o multipart não completa
+  (`DECISIONS.md` #793).
 - Upload anônimo não existe: todo arquivo tem dono desde o `create`. Quem não tem conta (a denúncia
   do curupira) envia preso a um rascunho, por um token de uso único e curto que só existe como hash no
   banco; sem token válido o upload responde 404, e rascunho vencido sai com os arquivos pelo
@@ -1804,7 +1809,7 @@ faixas privadas (10/8, 172.16/12, 192.168/16, fc00::/7) sem listar a rede de cad
 **Cloudflare** na frente do Traefik, o `X-Forwarded-For` chega com o IP da Cloudflare no meio da
 cadeia, e `uniquelocal` sozinho para antes dela: o `request.ip()` sai como IP da borda, todo mundo
 que passa pela mesma borda divide um balde só do limiter, e uma sala de aula ou um escritório inteiro
-fica trancado fora do login pelas senhas erradas de uma pessoa. Nesse caso o valor é `uniquelocal,cloudflare` (`DECISIONS.md` #294): a palavra
+fica trancado fora do login pelas senhas erradas de uma pessoa. Nesse caso, com a Cloudflare conectando direto na origem (DNS em proxy apontando para o IP do servidor), o valor é `uniquelocal,cloudflare` (`DECISIONS.md` #294). **Com Cloudflare Tunnel, o desenho da casa** (`cloudflared` em container no Coolify, na rede do Docker), quem conecta no Traefik é o `cloudflared`, de IP privado, e a borda nunca é o par TCP: `uniquelocal` sozinho já chega ao IP do visitante, e o `cloudflare` a mais não muda nada (`DECISIONS.md` #792). **Decisão do dono: `uniquelocal` em todo projeto, sem variação por projeto.** Só se o desenho mudar (o `cloudflared` sair do Docker ou a Cloudflare passar a conectar direto na origem) a régua muda, aqui, e não no projeto. A palavra
 `cloudflare` vira, no leitor, as faixas publicadas em https://www.cloudflare.com/ips-v4 e
 https://www.cloudflare.com/ips-v6 (conferidas em 2026-11-08). A confiança vai nas faixas, nunca no
 cabeçalho `CF-Connecting-IP`: a requisição que chega à origem sem passar pela Cloudflare escreve o

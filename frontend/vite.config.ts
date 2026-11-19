@@ -10,6 +10,7 @@ import { defineConfig, loadEnv } from 'vite'
 import { readBuildEnv } from './src/lib/build-env.ts'
 import { failOnUndefinedImport } from './src/lib/build-log.ts'
 import { STATIC_SECURITY_HEADERS } from './src/lib/security-headers.ts'
+import { PROJECT_VITE } from './vite.project.ts'
 
 export default defineConfig(({ mode }) => {
   // The `.env*` files are not in `process.env` while the config runs, hence `loadEnv`; the same
@@ -30,8 +31,11 @@ export default defineConfig(({ mode }) => {
       // Pinned preset: without it Nitro guesses the platform from the CI variables, and the
       // `Dockerfile-production` expects `node-server` (_doc-lib/nitro.md#deploy/runtimes/node).
       nitro({
+        // The project's own Nitro options (compressPublicAssets...), `vite.project.ts`.
+        ...PROJECT_VITE.nitro,
         preset: 'node-server',
         routeRules: {
+          ...PROJECT_VITE.nitro.routeRules,
           // The files of `.output/public` never reach `src/server.ts`: Nitro's static handler
           // answers first, so this rule is what gives them the headers. Same values as the server
           // entry, from one source (`lib/security-headers.ts`, _doc-lib/nitro.md#docs/lifecycle).
@@ -43,6 +47,8 @@ export default defineConfig(({ mode }) => {
       // (_doc-lib/paraglide.md#/tanstack-start, https://paraglidejs.com/tanstack-start).
       paraglideVitePlugin({ project: './project.inlang' }),
       tanstackStart({
+        // The project's own Start options (prerender, pages), `vite.project.ts`.
+        ...PROJECT_VITE.start,
         router: {
           routeToken: 'layout',
           // A test next to the route is not a route: without this the generator evaluates it.
@@ -52,6 +58,7 @@ export default defineConfig(({ mode }) => {
       react(),
       // React Compiler after the React plugin, over the processed JSX (`_standards/frontend.md` §9.1).
       babel({ presets: [reactCompilerPreset()] }),
+      ...PROJECT_VITE.plugins,
     ],
   }
 })

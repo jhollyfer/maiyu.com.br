@@ -27,6 +27,9 @@ export interface ApiDefinition {
       show: typeof routes['account.profile.show']
       update: typeof routes['account.profile.update']
     }
+    email: {
+      confirm: typeof routes['account.email.confirm']
+    }
   }
   storefront: {
     cities: {

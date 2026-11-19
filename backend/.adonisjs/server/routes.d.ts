@@ -32,6 +32,7 @@ export type ScannedRoutes = {
     'storages.files.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'storages.files.delete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
     'storages.files.download': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'account.email.confirm': { paramsTuple?: []; params?: {} }
     'storefront.contacts.create': { paramsTuple?: []; params?: {} }
     'administrator.contacts.paginate': { paramsTuple?: []; params?: {} }
     'administrator.contacts.show': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
@@ -79,6 +80,7 @@ export type ScannedRoutes = {
     'storages.files.create': { paramsTuple?: []; params?: {} }
     'storages.files.create-for-tenant': { paramsTuple: [ParamValue,ParamValue]; params: {'city': ParamValue,'tenant': ParamValue} }
     'storages.files.complete': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
+    'account.email.confirm': { paramsTuple?: []; params?: {} }
     'storefront.contacts.create': { paramsTuple?: []; params?: {} }
     'administrator.contacts.answer': { paramsTuple: [ParamValue]; params: {'id': ParamValue} }
   }

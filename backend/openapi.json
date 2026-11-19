@@ -45,6 +45,81 @@
     }
   ],
   "paths": {
+    "/account/email/confirm": {
+      "post": {
+        "operationId": "accountEmailConfirm",
+        "summary": "Confirmar o novo e-mail",
+        "tags": [
+          "Conta"
+        ],
+        "responses": {
+          "204": {
+            "description": "Sucesso, sem corpo"
+          },
+          "401": {
+            "description": "Não autorizado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Dados inválidos · Código inválido ou expirado · Este e-mail já está em uso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error422EmailTakenEmailTokenInvalidValidationError"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Tentativas em excesso. Tente novamente mais tarde",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error429TooManyRequests"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno do servidor",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error500AccountEmailConfirmError"
+                }
+              }
+            }
+          }
+        },
+        "description": "Confirma a troca do e-mail pedida em `PUT /account/profile` com o `token` de uso único que chegou ao endereço novo (vale 60 minutos e só abre a conta de quem pediu). Código inválido, já usado, vencido ou de outra conta responde `422` `EMAIL_TOKEN_INVALID` no campo `token`; endereço que outra conta tomou nesse meio-tempo responde `422` `EMAIL_TAKEN`, e o código segue valendo.\n\nResponde `204` **sem corpo**. Trocar o e-mail **derruba todas as outras sessões da conta**: a sessão que confirmou continua, com um par de tokens novo no `Set-Cookie`. Parte do bloco de e-mail: só existe no projeto que o tem.\n\nLimite de 10 tentativas por 15 minutos por usuário.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AccountEmailConfirmBody"
+              }
+            }
+          }
+        }
+      }
+    },
     "/account/profile": {
       "get": {
         "operationId": "accountProfileShow",
@@ -2548,6 +2623,20 @@
       }
     },
     "schemas": {
+      "AccountEmailConfirmBody": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "additionalProperties": false
+      },
       "AccountProfileShowResponse200": {
         "type": "object",
         "properties": {
@@ -3987,6 +4076,43 @@
           "errors"
         ]
       },
+      "Error422EmailTakenEmailTokenInvalidValidationError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              422
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "EMAIL_TAKEN",
+              "EMAIL_TOKEN_INVALID",
+              "VALIDATION_ERROR"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code",
+          "errors"
+        ]
+      },
       "Error422MemberUserNotFoundValidationError": {
         "type": "object",
         "properties": {
@@ -4155,6 +4281,40 @@
             "description": "Identificador de máquina da falha.",
             "enum": [
               "TOO_MANY_REQUESTS"
+            ]
+          },
+          "errors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Mensagem por campo, quando a falha é atribuível a campos do payload."
+          }
+        },
+        "required": [
+          "message",
+          "status",
+          "code"
+        ]
+      },
+      "Error500AccountEmailConfirmError": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Mensagem no idioma do `Accept-Language`, exibível ao usuário."
+          },
+          "status": {
+            "type": "integer",
+            "enum": [
+              500
+            ]
+          },
+          "code": {
+            "type": "string",
+            "description": "Identificador de máquina da falha.",
+            "enum": [
+              "ACCOUNT_EMAIL_CONFIRM_ERROR"
             ]
           },
           "errors": {

@@ -376,11 +376,11 @@ entrada.
 - **Cabeçalhos de segurança no servidor do frontend** *(opinião da casa; página do Nitro não
   conferida)*: o Nitro não manda nenhum por padrão. `routeRules` com `headers` em `'/**'`
   (`_doc-lib/nitro.md#config`) ou middleware em `src/server.ts` enviam `Content-Security-Policy` com
-  `frame-ancestors 'none'` e `connect-src`/`img-src` só para a API e, com upload pré-assinado
+  `frame-ancestors 'none'` e `connect-src`/`img-src`/`media-src` só para a API e, com upload pré-assinado
   (`backend.md` §5.4), a origem pública do storage (`STORAGE_PUBLIC_URL`, lida por requisição em
   `src/server.ts`, nunca fixada no build pelo `vite.config.ts`), e o `img-src` também as origens de
   imagem de terceiros que o projeto lista em `lib/csp-project.ts` (`PROJECT_IMAGE_ORIGINS`, ponto de
-  extensão vazio por padrão; ex. tile de mapa, `DECISIONS.md` #773), nada além, `X-Content-Type-Options: nosniff`,
+  extensão vazio por padrão; ex. tile de mapa, `DECISIONS.md` #773), nada além (vídeo e áudio do bucket pelo `media-src`, `DECISIONS.md` #793), `X-Content-Type-Options: nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin` e HSTS sem `preload`. Sem `frame-ancestors`, a
   tela de login pode ser embutida em `iframe` por outro site (clickjacking).
 - **Endereço da API sem default de rede.** `src/env.ts` lê `VITE_API_URL` uma vez e o build falha

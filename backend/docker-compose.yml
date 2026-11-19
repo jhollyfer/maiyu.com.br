@@ -91,8 +91,32 @@ services:
     volumes:
       - ./infra/minio:/setup:ro
 
+  # --- optional: mail ---
+  # The queue of the mail block (REDIS_URL). `appendonly`: the queue is why Redis
+  # is here, and a restart without persistence loses the pending jobs. No password,
+  # so it stays on 127.0.0.1.
+  redis:
+    image: redis:8-alpine
+    container_name: maiyu-backend-redis
+    restart: unless-stopped
+    command: ['redis-server', '--appendonly', 'yes']
+    ports:
+      - '127.0.0.1:6383:6379'
+    volumes:
+      - maiyu-backend-redis-volume:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  # --- end optional ---
+
 volumes:
   maiyu-backend-database-volume:
     driver: local
   maiyu-backend-minio-volume:
     driver: local
+  # --- optional: mail ---
+  maiyu-backend-redis-volume:
+    driver: local
+  # --- end optional ---

@@ -298,7 +298,7 @@ Arquivo que não é código de camada também tem casa. O que não está aqui ne
 ```
 frontend/
 ├── package.json  tsconfig.json  eslint.config.js  prettier.config.js  .prettierignore
-├── vite.config.ts  vitest.config.ts  vitest.setup.ts  components.json  Dockerfile-production
+├── vite.config.ts  vite.project.ts  vitest.config.ts  vitest.setup.ts  components.json  Dockerfile-production
 ├── .env.example  .env.production  .env.e2e.example   # .env.production versionado, só VITE_* de produção (tooling.md §8.2)
 ├── public/                          # só nome estável: favicon, manifest (frontend.md §9.6)
 ├── project.inlang/{settings.json, paraglide.config.ts}   # i18n.md, §3.4

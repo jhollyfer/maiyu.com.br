@@ -700,7 +700,8 @@ marca: o sync o grava em qualquer `frontend/` que exista.
 que roda a funcional inteira trava cada commit por minutos, e a resposta de quem espera é o
 `--no-verify`, que desliga também o lint. Elas rodam na sessão do agente, uma vez, com tudo pronto e
 antes de abrir o PR (§7), e o resultado vai no corpo do PR: o comando de cada suíte, quantos testes
-passaram e o tempo. Não existe GitHub Actions para rodá-las depois.
+passaram e o tempo. Não existe GitHub Actions para rodá-las depois. O corpo leva também as
+evidências do fluxo testado (§10.1, "Evidência no PR").
 
 **O deploy é observado, sempre**: depois do merge na `main`, o agente acompanha o deploy do Coolify
 até o fim (status do deploy pelo painel ou pela API dele) e roda a conferência de produção de §10.1.
@@ -936,8 +937,8 @@ app constrói dentro e o dono trocou o recurso do Coolify para GitHub App (§8.3
 tirar antes derruba a publicação (`DECISIONS.md` #371). Depois, tirar o check do Actions da proteção
 de branch (§9) e apagar os secrets do Actions.
 
-**O sync também cobra e limpa:** `tsconfig-diverge:` (o `tsconfig.json` e o `tsconfig.build.json` do
-`shared/`, que é esqueleto, contra o kit, comparados como JSON e sem contar comentário), arquivo que o
+**O sync também cobra e limpa:** o `tsconfig.json` e o `tsconfig.build.json` do `shared/`, que são do kit
+(`code-diverge:` e reescritos no sync; o build da imagem depende deles, `DECISIONS.md` #790), arquivo que o
 kit removeu ou renomeou (`REMOVED_CODE` em `scripts/kit-manifest.mjs`: aparece como `sobra:` e sai no
 sync, mesmo fora das pastas espelhadas) e `--com-backend`, que cria `backend/` num projeto só
 frontend que ganhou API (sem a flag ele continua sem). O `kit-check` ainda prova o build do
@@ -1086,6 +1087,11 @@ configurado assim:
   (§10.1).
 - **Perfil sem `backend/`** (§8.1, `DECISIONS.md` #286): um recurso só, o do frontend, com o mesmo
   quadro sem *Post-deployment command*.
+- **Variáveis de produção** (`DECISIONS.md` #790): o boot em produção valida o ambiente e cai em
+  `EnvValidationException` sem `LOG_LEVEL`, `UPLOAD_MAX_SIZE`, `STORAGE_KEY`, `STORAGE_BUCKET` e
+  `STORAGE_ENDPOINT` (contrato em `start/env.ts` do kit). `TRUSTED_PROXIES` em produção é
+  `uniquelocal`, em todo projeto (decisão do dono, `backend.md` §4.10, `DECISIONS.md` #792); ausente,
+  vale `loopback` e todo cliente vira o IP do proxy.
 - **Troca de recurso** (de *Docker Image* para repositório, ou qualquer recurso novo no lugar de um
   antigo) segue esta lista, na ordem (`DECISIONS.md` #296):
   1. copiar **todas** as variáveis do recurso antigo, uma a uma (`COOKIE_DOMAIN`, `CORS_ORIGINS`,
@@ -1332,6 +1338,33 @@ Processo das etapas 5 a 7 do `AGENTS.md`. As skills (`systematic-debugging`,
   e a rodada fica verde sem a suíte; com `CI=1` (§7) o plugin reprova (_doc-lib/japa.md#docs/filtering-tests).
 - Entrega sem `// TODO` sem dono, sem `// ...` e sem stub no lugar do que foi pedido.
 
+**Evidência no PR** *(decisão do dono, `DECISIONS.md` #791)*: todo PR leva evidência testada, não só a
+contagem de testes. Esta é a casa única da regra; §6, §7 e o `AGENTS.md` apontam para cá.
+
+- **O que conta:** a saída real dos comandos (check, unitário, funcional, E2E, `docker build` e
+  `docker run` com o `/health-check`) mais a evidência do fluxo que o usuário percorre:
+  - mudança de tela: print antes e depois em desktop e celular (Playwright, `deviceScaleFactor: 2`),
+    e gif ou vídeo curto quando o fluxo tem mais de um passo (o `video` do Playwright ou a sequência
+    de prints);
+  - mudança de API: a requisição e a resposta reais (curl ou o funcional), com o status;
+  - deploy: o log do boot e o `/health-check`;
+  - mudança só de régua ou doc: os testes dos scripts e o `--check`.
+- **Gerada na sessão, rodando de verdade.** Print de mock, de outra branch ou feito à mão não vale.
+  Cada evidência diz o commit em que foi tirada.
+- **Onde fica: no próprio PR, sem ir para a `main`.** As evidências entram na branch do PR num commit
+  `test(evidencias): <assunto>`, na pasta `.evidencias/<número-do-PR>/` (print, gif, log em `.txt`).
+  A **descrição do PR (o markdown do corpo)** mostra cada uma embutida, numa seção `## Evidências`:
+  print e gif como imagem (`![tela X, desktop](https://github.com/<owner>/<repo>/blob/<sha>/.evidencias/<n>/<arquivo>?raw=true)`,
+  pelo sha desse commit, que é link permanente) e a saída de comando colada em bloco de código. Link
+  para arquivo sem a imagem aparecer na descrição não conta. O último commit
+  antes do merge, `chore(evidencias): retira os arquivos do PR`, apaga a pasta: o histórico guarda,
+  a `main` fica limpa e o repositório não incha. Quem faz o merge confere que a pasta saiu
+  (decisão do dono de 2026-11-19, que troca a branch órfã da primeira versão da #791).
+- **Sem dado real.** Nenhuma evidência mostra segredo nem dado pessoal; use as contas de E2E do kit.
+  Vale em dobro no adacaibs, que tem dado real.
+- **PR sem evidência não sai do rascunho**, e quem faz o merge confere antes.
+- **Verificação independente:** o verificador anexa a evidência dele, não a do autor.
+
 ### 10.2 Revisão de código
 
 - **Ferramenta primeiro, olho depois**: `check` e os testes do diff rodam antes da leitura. O que
@@ -1443,10 +1476,12 @@ Como se cobra:
   por isso a régua o pede no prompt e nas instruções: (1) **antes de fechar o plano**; (2) **quando o
   mesmo erro de teste ou de compilação falha duas vezes**; (3) **antes de declarar pronto ou
   commitar**. O advisor não substitui o verificador independente (§10.1): quem escreveu não confere
-  o próprio trabalho. **Na nuvem não há advisor**: a sub-sessão nasce de `create_session`, que não
-  recebe `--advisor`, e o container não tem `~/.claude/settings.json` (provado em 2026-11-19 numa
-  sub-sessão Sonnet, Claude Code 2.1.328: nenhuma ferramenta advisor). Ali os três momentos chamam
-  um subagente revisor com `model: "opus"`, que lê o plano, o erro ou o diff e devolve parecer curto.
+  o próprio trabalho. **Na nuvem, o advisor vem do `.claude/settings.json` do projeto**: a sub-sessão nasce de
+  `create_session`, que não recebe `--advisor`, e o container não tem `~/.claude/settings.json`; com
+  `"advisorModel": "opus"` no settings do projeto a ferramenta aparece (provado em 2026-11-19 nas
+  regentes do adacaibs e do simple-hub; sem a chave, nenhuma ferramenta advisor, Claude Code 2.1.328).
+  Ela pode sumir no meio da sessão. Sem ela, os três momentos chamam um subagente revisor com
+  `model: "opus"`, que lê o plano, o erro ou o diff e devolve parecer curto.
 - **Subagente:** busca, `grep`, consulta de doc e auditoria de diff vão aos agentes Haiku só de leitura
   de `.claude/agents/`, que o sync espelha: `search` (onde fica algo), `grep` (chamadores e usos),
   `docs` (entrada em `_doc-lib` + página oficial, com a citação) e `audit` (diff contra `_standards/`,

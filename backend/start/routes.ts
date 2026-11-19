@@ -192,6 +192,22 @@ router
   .prefix('storages')
   .use(middleware.auth())
 
+// --- optional: mail ---
+/**
+ * The e-mail change of the owner's own account (DECISIONS.md #442): `PUT /account/profile` asks
+ * for it and the token sent to the new address confirms it here. Part of the e-mail block.
+ */
+router
+  .group(() => {
+    router
+      .post('confirm', [controllers.account.email.confirm.Confirm])
+      .as('account.email.confirm')
+      .use(accountThrottle)
+  })
+  .prefix('account/email')
+  .use(middleware.auth())
+// --- end optional ---
+
 /**
  * The public area: no session, so every write here is declared in
  * `core/openapi/public-routes.ts` and carries its own limiter.

@@ -1,4 +1,5 @@
 {
+  "POST /account/email/confirm": "authenticated",
   "GET /account/profile": "authenticated",
   "PUT /account/profile": "authenticated",
   "GET /administrator/contacts": "ADMINISTRATOR",

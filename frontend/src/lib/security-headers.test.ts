@@ -55,6 +55,15 @@ describe('documentHeaders', () => {
     )
   })
 
+  it('when STORAGE_PUBLIC_URL is set, media-src opens the bucket for video and audio', () => {
+    expect(csp(BASE)).toContain("media-src 'self' https://api.example.com;")
+    expect(
+      csp({ ...BASE, storageOrigin: 'https://storage.example.com' }),
+    ).toContain(
+      "media-src 'self' https://api.example.com https://storage.example.com;",
+    )
+  })
+
   it('when the project lists image origins, they open img-src and not connect-src', () => {
     const policy = csp({
       ...BASE,
