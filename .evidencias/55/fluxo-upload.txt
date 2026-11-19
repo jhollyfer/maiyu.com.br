@@ -1,0 +1,32 @@
+commit: ad75a6a
+# fluxo real: imagem da API (NODE_ENV=production, TRUSTED_PROXIES=uniquelocal) + MinIO + Postgres
+$ POST /authentication/sign-in
+204
+$ POST /storages  {fileName: prova.png, mimetype: image/png, size: 179}
+201
+status PENDING totalParts 1 url: http://127.0.0.1:9016/maiyu/e392238d-e8c9-46be-a220-5e08d1557563/97f48f36-6d62-4881-a6e6-dc199858c55e.png + X-Amz-Signature=<oculto>
+$ PUT <url assinada> (direto no bucket, sem passar pela API)
+HTTP/1.1 200 OK
+ETag: "2482c5d01f2dbcfa5c9fdaf6dc6f0d14"
+$ POST /storages/:id/complete
+200
+$ GET /storages/:id
+status UPLOADED | url: http://127.0.0.1:9016/maiyu/e392238d-e8c9-46be-a220-5e08d1557563/97f48f36-6d62-4881-a6e6-dc199858c55e.png + assinatura (15 min)
+$ curl -I <url assinada>   (HEAD: a assinatura S3 vale só para GET)
+HTTP/1.1 403 Forbidden
+$ curl <url assinada>  (GET)
+HTTP/1.1 200 OK
+Content-Length: 179
+Content-Type: image/png
+X-Content-Type-Options: nosniff
+bytes iguais ao arquivo enviado
+$ curl <url com assinatura adulterada>
+403
+$ curl <url sem assinatura> (bucket privado)
+403
+$ GET /storages/:id/download
+302 -> http://127.0.0.1:9016/maiyu/e392238d-e8c9-46be-a220-5e08d1557563/97f48f36-6d62-4881-a6e6-dc199858c55e.png?X-Amz-... (assinada)
+$ OPTIONS (preflight do navegador) no bucket
+HTTP/1.1 204 No Content
+Access-Control-Allow-Methods: PUT
+Access-Control-Allow-Origin: http://localhost:3000
