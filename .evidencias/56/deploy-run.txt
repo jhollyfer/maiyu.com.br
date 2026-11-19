@@ -1,0 +1,9 @@
+commit: c1a9097
+$ curl -i http://127.0.0.1:3333/health-check  (API)
+HTTP/1.1 200 OK
+$ curl http://localhost:3000/  (site)
+200
+$ curl http://localhost:3000/health-check
+200
+web  Up 8 seconds (healthy)
+api  Up About a minute (healthy)

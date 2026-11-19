@@ -1,0 +1,11 @@
+commit: c1a9097
+$ pnpm check   # shared, backend e frontend
+ Test Files  15 passed (15)
+      Tests  150 passed (150)
+adonisjs:check: no findings.
+[ success ] openapi.json is up to date.
+pattern:check: no findings.
+ Test Files  121 passed (121)
+      Tests  620 passed (620)
+exit 0
+backend: Tests  491 passed (491)
