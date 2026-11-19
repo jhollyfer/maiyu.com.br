@@ -1,0 +1,6 @@
+commit: 61ae63cbe631e829b91aed6a8ed07f29b1bd573b
+upstream: maiyu-pattern 532077d
+$ node ../maiyu-pattern/scripts/sync-to-project.mjs . --check --com=painel --sem=table --sem=pix --com-backend
+env: backend/.env.example 28 chaves (modelo 28)
+env: frontend/.env.example 10 chaves (modelo 10)
+0 diverge, 0 code-diverge, 0 kit-diverge, 0 sobra, 0 falta, 0 env-diverge, 0 deps-diverge, 0 cn-diverge, 0 prepare-diverge, 0 scripts-diverge, 0 tsconfig-diverge, 0 agents-diverge, 0 extension-stale, 0 migration-missing, 0 migration-changed, 0 migration-orphan, 0 collision, 0 block-region, 0 block-foreign, 0 removed-in-use, 0 extra-in-use, 0 workflow-pendente, 0 frontend-legado, 0 gitignore-falta

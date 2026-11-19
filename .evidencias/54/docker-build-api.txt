@@ -1,0 +1,24 @@
+commit: 61ae63cbe631e829b91aed6a8ed07f29b1bd573b
+# api: docker build (cópia do Dockerfile só com a CA do sandbox; contexto na raiz)
+#6 [builder  1/15] FROM docker.io/library/node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+#6 [builder  1/15] FROM docker.io/library/node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+#6 [builder  1/15] FROM docker.io/library/node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+#8 [builder  2/15] WORKDIR /app
+#9 [builder  3/15] COPY --from=ca ca.crt /usr/local/share/ca.crt
+#10 [builder  4/15] RUN cat /usr/local/share/ca.crt >> /etc/ssl/certs/ca-certificates.crt
+#11 [stage-1 4/6] RUN cat /usr/local/share/ca.crt >> /etc/ssl/certs/ca-certificates.crt && apk add --no-cache curl
+#12 [builder  5/15] RUN npm install -g pnpm@12
+#13 [builder  6/15] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+#14 [builder  7/15] COPY .husky/install.mjs .husky/
+#15 [builder  8/15] COPY backend/package.json backend/
+#16 [builder  9/15] COPY frontend/package.jso[n] frontend/
+#17 [builder 10/15] COPY shared/package.json shared/
+#18 [builder 11/15] RUN pnpm --filter "{./backend}..." install --frozen-lockfile
+#19 [builder 12/15] COPY shared/ shared/
+#20 [builder 13/15] COPY backend/ backend/
+#21 [builder 14/15] RUN NODE_ENV=development     PORT=3333     HOST=0.0.0.0     LOG_LEVEL=info     APP_KEY=build-time-placeholder-not-used-at-runtime     APP_SERVER_URL=http://localhost:3333     TRUSTED_PROXIES=loopback     CORS_ORIGINS=http://localhost:3000     DATABASE_URL=postgres://build:build@localhost:5432/build     DRIVE_DISK=s3     UPLOAD_MAX_SIZE=1073741824     STORAGE_KEY=build     STORAGE_SECRET=build     STORAGE_BUCKET=build     STORAGE_ENDPOINT=http://localhost:9000     pnpm --filter "{./backend}..." run build
+#22 [builder 15/15] RUN pnpm --filter ./backend --prod deploy /out
+#23 [stage-1 5/6] COPY --from=builder --chown=node:node /app/backend/build ./
+#24 [stage-1 6/6] COPY --from=builder --chown=node:node /out/node_modules ./node_modules
+#25 naming to docker.io/library/api:latest done
+exit 0

@@ -1,0 +1,25 @@
+commit: 61ae63cbe631e829b91aed6a8ed07f29b1bd573b
+$ docker run api (NODE_ENV=production TRUSTED_PROXIES=uniquelocal,cloudflare, Postgres de container)
+{"level":30,"time":1795101062258,"pid":1,"hostname":"38fea411bed2","name":"maiyu","msg":"started HTTP server on 0.0.0.0:3333"}
+$ docker exec api node ace migration:run --force
+❯ migrated database/migrations/1700000000060_add_uploader_to_storages_table
+❯ migrated database/migrations/1700000000100_create_contacts_table
+❯ migrated database/migrations/1700000000110_add_tenant_to_contacts_table
+Migrated in 234 ms
+$ docker exec api node ace db:seed
+❯ completed database/seeders/city.seed
+❯ completed database/seeders/tenant.seed
+❯ completed database/seeders/user.seed
+$ curl -i http://localhost:3333/health-check
+HTTP/1.1 200 OK
+Content-Security-Policy: default-src 'none';frame-ancestors 'none';base-uri 'none';form-action 'none'
+x-frame-options: DENY
+$ docker ps
+web  Up 15 seconds (healthy)
+api  Up 15 seconds (healthy)
+pg  Up 15 seconds
+$ docker run web
+➜ Listening on: http://localhost:3000/ (all interfaces)
+$ curl -o /dev/null -w "%{http_code}" http://localhost:3000/ e /health-check
+/ 200
+/health-check 200

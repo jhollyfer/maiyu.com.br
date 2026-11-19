@@ -1,0 +1,23 @@
+commit: 61ae63cbe631e829b91aed6a8ed07f29b1bd573b
+# web: docker build (cópia do Dockerfile só com a CA do sandbox; contexto na raiz)
+#5 [builder  1/16] FROM docker.io/library/node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
+#7 [builder  3/16] COPY --from=ca ca.crt /usr/local/share/ca.crt
+#8 [builder  2/16] WORKDIR /app
+#9 [stage-1 4/6] RUN cat /usr/local/share/ca.crt >> /etc/ssl/certs/ca-certificates.crt && apk add --no-cache curl
+#10 [stage-1 5/6] RUN addgroup --system --gid 1001 nodejs &&     adduser --system --uid 1001 nitro
+#12 [builder  4/16] RUN cat /usr/local/share/ca.crt >> /etc/ssl/certs/ca-certificates.crt
+#13 [builder  5/16] RUN npm install -g pnpm@12
+#14 [builder  6/16] COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+#15 [builder  7/16] COPY .husky/install.mjs .husky/
+#16 [builder  8/16] COPY backend/package.jso[n] backend/
+#17 [builder  9/16] COPY frontend/package.json frontend/
+#18 [builder 10/16] COPY shared/package.json shared/
+#19 [builder 11/16] RUN pnpm --filter "{./frontend}..." install --frozen-lockfile
+#20 [builder 12/16] COPY shared/ shared/
+#21 [builder 13/16] COPY backend/.adonisjs/clien[t] backend/.adonisjs/client
+#22 [builder 14/16] COPY frontend/ frontend/
+#23 [builder 15/16] RUN set -eu;     for key in VITE_API_URL VITE_SITE_URL; do       value=$(sed -n "s/^${key}=//p" frontend/.env.production 2>/dev/null | tail -n 1 | tr -d "\"'");       case "$value" in         https://*/) echo "$key ends with a slash in frontend/.env.production" >&2; exit 1 ;;         https://?*) ;;         *) echo "$key must be an https:// URL in frontend/.env.production" >&2; exit 1 ;;       esac;     done
+#24 [builder 16/16] RUN pnpm --filter ./frontend run i18n:compile &&     pnpm --filter "{./frontend}..." --filter "!./backend" run build
+#25 [stage-1 6/6] COPY --from=builder --chown=nitro:nodejs /app/frontend/.output ./.output
+#26 naming to docker.io/library/web:latest done
+exit 0

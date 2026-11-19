@@ -1,0 +1,36 @@
+commit: 61ae63cbe631e829b91aed6a8ed07f29b1bd573b
+$ pnpm check   # (format, lint, tipos, adonisjs, openapi, pattern, authz, validators, unitário de shared, backend e frontend)
+$ pnpm --recursive check
+$ pnpm lint && pnpm typecheck && pnpm test:unit
+$ eslint . --max-warnings 0
+$ tsc --noEmit
+$ vitest run
+ Test Files  15 passed (15)
+      Tests  150 passed (150)
+$ pnpm build:deps && pnpm format:check && pnpm lint && pnpm typecheck && pnpm adonisjs:check && pnpm openapi:check && pnpm pattern:check && pnpm authz:check && pnpm validators:check && pnpm test:unit
+$ pnpm --filter "{.}^..." build
+$ tsc -p tsconfig.build.json
+$ prettier --check .
+$ eslint . --max-warnings 0
+$ tsc --noEmit
+$ node --import @poppinss/ts-exec scripts/adonisjs-check.ts
+$ node ace openapi:generate --check --strict
+$ node --import @poppinss/ts-exec scripts/pattern-check.ts
+$ node --import @poppinss/ts-exec scripts/authz-check.ts
+$ node --import @poppinss/ts-exec scripts/validators-check.ts
+$ node ace test unit
+Tests  462 passed (462)
+$ pnpm build:deps && pnpm i18n:compile && pnpm i18n:check && pnpm lint && pnpm typecheck && pnpm format:check && pnpm test:unit
+$ pnpm --filter "{.}^..." build
+$ tsc -p tsconfig.build.json
+$ node ace build
+$ paraglide-js compile --project ./project.inlang && node scripts/check-i18n-compile.mjs
+$ inlang check --project ./project.inlang --source ./src
+$ eslint
+$ tsc --noEmit
+$ prettier --check .
+$ pnpm i18n:compile && vitest run
+$ paraglide-js compile --project ./project.inlang && node scripts/check-i18n-compile.mjs
+ Test Files  121 passed (121)
+      Tests  619 passed (619)
+exit 0
