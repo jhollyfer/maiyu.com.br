@@ -2,7 +2,7 @@ import app from '@adonisjs/core/services/app'
 import logger from '@adonisjs/core/services/logger'
 import { BaseSeeder } from '@adonisjs/lucid/seeders'
 
-import { ACTIVE_STATUS, PLATFORM_ROLE, USER_ROLE } from '@maiyu/shared'
+import { ACTIVE_STATUS, PLATFORM_ROLE, STAFF_USER_ROLES } from '@maiyu/shared'
 
 import { TenantConfig } from '#config/tenant'
 import City from '#models/city'
@@ -57,9 +57,16 @@ export default class extends BaseSeeder {
       .first()
     if (!tenant) return
 
+    // The first staff role is the one `ROLE_FIXTURES.owner` has (`tests/role-fixtures.ts`), whatever
+    // roles the project's `USER_ROLE` holds (DECISIONS.md #785).
+    const [ownerRole] = STAFF_USER_ROLES
+    if (ownerRole === undefined) {
+      throw new Error('STAFF_USER_ROLES is empty: no role for the tenant owner')
+    }
+
     await TenantMembership.firstOrCreate(
       { userId: owner.id, tenantId: tenant.id },
-      { role: USER_ROLE.ADMINISTRATOR },
+      { role: ownerRole },
     )
   }
 }

@@ -682,6 +682,18 @@ o `check` e a suíte **unitária** só do app que o commit toca; o `commit-msg` 
 que roda em todo commit. A suíte E2E fica na sessão antes do PR (§7): precisa de banco e serviços em
 container e deixaria o hook lento o bastante para ser pulado com `--no-verify`.
 
+**Frontend ainda legado** (`DECISIONS.md` #786): projeto que migra por fases, backend primeiro e
+frontend por último, tem um `frontend/` cujo `check` não é o do kit e já nasce com erros. Como o
+tsconfig do frontend inclui o backend (registro do Tuyau), o hook rodaria esse `check` em todo
+commit que toca `backend/` ou `shared/`, e nenhum passaria até a fase do frontend. O estado é
+explícito e escrito: `sync-to-project.mjs <dir> --frontend=legado` grava `"frontend": "legado"` no
+`.maiyu/kit-extension-points.json` (versionado), e o `pre-commit` pula só o `check` e o unitário do
+frontend, com uma linha (`pre-commit: frontend ainda legado ...`), nunca em silêncio. Enquanto o
+estado existir, o sync não escreve kit em `frontend/` e o `--check` reprova com `frontend-legado:`,
+para a pendência não ser esquecida; a fase do frontend termina com `--frontend=kit`, que tira a chave
+e devolve o rigor. Sem a chave (o padrão) o frontend é estrito. `frontend/kit.deps.json` não serve de
+marca: o sync o grava em qualquer `frontend/` que exista.
+
 **Teste pesado na sessão, antes do PR** (`DECISIONS.md` #298): nenhum hook local (`pre-commit`,
 `pre-push`) roda suíte que precisa de banco, fila, bucket ou navegador: a funcional do backend
 (`node ace test` inteiro, Japa contra Postgres e MinIO), a de integração e a E2E (Playwright). Hook
@@ -1394,56 +1406,75 @@ terceiro.
   cenário de exploração nem valor de segredo.
 - Falso positivo sai com motivo, como em `_findings/README.md` (`descartado: <motivo>`).
 
-### 10.5 Modelo por etapa: Opus planeja, Sonnet executa *(opinião da casa)*
+### 10.5 Modelo por etapa: Sonnet executa, Opus aconselha, Haiku busca *(opinião da casa, `DECISIONS.md` #787)*
 
-Todo planejamento é do **Opus 5.5** (`claude-opus-5-5`): brainstorming, spec, design, plano, quebra em
-tarefas, decisão de arquitetura e replanejamento quando a execução sai do plano. Toda execução do
-plano é do **Sonnet 5.5** (`claude-sonnet-5-5`): implementar tarefa, escrever teste, corrigir lint ou
-suíte, migrar arquivo. Revisão final do diff (etapa 7) volta para o Opus, porque é o mesmo julgamento do
-plano. Etapas: 1 e 3 Opus; 4 a 6 Sonnet; 7 Opus (`AGENTS.md`, fluxo).
+A sessão de trabalho e as sub-sessões rodam em **Sonnet 5.5** (`claude-sonnet-5-5`) com **Opus 5.5**
+(`claude-opus-5-5`) como **advisor** e esforço `high`. O Opus não conduz a sessão: é consultado nos
+pontos em que um erro de rumo custa mais. Busca e auditoria de leitura vão para os agentes Haiku da
+casa. Etapas: 1, 3 e 7 pedem o julgamento do advisor; 4 a 6 são do Sonnet.
 
 Como se cobra:
 
-- **Sessão:** modelo `opusplan`, que usa Opus no modo de plano e Sonnet fora dele. Por projeto, no
-  `.claude/settings.json`; o dono cola, porque o agente não edita esse arquivo:
+- **Sessão:** o dono cola à mão, no `settings.json` do usuário ou do projeto; o agente não edita esse
+  arquivo:
 
   ```json
-  "model": "opusplan",
-  "env": {
-    "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5",
-    "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5-5",
-    "CLAUDE_CODE_SUBAGENT_MODEL": "claude-sonnet-5-5"
+  {
+    "model": "sonnet",
+    "advisorModel": "opus",
+    "effortLevel": "high",
+    "env": {
+      "ANTHROPIC_DEFAULT_OPUS_MODEL": "claude-opus-5-5",
+      "ANTHROPIC_DEFAULT_SONNET_MODEL": "claude-sonnet-5-5",
+      "ANTHROPIC_DEFAULT_HAIKU_MODEL": "claude-haiku-5-5"
+    }
   }
   ```
 
-  `opusplan` usa o alias `opus` no modo de plano e `sonnet` fora dele. Na API da Anthropic os dois
-  apontam hoje para Opus 5.5 e Sonnet 5.5, mas alias acompanha a versão nova sozinho: as duas
-  `ANTHROPIC_DEFAULT_*` fixam a versão, e trocar de versão vira decisão registrada. Pede Claude
-  Code v2.1.284 ou mais novo (Sonnet 5.5; Opus 5.5 pede v2.1.280). Na sessão em nuvem, as mesmas
-  variáveis entram nas variáveis de ambiente do ambiente.
-- **Subagente:** executor (implementador de tarefa, `superpowers:subagent-driven-development`,
-  `tlc-implement`, `dispatching-parallel-agents` de execução) roda em Sonnet: a variável vale para
-  o subagente que não recebe modelo de outro jeito. Ordem da doc: modelo passado na chamada >
-  `model` da definição do subagente (inclusive `inherit`) > `CLAUDE_CODE_SUBAGENT_MODEL` > modelo da
-  conversa. Então subagente de planejamento ou de revisão final recebe `model: "opus"` na própria
-  chamada. Os embutidos `Plan` e `Explore` herdam o modelo da conversa (não leem a variável sem o
-  `CLAUDE_CODE_SUBAGENT_MODEL_FORCE`, que a casa não usa): no modo de plano do `opusplan` eles rodam
-  em Opus, que é o desejado.
-- Sem `opusplan` disponível, o agente diz qual modelo está rodando antes de planejar e pede a troca
-  (`/model`) em vez de planejar no modelo de execução.
-- **Sessões orquestradas (§10.7, `DECISIONS.md` #776):** a regente geral e a regente de cada projeto
-  rodam em **Opus 5.5** e só planejam, decidem, distribuem e revisam: nunca escrevem código. Toda
-  sub-sessão (shared, backend, frontend) nasce em **Sonnet 5.5**, com `create_session` e
-  `model: "claude-sonnet-5-5"` explícito, porque, sem o campo, a sessão herda o Opus de quem a criou.
-  Todo subagente que implementa, corrige ou verifica é chamado com `model: "sonnet"`; só o subagente
-  de plano ou de revisão final recebe `model: "opus"`. Sub-sessão que esteja em Opus é recriada em
-  Sonnet: o contexto passa pelo brief, que traz o `docs/MEMORY.md`, as branches e os PRs. A antiga só
-  é arquivada depois de conferido que não tem nada só local. A regente confere o modelo de cada
-  sub-sessão pelo `get_session` (`session_context.model` e `external_metadata.last_served_model`).
+  O `effortLevel` de topo não vale para o Opus 5.5 (a doc pede o esforço por modelo em `modelSettings`); no bloco acima ele vale porque a sessão é Sonnet (https://code.claude.com/docs/en/model-config).
 
-Conferido em 2026-10-26: `_doc-lib`-equivalente ainda não existe para o Claude Code; as páginas
-usadas foram `https://code.claude.com/docs/en/model-config.md` (aliases, `opusplan`, versões, fixar
-versão) e `https://code.claude.com/docs/en/sub-agents.md` ("Choose a model", embutidos).
+  As três `ANTHROPIC_DEFAULT_*` fixam a versão (alias acompanha a versão nova sozinho; trocar vira
+  decisão registrada). o modo de plano com troca de modelo e a variável de modelo único de subagente não se usam: o modelo de cada
+  subagente vem do `model` do frontmatter dos agentes da casa ou do parâmetro da chamada. Ordem da
+  doc: parâmetro da chamada > `model` do frontmatter > `CLAUDE_CODE_SUBAGENT_MODEL` > modelo do pai.
+  Sonnet 5.5 aceita como advisor Fable, Opus 5 ou mais novo e Sonnet 5.5; o subagente herda o advisor.
+  `/advisor off` ou `CLAUDE_CODE_DISABLE_ADVISOR_TOOL=1` o desligam (a casa não desliga).
+- **Os três momentos de consulta.** O advisor é decidido pelo modelo e não há setting que o force;
+  por isso a régua o pede no prompt e nas instruções: (1) **antes de fechar o plano**; (2) **quando o
+  mesmo erro de teste ou de compilação falha duas vezes**; (3) **antes de declarar pronto ou
+  commitar**. O advisor não substitui o verificador independente (§10.1): quem escreveu não confere
+  o próprio trabalho. **Na nuvem não há advisor**: a sub-sessão nasce de `create_session`, que não
+  recebe `--advisor`, e o container não tem `~/.claude/settings.json` (provado em 2026-11-19 numa
+  sub-sessão Sonnet, Claude Code 2.1.328: nenhuma ferramenta advisor). Ali os três momentos chamam
+  um subagente revisor com `model: "opus"`, que lê o plano, o erro ou o diff e devolve parecer curto.
+- **Subagente:** busca, `grep`, consulta de doc e auditoria de diff vão aos agentes Haiku só de leitura
+  de `.claude/agents/`, que o sync espelha: `search` (onde fica algo), `grep` (chamadores e usos),
+  `docs` (entrada em `_doc-lib` + página oficial, com a citação) e `audit` (diff contra `_standards/`,
+  em worktree, Bash só de leitura). Implementar, corrigir e verificar continuam em Sonnet:
+  `model: "sonnet"` na chamada. Subagente de plano ou de revisão final que precise do Opus recebe
+  `model: "opus"` na chamada.
+- **Sessões orquestradas (§10.7):** a regente geral roda em **Opus 5.5** e só planeja, decide,
+  distribui e revisa; nunca escreve código nem cria sub-sessão de projeto. A regente de cada projeto
+  roda em **Sonnet 5.5** com advisor Opus. A sub-sessão (shared, backend, frontend) nasce com
+  `create_session` e `model: "claude-sonnet-5-5"` explícito (sem o campo herda o modelo de quem a
+  criou) e **é criada pela regente do projeto, nunca pela geral**: criada pela geral ela não fica
+  aninhada à regente na barra lateral (lição de 2026-11-16). Sub-sessão no modelo errado é recriada: o
+  contexto passa pelo brief, que traz o `docs/MEMORY.md`, as branches e os PRs, e a antiga só é
+  arquivada depois de conferido que não tem nada só local. A regente confere o modelo pelo
+  `get_session` (`session_context.model` e `external_metadata.last_served_model`).
+
+#### Code Mode (opcional, só na máquina do dono)
+
+`CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1` no `env` do `~/.claude/settings.json` (a variável é ignorada em
+settings de projeto), Claude Code v2.1.323 ou mais novo. Vale só na sessão interativa `claude` do
+terminal: não funciona em `-p`, no Agent SDK, no VS Code, no Desktop nem em sessão de nuvem. Por isso
+nenhuma regra da casa depende dele.
+
+Conferido em 2026-11-19: `https://code.claude.com/docs/en/advisor.md` (advisor, modelos aceitos,
+herança, desligar), `https://code.claude.com/docs/en/sub-agents.md` (ordem do modelo, frontmatter),
+`https://code.claude.com/docs/en/model-config.md` (aliases, fixar versão, `effortLevel`),
+`https://code.claude.com/docs/en/settings.md` (`advisorModel`, `env`) e
+`https://code.claude.com/docs/en/code-mode.md` (Code Mode).
 
 ### 10.6 Suíte que não leva horas *(opinião da casa, a partir de Twenty, n8n, Medusa, Cal.com, Payload e Immich; `DECISIONS.md` #253)*
 
@@ -1480,7 +1511,7 @@ Camadas, cada uma com a sua ferramenta:
 | Camada | Quem | Ferramenta |
 |---|---|---|
 | Regente geral (entre projetos e upstream) | a sessão em que o dono conversa | `send_message` para as regentes de projeto, quadro em `_standards/_map/<rodada>/QUADRO.md` |
-| Regente do projeto | uma sessão por projeto (`create_session` com o repositório dele) | quebra cada fase do plano em itens, despacha, revisa, abre a PR; não executa item |
+| Regente do projeto | uma sessão por projeto (`create_session` com o repositório dele) | quebra cada fase do plano em itens, despacha, revisa, abre a PR; não executa item; roda em Sonnet com advisor Opus e é ela quem cria as sub-sessões (§10.5) |
 | Sub-sessões shared, backend e frontend | uma sessão por pasta do projeto, abertas pela regente (`create_session`, mesmo repositório); projeto sem uma das pastas não tem a sub-sessão dela | executam todo item de resolução, correção e melhoria do seu lado, com seus subagentes; reportam à regente do projeto |
 | Item G (fase 2 ou 3 do plano, feature) | subagentes do projeto | `tlc-plan` (plano aprovado pelo dono) e `tlc-implement` (lotes, verificador independente, provas por script) |
 | Item P ou M | um subagente por item | `superpowers:subagent-driven-development`, worktree e branch próprias (#311) |

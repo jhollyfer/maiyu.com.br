@@ -5,7 +5,7 @@ driver mongodb + BullMQ + socket.io + isolated-vm. Frontend React 19 + TanStack 
 react-hook-form + Zod (VineJS só no backend Adonis) + shadcn (Base UI) + Tailwind v4 + Tiptap + Paraglide. Pacote `shared/` no pnpm
 workspace. Vite, Nitro, Vitest/Japa/Playwright. Sem GitHub Actions. Deploy Coolify/Docker.
 
-Fontes: `.claude/skills/*` (projeto, 223), `~/.claude/skills/*` (usuário), plugins em cache (caveman,
+Fontes: `.claude/skills/*` (projeto, 252), `~/.claude/skills/*` (usuário), plugins em cache (caveman,
 context-mode, ponytail, superpowers, engineering, design, figma, anthropic-skills, searchfit-seo).
 
 **Regra de uso:** dispare a skill **mais direcionada e necessária** para a tarefa, uma por momento,
@@ -46,6 +46,7 @@ repositório, uma vez por sessão: `code-review-graph build` na raiz do projeto.
 - **code-pattern**: estilo TS/React e commit da casa (sem ternário, `any`, `as`, `!`, `interface`;
   `Merge`; lookup `satisfies Record`; função com casa e sem verificação de tipo; inglês; commit pt-BR
   com autor único). Vale para toda linha de TS/TSX e todo commit.
+- **`.claude/agents/`** (`search`, `grep`, `docs`, `audit`): Haiku só-leitura para busca, chamadores, doc e auditoria de diff; implementar, corrigir e verificar segue em Sonnet (`tooling.md` §10.5, `DECISIONS.md` #787).
 - **maiyu-standards**: ordem de consulta (`_standards/`, `_doc-lib` + página oficial, tipo instalado,
   código vizinho) antes de qualquer decisão. É o roteiro que `maiyu-backend`, `maiyu-frontend` e
   `maiyu-docs` pressupõem.
@@ -61,7 +62,7 @@ tarefa").
 | feature nova (1, 3) | `tlc-spec-driven` | `tlc-prd` antes, quando o problema e o escopo ainda não estão decididos (grava em `docs/PRD.md`); `tlc-discover` (veredito em aberto); `tlc-spec-lean` só se o `AGENTS.md` do projeto declarar |
 | escolha difícil de desfazer (1→8) | `the-jury` | `create-rfc` quando várias partes opinam; registro é linha em `docs/DECISIONS.md` |
 | plano de trabalho não-feature (3) | `superpowers:writing-plans` | `tlc-plan` corta PRD/design já decidido; `legacy-migration-planner` para migrar camada (model direto → repository) |
-| executar plano (4) | `superpowers:executing-plans` / `superpowers:subagent-driven-development` | `tlc-implement` executa checklist com verificador |
+| executar plano (4) | `superpowers:executing-plans` / `superpowers:subagent-driven-development` | `tlc-implement` executa checklist com verificador; as duas de `superpowers` vêm do plugin (como `writing-plans`), sem cópia em `.claude/skills/` (`DECISIONS.md` #788) |
 | paralelizar (4) | `superpowers:dispatching-parallel-agents` | `superpowers:using-git-worktrees` para isolar |
 | orquestrar trabalho que passa de um projeto ou de uma fase (3, 4) | regente geral e uma sessão regente por projeto (`tooling.md` §10.7) | item G: `tlc-plan` e `tlc-implement`; item P ou M: `superpowers:subagent-driven-development`; varredura em massa: `Workflow` (`workflow-authoring`) com cético por achado (#364) |
 | código de produção (4) | `superpowers:test-driven-development` | `engineering:testing-strategy` para decidir nível e borda do teste |
@@ -78,7 +79,18 @@ tarefa").
 | antes de deploy (8) | `engineering:deploy-checklist` | migration testada, rollback e gatilho decididos antes |
 | fim da branch (8) | `superpowers:finishing-a-development-branch` | `resolving-merge-conflicts` em conflito |
 | prosa para humano (8) | `humanizer` | `docs-writer` para estrutura; regra de escrita do `CLAUDE.md` do projeto vence |
-| UI: criar, polir | `impeccable` | `design-taste-frontend` (direção visual), `design:ux-copy` (microcopy de erro e botão) |
+| UI: criar, polir | `impeccable` | `design-taste-frontend` (direção visual), `ui-ux-pro-max` (catálogo de estilo, paleta e fonte, só para propor no `docs/DESIGN.md`), `hallmark` (página nova e vitrine, piso anti-genérico), `design:ux-copy` (microcopy de erro e botão) |
+| polir interação e microdetalhe de UI pronta (4) | `make-interfaces-feel-better` (checklist: superfície, tipografia, ícone, animação, performance) | apoio: `emil-design-eng` quando a dúvida é de movimento e de gesto (origem do popover, tempo de tooltip, `clip-path`); `impeccable` continua sendo quem cria e critica, estas só afinam; Base UI, Phosphor e `LazyMotion` strict valem sobre os exemplos |
+| peça visual estática avulsa: cartaz, arte de divulgação (1, 4) | `canvas-design` | só fora do código do produto; tela do produto é `impeccable`; saída fora do repositório; apoio: `algorithmic-art` (arte generativa em p5.js, fora do repositório salvo pedido; em página só como asset do tema) |
+| ilustração de vitrine com UI de mentira (hero, card de funcionalidade, demo com cursor) (1, 4) | `stageshow` | só vitrine pública, nunca tela do produto; mock marcado como ilustrativo, sem métrica ou logo inventado; ícone Phosphor no lugar do lucide do kit |
+| vídeo em React (peça de divulgação) | **não vendorizada** | `remotion-dev/skills` não traz LICENSE; ver "Avaliadas e recusadas" |
+| tema (cor e fonte) de deck, documento ou peça avulsa | `theme-factory` | nunca o tema do projeto (`styles.css`); deck do ambiente sai do Artifact de slides |
+| documento Word, planilha, apresentação ou PDF pedido pelo dono | `docx` / `xlsx` / `pptx` / `pdf` (uma por formato) | saída fora do repositório salvo pedido; a doc do projeto é Markdown em `docs/`; o ambiente também tem `anthropic-skills:docx`/`xlsx`/`pptx`/`pdf`: use uma só, a da casa quando a tarefa é do projeto |
+| explorar fluxo no navegador local (6) | `webapp-testing` | apoio de `playwright-skill`: só exploração; o teste é `frontend/e2e/*.spec.ts` (`tooling.md`) |
+| landing page, copy de vitrine pública (1, 4) | `copywriting` | com `cro` para estrutura e conversão da página ou do formulário; `humanizer` no fim; `impeccable` para a UI |
+| auditoria de SEO da vitrine pública (7) | `seo-audit` | apoio de `seo`; técnico (`schema`, `technical-seo`) é `searchfit-seo:*` |
+| e-mail de produto ou sequência (4) | `emails` | envio é do backend do projeto |
+| divulgação em rede social | `social` | peça sai fora do repositório; texto passa pelo `humanizer` |
 | identidade visual de projeto novo, a partir de referência (1, 4) | `design-dna` | extrai token, estilo e efeito de site de referência para o `docs/DESIGN.md`; referência é inspiração, nunca cópia de marca alheia |
 | movimento e microinteração (4) | `motion-design` (princípios: tempo, easing, coreografia) | `genjutsu:cast` para propor e implementar o movimento numa UI pronta; CSS nativo primeiro (`genjutsu` módulo `css-native`), biblioteca só com entrada na `_doc-lib` |
 | navegador | navegador embutido, `browser-harness` | `chrome-devtools` para depurar; `agent-browser` (CLI) quando o agente precisa dirigir a página fora da sessão; `playwright-skill` só para explorar (teste é `e2e/*.spec.ts`) |
@@ -114,7 +126,8 @@ tarefa").
 | Commit / PR | `caveman-commit` | `gh-address-comments`; regras em `code-pattern` §9 |
 | Hooks locais (`pre-commit`, `commit-msg`) | `setup-pre-commit` | — |
 | Deploy | `engineering:deploy-checklist` | — |
-| Criar skill/agente | `skill-architect` | `superpowers:writing-skills`, `subagent-creator` |
+| Criar skill/agente | `skill-architect` | `superpowers:writing-skills`, `subagent-creator`; `skill-creator` (eval e ajuste da descrição, no upstream) |
+| Servidor MCP | `mcp-builder` | TypeScript da régua; SDK novo só com entrada na `_doc-lib` |
 
 ## Por biblioteca — disparo a partir da doc
 
@@ -214,8 +227,9 @@ Também duplicadas entre `.claude/skills` e `~/.claude/skills` (mesma skill vis�
   do `genjutsu` (`gsap`, `threejs-r3f`) seguem a regra de GSAP abaixo; o `framer-motion` vale com
   `_doc-lib/motion.md`; o
   `ui-ux-pro-max` embutido nele é o mesmo da seção UI/UX.
-- **UI/UX**: `impeccable` corrige, `design-taste-frontend` dá a direção; `ui-ux-pro-max` só como
-  consulta de paleta, par de fontes e regra de UX para escrever o `docs/DESIGN.md` do projeto.
+- **UI/UX**: `impeccable` corrige, `design-taste-frontend` dá a direção; `ui-ux-pro-max` (vendorizada
+  em 2026-11-19) só como consulta de estilo, paleta, par de fontes e regra de UX para escrever o
+  `docs/DESIGN.md` do projeto; `hallmark` só em página nova e vitrine, como piso contra o genérico.
 
 ## Quando a skill contradiz a casa
 
@@ -267,7 +281,8 @@ vendor escolhido para aquele projeto). Nunca por garantia.
   cria `_doc-lib/gsap.md` antes (`AGENTS.md`, "Autoridade") e então `gsap-react` entra em
   "Por biblioteca".
 - **Pesquisa e conteúdo**: `last30days` (o que se fala de um assunto nos últimos 30 dias),
-  `marketingskills` (coreyhaines31, 50 skills: copy, SEO, CRO, e-mail, `social`), `brandkit`.
+  `marketingskills` (coreyhaines31, 50 skills; entram só `copywriting`, `seo-audit`, `cro`, `emails` e
+  `social`, em "Por momento"; as outras 45 seguem fora), `brandkit`.
 
 ## Pacotes externos avaliados (2026-10-14)
 
@@ -281,7 +296,7 @@ origem antes de entrar aqui; onde a lista citou o nome errado, vale o real.
 | caveman | `JuliusBrussee/caveman` | sempre ligada |
 | pentiall | provavelmente `ponytail` | sempre ligada (não confirmado pelo nome da lista) |
 | coder, t-hunt-and | não identificados | fora até o dono indicar o repositório |
-| ui-ux-pro-max | `nextlevelbuilder/ui-ux-pro-max-skill` | sobreposta: consulta para `docs/DESIGN.md`; Radix contradiz |
+| ui-ux-pro-max | `nextlevelbuilder/ui-ux-pro-max-skill` | vendorizada em 2026-11-19 (MIT, só a skill `ui-ux-pro-max`); consulta para `docs/DESIGN.md`, e onde ela pede Radix vale Base UI (`ui-styling` segue em "Quando a skill contradiz a casa") |
 | taste-skill | `Leonxlnx/taste-skill` | já instalada (`design-taste-frontend` e presets) |
 | impeccable | `pbakaus/impeccable` | já instalada, UI |
 | hyperframe | `heygen-com/hyperframes` | fora da stack, vídeo |
@@ -322,6 +337,30 @@ Terceira lista (ranking "Top 10 Fastest Growing Claude Skills", set/2026):
 | Graphify | `safishamsi/graphify` | sobreposta com `code-review-graph` (já avaliada) |
 | Addy Osmani Skills | `addyosmani/agent-skills` | instaladas em 2026-10-19 (`aeac41d`): `api-and-interface-design`, `observability-and-instrumentation`, `performance-optimization`, `incremental-implementation` (etapa 4, fatia fina verificável) e `constraint-driven-development` (ao entrar no projeto, para escrever a régua de qualidade dele no `docs/RULES.md`). `source-driven-development` é o que `maiyu-standards` já faz com a `_doc-lib`; `doubt-driven-development` repete `the-fool`; `spec-driven-development` e `planning-and-task-breakdown` repetem `tlc-spec-driven`; `documentation-and-adrs` contradiz o conjunto fechado de docs |
 | Impeccable | `pbakaus/impeccable` | UI |
+
+Quarta lista (2026-11-19, `DECISIONS.md` #788). Vendorizadas, cada uma com cabeçalho de origem e do que
+a régua vence (origem e commit na tabela do fim da página):
+
+| Skill | Repositório | Onde ficou |
+|---|---|---|
+| `canvas-design`, `theme-factory`, `docx`, `pptx`, `xlsx`, `pdf`, `webapp-testing`, `mcp-builder`, `skill-creator` | `anthropics/skills` | "Por momento" e "Por tarefa". As quatro de documento têm `LICENSE.txt` Apache-2.0 padrão, que permite redistribuir: copiadas |
+| `make-interfaces-feel-better` | `jakubkrehel/make-interfaces-feel-better` | polir interação (4) |
+| `emil-design-eng` | `emilkowalski/skills` (o diretório não se chama `emil-design-engineering`) | apoio da anterior; as outras 19 do repositório (`animate`, `gestures`, `write-swift`, `mobile-native`...) ficam fora |
+| `copywriting`, `seo-audit`, `cro`, `emails`, `social` | `coreyhaines31/marketingskills` | nomes reais: não há `email` nem `social-media` e `cro` já cobre `page-cro` e `form-cro` (`references/form.md`) |
+| `ui-ux-pro-max` | `nextlevelbuilder/ui-ux-pro-max-skill` (`.claude/skills/ui-ux-pro-max`, com `LICENSE` MIT) | apoio de `design-taste-frontend` e `impeccable` na direção visual; catálogo para `docs/DESIGN.md`; Base UI no lugar de Radix. As outras skills do repositório (`ui-styling`, `design-system`, `brand`, `slides`, `banner-design`) ficam fora |
+| `hallmark` | `Nutlope/hallmark` | página nova e vitrine, apoio de `impeccable`; `LICENSE` MIT na pasta |
+| `stageshow` | `benjitaylor/skills` | ilustração de vitrine; MIT, com `NOTICE.md` e licenças de marca de terceiros |
+| `algorithmic-art` | `anthropics/skills` | apoio de `canvas-design`; `LICENSE.txt` Apache-2.0 |
+| `subagent-driven-development` | `obra/superpowers` | não copiada: vem do plugin, como `writing-plans` |
+
+Avaliadas e recusadas:
+
+| Candidata | Motivo |
+|---|---|
+| Anti UI Slop (uizze.com) | site, sem skill nem repositório identificado; `uizze.com` não resolve na rede da sessão (precisa liberar o domínio para conferir). Entra só como referência de consulta em `frontend.md` §6.4; o que a casa tem contra UI genérica é `impeccable`, `hallmark` e `frontend.md` (anti-IA) |
+| `remotion-create` e as outras `remotion-*` (`remotion-dev/skills`) | o repositório não traz arquivo LICENSE (nem o `package.json` declara licença), e o Remotion tem licença própria para empresas, em `remotion.dev/docs/license`. Sem licença de redistribuição não se copia; reavaliar quando o dono confirmar a licença da empresa |
+| `doc-coauthoring` (`anthropics/skills`) | a pasta não traz LICENSE (ver #788) |
+| "JEV" | não existe na documentação oficial; sem repositório identificado (regra "Nome não é identidade") |
 
 **Nome não é identidade.** Skill entra pelo repositório exato (dono/nome) conferido, nunca pelo nome
 que um post, ranking ou outro agente citou. Nome popular sem repositório confirmado é o caso típico
@@ -420,6 +459,13 @@ vai para a seção "Quando a skill contradiz a casa", e não para dentro da cóp
 | `Leonxlnx/taste-skill` | `a9c73c3` | MIT | 12 trocadas; o conteúdo longo saiu do `SKILL.md` para `references/` e `library/` |
 | `addyosmani/agent-skills` | `aeac41d` | MIT | 5 novas (acima) |
 | `cloudflare/security-audit-skill` | `c1c8a8c` | MIT | `security-audit` (com os validadores `.cjs` e os testes dele, que só usam `fs` e `path`) |
+| `anthropics/skills` | `e4bb5d960d87126ff3b3a8af1a104b7db67560ba` | Apache-2.0 | 2026-11-19: `canvas-design`, `theme-factory`, `docx`, `pptx`, `xlsx`, `pdf`, `webapp-testing`, `mcp-builder`, `skill-creator`; 2026-11-19 (segunda leva): `algorithmic-art` |
+| `jakubkrehel/make-interfaces-feel-better` | `6d9f2f1df10e8ce2ae1708598a73b0506fb98794` | MIT | 2026-11-19: `make-interfaces-feel-better` |
+| `nextlevelbuilder/ui-ux-pro-max-skill` | `2de1134dc4d1cfe112934611ae5803ae17a1bd7e` | MIT | 2026-11-19: `ui-ux-pro-max` (cópia de `.claude/skills/ui-ux-pro-max`, com `scripts/` Python e `data/`, que não se executam) |
+| `Nutlope/hallmark` | `04977e15f3dfd6ee4b74c887dac3eb52665d6c92` | MIT | 2026-11-19: `hallmark` (com `scripts/sloplint`, que só roda por pedido) |
+| `benjitaylor/skills` | `299140fafd08df55a9c234e610c3f64af3f45531` | MIT (marcas de terceiros em `kit/brands/`) | 2026-11-19: `stageshow` |
+| `emilkowalski/skills` | `64eb3deb9a5fbfa041faf783e0bc3fd635872e9c` | MIT | 2026-11-19: `emil-design-eng` |
+| `coreyhaines31/marketingskills` | `73573e94a06a39965978b3fa1f9c1eace8cebc7c` | MIT | 2026-11-19: `copywriting`, `seo-audit`, `cro`, `emails`, `social` |
 | `mksglu/context-mode` | `6006a35` | **Elastic 2.0** | plugin; uso interno livre, oferecer como serviço hospedado não |
 | `obra/superpowers`, `DietrichGebert/ponytail`, `browser-use/browser-harness`, `tirth8205/code-review-graph`, `rtk-ai/rtk` | último do dia | MIT / Apache-2.0 | plugin, MCP ou CLI pelo `scripts/cloud-setup.sh`; não ficam copiados aqui |
 

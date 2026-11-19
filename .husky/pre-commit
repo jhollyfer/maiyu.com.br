@@ -25,8 +25,20 @@ fi
 if has backend && { touches backend || touches shared; }; then
   pnpm --filter ./backend check && pnpm --filter ./backend test:unit || exit 1
 fi
+# A frontend still on the legacy app (migration by phases, DECISIONS.md #786) is declared in the manifest
+# the sync writes (`"frontend": "legado"`, set by `sync --frontend=legado`): its `check` is not the kit's
+# and has errors that predate the migration, so it would block every backend commit. It is skipped, never
+# silently: one line says so, and `sync --check` keeps listing `frontend-legado:` until `--frontend=kit`.
+legacy_frontend() {
+  grep -q '"frontend": *"legado"' .maiyu/kit-extension-points.json 2>/dev/null
+}
+
 # backend too: the frontend tsconfig includes the backend for the Tuyau registry, so a backend type
 # change can break the frontend typecheck.
 if has frontend && { touches frontend || touches shared || touches backend; }; then
-  pnpm --filter ./frontend check && pnpm --filter ./frontend test:unit || exit 1
+  if legacy_frontend; then
+    echo "pre-commit: frontend ainda legado (manifesto .maiyu): check do frontend pulado"
+  else
+    pnpm --filter ./frontend check && pnpm --filter ./frontend test:unit || exit 1
+  fi
 fi

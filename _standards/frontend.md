@@ -891,19 +891,23 @@ A forma única está nas skills `dialog-pattern` e `sheet-pattern`; o resumo que
   *(opinião da casa)*.
 - Elemento clicável que não é `<button>`: §10.2.
 
-### 6.4 Referência visual e componente de terceiro *(opinião da casa sobre a doc)*
+### 6.4 Referência visual e componente de terceiro *(opinião da casa sobre a doc, `DECISIONS.md` #789)*
 
 Duas coisas diferentes, com regra diferente.
 
 **Referência (só olhar)**: Godly (`godly.website`) e Awwwards (`awwwards.com`) para direção e nível
-de acabamento; Motionsites (`motionsites.com`) para landing animada. Entram **antes** do layout, na
+de acabamento; Motionsites (`motionsites.com`) para landing animada; Anti UI Slop (`uizze.com`), de consulta contra
+UI genérica (site, sem skill nem repositório; não conferido nesta sessão, fora do acesso). Entram **antes** do layout, na
 direção visual (`design-taste-frontend`, `design-dna`), e o que se escolheu vai para
 `docs/DESIGN.md` §12 com o porquê. O prompt pronto do Motionsites é ponto de partida para a
 conversa, não especificação: o resultado passa pelos tokens do projeto e por esta régua. Marca,
 logo, texto e imagem do site de referência nunca entram.
 
-**Componente (copia e cola)**: 21st.dev e React Bits (`reactbits.dev`) entregam código que vira
-arquivo do projeto. O 21st.dev é registry comunitário instalável por `shadcn add <url>`, e registry
+**Componente (copia e cola)**: 21st.dev, React Bits (`reactbits.dev`), Magic UI (`magicui.design`),
+Aceternity UI (`ui.aceternity.com`), Animate UI (`animate-ui.com`), Motion Primitives
+(`motion-primitives.com`), Cult UI (`cult-ui.com`) e Kibo UI (`kibo-ui.com`) entregam código que vira
+arquivo do projeto, com as mesmas restrições (`DECISIONS.md` #789). O 21st.dev é registry
+comunitário instalável por `shadcn add <url>`, e registry
 comunitário "não passa por nenhuma curadoria do shadcn" (_doc-lib/shadcn.md#docs/directory): é
 código de terceiro e se revisa **antes** de instalar. Ao trazer:
 
@@ -916,14 +920,31 @@ código de terceiro e se revisa **antes** de instalar. Ao trazer:
   `_doc-lib/<lib>.md` e linha em `docs/DECISIONS.md` (`AGENTS.md`, "Autoridade"). Sem isso, a versão em CSS
   do bloco (o React Bits oferece variante CSS e Tailwind) ou nada. Motion já tem entrada
   (`_doc-lib/motion.md`): `motion/react` com `LazyMotion` + `m`, e Motion+ só com decisão do projeto.
-- **Licença conferida** e anotada no topo do arquivo: React Bits é MIT com Commons Clause, 21st.dev
-  varia por autor. Sem licença declarada, o bloco não entra.
+- **Licença conferida** e anotada no topo do arquivo: React Bits e Animate UI são MIT com Commons
+  Clause, 21st.dev varia por autor, Aceternity UI tem licença própria (só a camada gratuita; Pro é
+  pago e fora). Sem licença declarada ou conferida por arquivo, o bloco não entra (o
+  Motion Primitives está nesse caso em 2026-11-19).
 - **O arquivo passa pela régua inteira**: TypeScript sem `any`/`as`/`!`, sem ternário, cores e
   raios só por token (§6, "Tokens e tema"), texto por chave de i18n (`i18n.md`),
   `prefers-reduced-motion` por componente (§10), e o lugar na árvore de `architecture.md`
   (`components/common/` só se duas rotas usam; senão `-components/` da rota).
 - **Efeito pesado** (WebGL, canvas, shader) entra com `lazy` e fora do caminho crítico (§9.4, §9.8):
   fundo animado não pode piorar o LCP da página.
+
+Conflito típico de cada registry e como o bloco entra (cada `_doc-lib/<slug>.md` traz a licença e
+as páginas oficiais conferidas):
+
+| Registry | Conflito típico | Como entra |
+|---|---|---|
+| Magic UI (`_doc-lib/magicui.md`) | `motion` direto; `lucide`; dependência extra (`cobe`) | `LazyMotion` + `m`, Phosphor; dependência nova só com `_doc-lib` e decisão |
+| Aceternity UI (`_doc-lib/aceternity-ui.md`) | `motion` direto; `three`/`@react-three/fiber` nos 3D; Pro pago | só a camada gratuita; Pro e `three` só com decisão do dono |
+| Animate UI (`_doc-lib/animate-ui.md`) | substitui primitivos de `ui/`; família Radix; ícones `lucide` | só componente de vitrine, variante Base UI; nunca reescreve o kit |
+| Motion Primitives (`_doc-lib/motion-primitives.md`) | `lucide-react` exigido; Dialog e Accordion à mão; sem `LICENSE` | só efeito (texto, glow); sem licença conferida o bloco não entra |
+| Cult UI (`_doc-lib/cult-ui.md`) | `lucide` (`Loader2`); `motion` direto; botões e inputs próprios | só vitrine; spinner e botão do kit |
+| Kibo UI (`_doc-lib/kibo-ui.md`) | Radix e `lucide`; blocos funcionais (tabela, dropzone) | quase nada serve: tabela e upload são do kit |
+
+Formulário, painel e qualquer primitivo interativo seguem o shadcn sobre Base UI do kit, de qualquer
+registry. A anotação no topo do arquivo copiado leva fonte (URL da página), licença e data.
 
 ### 6.5 Uso estrito do kit *(opinião da casa sobre a doc, `DECISIONS.md` #300)*
 
