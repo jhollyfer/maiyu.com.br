@@ -32,7 +32,7 @@ em development e test.
 | `APP_KEY` | api | sim | **sim** | chave de cifra, gerada por `node ace generate:key` | `<segredo>` |
 | `APP_SERVER_URL` | api | sim | não | endereço público da API; em produção `https://api.maiyu.com.br` | `http://localhost:3333` |
 | `APP_CLIENT_URL` | api | só com app e API em sites diferentes | não | origem pública do site; decide o `sameSite` do cookie | `https://maiyu.com.br` |
-| `TRUSTED_PROXIES` | api | **sim em produção** | não | proxies de que `X-Forwarded-For` vale; ausente vale `loopback`; nunca `true`. A API exige `uniquelocal,cloudflare` no Coolify: o `Dockerfile-production` do kit fixa `loopback`, e atrás do Traefik todo visitante teria o IP do proxy, então o limite do contato e o do login valeriam para todos juntos. `cloudflare` vale como as faixas CIDR publicadas pela Cloudflare (`app/core/trusted-proxies.ts`, chamado em `config/app.ts`); sem a Cloudflare na frente, `uniquelocal` basta | `uniquelocal,cloudflare` |
+| `TRUSTED_PROXIES` | api | **sim em produção** | não | proxies de que `X-Forwarded-For` vale; ausente vale `loopback`; nunca `true`. A API exige `uniquelocal` no Coolify: o `Dockerfile-production` do kit fixa `loopback`, e atrás do Traefik todo visitante teria o IP do proxy, então o limite do contato e o do login valeriam para todos juntos. | `uniquelocal` |
 | `COOKIE_DOMAIN` | api | em produção com hosts irmãos | não | domínio dos cookies de sessão | `.maiyu.com.br` |
 | `CORS_ORIGINS` | api | sim fora de dev | não | origens do navegador que podem escrever, separadas por vírgula; em produção só `https://maiyu.com.br`, a origem do site | `http://localhost:3000` |
 | `DATABASE_URL` | api | sim | **sim** | conexão com o Postgres, só no servidor | `postgres://maiyu:<senha>@localhost:5440/maiyu` |
@@ -129,7 +129,7 @@ Docker Hub.
 | Desenvolvimento | `backend/.env` copiado de `backend/.env.example`; o frontend não precisa de `.env` | site na porta 3000, API na 3333, infra local por `docker compose` |
 | Teste | `backend/.env.test` versionado; `DATABASE_URL` do processo vence o arquivo | banco `app_test` e bucket `maiyu-test` |
 | Preview | Não se aplica: não há ambiente de preview | |
-| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal,cloudflare`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
+| Produção | painel do Coolify, um recurso por app (`ARCHITECTURE.md` §9.1) | API (`api.maiyu.com.br`): as de runtime da seção 1.1, com `TZ=America/Eirunepe`, `CORS_ORIGINS=https://maiyu.com.br`, `TRUSTED_PROXIES=uniquelocal`, nunca no repositório; site (`maiyu.com.br`): `SITE_ENV=production` obrigatória (sem ela toda resposta sai com `noindex` e o site some dos buscadores) e `TZ=America/Eirunepe`; o campo *Health Check* do painel fica vazio nos dois |
 
 ## 5. Primeira configuração
 
