@@ -1,6 +1,7 @@
 {
   "dependencies": {
-    "@adonisjs/core": "7.6.0"
+    "@adonisjs/core": "7.6.0",
+    "argon2": "0.45.2"
   },
   "devDependencies": {
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",

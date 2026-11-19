@@ -1,6 +1,6 @@
 # Índice de documentação
 
-Referência anotada de 1321 páginas de documentação, distribuídas em 24 bibliotecas. As regras da
+Referência anotada de 2770 páginas de documentação, distribuídas em 74 bibliotecas. As regras da
 casa — o que fazer com elas — ficam em [`_standards/`](_standards/), e vencem o código existente.
 
 O Fastify é a única biblioteca com **dois** arquivos, e o motivo é que são duas perguntas: como o
@@ -82,6 +82,12 @@ o container e a convenção de controller que o Adonis traz de fábrica.
 | **Motion**          | [`_doc-lib/motion.md`](_doc-lib/motion.md)                   | Animação React: layout, saída, gesto, arraste, scroll; Motion+ (pago) marcado                     |  44   |
 | **Paraglide JS**    | [`_doc-lib/paraglide.md`](_doc-lib/paraglide.md)             | i18n compilado do frontend: mensagens tipadas, estratégia de idioma, URL por locale, SSR        |  40   |
 | **Phosphor**        | [`_doc-lib/phosphor.md`](_doc-lib/phosphor.md)               | Ícones React: pesos, `IconContext`, acessibilidade, migração do lucide pelo shadcn             |  14   |
+| **Magic UI** | [`_doc-lib/magicui.md`](_doc-lib/magicui.md) | Registry de componentes de landing animados (shadcn CLI); só vitrine, MIT | 4 |
+| **Aceternity UI** | [`_doc-lib/aceternity-ui.md`](_doc-lib/aceternity-ui.md) | Registry de componentes animados; gratuito só, Pro pago fora; licença própria | 4 |
+| **Animate UI** | [`_doc-lib/animate-ui.md`](_doc-lib/animate-ui.md) | Primitivos animados com Motion (variante Base UI); MIT + Commons Clause | 4 |
+| **Motion Primitives** | [`_doc-lib/motion-primitives.md`](_doc-lib/motion-primitives.md) | Componentes de movimento em beta; licença não conferida por arquivo | 4 |
+| **Cult UI** | [`_doc-lib/cult-ui.md`](_doc-lib/cult-ui.md) | Registry de componentes animados de nicho para shadcn/ui; MIT | 4 |
+| **Kibo UI** | [`_doc-lib/kibo-ui.md`](_doc-lib/kibo-ui.md) | Registry de blocos funcionais sobre shadcn/ui (tabela, dropzone); só vitrine, MIT | 4 |
 | **Recharts**        | [`_doc-lib/recharts.md`](_doc-lib/recharts.md)               | Gráficos React em SVG por composição, a base do `chart` do shadcn                               |  111  |
 | **Tuyau**           | [`_doc-lib/tuyau.md`](_doc-lib/tuyau.md)                     | Cliente HTTP tipado do Adonis por nome de rota; transporte sob o `http.ts`, não o contrato     |   2   |
 | **TanStack Store**  | [`_doc-lib/tanstack-store.md`](_doc-lib/tanstack-store.md)   | Estado de cliente que não é do servidor nem cabe na URL                                          |   4   |
@@ -236,7 +242,7 @@ formato passou a ser garantido por quem não segura o dado.
 
 ## Ordem de leitura sugerida
 
-Para quem está começando na stack e não quer ler 1321 páginas:
+Para quem está começando na stack e não quer ler 2770 páginas:
 
 **Backend**: `adonisjs` (folder-structure, http-context, routing, dependency-injection),
 `vinejs` (schema_101, html_forms_and_surprises, types/object) e `lucid` (models, migrations,
