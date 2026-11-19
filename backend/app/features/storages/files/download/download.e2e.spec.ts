@@ -76,6 +76,8 @@ test.group('storages > download', (group) => {
     // Both names, as RFC 6266 asks.
     assert.include(disposition, 'filename="capa.png"')
     assert.include(disposition, "filename*=UTF-8''capa.png")
+    // The type the upload declared, not a generic `application/octet-stream`.
+    assert.include(response.header('content-type'), 'image/png')
   })
 
   test('whoever is not staff cannot download a file that is not theirs: only the staff operates the collection', async ({

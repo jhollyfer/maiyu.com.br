@@ -29,6 +29,9 @@ export * from './responses/storefront/contacts.response.js'
 export * from './rich-text-schema.js'
 export * from './validator.js'
 export * from './validators/account/profile.validator.js'
+// --- optional: mail ---
+export * from './validators/account/email-confirmation.validator.js'
+// --- end optional ---
 export * from './validators/administrator/contacts.validator.js'
 export * from './validators/authentication/actor.validator.js'
 export * from './validators/authentication/sessions.validator.js'

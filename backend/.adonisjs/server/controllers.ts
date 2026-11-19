@@ -5,6 +5,11 @@
 
 export const controllers = {
   account: {
+    email: {
+      confirm: {
+        Confirm: () => import('#features/account/email/confirm/confirm.controller'),
+      },
+    },
     profile: {
       show: {
         Show: () => import('#features/account/profile/show/show.controller'),

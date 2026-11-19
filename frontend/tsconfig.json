@@ -12,6 +12,7 @@
     "scripts/**/*.ts",
     "scripts/**/*.mjs",
     "vite.config.ts",
+    "vite.project.ts",
     "vitest.config.ts",
     "vitest.setup.ts",
     // Paraglide's project config, present in every project with i18n.

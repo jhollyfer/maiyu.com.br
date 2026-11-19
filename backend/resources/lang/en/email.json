@@ -1,0 +1,6 @@
+{
+  "change_subject": "Confirm the new email of your account",
+  "change_body": "We received a request to change your account email. To confirm, use the code below within {minutes} minutes. If it was not you, ignore this message: nothing changes.",
+  "token_invalid": "Invalid or expired code",
+  "token_invalid_field": "The code does not match or has expired. Ask for the change again."
+}

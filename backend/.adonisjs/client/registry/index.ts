@@ -176,6 +176,12 @@ const routes = {
     tokens: [[0,"storages"],[1,"id"],[0,"download"]],
     types: placeholder as Registry['storages.files.download']['types'],
   },
+  'account.email.confirm': {
+    methods: ["POST"],
+    pattern: '/account/email/confirm',
+    tokens: [[0,"account"],[0,"email"],[0,"confirm"]],
+    types: placeholder as Registry['account.email.confirm']['types'],
+  },
   'storefront.contacts.create': {
     methods: ["POST"],
     pattern: '/storefront/contacts',

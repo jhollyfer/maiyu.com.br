@@ -1,0 +1,6 @@
+{
+  "change_subject": "Confirme o novo e-mail da sua conta",
+  "change_body": "Recebemos o pedido para trocar o e-mail da sua conta. Para confirmar, use o código abaixo em até {minutes} minutos. Se não foi você, ignore esta mensagem: nada muda.",
+  "token_invalid": "Código inválido ou expirado",
+  "token_invalid_field": "O código não confere ou já expirou. Peça a troca de novo."
+}

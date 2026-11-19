@@ -7,12 +7,16 @@ import { FieldCheckbox } from '#/components/common/field/field-checkbox'
 import { FieldFiles } from '#/components/common/field/field-files'
 import { FieldNumber } from '#/components/common/field/field-number'
 import { FieldPassword } from '#/components/common/field/field-password'
+// --- optional: rich-text ---
 import { FieldRichText } from '#/components/common/field/field-rich-text'
+// --- end optional ---
 import { FieldSwitch } from '#/components/common/field/field-switch'
 import { FieldText } from '#/components/common/field/field-text'
 import { FieldTextarea } from '#/components/common/field/field-textarea'
 import { AppField } from '#/integrations/react-hook-form/app-field'
+// --- optional: rich-text ---
 import type { RichTextDocument } from '@maiyu/shared'
+// --- end optional ---
 
 /**
  * Two forms on the same page with a field of the same `name` (checkout and newsletter e-mail):
@@ -26,7 +30,9 @@ type Values = {
   quantity: number | null
   terms: boolean
   news: boolean
+  // --- optional: rich-text ---
   body: RichTextDocument | null
+  // --- end optional ---
   gallery: Array<string>
 }
 
@@ -48,7 +54,9 @@ function Form({ title }: { readonly title: string }): React.JSX.Element {
       quantity: null,
       terms: false,
       news: false,
+      // --- optional: rich-text ---
       body: null,
+      // --- end optional ---
       gallery: [],
     },
   })
@@ -73,9 +81,11 @@ function Form({ title }: { readonly title: string }): React.JSX.Element {
       <AppField name="news" control={form.control}>
         <FieldSwitch label="Receber novidades" />
       </AppField>
+      {/* --- optional: rich-text --- */}
       <AppField name="body" control={form.control}>
         <FieldRichText label="Corpo" />
       </AppField>
+      {/* --- end optional --- */}
       <AppField name="gallery" control={form.control}>
         <FieldFiles
           label="Galeria"
@@ -137,24 +147,30 @@ describe('useFieldValidation: control id', () => {
     }
   })
 
-  // The rich text editor (a `div`, labelled by `aria-labelledby`) and the upload trigger take the
-  // id by suffix: neither is reached by `getByLabelText` on a sibling `label for`.
-  it.each(['body', 'gallery'])(
-    'the "%s" control gets one distinct id per form',
-    async (name) => {
-      render(<Page />)
+  // --- optional: rich-text ---
+  // The rich text editor (a `div`, labelled by `aria-labelledby`) takes the id by suffix too.
+  // --- end optional ---
+  // The upload trigger takes the id by suffix: it is not reached by `getByLabelText` on a sibling
+  // `label for`.
+  it.each([
+    // --- optional: rich-text ---
+    'body',
+    // --- end optional ---
+    'gallery',
+  ])('the "%s" control gets one distinct id per form', async (name) => {
+    render(<Page />)
 
-      await waitFor(() => {
-        expect(document.querySelectorAll(`[id$="-${name}"]`)).toHaveLength(2)
-      })
-      const ids = [...document.querySelectorAll(`[id$="-${name}"]`)].map(
-        (element) => element.id,
-      )
-      expect(new Set(ids).size).toBe(2)
-      expect(document.getElementById(name)).toBeNull()
-    },
-  )
+    await waitFor(() => {
+      expect(document.querySelectorAll(`[id$="-${name}"]`)).toHaveLength(2)
+    })
+    const ids = [...document.querySelectorAll(`[id$="-${name}"]`)].map(
+      (element) => element.id,
+    )
+    expect(new Set(ids).size).toBe(2)
+    expect(document.getElementById(name)).toBeNull()
+  })
 
+  // --- optional: rich-text ---
   it('the rich text of each form is labelled by the label of its own form', () => {
     render(<Page />)
 
@@ -167,4 +183,5 @@ describe('useFieldValidation: control id', () => {
       expect(form.contains(document.getElementById(labelledBy))).toBe(true)
     }
   })
+  // --- end optional ---
 })

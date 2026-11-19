@@ -372,6 +372,19 @@ export interface Registry {
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/storages/files/download/download.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
     }
   }
+  'account.email.confirm': {
+    methods: ["POST"]
+    pattern: '/account/email/confirm'
+    types: {
+      body: ExtractBody<InferInput<(typeof import('#validators/account/email-confirmation.validator').AccountEmailConfirmValidator)>>
+      paramsTuple: []
+      params: {}
+      query: ExtractQuery<InferInput<(typeof import('#validators/account/email-confirmation.validator').AccountEmailConfirmValidator)>>
+      response: ExtractResponse<Awaited<ReturnType<import('#features/account/email/confirm/confirm.controller').default['handle']>>>
+      errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/account/email/confirm/confirm.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+      rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/account/email/confirm/confirm.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
+    }
+  }
   'storefront.contacts.create': {
     methods: ["POST"]
     pattern: '/storefront/contacts'

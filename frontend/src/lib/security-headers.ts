@@ -72,6 +72,8 @@ function contentSecurityPolicy(input: DocumentHeadersInput): string {
     `img-src ${[origins, ...input.imageOrigins].join(' ')} data: blob:`,
     "font-src 'self' data:",
     `connect-src ${origins}`,
+    // Video and audio from the bucket: without the directive they fall to `default-src 'self'`.
+    `media-src ${origins}`,
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",
