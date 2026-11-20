@@ -161,6 +161,19 @@ Na retomada: recriar as sub-sessões de backend, frontend e shared em Sonnet 5.5
 - Posicionamento: primeira empresa de consultoria e desenvolvimento de software sob demanda da tríplice fronteira, feita por indígenas e pessoas originárias da região (`PRD.md`).
 - Contato e carreiras sem formulário: aviso honesto e canais reais, `contato@maiyu.com.br` e WhatsApp (`DECISIONS.md` #17, que substitui a #7).
 
+## Decisões do dono vigentes (consolidado de 2026-11-20)
+
+O que toca este projeto, com o estado de cada uma:
+
+- **Processo:** autor único, tudo por PR (merge do regente geral), `chore(evidencias)` antes do "pronto", prints desktop e 375 px, funcional e E2E rodados, deploy pelo Coolify a partir da `main`, kit único (mudança de kit vai ao `maiyu-pattern`). Em vigor.
+- **Shadcn sobre Base UI, estrito:** registry completo (64 componentes, `check-ui-components` sem pendência) e `RAW_INTERACTIVE` em todo `src/` sem desvio (#59). Link com cara de botão é `<Link className={buttonVariants()}>`: o `PillButton` sai no PR de design (#60). Erro de campo é `FieldError`, aviso é `Alert`, grupo é `FieldSet` e `FieldLegend`.
+- **Esqueleto é a regra, spinner exceção; celular primeiro (375 px):** o lint `ROUTE_PENDING` (kit #146, #808) entra no sync do PR de design, com `pendingComponent` nas rotas que buscam dado e `pendingComponent: Outlet` no `_private/layout.tsx` e no `$city/layout.tsx`.
+- **Design sem cara de IA, sóbrio e editorial:** este projeto é o piloto (PR #60, proposta aguardando o aval do dono); depois vira regra do kit. Fotos e logos reais vêm do dono; até lá, "foto a definir".
+- **Troca de idioma recarrega por design do Paraglide (URL):** não mudar sem decisão.
+- **Combobox:** nenhum próprio; busca de entidade usa o `AsyncCombobox` do kit quando chegar.
+- **Cadastro público mínimo:** o site não tem cadastro de conta (`PUBLIC_SIGNUP_VALIDATORS` vazio); o formulário de contato não é cadastro. Critérios de LGPD e o e-mail de privacidade (um por projeto) vêm do dono.
+- **Demo mínima:** liberada neste projeto (#59). `SEED_DEMO_PASSWORD` com 16 caracteres ou mais, só em runtime, é opcional; contas de plataforma em produção são risco aceito pelo dono; `demo.project.ts` fica vazio (só contatos, dado pessoal).
+
 ## Lições
 
 > Uma linha por correção do dono (`AGENTS.md`, "Modo de trabalho" item 3). Lida no início de toda
