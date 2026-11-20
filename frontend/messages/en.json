@@ -57,6 +57,7 @@
   "home_selected_work_desc": "The other projects.",
   "blog_title": "Notes from the build.",
   "blog_description": "What we learn building software on the triple border.",
+  "blog_meta_description": "Notes from the Maiyu team on building custom software on the triple border: decisions, lessons learned and what changes when technology is born in the forest.",
   "blog_category_all": "Everything",
   "blog_category_tech": "Engineering",
   "blog_category_design": "Design",

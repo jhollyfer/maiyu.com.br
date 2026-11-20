@@ -42,6 +42,7 @@ export const Route = createFileRoute('/_public/$')({
     return pageHead({
       pathname: '/'.concat(splat),
       title: m.kit_not_found_title(),
+      description: m.kit_not_found_description(),
       noindex: true,
     })
   },
