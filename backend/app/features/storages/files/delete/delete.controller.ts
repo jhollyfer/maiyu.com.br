@@ -5,6 +5,8 @@ import StoragesFileDeleteUseCase from './delete.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
 import { IdentifierValidator } from '#core/validator'
+import StoragePolicy from '#policies/storage.policy'
+import { StorageRepository } from '#repositories/storage/storage.repository'
 
 @inject()
 export default class StoragesFileDeleteController {
@@ -19,13 +21,21 @@ export default class StoragesFileDeleteController {
       'Arquivo ainda `PENDING` é cancelamento de envio: o multipart é abortado, e é isso que ' +
       'faz as partes já enviadas sumirem do bucket.\n\n' +
       'É o par de `POST /storages`, que grava o arquivo antes de o formulário ser salvo: sem ' +
-      'esta rota, todo anexo escolhido e depois tirado da tela ficaria no bucket para sempre.',
+      'esta rota, todo anexo escolhido e depois tirado da tela ficaria no bucket para sempre.\n\n' +
+      'Apaga quem enviou o arquivo e a equipe do próprio tenant; membro comum não apaga o ' +
+      'arquivo de outro membro, e o arquivo de cliente final é só dele. O que não se alcança ' +
+      'responde `404`, o mesmo de um arquivo que não existe (`StoragePolicy`).',
   })
 
-  constructor(private readonly useCase: StoragesFileDeleteUseCase) {}
+  constructor(
+    private readonly useCase: StoragesFileDeleteUseCase,
+    private readonly storages: StorageRepository,
+  ) {}
 
   async handle(context: HttpContext) {
     const { params } = await context.request.validateUsing(IdentifierValidator)
+    const storage = await this.storages.findById(params.id)
+    await context.bouncer.with(StoragePolicy).authorize('delete', storage)
     const result = await this.useCase.execute(params)
     if (result.isLeft()) throw result.value
     return context.response.noContent()

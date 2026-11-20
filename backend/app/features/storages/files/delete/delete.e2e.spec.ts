@@ -6,11 +6,15 @@ import { ErrorEnvelope } from '@maiyu/shared'
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
+  authenticateAsCustomer,
+  authenticateAsNonStaff,
   body,
   resetDatabase,
   signInWithFactory,
 } from '#tests/http-fixtures'
+import { NO_NON_STAFF_ROLE, ROLE_FIXTURES } from '#tests/role-fixtures'
 import {
+  customerUploadPath,
   openUpload,
   partUrl,
   putPart,
@@ -18,10 +22,11 @@ import {
   pngBytes,
 } from '#tests/storages-fixtures'
 import { Stored } from '#tests/stored-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
- * The file as a neutral, shared record: it does not belong to the
- * form that submitted it, and ownership authorizes nothing. What rules is the state
+ * The file is a record the form does not own, and it is the one who uploaded it, or the staff of
+ * the tenant, who reaches it by id (`StoragePolicy`, DECISIONS.md #803). Besides that, what rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
 
@@ -166,5 +171,139 @@ test.group('storages > delete > identificador', (group) => {
       Object.keys(body(response, ErrorEnvelope).errors ?? {}),
       'params.id',
     )
+  })
+})
+
+/**
+ * `StoragePolicy.delete` (DECISIONS.md #803): the removal reaches the one who uploaded and the
+ * staff of the tenant. Another member's file, another tenant's and another customer's answer the
+ * 404 of a missing file, and the binary stays.
+ */
+test.group('storages > delete > autorização', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  test('the member discards its own orphan, the avatar swap and the cancelled form', async ({
+    client,
+    assert,
+  }) => {
+    const member = await authenticateAsNonStaff(client)
+    const file = await uploadFile(client, member)
+
+    const response = await client.delete(`/storages/${file.id}`).cookies(member)
+
+    response.assertStatus(204)
+    assert.isNull(await Stored.storage(file.id))
+    assert.isFalse(await drive.use().exists(file.path))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test("another member of the same tenant cannot delete a member's file: 404, the binary stays", async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsNonStaff(client)
+    const other = await authenticateAsNonStaff(client)
+    const file = await uploadFile(client, author)
+
+    const response = await client.delete(`/storages/${file.id}`).cookies(other)
+
+    response.assertStatus(404)
+    assert.equal(body(response, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
+    assert.isNotNull(await Stored.storage(file.id))
+    assert.isTrue(await drive.use().exists(file.path))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test("another member cannot cancel a member's pending upload: 404, the upload stays", async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsNonStaff(client)
+    const other = await authenticateAsNonStaff(client)
+    const opened = await openUpload(client, author, {
+      fileName: 'foto.png',
+      mimetype: 'image/png',
+      size: PART_SIZE * 2,
+    })
+
+    const response = await client
+      .delete(`/storages/${opened.storage.id}`)
+      .cookies(other)
+
+    response.assertStatus(404)
+    assert.isNotNull(await Stored.storage(opened.storage.id))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test("the staff of the tenant deletes a member's orphan", async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsNonStaff(client)
+    const staff = await authenticateAsAdministrator(client)
+    const file = await uploadFile(client, author)
+
+    const response = await client.delete(`/storages/${file.id}`).cookies(staff)
+
+    response.assertStatus(204)
+    assert.isNull(await Stored.storage(file.id))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test('the staff of another tenant cannot delete the file: 404', async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsAdministrator(client)
+    const file = await uploadFile(client, author)
+    const elsewhere = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', elsewhere)
+
+    const response = await client
+      .delete(`/storages/${file.id}`)
+      .cookies(session)
+
+    response.assertStatus(404)
+    assert.isNotNull(await Stored.storage(file.id))
+  })
+
+  test('the customer deletes its own file; another customer and the tenant staff cannot', async ({
+    client,
+    assert,
+  }) => {
+    const store = await Tenants.create()
+    const customer = await authenticateAsCustomer(client)
+    const stranger = await authenticateAsCustomer(client)
+    const staff = await signInWithFactory(client, 'staff', store)
+    const path = await customerUploadPath(store)
+    const proof = await uploadFile(client, customer, path)
+
+    const foreign = await client
+      .delete(`/storages/${proof.id}`)
+      .cookies(stranger)
+    const tenantStaff = await client
+      .delete(`/storages/${proof.id}`)
+      .cookies(staff.session)
+
+    foreign.assertStatus(404)
+    tenantStaff.assertStatus(404)
+    assert.isNotNull(await Stored.storage(proof.id))
+
+    const own = await client.delete(`/storages/${proof.id}`).cookies(customer)
+
+    own.assertStatus(204)
+    assert.isNull(await Stored.storage(proof.id))
+  })
+
+  test("the customer with no link to the store cannot delete a store's file: 404", async ({
+    client,
+    assert,
+  }) => {
+    const staff = await authenticateAsAdministrator(client)
+    const file = await uploadFile(client, staff)
+    const customer = await authenticateAsCustomer(client)
+
+    const response = await client
+      .delete(`/storages/${file.id}`)
+      .cookies(customer)
+
+    response.assertStatus(404)
+    assert.isNotNull(await Stored.storage(file.id))
   })
 })

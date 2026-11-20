@@ -97,6 +97,10 @@ export abstract class StorageRepository {
    * file a form is about to attach.
    */
   abstract findOrphans(before: Date): Promise<Storage[]>
+  /**
+   * The file library. The staff of the tenant lists every file it reads; any other account lists
+   * only what it uploaded itself, the same rule as `StoragePolicy.show` (DECISIONS.md #803).
+   */
   abstract paginate(
     criteria: StorageListCriteria,
   ): Promise<Paginated<StorageFileRead>>

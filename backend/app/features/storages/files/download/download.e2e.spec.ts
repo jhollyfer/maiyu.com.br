@@ -14,8 +14,8 @@ import { NO_NON_STAFF_ROLE, ROLE_FIXTURES } from '#tests/role-fixtures'
 import { uploadFile } from '#tests/storages-fixtures'
 
 /**
- * The file as a neutral, shared record: it does not belong to the
- * form that submitted it, and ownership authorizes nothing. What rules is the state
+ * The file is a record the form does not own, and it is the one who uploaded it, or the staff of
+ * the tenant, who reaches it by id (`StoragePolicy`, DECISIONS.md #803). Besides that, what rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
 

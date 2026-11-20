@@ -6,10 +6,15 @@ import { ErrorEnvelope, StoragesFileShowResponse } from '@maiyu/shared'
 import { PART_SIZE } from '#services/multipart/multipart.contract'
 import {
   authenticateAsAdministrator,
+  authenticateAsCustomer,
+  authenticateAsNonStaff,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
+import { NO_NON_STAFF_ROLE, ROLE_FIXTURES } from '#tests/role-fixtures'
 import {
+  customerUploadPath,
   openUpload,
   partUrl,
   putPart,
@@ -17,10 +22,11 @@ import {
   pngBytes,
 } from '#tests/storages-fixtures'
 import { Stored } from '#tests/stored-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 /**
- * The file as a neutral, shared record: it does not belong to the
- * form that submitted it, and ownership authorizes nothing. What rules is the state
+ * The file is a record the form does not own, and it is the one who uploaded it, or the staff of
+ * the tenant, who reaches it by id (`StoragePolicy`, DECISIONS.md #803). Besides that, what rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
 
@@ -175,5 +181,109 @@ test.group('storages > complete > acesso e identificador', (group) => {
       Object.keys(body(response, ErrorEnvelope).errors ?? {}),
       'params.id',
     )
+  })
+})
+
+/**
+ * `StoragePolicy.upload` (DECISIONS.md #803): closing an upload is the author's, or the staff of
+ * the tenant's. Another member cannot hijack a pending upload by sending its own bytes to the
+ * signed URL and confirming it, and cannot read a confirmed file through this route either.
+ */
+test.group('storages > complete > autorização', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  test("another member cannot confirm a member's pending upload: 404, the upload stays PENDING and the author still completes it", async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsNonStaff(client)
+    const other = await authenticateAsNonStaff(client)
+    const opened = await openUpload(client, author, {
+      fileName: 'foto.png',
+      mimetype: 'image/png',
+      size: SMALL.byteLength,
+    })
+    await putPart(partUrl(opened), SMALL)
+
+    const attack = await client
+      .post(`/storages/${opened.storage.id}/complete`)
+      .cookies(other)
+      .json({})
+
+    attack.assertStatus(404)
+    assert.equal(body(attack, ErrorEnvelope).code, 'STORAGE_NOT_FOUND')
+    const row = await Stored.storage(opened.storage.id)
+    assert.equal(row?.status, 'PENDING')
+
+    const own = await client
+      .post(`/storages/${opened.storage.id}/complete`)
+      .cookies(author)
+      .json({})
+
+    own.assertStatus(200)
+    assert.equal(body(own, StoragesFileShowResponse).status, 'UPLOADED')
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test("another member gets no signed url from a member's confirmed file: 404", async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsNonStaff(client)
+    const other = await authenticateAsNonStaff(client)
+    const file = await uploadFile(client, author)
+
+    const response = await client
+      .post(`/storages/${file.id}/complete`)
+      .cookies(other)
+      .json({})
+
+    response.assertStatus(404)
+    assert.notProperty(body(response), 'url')
+    assert.isTrue(await drive.use().exists(file.path))
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test("the staff of the store cannot confirm the customer's upload: 404; the customer does", async ({
+    client,
+    assert,
+  }) => {
+    const store = await Tenants.create()
+    const customer = await authenticateAsCustomer(client)
+    const staff = await signInWithFactory(client, 'staff', store)
+    const opened = await openUpload(
+      client,
+      customer,
+      { fileName: 'pix.png', mimetype: 'image/png', size: SMALL.byteLength },
+      await customerUploadPath(store),
+    )
+    await putPart(partUrl(opened), SMALL)
+
+    const served = await client
+      .post(`/storages/${opened.storage.id}/complete`)
+      .cookies(staff.session)
+      .json({})
+    const own = await client
+      .post(`/storages/${opened.storage.id}/complete`)
+      .cookies(customer)
+      .json({})
+
+    served.assertStatus(404)
+    own.assertStatus(200)
+    assert.equal(body(own, StoragesFileShowResponse).status, 'UPLOADED')
+  })
+
+  test('the staff of another tenant cannot confirm: 404', async ({
+    client,
+  }) => {
+    const author = await authenticateAsAdministrator(client)
+    const file = await uploadFile(client, author)
+    const elsewhere = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', elsewhere)
+
+    const response = await client
+      .post(`/storages/${file.id}/complete`)
+      .cookies(session)
+      .json({})
+
+    response.assertStatus(404)
   })
 })

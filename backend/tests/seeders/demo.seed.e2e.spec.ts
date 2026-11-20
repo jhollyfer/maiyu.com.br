@@ -11,8 +11,10 @@ import {
   USER_ROLES,
 } from '@maiyu/shared'
 
+import { TenantConfig } from '#config/tenant'
+import { DemoSeed } from '#database/demo/demo-seed'
 import { DemoConfig } from '#database/demo/demo.config'
-import City from '#models/city'
+import type City from '#models/city'
 import Tenant from '#models/tenant'
 import TenantMembership from '#models/tenant-membership'
 import User from '#models/user'
@@ -43,6 +45,15 @@ function demoUsers() {
 
 function demoTenants() {
   return Tenant.query().where('demo', true)
+}
+
+/** The city the seeder puts the demo tenants in: the same resolution, from the same config. */
+async function demoCity(): Promise<City> {
+  const { seed } = await app.container.make(TenantConfig)
+  const city = await DemoSeed.cityOf(seed?.city ?? null)
+  if (!city) throw new Error('no city for the demo tenants')
+
+  return city
 }
 
 function domain(): string {
@@ -147,7 +158,7 @@ test.group('seeders > demo', (group) => {
   test('a real tenant that holds a demo slug is left alone', async ({
     assert,
   }) => {
-    const city = await City.query().orderBy('slug', 'asc').firstOrFail()
+    const city = await demoCity()
     const real = await Tenants.create({
       citySlug: city.slug,
       slug: DemoConfig.slug(TENANT_TYPE_FIXTURE),
@@ -166,19 +177,25 @@ test.group('seeders > demo', (group) => {
   test('the demo tenant is in no public list or count, and opens by its slug', async ({
     assert,
   }) => {
-    const city = await City.query().orderBy('slug', 'asc').firstOrFail()
-    const real = await Tenants.create({ citySlug: city.slug })
+    const city = await demoCity()
+    await Tenants.create({ citySlug: city.slug })
     await seed(PASSWORD)
     const demos = await demoTenants()
     const tenants = await app.container.make(TenantLucidRepository)
+    // Every tenant of the city that is not a demo one: the project's own seeded tenant is among them.
+    const real = (
+      await Tenant.query().where('cityId', city.id).where('demo', false)
+    )
+      .map((each) => each.id)
+      .sort()
 
     const cityWide = await tenants.resolvePublic(city.slug, null)
-    assert.deepEqual(cityWide?.cityTenantIds, [real.id])
+    assert.deepEqual([...(cityWide?.cityTenantIds ?? [])].sort(), real)
     assert.deepEqual(
-      (
-        await tenants.listPublic([real.id, ...demos.map((each) => each.id)])
-      ).map((tenant) => tenant.id),
-      [real.id],
+      (await tenants.listPublic([...real, ...demos.map((each) => each.id)]))
+        .map((tenant) => tenant.id)
+        .sort(),
+      real,
     )
 
     const overview = await tenants.overview()
@@ -188,7 +205,7 @@ test.group('seeders > demo', (group) => {
     )
     assert.equal(
       overview.cities.find((each) => each.id === city.id)?.tenants,
-      1,
+      real.length,
     )
 
     for (const demo of demos) {

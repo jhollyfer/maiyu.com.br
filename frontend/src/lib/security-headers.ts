@@ -17,12 +17,21 @@
 
 /**
  * The same on every response and in every environment. No `preload` in HSTS: joining the list is a
- * commitment that cannot be undone. Over plain `http` (dev) the browser ignores HSTS by spec.
+ * commitment that cannot be undone, and `includeSubDomains` is on because the apex and its
+ * subdomains are all served by the same team over TLS. Over plain `http` (dev) the browser
+ * ignores HSTS by spec.
  */
 export const STATIC_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  // Every sensor and payment API off, except `camera` and `geolocation` for the site itself (a
+  // project map asks "where am I", a project may scan or photograph with `getUserMedia`; an
+  // embedded third party never does). Microphone stays off: no kit block records. The header is an
+  // allowlist per feature, and `()` is an empty one
+  // (https://developer.mozilla.org/docs/Web/HTTP/Reference/Headers/Permissions-Policy).
+  'Permissions-Policy':
+    'accelerometer=(), camera=(self), geolocation=(self), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
 } as const
 
 type DocumentHeadersInput = Readonly<{

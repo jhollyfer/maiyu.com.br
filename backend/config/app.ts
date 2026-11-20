@@ -31,6 +31,21 @@ export const http = defineConfig({
   trustProxy: TrustedProxies.compile(env.get('TRUSTED_PROXIES')),
 
   /**
+   * ETag on every response with a body (`response.send`/`json`/`download`), and
+   * `304` with no body when `If-None-Match` matches, on GET/HEAD only: the public
+   * reads (storefront, catalog) stop resending what did not change. Off by default
+   * in the server (`HttpConfig.etag`, `@adonisjs/http-server`
+   * `types/response.d.ts`; the response page documents the per-call `generateEtag`
+   * and the ETag of `download()`: _doc-lib/adonisjs.md#guides/basics/response,
+   * https://docs.adonisjs.com/guides/basics/response). Harmless with
+   * `private-cache.middleware.ts`: `no-store` keeps the browser and proxies from
+   * storing, so no one sends `If-None-Match` for a session response. A stream
+   * (`response.stream`) gets no ETag; the file of `download()` gets a weak one
+   * from `stat`, with no hashing of the body.
+   */
+  etag: true,
+
+  /**
    * Allow HTTP method spoofing via the "_method" form/query parameter.
    * This lets HTML forms target PUT/PATCH/DELETE routes while still
    * submitting with POST.

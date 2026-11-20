@@ -11,6 +11,7 @@ import {
   type StorageListCriteria,
 } from './storage.repository.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { TransactionContext } from '#core/transaction-context'
 import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
@@ -263,6 +264,12 @@ export class StorageLucidRepository extends StorageRepository {
     const query = CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
     ).withScopes((scopes) => scopes.notDeleted())
+
+    // The library of whoever is not the tenant's staff is what it uploaded itself: the same rule
+    // as `StoragePolicy.show` (DECISIONS.md #803), so the list never shows what the detail refuses.
+    const scope = TenantScope.current()
+    if (scope && scope.servedTenantId() === null)
+      query.where('uploadedBy', scope.accountId ?? '')
 
     if (criteria.status) query.where('status', criteria.status)
     if (criteria.mimetype) query.where('mimetype', criteria.mimetype)

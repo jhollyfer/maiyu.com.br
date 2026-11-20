@@ -32,10 +32,11 @@ type Response = Either<HTTPException, null>
  * object listing, and keep being billed. `UPLOADED` is the finished
  * file, and then the entity reference rule applies.
  *
- * **Only deletes what nobody uses.** `storages` is a neutral, shared record
- * - the file does not belong to the form that submitted it -, so ownership does not
- * serve as authorization: whoever knew a uuid would puncture another user's
- * avatar. Referenced is `409`, and the message says where.
+ * **Only deletes what nobody uses.** The file does not belong to the form that submitted it, so
+ * being the uploader does not free a file another record references: whoever uploaded it would
+ * puncture its own avatar. Referenced is `409`, and the message says where. Who may try at all is
+ * `StoragePolicy.delete`, checked by the controller: the uploader or the staff of the tenant
+ * (DECISIONS.md #803).
  */
 @inject()
 export default class StoragesFileDeleteUseCase {

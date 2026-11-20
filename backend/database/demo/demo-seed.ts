@@ -33,7 +33,7 @@ export type DemoSeedInput = {
  */
 export class DemoSeed {
   static async run(input: DemoSeedInput): Promise<void> {
-    const city = await DemoSeed.city(input.citySlug)
+    const city = await DemoSeed.cityOf(input.citySlug)
     if (!city) {
       logger.warn('no city to hold the demo tenants: demo seed skipped')
       return
@@ -44,7 +44,11 @@ export class DemoSeed {
     await DemoProject.seed({ tenants })
   }
 
-  private static async city(slug: string | null): Promise<City | null> {
+  /**
+   * The city that holds the demo tenants: the seed's own (`TENANT_PROJECT.seed.city`), else the first
+   * by slug. Public so a spec asks the same question the seeder answers.
+   */
+  static async cityOf(slug: string | null): Promise<City | null> {
     if (slug !== null) return City.findBy('slug', slug)
 
     return City.query().orderBy('slug', 'asc').first()

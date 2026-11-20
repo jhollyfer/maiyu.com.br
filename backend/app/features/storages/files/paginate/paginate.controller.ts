@@ -21,7 +21,9 @@ export default class StoragesFilePaginateController {
       `\`?mimetype\` aceita ${STORAGE_MIMETYPES.join(', ')}.\n\n` +
       `\`?sort\` aceita ${STORAGE_SORT_COLUMNS.join(', ')} e \`?direction\` aceita asc ou desc. ` +
       'Padrão: página 1, 20 por página, do mais recente ao mais antigo, porque numa biblioteca de ' +
-      'arquivos o que importa é o que acabou de subir.',
+      'arquivos o que importa é o que acabou de subir.\n\n' +
+      'A equipe do tenant lista todos os arquivos que lê; qualquer outra conta lista só os que ' +
+      'enviou, e o cliente final só os dele.',
   })
 
   constructor(private readonly useCase: StoragesFilePaginateUseCase) {}

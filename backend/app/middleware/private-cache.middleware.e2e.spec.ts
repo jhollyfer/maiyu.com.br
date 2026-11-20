@@ -103,4 +103,22 @@ test.group('private-cache middleware', (group) => {
     response.assertStatus(200)
     assert.equal(response.header('cache-control'), 'no-store')
   })
+
+  test('a public GET carries an ETag and answers 304 with no body to If-None-Match', async ({
+    client,
+    assert,
+  }) => {
+    const first = await client.get('/health-check')
+    const etag = first.header('etag')
+
+    first.assertStatus(200)
+    assert.isString(etag)
+
+    const second = await client
+      .get('/health-check')
+      .header('if-none-match', etag ?? '')
+
+    second.assertStatus(304)
+    assert.equal(second.text(), '')
+  })
 })

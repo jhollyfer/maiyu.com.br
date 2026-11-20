@@ -1790,7 +1790,7 @@
             }
           }
         },
-        "description": "A biblioteca de arquivos do painel. `?search` filtra por nome original, nome gerado e tipo, `?status` separa o que já subiu do envio aberto, e `?mimetype` restringe a um tipo só.\n\n`?mimetype` aceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav.\n\n`?sort` aceita originalName, mimetype, size, createdAt e `?direction` aceita asc ou desc. Padrão: página 1, 20 por página, do mais recente ao mais antigo, porque numa biblioteca de arquivos o que importa é o que acabou de subir.",
+        "description": "A biblioteca de arquivos do painel. `?search` filtra por nome original, nome gerado e tipo, `?status` separa o que já subiu do envio aberto, e `?mimetype` restringe a um tipo só.\n\n`?mimetype` aceita image/jpeg, image/png, image/webp, image/gif, application/pdf, audio/mpeg, audio/mp4, audio/ogg, audio/wav.\n\n`?sort` aceita originalName, mimetype, size, createdAt e `?direction` aceita asc ou desc. Padrão: página 1, 20 por página, do mais recente ao mais antigo, porque numa biblioteca de arquivos o que importa é o que acabou de subir.\n\nA equipe do tenant lista todos os arquivos que lê; qualquer outra conta lista só os que enviou, e o cliente final só os dele.",
         "security": [
           {
             "cookieAuth": []
@@ -2162,7 +2162,7 @@
             }
           }
         },
-        "description": "Devolve o registro cru, sem envelope: o rótulo original, o tipo, o tamanho, o estado do envio e a `url` derivada.\n\nVale também para arquivo ainda `PENDING`: a tela de detalhe é onde se descobre que um envio ficou pela metade. Quem anexa é quem exige `UPLOADED`.",
+        "description": "Devolve o registro cru, sem envelope: o rótulo original, o tipo, o tamanho, o estado do envio e a `url` derivada.\n\nVale também para arquivo ainda `PENDING`: a tela de detalhe é onde se descobre que um envio ficou pela metade. Quem anexa é quem exige `UPLOADED`.\n\nAlcança quem enviou o arquivo e a equipe do tenant; membro comum não vê o arquivo de outro membro, e o arquivo de cliente final é só dele. O que não se alcança responde `404`, o mesmo de um arquivo que não existe (`StoragePolicy`).",
         "security": [
           {
             "cookieAuth": []
@@ -2244,7 +2244,7 @@
             }
           }
         },
-        "description": "**Irreversível**: apaga o binário no bucket e a linha em `storages`.\n\nSó apaga arquivo **órfão**. O arquivo é um registro neutro e compartilhado (não pertence ao formulário que o enviou), então quem o referencia manda: arquivo em uso por outro registro (hoje, o avatar de um usuário) responde `409`, com a origem na mensagem. Desvincule primeiro, apague depois.\n\nArquivo ainda `PENDING` é cancelamento de envio: o multipart é abortado, e é isso que faz as partes já enviadas sumirem do bucket.\n\nÉ o par de `POST /storages`, que grava o arquivo antes de o formulário ser salvo: sem esta rota, todo anexo escolhido e depois tirado da tela ficaria no bucket para sempre.",
+        "description": "**Irreversível**: apaga o binário no bucket e a linha em `storages`.\n\nSó apaga arquivo **órfão**. O arquivo é um registro neutro e compartilhado (não pertence ao formulário que o enviou), então quem o referencia manda: arquivo em uso por outro registro (hoje, o avatar de um usuário) responde `409`, com a origem na mensagem. Desvincule primeiro, apague depois.\n\nArquivo ainda `PENDING` é cancelamento de envio: o multipart é abortado, e é isso que faz as partes já enviadas sumirem do bucket.\n\nÉ o par de `POST /storages`, que grava o arquivo antes de o formulário ser salvo: sem esta rota, todo anexo escolhido e depois tirado da tela ficaria no bucket para sempre.\n\nApaga quem enviou o arquivo e a equipe do próprio tenant; membro comum não apaga o arquivo de outro membro, e o arquivo de cliente final é só dele. O que não se alcança responde `404`, o mesmo de um arquivo que não existe (`StoragePolicy`).",
         "security": [
           {
             "cookieAuth": []

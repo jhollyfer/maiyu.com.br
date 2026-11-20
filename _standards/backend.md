@@ -1496,6 +1496,11 @@ export abstract class PaymentGatewayContract {
   painel do R2 ou por `wrangler r2 bucket cors set <bucket> --file backend/infra/r2-cors.json`. Sem
   `ExposeHeaders: ["ETag"]` o navegador não lê o `ETag` de cada parte e o multipart não completa
   (`DECISIONS.md` #793).
+- **Quem alcança o arquivo por id** (`GET /storages/:id`, `DELETE /storages/:id`, `GET /storages/:id/parts`,
+  `POST /storages/:id/complete`, `GET /storages/:id/download`): a
+  `StoragePolicy`, sempre, nunca só o filtro de tenant do repositório (`findWritable` não autoriza). Detalhar, apagar, retomar e fechar o envio é de quem
+  enviou (`uploaded_by`) e da equipe do tenant; arquivo de cliente final é só do cliente (a equipe lê o
+  comprovante pelo `download`); negação é 404, igual a arquivo inexistente. A listagem (`GET /storages`) aplica a mesma regra no repositório: a equipe do tenant lista tudo, qualquer outra conta só o que enviou (`DECISIONS.md` #803).
 - Upload anônimo não existe: todo arquivo tem dono desde o `create`. Quem não tem conta (a denúncia
   do curupira) envia preso a um rascunho, por um token de uso único e curto que só existe como hash no
   banco; sem token válido o upload responde 404, e rascunho vencido sai com os arquivos pelo
@@ -1718,7 +1723,8 @@ stack e que as seções acima não fechavam. Cada item completa a seção citada
    *(WEB-PROTOCOL-AND-AUTH.md, Account linking; Step-up.)*
 8. **Resposta autenticada não é cacheável** (§4.10). O `private-cache.middleware.ts`, no `server.use`
    depois do CORS, põe `Cache-Control: private, no-store` em toda resposta com sessão, com E2E
-   (`DECISIONS.md` #339, #363). *(WEB-PROTOCOL-AND-AUTH.md,
+   (`DECISIONS.md` #339, #363). A resposta pública revalida por ETag: `etag: true` no `http` de
+   `config/app.ts`, 304 por `If-None-Match`, inócuo com o `no-store` (`DECISIONS.md` #804). *(WEB-PROTOCOL-AND-AUTH.md,
    Cache deception.)*
 9. **SSRF por redirect e DNS rebinding** (§5.3, §5.6 item 8). Busca de URL do usuário com
    `redirect: 'manual'`, revalidando cada salto, e conexão feita ao IP já conferido (resolve uma

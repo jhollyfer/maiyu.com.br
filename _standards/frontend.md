@@ -381,8 +381,24 @@ entrada.
   `src/server.ts`, nunca fixada no build pelo `vite.config.ts`), e o `img-src` também as origens de
   imagem de terceiros que o projeto lista em `lib/csp-project.ts` (`PROJECT_IMAGE_ORIGINS`, ponto de
   extensão vazio por padrão; ex. tile de mapa, `DECISIONS.md` #773), nada além (vídeo e áudio do bucket pelo `media-src`, `DECISIONS.md` #793), `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: strict-origin-when-cross-origin` e HSTS sem `preload`. Sem `frame-ancestors`, a
-  tela de login pode ser embutida em `iframe` por outro site (clickjacking).
+  `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (microfone, sensores,
+  pagamento e USB fechados; `camera=(self)` e `geolocation=(self)`, que só o próprio site pode pedir) e HSTS com
+  `includeSubDomains` e sem `preload` (`DECISIONS.md` #805). O CSP leva nonce em `script-src`, sem
+  `unsafe-eval`; `style-src` mantém `'unsafe-inline'` porque o Start inlina o CSS de rota em produção
+  (`lib/security-headers.ts`). Sem `frame-ancestors`, a tela de login pode ser embutida em `iframe` por
+  outro site (clickjacking).
+- **Redirect do servidor sai com `Location` relativo.** Atrás do proxy TLS (Traefik, Cloudflare) o Nitro
+  vê `http://`, e o 307 do Paraglide sairia `http://<host>/pt-br`. `src/server.ts` passa toda resposta por
+  `RelativeRedirect` (`lib/relative-redirect.ts`): `Location` da mesma origem vira caminho (menos o que começa com `//`, protocolo-relativo, que fica absoluto), sem confiar em
+  `X-Forwarded-Proto`; de outra origem fica como veio (_doc-lib/paraglide.md#/middleware,
+  https://paraglidejs.com/middleware: `onRedirect` só observa e `effectiveRequestUrl` exigiria cabeçalho
+  confiável). Arquivo na raiz (`/cv.pdf`, `/favicon.ico`) e `/assets/**` ficam fora do redirect de idioma por
+  `routeStrategies` (`paraglide.config.ts`); caminho mais fundo, com ponto ou não, é página e mantém o redirect: o que existe em `public/` o Nitro serve antes do servidor, o
+  que não existe responde 404; a guarda `$city` recusa segmento com ponto sem chamar a API.
+- **`/.well-known/security.txt` só existe com `SECURITY_CONTACT`.** O RFC 9116 exige `Contact` e
+  `Expires` (https://www.rfc-editor.org/rfc/rfc9116#section-2.5); sem contato não há arquivo válido, e a
+  rota responde 404 em vez de publicar um vazio. Todo projeto em produção preenche a chave (a chave é do
+  catálogo, `DECISIONS.md` #417); o `Expires` é um ano à frente de cada requisição.
 - **Endereço da API sem default de rede.** `src/env.ts` lê `VITE_API_URL` uma vez e o build falha
   sem ela; `http://localhost:3333` como fallback publica um site que manda senha para a máquina de
   quem visita. Em produção ela vem do `frontend/.env.production` versionado, que o build da imagem

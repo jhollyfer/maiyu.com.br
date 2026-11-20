@@ -179,6 +179,7 @@ export class StorageMemoryRepository extends StorageRepository {
     const all = [...this.rows.values()]
       .filter((row) => !row.deletedAt)
       .filter((row) => TenantScope.readsOwned(row.tenantId, row.customerId))
+      .filter((row) => this.listedFor(row))
       .filter((row) => !criteria.status || row.status === criteria.status)
       .filter((row) => !criteria.mimetype || row.mimetype === criteria.mimetype)
       .filter(
@@ -198,6 +199,14 @@ export class StorageMemoryRepository extends StorageRepository {
       meta: page.meta,
       data: page.data.map((row) => this.toResponse(row)),
     }
+  }
+
+  /** The library of whoever is not the tenant's staff is what it uploaded itself (DECISIONS.md #803). */
+  private listedFor(row: StorageProps): boolean {
+    const scope = TenantScope.current()
+    if (!scope || scope.servedTenantId() !== null) return true
+
+    return row.uploadedBy !== null && row.uploadedBy === scope.accountId
   }
 
   private live(): StorageProps[] {
