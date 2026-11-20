@@ -1,4 +1,0 @@
-commit: fcbd2b0
-docker build -f backend/Dockerfile-production .  -> exit 0
-docker build -f frontend/Dockerfile-production . -> exit 0
-(cópias dos Dockerfiles só com a CA do proxy do sandbox, não commitadas)
