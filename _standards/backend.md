@@ -372,6 +372,10 @@ de novo o que é regra de negócio (existência, unicidade, posse).
 
 **O body parser não apara strings** (`trimWhitespaces: false`, `DECISIONS.md` #402): todo `vine.string()` de texto leva `.trim()` na própria regra, e o `pattern:check` (`vine-string-trim`) reprova o que esquecer. A senha e o documento rich-text vão como digitados.
 
+**Validator de cadastro público pede só o mínimo** (nome, e-mail, senha e aceites; mais o nome do
+negócio e a cidade quando o cadastro cria um negócio): nada de documento, telefone, endereço, Pix ou
+dado pessoal, que se completam depois do login (§4.16, `DECISIONS.md` #799).
+
 O validator de request é **Zod e mora em `shared/`**, um arquivo por recurso
 (`shared/src/validators/<módulo>/<recurso>.validator.ts`), com um export por ação e o tipo ao
 lado; o schema de resposta mora em `shared/src/responses/` (`architecture.md` §9, §10). O backend
@@ -1144,7 +1148,16 @@ regra mora no kit, em três peças, e nenhum use-case escreve `where tenant_id` 
 - **Policy base** (`session-scoped-policy.base.ts`): `readsTenant`, `writesTenant` e `isStaffOf`
   conferem o tenant do `actor` pela mesma regra. O papel dentro do tenant é do vínculo
   (`actor.tenant.role`), e `role.middleware.ts` lê dali; acima dos tenants, `platform.middleware.ts`
-  deixa entrar só o dono da plataforma (`actor.platformRole`).
+  deixa entrar só o dono da plataforma (`actor.platformRole`), ou os papéis que a rota lista:
+  `middleware.platform({ roles: PLATFORM_STAFF_ROLES })` admite também o `ADMINISTRATOR` da plataforma
+  (#404), para o painel da equipe; sem `roles` o comportamento é o de sempre, só o dono (#797).
+- **Cliente global (#797).** Produto de vitrine única, sem tenant na URL (o comprador monta carrinho e
+  pedidos de várias lojas), protege a rota do comprador com `middleware.auth()` e `middleware.customer()`
+  (`customer.middleware.ts`): passa só a conta sem nenhum vínculo (`TenantScope.customer`), e quem tem
+  vínculo, tem vários sem escolha ou é o dono da plataforma recebe `403 ACCESS_DENIED`, a mesma resposta
+  do `publicTenant({ access: 'customer' })`. Não define tenant: o cliente lê e altera as linhas que possui
+  em qualquer tenant (`CustomerScoped`), e `customerTarget()` segue `null` sem tenant. O tenant da loja
+  de um pedido novo vem do dado já validado (o produto, a loja), nunca do escopo da requisição.
 
 **Cliente único (#399).** Produto que por natureza tem um cliente só liga `TENANT_PROJECT.singleSlug`
 (`config/tenant.project.ts`, lido só em `config/tenant.ts`, `null` por padrão e fora do ENV, #782): o `public-tenant.middleware.ts` resolve esse tenant sem segmento
@@ -1229,6 +1242,39 @@ arquivo e o tornava foto pública do produto. Use caso novo de anexo chama um do
 regra à mão; o `customer_id` nulo tem o teste que o derruba em Lucid e em memória
 (`storage.repository.e2e.spec.ts`).
 
+#### Escopo de cidade *(DECISIONS.md #794, #795)*
+
+Dois modelos, e cada produto usa um (#794): o **tenant por cliente** (`TenantScope`, acima) e a
+**plataforma única** que lista itens por cidade (aporta, delivery, vitrine do matiscraft). No segundo
+o item não tem tenant: tem **cidade obrigatória**, e o visitante entra por `/pt-br/<cidade>/...` já
+filtrado (o cookie só pré-marca o seletor). A regra mora no bloco opcional `city` do kit
+(`--com=city`, `OPTIONAL_CODE` em `kit-manifest.mjs`), em quatro peças, e nenhum use-case escreve
+`where city_id` à mão:
+
+- **`CityScope`** (`app/core/city-scope.ts`), o gêmeo do `TenantScope` para a cidade: `ofCity(cityId,
+  { accountId })` lê só a cidade da URL; só a conta logada (`accountId`) escreve, e só nela. A
+  linha nova sai de `CityScope.cityTargetOf()`. Fora de requisição não há escopo e o repositório não
+  filtra, como no `TenantScope`.
+- **`CityScoped`** (`app/repositories/shared/city-scoped.ts`): `readable()` e `writable()` filtram
+  `city_id`, a coluna de mesmo nome em toda tabela de cidade. Linha de outra cidade não é achada, e
+  o use-case responde o 404 de id inexistente (§4.6). Helper estático, não *model query scope*: o
+  *scope* do Lucid só roda quando a consulta lembra de `withScopes`/`apply`, e a cidade não pode
+  depender disso (_doc-lib/lucid.md#model-query-scopes,
+  https://lucid.adonisjs.com/docs/model-query-scopes).
+- **`public-city.middleware.ts`**: lê `:city` (`CityParamsValidator`, a `Rule.slug()` do `shared`),
+  responde 404 `RESOURCE_NOT_FOUND` se a cidade não existe (`CityRepository.findBySlug`, do núcleo) e
+  grava `ctx.cityScope`. Depois de `middleware.auth()`, a conta da sessão é quem escreve.
+- **A tabela** declara `city_id uuid not null references cities(id) on delete restrict` e um índice
+  em `city_id` (ou composto, com a ordenação da listagem): cidade com itens não se remove, e a
+  listagem por cidade não varre a tabela. A migration, a policy e a coluna de dono (o anunciante) são
+  do projeto.
+
+A rota pública do item é
+`router.group(...).prefix('cities/:city').use(middleware.publicCity())`, e a privada de quem anuncia
+repete o grupo com `middleware.auth()` antes. Produto com tenant por cliente continua em
+`middleware.publicTenant()`; os dois não se misturam numa mesma tabela. O papel que modera itens de
+todas as cidades (o moderador do aporta) é papel global do projeto, sem escopo de cidade no kit.
+
 ### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
 
 - **Foto.** `PUT /account/profile` aceita `avatarId`, o id de um arquivo `UPLOADED` e vivo que a
@@ -1265,6 +1311,59 @@ regra à mão; o `customer_id` nulo tem o teste que o derruba em Lucid e em mem�
   `optional: mail` (rota, provider do contrato, providers de e-mail e fila no `adonisrc.ts`). O `shared/`
   tem `AccountProfileUpdateResponse` e `AccountEmailConfirmValidator`. O kit não tem peça de perfil no
   frontend: só o contrato e a API; a página de perfil é do projeto até o kit ganhar a peça.
+
+### 4.16 Cadastro público mínimo e função travada por perfil incompleto *(DECISIONS.md #799)*
+
+Vale para todo projeto. Toda rota **sem login que cria conta ou negócio** pede só o mínimo:
+
+- **Pessoa:** nome, e-mail, senha (com a confirmação, que o `Rule.password()` já lê) e os aceites de
+  termos e LGPD quando existirem.
+- **Negócio** (loja, restaurante, instituição, associação): além disso, o nome do negócio e a cidade
+  (se o projeto tem o bloco `city`).
+- **Fora do cadastro público**, sempre: telefone, CPF/CNPJ/documento, endereço, chave Pix, dado
+  bancário, nascimento, filiação, foto e qualquer outro dado. A única exceção é o telefone como
+  identificador de login: o kit aceita e-mail ou telefone desde a #396 (`users.phone`,
+  `uids: ['email','phone']`, sign-in com `login`), então o cadastro público pode pedir `phone`, sozinho ou
+  junto com o `email`, com pelo menos um dos dois. `whatsapp`, telefone de dono e os demais seguem
+  fora.
+
+O resto se completa **depois do login**, na página de perfil (`frontend.md` §3.6), em qualquer nível
+de acesso. Perfil incompleto não barra a conta: ela entra e usa o painel, e só a **função** que
+depende do dado fica travada até ele ser preenchido (o restaurante sem Pix não aparece na vitrine
+nem recebe pedido).
+
+**O gate é do kit, a regra é do projeto.** O projeto declara que campos cada função exige; o kit dá
+duas peças, sem regra de produto:
+
+- `ProfileGate.missing(fields)` (`app/core/profile-gate.ts`): dado um objeto `campo → valor`, devolve
+  os campos vazios (`null`, `undefined`, texto em branco, lista vazia; `0` e `false` são valor).
+- `ProfileGateRefusal.check(fields, i18n)` (`features/_shared.profile-gate-refusal.ts`): a recusa
+  única, `409` com `code: 'PROFILE_INCOMPLETE'` e, em `errors`, uma chave por campo que falta (o
+  nome do campo; o texto diz onde preencher). É falha de negócio, então o use-case a devolve como
+  `left`, nunca `throw` (§4.2):
+
+  ```ts
+  const refusal = ProfileGateRefusal.check({ pixKey: store.pixKey }, this.i18n)
+  if (refusal) return left(refusal)
+  ```
+
+  `409` e não `422`: a requisição é válida, é o estado da conta que ainda não permite, e a mesma
+  requisição passa quando o dado é preenchido. O `code` é literal na recusa, como o das outras.
+
+**Cobrança** (`pattern:check`, regra `public-signup-minimum`): o projeto lista os validators dos seus
+cadastros públicos em `PUBLIC_SIGNUP_VALIDATORS` (`scripts/pattern-check.config.ts`, ponto de
+extensão), pelo nome exportado (`AuthenticationSignUpValidator`). O check não adivinha qual rota é
+cadastro: lê o `vine.create` de cada nome listado e reprova campo cujo nome tem uma das palavras de
+`PatternRules.SENSITIVE_SIGNUP_WORDS` (cpf, cnpj, document, tax, phone, whatsapp, pix, bank, address,
+birth, mother, father, photo...), em qualquer profundidade do schema. O nome é lido por palavras
+(`pixKey` é `pix` + `key`, `emailAddress` é `email` + `address`), e um campo legítimo que a lista
+pegar é exceção com `reason` em `PATTERN_EXCEPTIONS`, como as outras. Nome listado que nenhum
+validator declara reprova (`unknown-signup-validator`): lista que não confere não pode checar nada
+calada. Sem a lista, não há regra. **Exceção do telefone** (#396): o campo chamado exatamente `phone` passa, sozinho ou junto com
+`email`, porque o login é e-mail e/ou telefone (pelo menos um dos dois); o check não exige `email` ao
+lado. `ownerPhone`, `whatsapp`, CPF e o resto reprovam. Não há chave no config. O achado cita o
+nome do campo além da linha. *(Fastify)* o `pattern:check` do kit é do Adonis: ali o
+cadastro mínimo é conferido na revisão (`tooling.md` §10.2).
 
 ## 5. Módulos de infraestrutura
 
@@ -1542,18 +1641,15 @@ uso é a skill `maiyu-node`. Decisões #215 a #223.
    processo vivo. _doc-lib/nodejs.md#api/process, #api/timers, #api/http.
 6. **Hash de senha é Argon2 (`argon2id`) nos dois backends** (`DECISIONS.md` #314).
    - Adonis: driver `argon` como `default` em `config/hash.ts`, com o pacote `argon2` instalado,
-     que é o que a página manda (_doc-lib/adonisjs.md#guides/security/hashing). Projeto que já tem
-     hash em `scrypt` mantém esse driver no `list` até todo hash ser refeito: `hash.verify` não
-     reconhece o algoritmo do hash gravado, e o login refaz o hash quando `hash.needsReHash` diz que
-     ele está velho. Durante a migração, o hasher que verifica é escolhido pelo que o hash declara
-     (`hash.use('scrypt').isValidHash(hash)`, a forma da página em "Migrating between algorithms").
-     Com `withAuthFinder`, que recebe um hasher só, o model recebe um driver composto em
-     `app/core/legacy-aware-hash-driver.ts`, que grava no algoritmo novo e devolve `needsReHash`
-     verdadeiro para o legado. O rehash fica no use-case do sign-in, depois da credencial e de a
-     conta poder abrir sessão, por método do repository com escrita condicional (`WHERE password =
-     <lido>`) que devolve `boolean`; a falha do banco sobe e o use-case a captura, loga e não recusa o login
-     (exceção nomeada ao §4.2: é efeito que tolera perda). O driver composto sai quando o último hash legado for refeito
-     (`DECISIONS.md` #370).
+     que é o que a página manda (_doc-lib/adonisjs.md#guides/security/hashing,
+     https://docs.adonisjs.com/guides/security/hashing). **Argon2 é o único driver**: `config/hash.ts`
+     não lista `scrypt` nem outro, e o `withAuthFinder` do model recebe `hash.use('argon')`; não há
+     driver composto nem `LegacyAwareHashDriver` (`DECISIONS.md` #796). O login refaz o hash quando
+     `hash.needsReHash` diz que os parâmetros do hash gravado são mais fracos que os do config, no
+     use-case do sign-in, depois da credencial e de a conta poder abrir sessão, por método do
+     repository com escrita condicional (`WHERE password = <lido>`) que devolve `boolean`; a falha do
+     banco sobe e o use-case a captura, loga e não recusa o login (exceção nomeada ao §4.2: é efeito
+     que tolera perda). Projeto com senha em outro algoritmo migra os hashes antes de adotar o kit.
    - Fastify: `crypto.argon2` da stdlib (Node 24.7 ou maior), variante `argon2id`, `nonce` de
      `randomBytes(16)` e os parâmetros gravados junto do hash, para poder subir o custo sem
      invalidar senha antiga; comparação por `crypto.timingSafeEqual`; um service injetável
@@ -2123,7 +2219,7 @@ abaixo diz o que cada script do backend reprova.
 | `typecheck` | `tsc --noEmit` |
 | `openapi:check` | `openapi:generate --check --strict`: documento desatualizado, ou operação sem resposta descrita |
 | `pattern:check` | o que o ESLint não alcança porque depende de *onde* o arquivo está: a árvore inteira de `architecture.md` §6; nomes derivados do caminho (§3); camada que importa outra (§1.3); `@vinejs/vine` e subpaths fora do `vine` configurado do Adonis; validator do Adonis sem par no `shared/`; spread de corpo cru em controller (§4.1); `throw` e `*OrFail()` em use-case e repository; `actor` com outro nome; policy fora do mecanismo do framework e `BOUNCER_REQUIRED` (§4.6); filtro de `deletedAt` fora do model, inclusive qualificado (§4.8); `_shared` com I/O (§4.9); diretórios obrigatórios; as checagens de ENV (§6) |
-| `authz:check` | mudança na cadeia de autorização de qualquer rota, e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json`; a proteção sai como `anonymous`, `optional` (sessão opcional, `silentAuth()`), `authenticated` ou os papéis, e o `public-routes.unit.spec.ts` lê o mesmo rótulo contra a lista do projeto em `app/core/openapi/public-routes.ts` (escrita anônima por desenho e prefixo público só de leitura) |
+| `authz:check` | mudança na cadeia de autorização de qualquer rota (`role`, `platform` e `customer`, `DECISIONS.md` #798), e rota nova fora da lista pública e sem sessão (§4.10), contra `app/core/openapi/authz-baseline.json`; a proteção sai como `anonymous`, `optional` (sessão opcional, `silentAuth()`), `authenticated` ou os papéis, e o `public-routes.unit.spec.ts` lê o mesmo rótulo contra a lista do projeto em `app/core/openapi/public-routes.ts` (escrita anônima por desenho e prefixo público só de leitura) |
 | `test:unit` | a suíte `unit`, sem banco |
 | `di:check` | constrói todo service, repository e policy pelo container e reprova o que não sobe; **reprova também se encontrar zero alvos** (varredura vazia é guard que não guarda) |
 
@@ -2157,6 +2253,7 @@ novas:
 | `query-exact-version` | `tooling.md` §0.1 |
 | `minio-outside-local` | `tooling.md` §8.4 (MinIO só no compose e em `infra/minio/`, `DECISIONS.md` #771) |
 | `common-prefix` | `i18n.md` §4 |
+| `public-signup-minimum`, `unknown-signup-validator` | §4.16 (cadastro público só com o mínimo, `DECISIONS.md` #799) |
 
 **Formato de saída de todo `scripts/<nome>-check.ts`** *(opinião da casa)*: cada achado é
 `{ file, line, rule, section, message }` (`section` = seção do `_standards` violada); a saída

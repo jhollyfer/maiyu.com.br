@@ -27,6 +27,13 @@ export class CityMemoryRepository extends CityRepository {
     return City.restore(MemoryRows.copy(row))
   }
 
+  async findBySlug(slug: string): Promise<City | null> {
+    const row = [...this.rows.values()].find((each) => each.slug === slug)
+    if (!row) return null
+
+    return City.restore(MemoryRows.copy(row))
+  }
+
   async slugTaken(slug: string, exceptId: string | null): Promise<boolean> {
     return [...this.rows.values()].some(
       (row) => row.slug === slug && row.id !== exceptId,

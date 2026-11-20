@@ -1,11 +1,9 @@
 import { defineConfig, drivers } from '@adonisjs/core/hash'
 
 /**
- * Passwords in Argon2id (DECISIONS.md #314). `scrypt` stays in `list` until every old hash is
- * redone, but being listed is not enough: `hash.verify` always uses the default driver and does
- * not detect the algorithm, so the scrypt hashes are read through `#core/legacy-aware-hash-driver`
- * (DECISIONS.md #370). Parameters from the page's example (_doc-lib/adonisjs.md#guides/security/hashing,
- * https://docs.adonisjs.com/guides/security/hashing, "Migrating between algorithms").
+ * Passwords in Argon2id, the only driver (DECISIONS.md #314, #796). Parameters from the page's
+ * example (_doc-lib/adonisjs.md#guides/security/hashing,
+ * https://docs.adonisjs.com/guides/security/hashing).
  */
 const hashConfig = defineConfig({
   default: 'argon',
@@ -18,13 +16,6 @@ const hashConfig = defineConfig({
       parallelism: 4,
       saltSize: 16,
       hashLength: 32,
-    }),
-
-    scrypt: drivers.scrypt({
-      cost: 16384,
-      blockSize: 8,
-      parallelization: 1,
-      maxMemory: 33554432,
     }),
   },
 })

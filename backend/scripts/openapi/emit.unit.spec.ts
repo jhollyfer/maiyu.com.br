@@ -1,5 +1,7 @@
 import { test } from '@japa/runner'
 
+import { PLATFORM_ROLE, PLATFORM_STAFF_ROLES } from '@maiyu/shared'
+
 import { readProtection, requestShape, securityOf } from './emit.ts'
 
 import {
@@ -132,6 +134,74 @@ test.group('openapi:generate > session of an operation (unit)', () => {
       assert.isTrue(protection.authenticated)
       assert.isFalse(protection.optional)
     }
+  })
+
+  // `middleware.<name>(x)` stores `args: x`, the one argument itself and not a list of arguments
+  // (@adonisjs/http-server, `defineNamedMiddleware`): `role([..])` carries the array and
+  // `platform({ roles })` the object. `platform()` has no `args` at runtime.
+  const guard = (name: string, args: unknown = undefined) => ({
+    ...entry(name),
+    args,
+  })
+
+  test('platform() without roles is the owner only', async ({ assert }) => {
+    const protection = await readProtection([guard('auth'), guard('platform')])
+
+    assert.deepEqual(protection.roles, ['OWNER'])
+  })
+
+  test('platform({ roles }) publishes the roles passed', async ({ assert }) => {
+    const protection = await readProtection([
+      guard('auth'),
+      guard('platform', { roles: PLATFORM_STAFF_ROLES }),
+    ])
+
+    assert.deepEqual(protection.roles, [...PLATFORM_STAFF_ROLES])
+  })
+
+  test('platform({ roles }) with the literal list publishes it too', async ({
+    assert,
+  }) => {
+    const protection = await readProtection([
+      guard('auth'),
+      guard('platform', {
+        roles: [PLATFORM_ROLE.OWNER, PLATFORM_ROLE.ADMINISTRATOR],
+      }),
+    ])
+
+    assert.deepEqual(protection.roles, [
+      PLATFORM_ROLE.OWNER,
+      PLATFORM_ROLE.ADMINISTRATOR,
+    ])
+  })
+
+  test('platform({ roles }) inside nested groups intersects', async ({
+    assert,
+  }) => {
+    const protection = await readProtection([
+      guard('auth'),
+      guard('platform', {
+        roles: [PLATFORM_ROLE.OWNER, PLATFORM_ROLE.ADMINISTRATOR],
+      }),
+      guard('platform', { roles: [PLATFORM_ROLE.ADMINISTRATOR] }),
+    ])
+
+    assert.deepEqual(protection.roles, [PLATFORM_ROLE.ADMINISTRATOR])
+  })
+
+  test('customer() has its own label', async ({ assert }) => {
+    const protection = await readProtection([guard('auth'), guard('customer')])
+
+    assert.deepEqual(protection.roles, ['customer'])
+  })
+
+  test('platform nested with role intersects the lists', async ({ assert }) => {
+    const protection = await readProtection([
+      guard('platform', { roles: PLATFORM_STAFF_ROLES }),
+      guard('role', ['OWNER']),
+    ])
+
+    assert.deepEqual(protection.roles, ['OWNER'])
   })
 
   test('neither middleware leaves the route anonymous', async ({ assert }) => {

@@ -87,6 +87,7 @@ backend/
 │   │   ├── transaction-context.ts   # AsyncLocalStorage da transação, lido por 2+ repositories (domain.md §6)
 │   │   ├── tenant-scope.ts          # o que a requisição lê e escreve entre os tenants (backend.md §4.14, DECISIONS #390)
 │   │   ├── membership-access.ts     # quando uma escrita de vínculo tira acesso e derruba a sessão (backend.md §4.14, DECISIONS #581)
+│   │   ├── profile-gate.ts          # quais campos do perfil faltam para uma função; a recusa é `_shared.profile-gate-refusal.ts` (backend.md §4.16, DECISIONS #799)
 │   │   ├── credential.ts            # contrato e peças da credencial pública que acha o tenant (backend.md §4.14, DECISIONS #583)
 │   │   ├── validator.ts             # Fastify: reexporta o z de shared/ + regras só do backend; Adonis: o vine do backend (arquivo)
 │   │   ├── validator.unit.spec.ts   # meta-spec dos validators (backend.md §4.4)
@@ -306,6 +307,7 @@ frontend/
 ├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
 ├── scripts/{check-i18n-compile.mjs, check-i18n-compile.test.ts}   # kit: exit 1 se o plugin do inlang não carregou (frontend.md §9.11)
 ├── scripts/{check-ui-patches.mjs, check-ui-patches.test.ts, ui-patches.json}   # kit: cobrança dos patches // casa: de ui/ (frontend.md §6)
+├── scripts/ui-accessible-name.test.ts   # kit: nome acessível de radio, checkbox e switch no HTML do servidor (frontend.md §6, #800)
 ├── e2e/                             # árvore abaixo
 └── src/
     ├── router.tsx            # getRouter(); getContext() por chamada; declare module Register { router }

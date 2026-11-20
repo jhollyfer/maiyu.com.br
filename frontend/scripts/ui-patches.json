@@ -1,5 +1,5 @@
 {
-  "source": "_standards/frontend.md §6 and §10.2, DECISIONS.md #461",
+  "source": "_standards/frontend.md §6 and §10.2, DECISIONS.md #461 and #800",
   "patches": [
     {
       "file": "button.tsx",
@@ -60,6 +60,34 @@
       "anchor": "^size-\\d",
       "add": ["max-sm:min-w-11"],
       "reason": "44px width below sm on icon sizes, the Button height floor already applies"
+    },
+    {
+      "file": "radio-group.tsx",
+      "element": "RadioPrimitive.Root",
+      "attribute": "aria-labelledby",
+      "value": "props.id ? `${props.id}-label` : undefined",
+      "reason": "accessible name in the server HTML: Base UI links the label to the span role only after hydration, so the control points at the id its Label derives from htmlFor"
+    },
+    {
+      "file": "checkbox.tsx",
+      "element": "CheckboxPrimitive.Root",
+      "attribute": "aria-labelledby",
+      "value": "props.id ? `${props.id}-label` : undefined",
+      "reason": "accessible name in the server HTML: Base UI links the label to the span role only after hydration, so the control points at the id its Label derives from htmlFor"
+    },
+    {
+      "file": "switch.tsx",
+      "element": "SwitchPrimitive.Root",
+      "attribute": "aria-labelledby",
+      "value": "props.id ? `${props.id}-label` : undefined",
+      "reason": "accessible name in the server HTML: Base UI links the label to the span role only after hydration, so the control points at the id its Label derives from htmlFor"
+    },
+    {
+      "file": "label.tsx",
+      "element": "label",
+      "attribute": "id",
+      "value": "props.htmlFor ? `${props.htmlFor}-label` : undefined",
+      "reason": "Label gets the id its control points at with aria-labelledby (radio-group, checkbox, switch), so the control has a name in the server HTML"
     }
   ]
 }

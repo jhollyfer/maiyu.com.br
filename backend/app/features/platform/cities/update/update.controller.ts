@@ -4,7 +4,6 @@ import type { HttpContext } from '@adonisjs/core/http'
 import PlatformCityUpdateUseCase from './update.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
-import { IdentifierValidator } from '#core/validator'
 import { CitiesUpdateValidator } from '#validators/cities/cities.validator'
 
 @inject()
@@ -19,9 +18,8 @@ export default class PlatformCityUpdateController {
   constructor(private readonly useCase: PlatformCityUpdateUseCase) {}
 
   async handle(context: HttpContext) {
-    const { params } = await context.request.validateUsing(IdentifierValidator)
-    const fields = await context.request.validateUsing(CitiesUpdateValidator)
-    const result = await this.useCase.execute({ ...fields, id: params.id })
+    const payload = await context.request.validateUsing(CitiesUpdateValidator)
+    const result = await this.useCase.execute(payload)
     if (result.isLeft()) throw result.value
     return context.response.ok(result.value)
   }

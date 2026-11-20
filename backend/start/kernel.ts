@@ -74,5 +74,6 @@ export const middleware = router.named({
   role: () => import('#middleware/role.middleware'),
   platform: () => import('#middleware/platform.middleware'),
   publicTenant: () => import('#middleware/public-tenant.middleware'),
+  customer: () => import('#middleware/customer.middleware'),
   credentialTenant: () => import('#middleware/credential-tenant.middleware'),
 })

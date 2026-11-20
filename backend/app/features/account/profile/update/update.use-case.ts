@@ -1,5 +1,6 @@
 import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
+import hash from '@adonisjs/core/services/hash'
 import { I18n } from '@adonisjs/i18n'
 
 import {
@@ -14,7 +15,6 @@ import {
 import { ProfileRefusal } from '../_shared.profile-refusal.ts'
 import { ProfilePresenter } from '../profile.presenter.ts'
 
-import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import HTTPException from '#exceptions/http.exception'
 import { EmailChangeRepository } from '#repositories/email-change/email-change.repository'
 import { StorageRepository } from '#repositories/storage/storage.repository'
@@ -86,11 +86,10 @@ export default class AccountProfileUpdateUseCase {
           ),
         )
 
-      const hasher = LegacyAwareHashDriver.hasher()
       const stored = user.snapshot().password
       const proven =
         currentPassword !== undefined &&
-        (await hasher.verify(stored, currentPassword))
+        (await hash.verify(stored, currentPassword))
       if (!proven) return left(this.wrongCurrentPassword())
 
       if (
@@ -108,7 +107,7 @@ export default class AccountProfileUpdateUseCase {
       // is touched. The entity only holds the hash, so the comparison is a verify against it.
       if (
         patch.password !== undefined &&
-        (await hasher.verify(stored, patch.password))
+        (await hash.verify(stored, patch.password))
       )
         return left(
           ProfileRefusal.http({ code: 'PASSWORD_SAME_AS_CURRENT' }, this.i18n),

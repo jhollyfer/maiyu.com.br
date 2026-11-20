@@ -985,6 +985,16 @@
               }
             }
           },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
           "409": {
             "description": "Slug em uso",
             "content": {
@@ -1021,6 +1031,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {
@@ -1063,6 +1076,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
                 }
               }
             }
@@ -1114,6 +1137,9 @@
             "cookieAuth": []
           }
         ],
+        "x-roles": [
+          "OWNER"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguage"
@@ -1123,7 +1149,8 @@
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -1154,6 +1181,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
                 }
               }
             }
@@ -1205,6 +1242,9 @@
             "cookieAuth": []
           }
         ],
+        "x-roles": [
+          "OWNER"
+        ],
         "parameters": [
           {
             "$ref": "#/components/parameters/AcceptLanguage"
@@ -1238,6 +1278,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
                 }
               }
             }
@@ -1278,6 +1328,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {
@@ -1323,6 +1376,16 @@
               }
             }
           },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
           "500": {
             "description": "Erro interno do servidor",
             "content": {
@@ -1339,6 +1402,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {
@@ -1371,6 +1437,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
                 }
               }
             }
@@ -1411,6 +1487,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {
@@ -1453,6 +1532,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error401AuthenticationRequired"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
                 }
               }
             }
@@ -1503,6 +1592,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {
@@ -1558,6 +1650,16 @@
               }
             }
           },
+          "403": {
+            "description": "Acesso negado. Exige um destes papéis: OWNER.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error403AccessDenied"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Cliente não encontrado",
             "content": {
@@ -1594,6 +1696,9 @@
           {
             "cookieAuth": []
           }
+        ],
+        "x-roles": [
+          "OWNER"
         ],
         "parameters": [
           {

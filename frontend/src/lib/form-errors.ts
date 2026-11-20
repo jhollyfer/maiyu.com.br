@@ -6,6 +6,7 @@ import {
   HTTPErrorCode,
   HTTPStatus,
 } from '#/integrations/tanstack-query/http'
+import { ProfilePending } from '#/lib/profile-pending'
 import { m } from '#/paraglide/messages'
 
 /**
@@ -38,6 +39,14 @@ export function applyHTTPErrorToForm<TValues extends FieldValues>({
   error: HTTPError
   fields: ReadonlyArray<FieldPath<TValues>>
 }): boolean {
+  // Perfil incompleto não é erro de campo deste formulário: as chaves são campos do perfil, que se
+  // completa na página dele. A mensagem lista o que falta e fica no rodapé (DECISIONS.md #799).
+  if (error.isProfileIncomplete) {
+    form.setError('root', { message: httpErrorMessage(error) })
+
+    return true
+  }
+
   const { root, ...rest } = error.errors ?? {}
 
   const orphans: Array<string> = []
@@ -127,6 +136,11 @@ export function httpErrorMessage(error: Error): string {
   // example) already carries the screen's text.
   if (!(error instanceof HTTPError)) return error.message
 
+  if (error.isProfileIncomplete)
+    return m.kit_profile_incomplete_error({
+      fields: ProfilePending.describe(error.missingProfileFields),
+    })
+
   const known = HTTP_ERROR_MESSAGES[error.code]
   if (known) return known()
   if (error.isServerError) return m.kit_error_server()
@@ -141,6 +155,8 @@ export function httpErrorMessage(error: Error): string {
  */
 export function isRetrySafe(error: Error): boolean {
   if (!(error instanceof HTTPError)) return false
+  // The same request is refused until the profile is completed: resending only repeats the refusal.
+  if (error.isProfileIncomplete) return false
 
   return error.status === HTTPStatus.CONFLICT || error.isServerError
 }

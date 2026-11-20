@@ -4,6 +4,7 @@ import { env } from '#/env'
 import { overwriteGetLocale } from '#/paraglide/runtime'
 
 import {
+  formatApiDay,
   formatCurrency,
   formatNumber,
   alternateLinks,
@@ -60,6 +61,10 @@ describe('the city clock', () => {
     expect(localInputToIso('2026-05-01T09:00', 'America/Eirunepe')).toBe(
       '2026-05-01T14:00:00.000Z',
     )
+  })
+
+  it('formats an API day without time and without shifting the day', () => {
+    expect(formatApiDay('2024-05-17')).toBe('17/05/2024')
   })
 
   it('defaults to TIME_ZONE, the western Amazonas zone (UTC-5, #393)', () => {

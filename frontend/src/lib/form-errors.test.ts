@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { HTTPError, HTTPErrorCode } from '#/integrations/tanstack-query/http'
+import { m } from '#/paraglide/messages'
 
 import {
   applyHTTPErrorToForm,
@@ -214,6 +215,45 @@ describe('applyMutationError', () => {
       'Não foi possível conectar ao servidor. Tente novamente.',
       expect.objectContaining({ id: 'testimonial-update-error' }),
     )
+  })
+})
+
+/** 409 PROFILE_INCOMPLETE (DECISIONS.md #799): the keys of `errors` are the missing profile fields. */
+function profileIncomplete() {
+  return new HTTPError({
+    message: 'Complete o seu perfil para usar este recurso',
+    status: 409,
+    code: HTTPErrorCode.PROFILE_INCOMPLETE,
+    errors: { campoSemRotulo: 'Preencha este dado no seu perfil' },
+  })
+}
+
+describe('PROFILE_INCOMPLETE', () => {
+  it('the form footer lists the missing fields and no field is marked', () => {
+    const { form, setError } = formStub()
+
+    expect(
+      applyHTTPErrorToForm({
+        form,
+        error: profileIncomplete(),
+        fields: FIELDS,
+      }),
+    ).toBe(true)
+
+    expect(setError).toHaveBeenCalledTimes(1)
+    expect(setError).toHaveBeenCalledWith('root', {
+      message: m.kit_profile_incomplete_error({ fields: 'campoSemRotulo' }),
+    })
+  })
+
+  it('the message names the fields, whatever the language of the backend text', () => {
+    expect(httpErrorMessage(profileIncomplete())).toBe(
+      m.kit_profile_incomplete_error({ fields: 'campoSemRotulo' }),
+    )
+  })
+
+  it('is not retry-safe: resending the same request is refused again', () => {
+    expect(isRetrySafe(profileIncomplete())).toBe(false)
   })
 })
 

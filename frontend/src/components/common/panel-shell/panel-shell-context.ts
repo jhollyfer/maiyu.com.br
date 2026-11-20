@@ -4,9 +4,9 @@ import type { PanelMenuGroup } from '#/lib/panel-menu'
 import type { AccountProfileShowResponse } from '@maiyu/shared'
 
 /**
- * O que o painel inteiro compartilha, e só isso: a conta da sessão, o menu que ela vê e os
- * contadores dos itens. Nascem em cima, no `PanelShell`, e são lidos três níveis abaixo (a sidebar, o
- * menu de conta): passar por prop repetiria os três em cada parte.
+ * O que o painel inteiro compartilha, e só isso: a conta da sessão, o menu que ela vê, os
+ * contadores dos itens e o que falta no perfil. Nascem em cima, no `PanelShell`, e são lidos níveis
+ * abaixo (a sidebar, o menu de conta, o conteúdo): passar por prop repetiria cada um em cada parte.
  */
 export type PanelShellContextValue = {
   readonly account: AccountProfileShowResponse
@@ -14,6 +14,10 @@ export type PanelShellContextValue = {
   readonly menu: ReadonlyArray<PanelMenuGroup>
   /** Contador por item, pelo `to` dele: o número que quem opera abre o painel para achar. */
   readonly badges: Readonly<Partial<Record<string, number>>>
+  /** Os campos do perfil que faltam para alguma função da conta (DECISIONS.md #799); vazio, sem aviso. */
+  readonly profilePending: ReadonlyArray<string>
+  /** O rótulo do projeto por campo pendente. */
+  readonly profileFieldLabels: Readonly<Record<string, string>> | undefined
 }
 
 export const PanelShellContext =

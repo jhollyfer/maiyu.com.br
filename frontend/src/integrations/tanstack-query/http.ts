@@ -72,6 +72,11 @@ export const HTTPErrorCode = {
   AUTHENTICATION_REQUIRED: 'AUTHENTICATION_REQUIRED',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   ACCESS_DENIED: 'ACCESS_DENIED',
+  /**
+   * 409 de uma função que depende de dado do perfil que a conta ainda não preencheu (DECISIONS.md
+   * #799): as chaves de `errors` são os campos que faltam (`HTTPError.missingProfileFields`).
+   */
+  PROFILE_INCOMPLETE: 'PROFILE_INCOMPLETE',
   /** `DELETE /storages/:id` 409: alguém referencia o arquivo. */
   STORAGE_IN_USE: 'STORAGE_IN_USE',
   /** `POST /storages/:id/complete` 422: o objeto no bucket não confere. */
@@ -108,6 +113,24 @@ export class HTTPError extends Error {
   /** Culpa do servidor ou da rede: 5xx e o status sintético 0. */
   get isServerError(): boolean {
     return this.status >= 500 || this.status === HTTPStatus.NETWORK
+  }
+
+  /** A função pede dado do perfil que falta preencher: 409 `PROFILE_INCOMPLETE`. */
+  get isProfileIncomplete(): boolean {
+    return (
+      this.status === HTTPStatus.CONFLICT &&
+      this.code === HTTPErrorCode.PROFILE_INCOMPLETE
+    )
+  }
+
+  /**
+   * Os campos que faltam no perfil, os nomes que o backend pôs nas chaves de `errors`; vazio em
+   * qualquer outro erro.
+   */
+  get missingProfileFields(): ReadonlyArray<string> {
+    if (!this.isProfileIncomplete) return []
+
+    return Object.keys(this.errors ?? {})
   }
 
   /** A sessão foi recusada: 401 de sessão (não o de credencial errada). */

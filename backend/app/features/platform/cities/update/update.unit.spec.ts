@@ -25,7 +25,13 @@ test.group('platform/cities > update (unit)', (group) => {
   test('keeps its own slug and saves the new name', async ({ assert }) => {
     const { cities, useCase } = await setup()
 
-    rightOf(await useCase.execute({ ...CITY_FIELDS, id: CITY_ID, name: 'BC' }))
+    rightOf(
+      await useCase.execute({
+        ...CITY_FIELDS,
+        params: { id: CITY_ID },
+        name: 'BC',
+      }),
+    )
 
     assert.equal((await cities.findById(CITY_ID))?.snapshot().name, 'BC')
   })
@@ -35,7 +41,7 @@ test.group('platform/cities > update (unit)', (group) => {
 
     const result = await useCase.execute({
       ...CITY_FIELDS,
-      id: '00000000-0000-4000-8000-000000000000',
+      params: { id: '00000000-0000-4000-8000-000000000000' },
     })
 
     assert.deepInclude(result.value, { status: 404, code: 'CITY_NOT_FOUND' })
@@ -48,7 +54,7 @@ test.group('platform/cities > update (unit)', (group) => {
 
     const result = await useCase.execute({
       ...CITY_FIELDS,
-      id: CITY_ID,
+      params: { id: CITY_ID },
       west: -69,
     })
 

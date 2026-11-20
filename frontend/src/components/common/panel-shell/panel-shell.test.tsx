@@ -74,12 +74,21 @@ beforeEach(() => {
 
 function Shell({
   badges,
-}: Readonly<{ badges?: Record<string, number> }>): React.JSX.Element {
+  profilePending,
+}: Readonly<{
+  badges?: Record<string, number>
+  profilePending?: ReadonlyArray<string>
+}>): React.JSX.Element {
   return (
     <QueryClientProvider client={QUERY_CLIENT}>
       <ThemeProvider theme="system">
         <TooltipProvider>
-          <PanelShell account={ACCOUNT} menu={MENU} badges={badges}>
+          <PanelShell
+            account={ACCOUNT}
+            menu={MENU}
+            badges={badges}
+            profilePending={profilePending}
+          >
             <PanelShellSidebar />
             <PanelShellInset>
               <PanelShellHeader />
@@ -92,10 +101,18 @@ function Shell({
   )
 }
 
-function mount(badges?: Record<string, number>): () => string {
+function mount(
+  badges?: Record<string, number>,
+  profilePending?: ReadonlyArray<string>,
+): () => string {
   return renderWithRouter(
     [
-      { path: '/profile', component: () => <Shell badges={badges} /> },
+      {
+        path: '/profile',
+        component: () => (
+          <Shell badges={badges} profilePending={profilePending} />
+        ),
+      },
       { path: '/sign-in', component: () => <p>entrada</p> },
     ],
     '/profile',
@@ -148,6 +165,28 @@ describe('PanelShell', () => {
     })
 
     expect(within(navigation).getByText('7')).toBeTruthy()
+  })
+
+  it('perfil incompleto: o aviso pede para completar e o resto do painel segue', async () => {
+    mount(undefined, ['campoSemRotulo'])
+
+    const main = await screen.findByRole('main')
+    const alert = within(main).getByRole('alert')
+    expect(alert.textContent).toContain(m.kit_profile_incomplete_title())
+    expect(alert.textContent).toContain('campoSemRotulo')
+    expect(
+      within(alert)
+        .getByRole('link', { name: m.kit_profile_incomplete_action() })
+        .getAttribute('href'),
+    ).toBe('/profile')
+    expect(within(main).getByText('o conteúdo da tela')).toBeTruthy()
+  })
+
+  it('perfil completo: nenhum aviso', async () => {
+    mount()
+
+    const main = await screen.findByRole('main')
+    expect(within(main).queryByRole('alert')).toBeNull()
   })
 
   it('o menu de conta mostra quem é e leva ao perfil', async () => {

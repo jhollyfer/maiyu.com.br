@@ -181,10 +181,10 @@ export interface Registry {
     methods: ["PUT"]
     pattern: '/platform/cities/:id'
     types: {
-      body: ExtractBody<InferInput<(typeof import('#core/validator').IdentifierValidator)>|InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
+      body: ExtractBody<InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
       paramsTuple: [ParamValue]
       params: { id: ParamValue }
-      query: ExtractQuery<InferInput<(typeof import('#core/validator').IdentifierValidator)>|InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
+      query: ExtractQuery<InferInput<(typeof import('#validators/cities/cities.validator').CitiesUpdateValidator)>>
       response: ExtractResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>>
       errorResponse: ExtractErrorResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }
       rawResponse: ExtractRawResponse<Awaited<ReturnType<import('#features/platform/cities/update/update.controller').default['handle']>>> | { status: 422; response: { errors: SimpleError[] } }

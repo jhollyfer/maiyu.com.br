@@ -495,3 +495,27 @@ test('the server base URL is SERVER_API_URL when set, VITE_API_URL when not', as
   expect(requests[1]?.url).toBe(new URL('/storages', env.VITE_API_URL).href)
   expect(BASE_URL).toBe(env.VITE_API_URL)
 })
+
+test('409 PROFILE_INCOMPLETE: the keys of `errors` are the missing profile fields', () => {
+  const error = new HTTPError({
+    message: 'Complete o seu perfil',
+    status: HTTPStatus.CONFLICT,
+    code: HTTPErrorCode.PROFILE_INCOMPLETE,
+    errors: { pixKey: 'Preencha', document: 'Preencha' },
+  })
+
+  expect(error.isProfileIncomplete).toBe(true)
+  expect(error.missingProfileFields).toEqual(['pixKey', 'document'])
+})
+
+test('a 409 of another code is not an incomplete profile and lists no field', () => {
+  const error = new HTTPError({
+    message: 'Conflito',
+    status: HTTPStatus.CONFLICT,
+    code: 'CITY_SLUG_TAKEN',
+    errors: { slug: 'Em uso' },
+  })
+
+  expect(error.isProfileIncomplete).toBe(false)
+  expect(error.missingProfileFields).toEqual([])
+})

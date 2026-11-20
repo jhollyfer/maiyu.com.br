@@ -12,5 +12,7 @@
   "email_same_as_current": "O novo e-mail deve ser diferente do atual",
   "email_same_as_current_field": "O novo e-mail deve ser diferente do atual",
   "email_change_unavailable": "A troca do e-mail por conta própria não está disponível",
-  "email_change_unavailable_field": "Peça a troca do e-mail ao administrador"
+  "email_change_unavailable_field": "Peça a troca do e-mail ao administrador",
+  "profile_incomplete": "Complete o seu perfil para usar este recurso",
+  "profile_incomplete_field": "Preencha este dado no seu perfil"
 }

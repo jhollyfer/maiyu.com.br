@@ -13,6 +13,13 @@
  * fails as well, so a registry that changed shape is reported instead of passing silently. A file
  * the project does not have is skipped: there is nothing to patch.
  *
+ * A second kind of entry, `element` + `attribute` + `value`, requires a JSX attribute and not a class:
+ * every `<element>` of the file must carry `attribute={value}` before its `{...props}` spread (so a
+ * prop of the caller still wins) with the `// casa:` mark. It exists for what a class cannot say, the
+ * accessible name of `Radio`/`Checkbox`/`Switch`: Base UI links the label to the `<span role=...>` only
+ * after hydration, so the server HTML has no name unless the attribute is there. `--fix` inserts it
+ * right after the tag name (or rewrites a different value), idempotent. DECISIONS.md #800.
+ *
  * Usage: `node scripts/check-ui-patches.mjs [--fix] [dir]` - `dir` defaults to `../src/components/ui` from this file, so it runs from any cwd; a missing dir fails.
  * `--fix` adds the missing tokens right after the anchor token and the missing `// casa:` comment,
  * then runs Prettier on the files it touched; running it again changes nothing.
@@ -23,7 +30,9 @@ import { fileURLToPath } from 'node:url'
 
 import ts from 'typescript'
 
-/** @typedef {{ file: string, anchor: string, add: string[], reason: string }} UiPatch */
+/** @typedef {{ file: string, anchor: string, add: string[], reason: string }} ClassPatch */
+/** @typedef {{ file: string, element: string, attribute: string, value: string, reason: string }} AttributePatch */
+/** @typedef {ClassPatch | AttributePatch} UiPatch */
 /** @typedef {{ file: string, line: number, missing: string[], comment: boolean, reason: string }} UiPatchProblem */
 
 const RULE = 'frontend.md §6 e §10.2, DECISIONS.md #461'
@@ -68,6 +77,66 @@ export function stringLiterals(source) {
   return found
 }
 
+/** @param {UiPatch} patch @returns {patch is AttributePatch} */
+const isAttributePatch = (patch) => 'element' in patch
+
+/** @param {string} text */
+const squash = (text) => text.replace(/\s+/g, ' ').trim()
+
+/**
+ * The JSX tags named `patch.element`, each with the state of `patch.attribute`: absent, a different
+ * value, after a spread (the caller's prop would lose) or right.
+ *
+ * @param {string} source
+ * @param {AttributePatch} patch
+ */
+export function matchAttribute(source, patch) {
+  const file = ts.createSourceFile(
+    'ui.tsx',
+    source,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  )
+  /** @type {{ tagEnd: number, line: number, ok: boolean, comment: boolean, attribute: ts.JsxAttribute | undefined }[]} */
+  const found = []
+  /** @param {ts.Node} node */
+  const visit = (node) => {
+    if (
+      (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+      node.tagName.getText(file) === patch.element
+    ) {
+      const properties = node.attributes.properties
+      const attribute = properties
+        .filter((each) => ts.isJsxAttribute(each))
+        .find((each) => each.name.getText(file) === patch.attribute)
+      const spread = properties.findIndex((each) =>
+        ts.isJsxSpreadAttribute(each),
+      )
+      const before =
+        spread < 0 || properties.indexOf(attribute ?? node) < spread
+      const initializer = attribute?.initializer
+      const same =
+        initializer !== undefined &&
+        ts.isJsxExpression(initializer) &&
+        initializer.expression !== undefined &&
+        squash(initializer.expression.getText(file)) === squash(patch.value)
+      const line = lineOf(source, (attribute ?? node.tagName).getStart(file))
+      found.push({
+        tagEnd: node.tagName.getEnd(),
+        line,
+        ok: same && before,
+        // An absent attribute has nothing to mark: the message must not ask for the mark twice.
+        comment: attribute === undefined || hasCasaComment(source, line),
+        attribute,
+      })
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(file)
+  return found
+}
+
 /** @param {string} source @param {number} offset */
 const lineOf = (source, offset) => source.slice(0, offset).split('\n').length
 
@@ -101,7 +170,7 @@ function hasCasaComment(source, line) {
  * The literals of `source` the patch reaches, each with the tokens it lacks.
  *
  * @param {string} source
- * @param {UiPatch} patch
+ * @param {ClassPatch} patch
  */
 export function matchPatch(source, patch) {
   const anchor = new RegExp(patch.anchor)
@@ -125,6 +194,7 @@ export function matchPatch(source, patch) {
  */
 export function checkSource(source, file, patches) {
   return patches.flatMap((patch) => {
+    if (isAttributePatch(patch)) return checkAttribute(source, file, patch)
     const matches = matchPatch(source, patch)
     if (matches.length === 0) {
       return [
@@ -150,6 +220,64 @@ export function checkSource(source, file, patches) {
 }
 
 /**
+ * @param {string} source
+ * @param {string} file
+ * @param {AttributePatch} patch
+ * @returns {UiPatchProblem[]}
+ */
+function checkAttribute(source, file, patch) {
+  const wanted = `${patch.attribute}={${patch.value}}`
+  const matches = matchAttribute(source, patch)
+  if (matches.length === 0) {
+    return [
+      {
+        file,
+        line: 0,
+        missing: [wanted],
+        comment: true,
+        reason: `${patch.reason}; nenhum <${patch.element}> no arquivo`,
+      },
+    ]
+  }
+  return matches
+    .filter((each) => !each.ok || !each.comment)
+    .map((each) => ({
+      file,
+      line: each.line,
+      missing: [wanted].filter(() => !each.ok),
+      comment: each.comment,
+      reason: patch.reason,
+    }))
+}
+
+/**
+ * Applies one attribute patch: a wrong or misplaced attribute is cut out, the right one goes right
+ * after the tag name (before any spread) with the mark on the line above. Idempotent.
+ *
+ * @param {string} source
+ * @param {AttributePatch} patch
+ */
+function fixAttribute(source, patch) {
+  let out = source
+  // Back to front, so the offsets of the earlier tags still hold.
+  for (const match of matchAttribute(source, patch).reverse()) {
+    if (match.ok && match.comment) continue
+    if (match.attribute !== undefined) {
+      // The leading comments go only when they are our own mark; another comment stays.
+      const trivia = source.slice(
+        match.attribute.getFullStart(),
+        match.attribute.getStart(),
+      )
+      let from = match.attribute.getStart()
+      if (trivia.includes('casa:')) from = match.attribute.getFullStart()
+      out = out.slice(0, from) + out.slice(match.attribute.getEnd())
+    }
+    out = `${out.slice(0, match.tagEnd)}\n// casa: ${patch.reason}\n${patch.attribute}={${patch.value}}${out.slice(match.tagEnd)}`
+  }
+  return out
+}
+
+/**
  * Applies one patch: the missing tokens go right after the anchor token, and a `// casa:` comment
  * goes on its own line above the literal when none is in reach. Idempotent.
  *
@@ -157,6 +285,7 @@ export function checkSource(source, file, patches) {
  * @param {UiPatch} patch
  */
 export function fixSource(source, patch) {
+  if (isAttributePatch(patch)) return fixAttribute(source, patch)
   let out = source
   // Back to front, so the offsets of the earlier literals still hold.
   for (const match of matchPatch(source, patch).reverse()) {

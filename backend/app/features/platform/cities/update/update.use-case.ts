@@ -2,23 +2,16 @@ import { inject } from '@adonisjs/core'
 import { HttpContext } from '@adonisjs/core/http'
 import { I18n } from '@adonisjs/i18n'
 
-import {
-  left,
-  right,
-  type CityResponse,
-  type Either,
-  type Merge,
-} from '@maiyu/shared'
+import { left, right, type CityResponse, type Either } from '@maiyu/shared'
 
 import { CityRefusal } from '../_shared.city-refusal.ts'
 
-import type { IdentifierPayload } from '#core/validator'
 import HTTPException from '#exceptions/http.exception'
 import { CityPresenter } from '#features/_shared.city.presenter'
 import { CityRepository } from '#repositories/city/city.repository'
 import type { CitiesUpdatePayload } from '#validators/cities/cities.validator'
 
-type Payload = Merge<IdentifierPayload, CitiesUpdatePayload>
+type Payload = CitiesUpdatePayload
 type Response = Either<HTTPException, CityResponse>
 
 /** The city's record again, by the platform owner (DECISIONS.md #390). */
@@ -29,12 +22,12 @@ export default class PlatformCityUpdateUseCase {
     private readonly i18n: I18n,
   ) {}
 
-  async execute({ id, ...fields }: Payload): Promise<Response> {
+  async execute({ params, ...fields }: Payload): Promise<Response> {
     try {
-      const city = await this.cities.findById(id)
+      const city = await this.cities.findById(params.id)
       if (!city) return left(CityRefusal.notFound(this.i18n))
 
-      if (await this.cities.slugTaken(fields.slug, id))
+      if (await this.cities.slugTaken(fields.slug, params.id))
         return left(CityRefusal.slugTaken(this.i18n))
 
       const updated = city.update(fields, new Date())
