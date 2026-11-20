@@ -15,6 +15,6 @@ export const Route = createFileRoute('/_public/blog/')({
     pageHead({
       pathname: '/blog',
       title: m.nav_blog(),
-      description: m.blog_description(),
+      description: m.blog_meta_description(),
     }),
 })
