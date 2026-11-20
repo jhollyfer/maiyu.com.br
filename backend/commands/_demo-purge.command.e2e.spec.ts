@@ -9,6 +9,7 @@ import { DemoImage } from '#database/demo/demo-image'
 import { UserFactory } from '#database/factories/user.factory'
 import Storage from '#models/storage'
 import Tenant from '#models/tenant'
+import User from '#models/user'
 import env from '#start/env'
 import { resetDatabase } from '#tests/http-fixtures'
 import { storageRow } from '#tests/storages-fixtures'
@@ -65,6 +66,7 @@ test.group('demo > purge', (group) => {
     await seedDemo()
     const demo = await Tenant.query().where('demo', true).firstOrFail()
     const image = await DemoImage.of(demo, 'cover')
+    if (!image) return assert.fail('the demo image was not created')
     assert.isTrue(await drive.use().exists(image.path))
 
     const command = await run()
@@ -94,6 +96,28 @@ test.group('demo > purge', (group) => {
 
     assert.isNotNull(await db.from('users').where('id', sameName.id).first())
     assert.isNotNull(await db.from('users').where('id', sameEmail.id).first())
+  })
+
+  test('it touches no real account whose name and e-mail both look like a demo one, nor what it owns', async ({
+    assert,
+  }) => {
+    const real = await Tenants.create()
+    const lookalike = await UserFactory.merge({
+      name: 'Demo Person',
+      email: 'person@demo.example.com',
+    }).create()
+    const owned = await storageRow({ tenantId: real.id })
+    const file = await Storage.findOrFail(owned.id)
+    file.uploadedBy = lookalike.id
+    await file.save()
+    await seedDemo()
+
+    const command = await run()
+    await command.exec()
+
+    assert.isNotNull(await db.from('users').where('id', lookalike.id).first())
+    assert.equal((await Storage.findOrFail(owned.id)).uploadedBy, lookalike.id)
+    assert.lengthOf(await User.query().where('demo', true), 0)
   })
 
   test('it is idempotent: with no demo left it deletes nothing', async ({

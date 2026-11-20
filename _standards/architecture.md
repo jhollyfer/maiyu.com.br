@@ -308,6 +308,8 @@ frontend/
 ├── scripts/{check-chunk-cycles.mjs, check-chunk-cycles.test.ts}   # kit
 ├── scripts/{check-i18n-compile.mjs, check-i18n-compile.test.ts}   # kit: exit 1 se o plugin do inlang não carregou (frontend.md §9.11)
 ├── scripts/{check-ui-patches.mjs, check-ui-patches.test.ts, ui-patches.json}   # kit: cobrança dos patches // casa: de ui/ (frontend.md §6)
+├── scripts/{check-ui-components.mjs, check-ui-components.test.ts, ui-components.json}   # kit: o registry inteiro em ui/ (frontend.md §6, #806)
+├── scripts/eslint-raw-interactive.test.ts   # kit: onde a proibição do elemento cru vale e o que acusa (frontend.md §6.5, #806)
 ├── scripts/ui-accessible-name.test.ts   # kit: nome acessível de radio, checkbox e switch no HTML do servidor (frontend.md §6, #800)
 ├── e2e/                             # árvore abaixo
 └── src/

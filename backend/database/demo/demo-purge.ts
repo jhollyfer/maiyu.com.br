@@ -1,7 +1,6 @@
 import app from '@adonisjs/core/services/app'
 import db from '@adonisjs/lucid/services/db'
 
-import { DemoConfig } from '#database/demo/demo.config'
 import { DemoProject } from '#database/demo/demo.project'
 import Storage from '#models/storage'
 import Tenant from '#models/tenant'
@@ -18,8 +17,9 @@ export type DemoPurgeResult = {
  * Removes the demonstration (`node ace demo:purge`, DECISIONS.md #802) and nothing else: the
  * project's records first (`DemoProject.purge`), then the files of the demo tenants (bucket and
  * rows), the tenants (their memberships go with them) and the demo accounts. What is a demo
- * row is decided by the same marks the seed writes: `tenants.demo`, and an account whose name
- * matches `DemoConfig.NAME_PATTERN` and whose e-mail matches `DemoConfig.EMAIL_PATTERN`. Idempotent: a second run finds nothing and says zero.
+ * row is decided only by the explicit marks the seed writes, `tenants.demo` and `users.demo`
+ * (DECISIONS.md #807), never by a text pattern of a name or an e-mail: a real account that looks
+ * like a demo one is not touched. Idempotent: a second run finds nothing and says zero.
  */
 export class DemoPurge {
   /** What `run` would delete, without deleting (`demo:purge --dry-run`). */
@@ -29,10 +29,7 @@ export class DemoPurge {
       'tenantId',
       tenants.map((tenant) => tenant.id),
     )
-    const accounts = await User.query()
-      .where('email', 'like', DemoConfig.EMAIL_PATTERN)
-      .where('name', 'like', DemoConfig.NAME_PATTERN)
-      .count('* as total')
+    const accounts = await User.query().where('demo', true).count('* as total')
 
     return {
       tenants: tenants.length,
@@ -63,8 +60,7 @@ export class DemoPurge {
       }
       const accounts = await trx
         .from('users')
-        .where('email', 'like', DemoConfig.EMAIL_PATTERN)
-        .where('name', 'like', DemoConfig.NAME_PATTERN)
+        .where('demo', true)
         .delete()
         .returning('id')
 

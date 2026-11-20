@@ -14,6 +14,8 @@ import {
 import { TenantConfig } from '#config/tenant'
 import { DemoSeed } from '#database/demo/demo-seed'
 import { DemoConfig } from '#database/demo/demo.config'
+import { DemoProject } from '#database/demo/demo.project'
+import { UserFactory } from '#database/factories/user.factory'
 import type City from '#models/city'
 import Tenant from '#models/tenant'
 import TenantMembership from '#models/tenant-membership'
@@ -40,7 +42,7 @@ async function seed(password: string) {
 }
 
 function demoUsers() {
-  return User.query().where('email', 'like', '%@demo.%')
+  return User.query().where('demo', true)
 }
 
 function demoTenants() {
@@ -121,6 +123,61 @@ test.group('seeders > demo', (group) => {
       assert.equal(user.status, ACTIVE_STATUS.ACTIVE)
       assert.isTrue(await hash.verify(user.password, PASSWORD))
     }
+  })
+
+  test('a project that is not ready makes the seed skip everything, accounts included', async ({
+    assert,
+  }) => {
+    const ready = DemoProject.ready.bind(DemoProject)
+    DemoProject.ready = () => ({
+      ok: false,
+      reason: 'repository without tenant scope',
+    })
+
+    try {
+      await seed(PASSWORD)
+    } finally {
+      DemoProject.ready = ready
+    }
+
+    assert.lengthOf(await User.query().where('email', 'like', '%@demo.%'), 0)
+    assert.lengthOf(await demoTenants(), 0)
+  })
+
+  test('a real account under a demo e-mail is never adopted nor given a membership', async ({
+    assert,
+  }) => {
+    const real = await UserFactory.merge({
+      name: 'Real Owner',
+      email: `platform-owner@${domain()}`,
+    }).create()
+
+    await seed(PASSWORD)
+
+    assert.isFalse((await User.findOrFail(real.id)).demo)
+    assert.lengthOf(
+      await User.query()
+        .where('email', 'like', '%@demo.%')
+        .where('demo', false),
+      1,
+    )
+  })
+
+  test('an unmarked account under a demo e-mail is skipped, even when named Demo', async ({
+    assert,
+  }) => {
+    await seed(PASSWORD)
+    await User.query()
+      .where('email', `customer@${domain()}`)
+      .update({ demo: false })
+
+    await seed(PASSWORD)
+
+    assert.lengthOf(
+      await User.query().where('email', 'like', '%@demo.%'),
+      ACCOUNTS,
+    )
+    assert.lengthOf(await demoUsers(), ACCOUNTS - 1)
   })
 
   test('the end customer is an account with no membership', async ({

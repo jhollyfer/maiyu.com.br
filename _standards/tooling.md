@@ -836,7 +836,7 @@ Adonis lê o `.env.test` quando é `test`. Num clone sem `.env`, rode com `NODE_
    (`tsc --noEmit`) inclui `e2e/`, porque o runner do Playwright não checa tipo
    (_doc-lib/playwright.md#docs/test-typescript); o `format:check` é o `prettier --check .`; o
    `test:unit` é o Vitest em `src/**/*.test.{ts,tsx}` e `scripts/**/*.test.ts` (`architecture.md` §8), que inclui
-   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6). Os plugins declarados em `modules` do
+   a cobrança dos patches `// casa:` de `components/ui/` (`scripts/check-ui-patches.test.ts`, `frontend.md` §6), a do registry inteiro instalado (`scripts/check-ui-components.test.ts`, #806) e a da regra do elemento cru (`scripts/eslint-raw-interactive.test.ts`). Os plugins declarados em `modules` do
    `project.inlang/settings.json` são devDependencies de versão exata lidas de `./node_modules/@inlang/<plugin>/dist/index.js`
    (o SDK do inlang lê do disco o módulo cujo caminho não começa com `http`; _doc-lib/paraglide.md#/file-formats):
    o compile e o `inlang check` não usam rede. URL de CDN em `modules` é reprovada pelo `check-i18n-compile.mjs` (#780)

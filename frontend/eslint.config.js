@@ -25,23 +25,53 @@ const NEW_RULE = {
     'Colaborador vem do container: injete por construtor (backend.md §2.1).',
 }
 
-// Every native element that has a pair in the shadcn registry (frontend.md §6, DECISIONS.md #366).
-// `input` is apart: the hidden `type="file"` behind a `Button` is the one exception §6.5 allows.
-// The element given to a Base UI `render` prop is not raw: it is the tag the `ui/` component
-// renders, as `nativeButton` asks (frontend.md §6, _doc-lib/base-ui.md#react/components/checkbox).
+// Every native element and every ARIA role that has a pair in the shadcn registry (frontend.md §6,
+// DECISIONS.md #366 and #806). `input` is apart: the hidden `type="file"` behind a `Button` is the
+// one exception §6.5 allows. The element given to a Base UI `render` prop is not raw: it is the tag
+// the `ui/` component renders, as `nativeButton` asks (frontend.md §6,
+// _doc-lib/base-ui.md#react/components/checkbox).
+const NOT_THE_RENDER_PROP =
+  ':not(JSXAttribute[name.name="render"] > JSXExpressionContainer > JSXElement > JSXOpeningElement)'
+
+// Pairs: details/summary -> Accordion or Collapsible; fieldset/legend -> FieldSet/FieldLegend (`field`);
+// kbd -> Kbd; thead..td -> TableHeader..TableCell (`table`); the rest by name. Left out on purpose,
+// no pair in the registry: menu, meter, output, nav (a landmark, `Breadcrumb` and `Sidebar` render
+// their own), img (`Picture` of the kit, `Avatar` is for people) and the text tags (typography is a
+// doc page, not an item).
+const RAW_ELEMENTS =
+  'button|select|textarea|label|table|dialog|form|progress|hr|details|summary|fieldset|legend|kbd|thead|tbody|tfoot|tr|th|td|caption'
+
+// Roles whose pair is in the registry: a `div` with one of them is a hand-made component. Lower-case
+// tag only (a component that receives `role` is the registry's own way of passing it on). `status`,
+// `list`, `region`, `group`, `presentation` and `navigation` stay out: they name a live region or a
+// landmark, not a widget the registry ships. `alert` has two pairs: `Alert` (a callout) and
+// `FieldError` (a field's message, `role="alert"` too), which is the one most hand-made alerts imitate.
+const RAW_ROLES =
+  'button|checkbox|radio|radiogroup|switch|slider|tab|tablist|tabpanel|dialog|alertdialog|menu|menubar|menuitem|menuitemcheckbox|menuitemradio|tooltip|progressbar|separator|combobox|listbox|option|alert'
+
 const RAW_INTERACTIVE = [
   {
-    selector:
-      'JSXOpeningElement[name.name=/^(button|select|textarea|label|table|dialog|form|progress|hr)$/]' +
-      ':not(JSXAttribute[name.name="render"] > JSXExpressionContainer > JSXElement > JSXOpeningElement)',
+    selector: `JSXOpeningElement[name.name=/^(${RAW_ELEMENTS})$/]${NOT_THE_RENDER_PROP}`,
     message:
-      'Elemento cru: use o componente de `#/components/ui` ou a peça do kit (frontend.md §6, DECISIONS.md #366).',
+      'Elemento cru: use o componente de `#/components/ui` ou a peça do kit (frontend.md §6, DECISIONS.md #366): Accordion/Collapsible, FieldSet/FieldLegend, Kbd, Table*, Button, Label, Select, Textarea, Separator, Progress, Dialog.',
   },
   {
     selector:
       'JSXOpeningElement[name.name="input"]:not(:has(JSXAttribute[name.name="type"][value.value="file"]))',
     message:
       'Campo cru: use `Input`, `Checkbox`, `RadioGroup`, `Switch` ou `Slider` de `#/components/ui` (frontend.md §6).',
+  },
+  {
+    // `<a>` that acts (onClick, no href) is a button: a navigation link is `Link` with `buttonVariants`.
+    selector:
+      'JSXOpeningElement[name.name="a"]:has(JSXAttribute[name.name="onClick"]):not(:has(JSXAttribute[name.name="href"]))',
+    message:
+      '`<a>` sem `href` que age no clique é botão: use `Button` de `#/components/ui` (frontend.md §6, DECISIONS.md #806).',
+  },
+  {
+    selector: `JSXOpeningElement[name.name=/^[a-z]/]:has(JSXAttribute[name.name="role"][value.value=/^(${RAW_ROLES})$/])${NOT_THE_RENDER_PROP}`,
+    message:
+      'Componente escrito à mão com `role`: use Button, Checkbox, RadioGroup, Switch, Slider, Tabs, Dialog, AlertDialog, DropdownMenu, Menubar, Tooltip, Progress, Separator, Combobox/Select, Alert ou FieldError (mensagem de campo) de `#/components/ui` (frontend.md §6, DECISIONS.md #806).',
   },
 ]
 
@@ -245,11 +275,18 @@ export default defineConfig([
     },
   },
   {
-    // `components/ui/` stays out of `files` because it is where the native element lives. Tests
-    // stay out because their fixtures stand in for a screen and are never shipped. Flat config
-    // replaces the rule options instead of merging them, so the `new` selector is repeated here.
-    files: ['src/routes/**/*.tsx', 'src/components/common/**/*.tsx'],
-    ignores: ['**/*.test.tsx'],
+    // Every `.tsx` of the app, not only routes and `common/`: `components/<other folder>`,
+    // `integrations/` and `lib/` escaped the ban (DECISIONS.md #806). `components/ui/` is where the
+    // native element lives and `src/lib/highlighter.tsx` is the registry's output (the block below),
+    // so both stay out. Tests stay out because their fixtures stand in for a screen and are never
+    // shipped. Flat config replaces the rule options instead of merging them, so the `new` selector
+    // is repeated here.
+    files: ['src/**/*.tsx'],
+    ignores: [
+      '**/*.test.tsx',
+      'src/components/ui/**',
+      'src/lib/highlighter.tsx',
+    ],
     rules: {
       'no-restricted-syntax': ['error', NEW_RULE, ...RAW_INTERACTIVE],
     },

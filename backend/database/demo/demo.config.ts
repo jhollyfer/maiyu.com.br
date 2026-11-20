@@ -9,15 +9,11 @@ export class DemoConfig {
   /** A demo account is a real, signed-in account in production too: a short password is refused. */
   static readonly MIN_PASSWORD_LENGTH = 16
 
-  /** Every demo account's name starts with this, and its e-mail domain with `demo.`. */
+  /** Every demo account's name starts with this, and its e-mail domain with `demo.`. Naming only: what `demo:purge` deletes is decided by `users.demo`, never by these. */
   static readonly NAME_PREFIX = 'Demo '
 
-  /** The marker `demo:purge` matches the e-mail with (`<role>@demo.<host>`). */
+  /** The domain prefix of a demo e-mail (`<role>@demo.<host>`). */
   static readonly EMAIL_DOMAIN_PREFIX = 'demo.'
-
-  /** The `like` patterns `demo:purge` finds the accounts by: both marks at once, never one alone. */
-  static readonly NAME_PATTERN = `${DemoConfig.NAME_PREFIX}%`
-  static readonly EMAIL_PATTERN = `%@${DemoConfig.EMAIL_DOMAIN_PREFIX}%`
 
   /** `null` when the password is acceptable, else the log line that says why the seed stops. */
   static refusal(password: string): string | null {

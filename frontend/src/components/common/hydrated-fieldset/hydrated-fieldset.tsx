@@ -1,6 +1,8 @@
 import { useHydrated } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { FieldSet } from '#/components/ui/field'
+
 type HydratedFieldsetProps = {
   readonly children: React.ReactNode
 }
@@ -27,8 +29,8 @@ export function HydratedFieldset({
   const hydrated = useHydrated()
 
   return (
-    <fieldset disabled={!hydrated} className="contents">
+    <FieldSet disabled={!hydrated} className="contents">
       {children}
-    </fieldset>
+    </FieldSet>
   )
 }

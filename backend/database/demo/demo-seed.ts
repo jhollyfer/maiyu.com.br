@@ -28,11 +28,21 @@ export type DemoSeedInput = {
  * The demonstration (DECISIONS.md #802), the smallest data that shows the product: one account
  * per role, one demo tenant per tenant type, and what the project adds (`DemoProject.seed`). It
  * runs on every deploy, so every write is `firstOrCreate` and a second run creates nothing; a
- * password changed by someone is not reset. The demo tenants are `demo: true`, which keeps them
+ * password changed by someone is not reset. The accounts carry `users.demo = true`, which is the only
+ * thing `demo:purge` deletes them by (DECISIONS.md #807); `DemoProject.ready` can stop all of it. The demo tenants are `demo: true`, which keeps them
  * out of every public list, search and count (`TenantRepository`), and reachable by slug.
  */
 export class DemoSeed {
   static async run(input: DemoSeedInput): Promise<void> {
+    // The project says whether a demo account is safe here (DECISIONS.md #807): not ready, nothing is created.
+    const readiness = DemoProject.ready()
+    if (!readiness.ok) {
+      logger.warn(
+        `demo seed skipped, the project is not ready: ${readiness.reason}`,
+      )
+      return
+    }
+
     const city = await DemoSeed.cityOf(input.citySlug)
     if (!city) {
       logger.warn('no city to hold the demo tenants: demo seed skipped')
@@ -92,18 +102,27 @@ export class DemoSeed {
     const account = async (
       label: string,
       platformRole: PlatformRole,
-    ): Promise<User> => {
+    ): Promise<User | null> => {
+      const email = DemoConfig.email(label, domain)
       // `firstOrCreate`, never `updateOrCreate` (DECISIONS.md #292): the password is only in the
       // payload of the creation, so one changed in the panel is not reset by the next deploy.
-      return User.firstOrCreate(
-        { email: DemoConfig.email(label, domain) },
+      const user = await User.firstOrCreate(
+        { email },
         {
           name: `${DemoConfig.NAME_PREFIX}${label}`,
           password: input.password,
           platformRole,
           status: ACTIVE_STATUS.ACTIVE,
+          demo: true,
         },
       )
+      if (user.demo) return user
+      // No demo ever ran before `users.demo` existed, so an account under this e-mail without the mark is a real one: skipped, never adopted, so `demo:purge` never deletes it.
+      logger.warn(
+        `account ${email} is not a demo account: demo seed skipped it`,
+      )
+
+      return null
     }
 
     for (const role of PLATFORM_ROLES) {
@@ -113,6 +132,7 @@ export class DemoSeed {
 
     for (const role of USER_ROLES) {
       const member = await account(DemoConfig.label(role), PLATFORM_ROLE.USER)
+      if (!member) continue
       for (const tenant of tenants) {
         await TenantMembership.firstOrCreate(
           { userId: member.id, tenantId: tenant.id },

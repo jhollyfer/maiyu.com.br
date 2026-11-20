@@ -2012,9 +2012,23 @@ cliente único (`TENANT_PROJECT.singleSlug`) nenhuma URL nomeia o tenant demo, q
 com a conta; e o kit não tem lista nem métrica de contas, então a que o projeto criar exclui o domínio
 `demo.`. **`node ace demo:purge`** (`commands/demo-purge.command.ts`; `--force` dispensa a pergunta) apaga
 o `DemoProject.purge`, os arquivos dos tenants demo (bucket e linhas), as cobranças deles, os tenants e
-as contas cujo nome começa com `Demo ` e o domínio do e-mail com `demo.`, e nada além, deixando o banco e o
-bucket como estavam antes; idempotente. Tabela do projeto que aponta para `tenants` ou `storages` sem
-cascade se esvazia no `DemoProject.purge`. Mecanismo: `_doc-lib/lucid.md#seeders`
+as contas com `users.demo = true`, e nada além, deixando o banco e o
+bucket como estavam antes; idempotente. **A marca é explícita, nunca padrão de texto** (`DECISIONS.md` #807):
+o seed grava `users.demo = true` (migration aditiva `1700000000080`) e o purge só lê essa coluna e
+`tenants.demo`, então uma conta real com nome `Demo ...` ou e-mail `@demo.` não é tocada, e suas FKs
+`SET NULL` não perdem a referência; o seed também não adota conta sob um e-mail de demo que não tenha `demo = true`: é pulada com log, sem exceção. Tabela do projeto que aponta para `tenants` ou `storages` sem
+cascade se esvazia no `DemoProject.purge`.
+
+**Imagem que falha não derruba o seed** (`DECISIONS.md` #807): `DemoImage.of` devolve `Storage | null`; bucket
+fora do ar vira `logger.warn` e `null`, e o `DemoProject.seed` cria o registro sem imagem (o campo aceita
+ausente na demo). O `db:seed` roda a cada deploy e nunca cai por foto. **Pré-condição do projeto:**
+`DemoProject.ready()` (`{ ok: true }` por padrão, ou `{ ok: false, reason }`) é consultado antes de tudo;
+`ok: false` faz o seeder pular contas, tenants e registros com um `warn` que traz o motivo. **Risco que o dono
+assumiu:** a demo com senha conhecida dá acesso às contas demo em produção, inclusive ao `OWNER` da
+plataforma, e o projeto é quem garante que conta demo não escreve em tenant real (repositório de domínio sem
+escopo por tenant, rota que alcança mais de um tenant): enquanto não garante, o `ready()` responde
+`ok: false`. O `demo.project.ts` é ponto de extensão: o modelo mudou, então o projeto fica `extension-stale`
+até o merge à mão (o tipo `DemoReadiness` e o `ready`) e o `--ack-extension`. Mecanismo: `_doc-lib/lucid.md#seeders`
 (https://lucid.adonisjs.com/docs/seeders, "Idempotent seeders"; o runner carrega todo script de
 `seeders/`), `_doc-lib/adonisjs.md#guides/ace/creating-commands` (https://docs.adonisjs.com/guides/ace/creating-commands,
 `startApp` e `flags.boolean`) e `#configuration` (ENV para o segredo, o resto no `config/`); o mínimo de 16
