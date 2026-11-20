@@ -1,0 +1,21 @@
+commit: 358fccb
+$ pnpm check
+ Test Files  15 passed (15)
+      Tests  150 passed (150)
+adonisjs:check: no findings.
+[ success ] openapi.json is up to date.
+pattern:check: no findings.
+Tests  548 passed (548)
+ Test Files  126 passed (126)
+      Tests  672 passed (672)
+exit 0
+
+$ node ace test functional (Postgres 18 + MinIO 2025-10-15)
+Tests  464 passed (464)
+exit 0
+
+$ sync --check
+0 diverge, 0 code-diverge, 0 kit-diverge, 0 sobra, 0 falta, 0 env-diverge, 0 deps-diverge, 0 cn-diverge, 0 prepare-diverge, 0 scripts-diverge, 0 agents-diverge, 0 extension-stale, 0 migration-missing, 0 migration-changed, 0 migration-orphan, 0 collis
+
+docker build -f backend/Dockerfile-production . -> exit 0
+docker build -f frontend/Dockerfile-production . -> exit 0 (cópias só com a CA do sandbox)
