@@ -1,9 +1,0 @@
-commit: 8cb05aa
-$ pnpm check
- Test Files  15 passed (15)
-      Tests  150 passed (150)
-Tests  522 passed (522)
- Test Files  125 passed (125)
-      Tests  646 passed (646)
-exit 0
-docker build -f frontend/Dockerfile-production . -> exit 0 (copia so com a CA do sandbox)
