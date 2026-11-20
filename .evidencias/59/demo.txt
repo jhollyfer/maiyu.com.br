@@ -1,0 +1,38 @@
+commit: 85c6c93
+$ docker run api (SEED_DEMO_PASSWORD de 16+ caracteres, só em runtime)
+{"level":30,"time":1795214991128,"pid":1,"hostname":"vm","name":"maiyu","msg":"started HTTP server on 127.0.0.1:3333"}
+$ node ace migration:run --force
+❯ migrating database/migrations/1700000000120_add_demo_to_tenants_table
+❯ migrated database/migrations/1700000000120_add_demo_to_tenants_table
+❯ migrating database/migrations/1700000000130_add_demo_to_users_table
+❯ migrated database/migrations/1700000000130_add_demo_to_users_table
+Migrated in 233 ms
+$ node ace db:seed (1a vez)
+❯ completed database/seeders/city.seed
+❯ completed database/seeders/demo.seed
+❯ completed database/seeders/tenant.seed
+❯ completed database/seeders/user.seed
+tenants demo: 1 | tenants reais: 1 | contas marcadas demo: 5 | conta do dono (sem marca): 1
+$ node ace db:seed (2a vez: não duplica)
+❯ completed database/seeders/city.seed
+❯ completed database/seeders/demo.seed
+❯ completed database/seeders/tenant.seed
+❯ completed database/seeders/user.seed
+tenants demo: 1 | tenants reais: 1 | contas marcadas demo: 5 | conta do dono (sem marca): 1
+# conta sem marca com e-mail de demo (colisão): não é apagada pelo purge
+conta real com e-mail @demo.: 1
+$ node ace demo:purge --dry-run
+[ info ] demo:purge would delete 1 tenants, 0 files and 5 accounts
+$ node ace demo:purge --force
+[ success ] demo:purge deleted 1 tenants, 0 files and 5 accounts
+tenants demo: 0 | tenants reais: 1 | contas marcadas demo: 0 | conta do dono (sem marca): 1
+conta real com e-mail @demo. após o purge: 1
+$ node ace demo:purge --force (2a vez)
+[ success ] demo:purge deleted 0 tenants, 0 files and 0 accounts
+$ curl API /health-check
+HTTP/1.1 200 OK
+$ curl site / e /health-check
+200
+200
+web  Up 19 seconds (healthy)
+api  Up 20 seconds (healthy)
