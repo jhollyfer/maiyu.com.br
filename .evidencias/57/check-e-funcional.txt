@@ -1,0 +1,18 @@
+commit: fcbd2b0
+$ pnpm check
+ Test Files  15 passed (15)
+      Tests  150 passed (150)
+adonisjs:check: no findings.
+[ success ] openapi.json is up to date.
+pattern:check: no findings.
+Tests  522 passed (522)
+ Test Files  124 passed (124)
+      Tests  644 passed (644)
+exit 0
+
+$ node ace test functional (Postgres 18 + MinIO 2025-10-15)
+Tests  418 passed (418)
+exit 0
+
+$ sync-to-project --check
+0 diverge, 0 code-diverge, 0 kit-diverge, 0 sobra, 0 falta, 0 env-diverge, 0 deps-diverge, 0 cn-diverge, 0 prepare-diverge, 0 scripts-diverge, 0 agents-diverge, 0 extension-stale, 0 migration-missing, 0 migration-changed, 0 migration-orphan, 0 collision, 0 blo

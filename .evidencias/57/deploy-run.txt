@@ -1,0 +1,17 @@
+commit: fcbd2b0
+$ docker run api (NODE_ENV=production, TRUSTED_PROXIES=uniquelocal)
+{"level":30,"time":1795206687547,"pid":1,"hostname":"vm","name":"maiyu","msg":"started HTTP server on 127.0.0.1:3333"}
+$ node ace migration:run --force
+Migrated in 222 ms
+$ node ace db:seed
+❯ completed database/seeders/city.seed
+❯ completed database/seeders/tenant.seed
+❯ completed database/seeders/user.seed
+$ curl -i :3333/health-check
+HTTP/1.1 200 OK
+$ curl :3000/ (site)
+200
+$ curl :3000/health-check
+200
+web  Up 13 seconds (healthy)
+api  Up 15 seconds (healthy)
