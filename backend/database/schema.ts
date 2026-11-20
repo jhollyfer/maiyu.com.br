@@ -182,12 +182,14 @@ export class TenantMembershipSchema extends BaseModel {
 }
 
 export class TenantSchema extends BaseModel {
-  static $columns = ['cityId', 'createdAt', 'id', 'name', 'parentId', 'slug', 'status', 'type', 'updatedAt'] as const
+  static $columns = ['cityId', 'createdAt', 'demo', 'id', 'name', 'parentId', 'slug', 'status', 'type', 'updatedAt'] as const
   $columns = TenantSchema.$columns
   @column()
   declare cityId: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare demo: boolean
   @column({ isPrimary: true })
   declare id: string
   @column()
@@ -205,7 +207,7 @@ export class TenantSchema extends BaseModel {
 }
 
 export class UserSchema extends BaseModel {
-  static $columns = ['activeTenantId', 'avatarId', 'createdAt', 'deletedAt', 'email', 'id', 'name', 'password', 'phone', 'platformRole', 'status', 'updatedAt'] as const
+  static $columns = ['activeTenantId', 'avatarId', 'createdAt', 'deletedAt', 'demo', 'email', 'id', 'name', 'password', 'phone', 'platformRole', 'status', 'updatedAt'] as const
   $columns = UserSchema.$columns
   @column()
   declare activeTenantId: string | null
@@ -215,6 +217,8 @@ export class UserSchema extends BaseModel {
   declare createdAt: DateTime
   @column.dateTime()
   declare deletedAt: DateTime | null
+  @column()
+  declare demo: boolean
   @column()
   declare email: string | null
   @column({ isPrimary: true })

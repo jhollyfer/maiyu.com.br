@@ -16,8 +16,8 @@ import { Stored } from '#tests/stored-fixtures'
 import { StoragesFileCreateValidator } from '#validators/storages/files.validator'
 
 /**
- * The file as a neutral, shared record: it does not belong to the
- * form that submitted it, and ownership authorizes nothing. What rules is the state
+ * The file is a record the form does not own, and it is the one who uploaded it, or the staff of
+ * the tenant, who reaches it by id (`StoragePolicy`, DECISIONS.md #803). Besides that, what rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
 

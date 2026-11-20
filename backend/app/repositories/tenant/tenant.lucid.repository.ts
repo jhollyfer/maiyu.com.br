@@ -177,20 +177,32 @@ export class TenantLucidRepository extends TenantRepository {
     if (!city) return null
 
     const tenants = z
-      .array(z.object({ id: z.string(), slug: z.string() }))
+      .array(z.object({ id: z.string(), slug: z.string(), demo: z.boolean() }))
       .parse(
         await client
           .from('tenants')
           .where('city_id', city.id)
           .where('status', ACTIVE_STATUS.ACTIVE)
-          .select('id', 'slug'),
+          .select('id', 'slug', 'demo'),
       )
-    const cityTenantIds = tenants.map((tenant) => tenant.id)
+    // A demo tenant (DECISIONS.md #802) is never one of the city's tenants: the city-wide read
+    // does not reach it, and it is opened only by its own slug, where it reads itself alone.
+    const cityTenantIds = tenants
+      .filter((tenant) => !tenant.demo)
+      .map((tenant) => tenant.id)
     if (tenantSlug === null)
       return { cityId: city.id, tenantId: null, cityTenantIds }
 
     const tenant = tenants.find((each) => each.slug === tenantSlug)
     if (!tenant) return null
+
+    // A demo tenant read by its slug reads itself alone, never the city's tenants.
+    if (tenant.demo)
+      return {
+        cityId: city.id,
+        tenantId: tenant.id,
+        cityTenantIds: [tenant.id],
+      }
 
     return { cityId: city.id, tenantId: tenant.id, cityTenantIds }
   }
@@ -227,6 +239,7 @@ export class TenantLucidRepository extends TenantRepository {
         .from('tenants')
         .whereIn('id', [...ids])
         .where('status', ACTIVE_STATUS.ACTIVE)
+        .where('demo', false)
         .orderBy('name', 'asc')
         .select('id', 'name', 'slug', 'type', 'parent_id as parentId'),
     )
@@ -237,7 +250,12 @@ export class TenantLucidRepository extends TenantRepository {
     const cities = CityCountRows.parse(
       await client
         .from('cities')
-        .leftJoin('tenants', 'tenants.city_id', 'cities.id')
+        .leftJoin('tenants', (join) => {
+          // The demonstration tenant (DECISIONS.md #802) is in no count.
+          join
+            .on('tenants.city_id', 'cities.id')
+            .andOnVal('tenants.demo', '=', false)
+        })
         .groupBy('cities.id', 'cities.name', 'cities.slug')
         .orderBy('cities.name', 'asc')
         .select('cities.id', 'cities.name', 'cities.slug')
@@ -246,6 +264,7 @@ export class TenantLucidRepository extends TenantRepository {
     const tenants = TenantCountRows.parse(
       await client
         .from('tenants')
+        .where('tenants.demo', false)
         .leftJoin(
           'tenant_memberships',
           'tenant_memberships.tenant_id',

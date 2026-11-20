@@ -81,10 +81,40 @@ test.describe('prefixo de idioma', () => {
     const response = await request.get('/', { maxRedirects: 0 })
 
     expect(response.status()).toBe(307)
-    expect(
-      new URL(response.headers()['location'] ?? '', 'http://x').pathname,
-    ).toBe('/pt-br')
+    // Relativo: atrás do proxy TLS a origem chega como http, e um Location absoluto rebaixaria
+    // o visitante (`lib/relative-redirect.ts`).
+    expect(response.headers()['location']).toBe('/pt-br')
   })
+
+  test('quando pede / com X-Forwarded-Proto https, o Location continua relativo', async ({
+    request,
+  }) => {
+    const response = await request.get('/', {
+      maxRedirects: 0,
+      headers: { 'X-Forwarded-Proto': 'https' },
+    })
+
+    expect(response.headers()['location']).toBe('/pt-br')
+  })
+
+  test('quando pede /blog/v1.2 sem prefixo, a página com ponto vai por 307 para o idioma', async ({
+    request,
+  }) => {
+    const response = await request.get('/blog/v1.2', { maxRedirects: 0 })
+
+    expect(response.status()).toBe(307)
+    expect(response.headers()['location']).toBe('/pt-br/blog/v1.2')
+  })
+
+  for (const path of ['/inexistente.pdf']) {
+    test(`quando pede o arquivo ${path} que não existe, responde 404 e não 307`, async ({
+      request,
+    }) => {
+      const response = await request.get(path, { maxRedirects: 0 })
+
+      expect(response.status()).toBe(404)
+    })
+  }
 
   for (const path of ['/health-check', '/robots.txt']) {
     test(`quando pede ${path}, responde sem redirecionar`, async ({
@@ -103,6 +133,19 @@ test.describe('prefixo de idioma', () => {
       maxRedirects: 0,
     })
 
+    // 200 com `SECURITY_CONTACT`, 404 sem: o RFC 9116 exige `Contact`, então sem contato não há
+    // arquivo (`frontend.md` §3.3).
     expect([200, 404]).toContain(response.status())
+  })
+
+  test('quando pede uma página, manda a Permissions-Policy e o HSTS com subdomínios', async ({
+    request,
+  }) => {
+    const response = await request.get('/health-check', { maxRedirects: 0 })
+    const headers = response.headers()
+
+    expect(headers['permissions-policy']).toContain('camera=(self)')
+    expect(headers['permissions-policy']).toContain('geolocation=(self)')
+    expect(headers['strict-transport-security']).toContain('includeSubDomains')
   })
 })

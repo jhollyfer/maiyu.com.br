@@ -7,6 +7,14 @@ import {
 } from '@maiyu/shared'
 import type { Actor } from '@maiyu/shared'
 
+/**
+ * What a reader of a customer table adds to the base rule. `platformOwn`: the platform's own rows
+ * (`tenant_id` and `customer_id` null) are also read by the platform's staff (`platformStaff`), and
+ * not only by its owner: the file library declares it, because the platform's files (the global
+ * catalog's images) are read by the whole platform team (DECISIONS.md #803). Off by default.
+ */
+export type ReadOwnedOptions = { readonly platformOwn?: boolean }
+
 /** Who the request is among the tenants' rows; each kind is one factory below. */
 type Kind = 'none' | 'member' | 'platform' | 'customer' | 'public'
 
@@ -176,8 +184,11 @@ export class TenantScope {
   static readsOwned(
     tenantId: string | null,
     customerId: string | null,
+    options: ReadOwnedOptions = {},
   ): boolean {
-    return TenantScope.current()?.canReadOwned(tenantId, customerId) ?? true
+    return (
+      TenantScope.current()?.canReadOwned(tenantId, customerId, options) ?? true
+    )
   }
 
   /** `canWriteOwned` for the running request; a system process writes everything. */
@@ -268,9 +279,15 @@ export class TenantScope {
    * A row of a customer table: its owner; the tenant's own rows (`customer_id` null) like a tenant
    * table; a customer's row only for the staff of its own tenant.
    */
-  canReadOwned(tenantId: string | null, customerId: string | null): boolean {
+  canReadOwned(
+    tenantId: string | null,
+    customerId: string | null,
+    options: ReadOwnedOptions = {},
+  ): boolean {
     if (this.owns(customerId)) return true
     if (customerId !== null) return this.servesCustomersOf(tenantId)
+    if (options.platformOwn === true && tenantId === null && this.platformStaff)
+      return true
 
     return this.canRead(tenantId)
   }

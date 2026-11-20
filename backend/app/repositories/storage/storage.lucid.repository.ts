@@ -6,11 +6,13 @@ import type { Paginated } from '@maiyu/shared'
 
 import { STORAGE_REFERENCES } from './storage.references.ts'
 import {
+  STORAGE_READ,
   StorageRepository,
   type StorageFileRead,
   type StorageListCriteria,
 } from './storage.repository.ts'
 
+import { TenantScope } from '#core/tenant-scope'
 import { TransactionContext } from '#core/transaction-context'
 import { Storage } from '#domain/storage/storage.entity'
 import StorageModel from '#models/storage'
@@ -33,6 +35,7 @@ export class StorageLucidRepository extends StorageRepository {
   async findById(id: string): Promise<Storage | null> {
     const row = await CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
+      STORAGE_READ,
     )
       .where('id', id)
       .withScopes((scopes) => scopes.notDeleted())
@@ -57,6 +60,7 @@ export class StorageLucidRepository extends StorageRepository {
   async findPublic(id: string): Promise<Storage | null> {
     const row = await CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
+      STORAGE_READ,
     )
       .where('id', id)
       .where('status', UPLOAD_STATUS.UPLOADED)
@@ -72,6 +76,7 @@ export class StorageLucidRepository extends StorageRepository {
   async detail(id: string): Promise<StorageFileRead | null> {
     const row = await CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
+      STORAGE_READ,
     )
       .where('id', id)
       .withScopes((scopes) => scopes.notDeleted())
@@ -86,6 +91,7 @@ export class StorageLucidRepository extends StorageRepository {
 
     const rows = await CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
+      STORAGE_READ,
     )
       .whereIn('id', [...new Set(ids)])
       .withScopes((scopes) => scopes.notDeleted())
@@ -262,7 +268,24 @@ export class StorageLucidRepository extends StorageRepository {
   ): Promise<Paginated<StorageFileRead>> {
     const query = CustomerScoped.readable(
       StorageModel.query({ client: this.transaction.client() }),
+      STORAGE_READ,
     ).withScopes((scopes) => scopes.notDeleted())
+
+    // The library of whoever is not the tenant's staff is what it uploaded itself, plus the
+    // platform's own files for its team: the same rule as `StoragePolicy.show` (DECISIONS.md #803),
+    // so the list never shows what the detail refuses.
+    const scope = TenantScope.current()
+    if (scope && scope.servedTenantId() === null)
+      query.where((own) => {
+        own.whereRaw('false')
+        if (scope.accountId !== null) own.orWhere('uploadedBy', scope.accountId)
+        if (scope.platformStaff)
+          own.orWhere((platform) => {
+            platform
+              .whereNull(TenantScoped.COLUMN)
+              .whereNull(CustomerScoped.COLUMN)
+          })
+      })
 
     if (criteria.status) query.where('status', criteria.status)
     if (criteria.mimetype) query.where('mimetype', criteria.mimetype)

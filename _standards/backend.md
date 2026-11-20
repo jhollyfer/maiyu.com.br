@@ -210,7 +210,7 @@ que nasce o segundo módulo, e as tags e códigos sem prefixo colidem (administr
 | classe base de template method | `abstract class` com o algoritmo, subclasse preenche o passo, **um nível** de herança. Em `services/` e `policies/`, `<nome>.base.ts`; entre recursos de um módulo, `_shared.<tema>.base.ts` (`architecture.md` §3). Não é contrato: o contrato é fronteira de I/O trocável em teste, a base não se troca |
 | comando de CLI | `commands/<recurso>-<verbo>.command.ts`, invocado como `<recurso>:<verbo>`; mutante aceita `--dry-run` (§4.12). _doc-lib/adonisjs.md#guides/ace/creating-commands |
 | evento | `<recurso>:<particípio>` (`post:archived`), como a doc (`_doc-lib/adonisjs.md#guides/digging-deeper/emitter`) |
-| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono liga pela chave e não restringe ambiente (§6); só o conteúdo de exemplo de `dev/` declara `static environment = ['development']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
+| seeder | `database/seeders/<nome>.seed.ts`: o sufixo é o contrato de descoberta do boot/`db:seed`. Seed manual (dado de demo, carga pontual) fica em `database/seeders/dev/` sem o sufixo, com o motivo no topo, e roda por script nomeado. O seeder do dono e o da demonstração (`demo.seed.ts`, lógica em `database/demo/`) ligam pela chave e não restringem ambiente (§6); só o conteúdo de exemplo de `dev/` declara `static environment = ['development']` (_doc-lib/lucid.md#seeders, `DECISIONS.md` #329) |
 | factory | `database/factories/<entidade>.factory.ts`, uma por entidade viva, usada só por spec; espelha o model, sem regra de negócio, nasce com o papel menos privilegiado (§7). _doc-lib/lucid.md#model-factories |
 | provider | um por contrato, `providers/<contrato>.provider.ts`, mais `repository.provider.ts` e `i18n.provider.ts`, com import estático (`DECISIONS.md` #340): `register()` liga contrato → implementação, `shutdown()` libera pool/conexão; `singleton` quando o cliente guarda conexão, `bind` quando é sem estado, comentário do porquê. _doc-lib/adonisjs.md#guides/concepts/service-providers |
 | socket | por feature, no contrato do service do socket: `<FEATURE>_NAMESPACE` (constante) e `<feature>Room(scopeId)` (única função que monta o nome da sala): quem entra e quem emite montam a mesma string. _doc-lib/socket-io.md#namespaces, #rooms |
@@ -1496,6 +1496,15 @@ export abstract class PaymentGatewayContract {
   painel do R2 ou por `wrangler r2 bucket cors set <bucket> --file backend/infra/r2-cors.json`. Sem
   `ExposeHeaders: ["ETag"]` o navegador não lê o `ETag` de cada parte e o multipart não completa
   (`DECISIONS.md` #793).
+- **Quem alcança o arquivo por id** (`GET /storages/:id`, `DELETE /storages/:id`, `GET /storages/:id/parts`,
+  `POST /storages/:id/complete`, `GET /storages/:id/download`): a
+  `StoragePolicy`, sempre, nunca só o filtro de tenant do repositório (`findWritable` não autoriza). Detalhar, apagar, retomar e fechar o envio é de quem
+  enviou (`uploaded_by`) e da equipe do tenant. Arquivo de cliente final: lê o cliente e a equipe do
+  próprio tenant (o comprovante), escreve (`upload`, `delete`) só o cliente. Arquivo da plataforma
+  (`tenant_id` nulo): lê a equipe da plataforma, escreve o dono; arquivo de tenant fica fora do alcance
+  dela. Negação é 404, igual a arquivo inexistente. A listagem (`GET /storages`) aplica a mesma regra no
+  repositório: a equipe do tenant lista tudo, qualquer outra conta só o que enviou (mais os arquivos da
+  plataforma, para a equipe dela) (`DECISIONS.md` #803).
 - Upload anônimo não existe: todo arquivo tem dono desde o `create`. Quem não tem conta (a denúncia
   do curupira) envia preso a um rascunho, por um token de uso único e curto que só existe como hash no
   banco; sem token válido o upload responde 404, e rascunho vencido sai com os arquivos pelo
@@ -1718,7 +1727,8 @@ stack e que as seções acima não fechavam. Cada item completa a seção citada
    *(WEB-PROTOCOL-AND-AUTH.md, Account linking; Step-up.)*
 8. **Resposta autenticada não é cacheável** (§4.10). O `private-cache.middleware.ts`, no `server.use`
    depois do CORS, põe `Cache-Control: private, no-store` em toda resposta com sessão, com E2E
-   (`DECISIONS.md` #339, #363). *(WEB-PROTOCOL-AND-AUTH.md,
+   (`DECISIONS.md` #339, #363). A resposta pública revalida por ETag: `etag: true` no `http` de
+   `config/app.ts`, 304 por `If-None-Match`, inócuo com o `no-store` (`DECISIONS.md` #804). *(WEB-PROTOCOL-AND-AUTH.md,
    Cache deception.)*
 9. **SSRF por redirect e DNS rebinding** (§5.3, §5.6 item 8). Busca de URL do usuário com
    `redirect: 'manual'`, revalidando cada salto, e conexão feita ao IP já conferido (resolve uma
@@ -1951,6 +1961,7 @@ unitário, `DRIVE_DISK` escolhe o disco, `supportsACL: false` no R2; `DECISIONS.
 |---|---|---|---|---|
 | `SEED_OWNER_EMAIL` | api | junto com a senha | não | e-mail do primeiro administrador criado pelo seeder; senha sem e-mail para o seeder |
 | `SEED_OWNER_PASSWORD` | api | não | sim | **liga** o seed do dono; vazia, o seed do dono é pulado com uma linha de log |
+| `SEED_DEMO_PASSWORD` | api | não | sim | **liga** a demonstração (abaixo, `DECISIONS.md` #802): a senha das contas dela, 16 caracteres no mínimo; vazia (ou só espaços), é pulada com uma linha de log |
 
 **O que não é chave de ENV** (`DECISIONS.md` #782): valor que não é segredo e não muda entre ambientes é
 configuração do produto e vai versionado, não para o catálogo. O primeiro tenant do seed e o modo cliente
@@ -1962,11 +1973,10 @@ segredo e para o que muda por ambiente, e o `config/` para o resto
 
 **Seed ligado pela chave.** Cada seed liga pela presença do valor da sua chave, em qualquer ambiente,
 nunca por flag à parte (`SEED_ENABLED`, `SEED_DEMO=true`) nem pelo `NODE_ENV`: o `static environment`
-do seeder não restringe o seed do dono, e o de conteúdo de exemplo só o exclui de produção (abaixo). Dado de referência que o app precisa
-para funcionar (bairros, categorias) não tem chave e roda sempre. Conteúdo de exemplo (anúncio, notícia,
-partida de mentira) é dado de desenvolvimento (abaixo); conta extra de exemplo
-não existe. O mesmo vale para todo recurso do catálogo: valor presente liga,
-ausente desliga (`DECISIONS.md` #276).
+do seeder não restringe o seed do dono nem a demonstração, e o conteúdo de exemplo de desenvolvimento
+(abaixo) é o único que o declara. Dado de referência que o app precisa para funcionar (bairros,
+categorias) não tem chave e roda sempre. O mesmo vale para todo recurso do catálogo: valor presente
+liga, ausente desliga (`DECISIONS.md` #276).
 
 **O seed roda a cada deploy** (o *Post-deployment* do Coolify, `tooling.md` §8.3), então todo seeder
 é idempotente e não desfaz o que o usuário mudou (`DECISIONS.md` #292). O do dono só cria:
@@ -1979,18 +1989,62 @@ porque a variável só é necessária no primeiro deploy e o erro reprovaria o d
 referência segue com `updateOrCreate`/`updateOrCreateMany` pela chave natural
 (https://lucid.adonisjs.com/docs/seeders, "Idempotent seeders").
 
-**Não há demonstração com conta e senha.** Nenhum projeto tem seeder de contas de demonstração,
-`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem `shared/src/records/demo-accounts.ts` (`DEMO_ACCOUNTS`):
-o E2E cria a própria conta por papel na hora (`e2e:accounts`, abaixo, `DECISIONS.md` #443). Conteúdo
-de exemplo sem conta (anúncio, notícia, partida de mentira) é dado de desenvolvimento: seeder em
-`database/seeders/dev/`, com `static environment = ['development']`, para nunca rodar em produção nem
-na suíte funcional, que semeia o banco a cada teste e espera as tabelas do domínio vazias; o E2E sobe o
-backend em `development` e vê o conteúdo (_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders,
-"Environment-specific seeders"). Achado no aporta.
-Projeto que ainda tem conta de demonstração a apaga junto da chave; se ela chegou a produção, sai por
-migration de alteração (§4.13), nunca por edição de seeder: a migration arquiva as contas (soft delete,
-para registro preso a elas manter a referência) e apaga os tokens, para a sessão aberta morrer agora, e
-o `down` dela não reativa conta.
+**Demonstração: `SEED_DEMO_PASSWORD` (`DECISIONS.md` #802, que revê a #443 e a trava de ambiente da
+#292 só para ela).** Com valor, o `db:seed` cria, em qualquer ambiente, produção incluída, a **menor**
+demonstração que mostra o produto (`database/seeders/demo.seed.ts`, lógica em `database/demo/`, porque o
+Lucid carrega todo `.ts` de `seeders/` como seeder, #380): **uma** conta por papel (cada papel da
+plataforma de `PLATFORM_ROLE` menos `USER`; cada `USER_ROLE`, membro de todo tenant demo; e o cliente
+final, sem vínculo), **um** tenant demo por `TENANT_TYPE` (slug `demo-<tipo>`, na cidade do
+`TENANT_PROJECT.seed` ou na primeira por slug) e, no ponto de extensão `database/demo/demo.project.ts`,
+**um** registro de cada entidade do projeto em cada tenant demo, com uma imagem (`DemoImage.of(tenant,
+'<rótulo>')`, o `database/data/demo/sample.png` enviado ao bucket pelo storage do kit) para cada registro
+que precisa de uma. Nada de lista, lote ou dado aleatório. O e-mail é `<papel>@demo.<host>`, com o host de
+`APP_CLIENT_URL` (senão `APP_SERVER_URL`): o domínio sai de uma origem que o projeto já tem, sem chave
+nova, e o nome da conta é `Demo <papel>`. Vazia (ou só espaços), pula com uma linha de log; com menos de
+16 caracteres, **recusa com log e não lança**, porque o `db:seed` roda a cada deploy e um erro o
+reprovaria. Tudo é `firstOrCreate`: rodar de novo não cria nada e a senha trocada não é refeita. O
+tenant demo é `tenants.demo = true` e fica fora de toda lista, busca e contagem públicas e do `overview`
+da plataforma, e abre pelo slug: `TenantRepository.resolvePublic` o tira do alcance da URL só da cidade
+(`cityTenantIds`) e, pelo slug, o lê sozinho, de modo que a tabela do projeto lida pelo escopo
+(`TenantScope`) herda a exclusão. O que o kit não exclui, por desenho: o vínculo da conta demo com o
+próprio tenant (ela precisa entrar nele); a cidade com tenant demo não se apaga (`hasTenants`); no modo
+cliente único (`TENANT_PROJECT.singleSlug`) nenhuma URL nomeia o tenant demo, que só se alcança entrando
+com a conta; e o kit não tem lista nem métrica de contas, então a que o projeto criar exclui o domínio
+`demo.`. **`node ace demo:purge`** (`commands/demo-purge.command.ts`; `--force` dispensa a pergunta) apaga
+o `DemoProject.purge`, os arquivos dos tenants demo (bucket e linhas), as cobranças deles, os tenants e
+as contas com `users.demo = true`, e nada além, deixando o banco e o
+bucket como estavam antes; idempotente. **A marca é explícita, nunca padrão de texto** (`DECISIONS.md` #807):
+o seed grava `users.demo = true` (migration aditiva `1700000000080`) e o purge só lê essa coluna e
+`tenants.demo`, então uma conta real com nome `Demo ...` ou e-mail `@demo.` não é tocada, e suas FKs
+`SET NULL` não perdem a referência; o seed também não adota conta sob um e-mail de demo que não tenha `demo = true`: é pulada com log, sem exceção. Tabela do projeto que aponta para `tenants` ou `storages` sem
+cascade se esvazia no `DemoProject.purge`.
+
+**Imagem que falha não derruba o seed** (`DECISIONS.md` #807): `DemoImage.of` devolve `Storage | null`; bucket
+fora do ar vira `logger.warn` e `null`, e o `DemoProject.seed` cria o registro sem imagem (o campo aceita
+ausente na demo). O `db:seed` roda a cada deploy e nunca cai por foto. **Pré-condição do projeto:**
+`DemoProject.ready()` (`{ ok: true }` por padrão, ou `{ ok: false, reason }`) é consultado antes de tudo;
+`ok: false` faz o seeder pular contas, tenants e registros com um `warn` que traz o motivo. **Risco que o dono
+assumiu:** a demo com senha conhecida dá acesso às contas demo em produção, inclusive ao `OWNER` da
+plataforma, e o projeto é quem garante que conta demo não escreve em tenant real (repositório de domínio sem
+escopo por tenant, rota que alcança mais de um tenant): enquanto não garante, o `ready()` responde
+`ok: false`. O `demo.project.ts` é ponto de extensão: o modelo mudou, então o projeto fica `extension-stale`
+até o merge à mão (o tipo `DemoReadiness` e o `ready`) e o `--ack-extension`. Mecanismo: `_doc-lib/lucid.md#seeders`
+(https://lucid.adonisjs.com/docs/seeders, "Idempotent seeders"; o runner carrega todo script de
+`seeders/`), `_doc-lib/adonisjs.md#guides/ace/creating-commands` (https://docs.adonisjs.com/guides/ace/creating-commands,
+`startApp` e `flags.boolean`) e `#configuration` (ENV para o segredo, o resto no `config/`); o mínimo de 16
+caracteres, o domínio e o purge são *(opinião da casa)*.
+
+Conteúdo de exemplo sem conta (anúncio, notícia, partida de mentira) continua dado de desenvolvimento:
+seeder em `database/seeders/dev/`, com `static environment = ['development']`, para nunca rodar em
+produção nem na suíte funcional, que semeia o banco a cada teste e espera as tabelas do domínio vazias
+(_doc-lib/lucid.md#seeders, https://lucid.adonisjs.com/docs/seeders, "Environment-specific seeders").
+Conta de demonstração com senha fixa no código continua proibida: a senha vem só da chave.
+
+**A suíte nunca semeia a demonstração.** O `resetDatabase` roda todos os seeders a cada teste e a funcional
+espera as tabelas do domínio vazias, então o `runnerHooks.setup` de `tests/bootstrap.ts` chama
+`SuiteEnv.quietDemo()` (`tests/suite-env.ts`) e zera `SEED_DEMO_PASSWORD` antes de tudo, mesmo exportada no
+shell ou escrita no `.env`; os specs da demonstração ligam a chave por conta própria, em cada teste
+(`tests/seeders/suite-env.e2e.spec.ts` prova com a chave exportada).
 
 `OWNER` aqui é "dono da instalação", o primeiro administrador, e o nome não muda com o papel que o
 projeto der a ele.
@@ -2031,8 +2085,9 @@ nascem na hora, pelo comando `node ace e2e:accounts` (`commands/e2e-accounts.com
 `staff`, o `nonStaff` (quando o projeto tem papel fora do staff) e o cliente final, lendo os papéis de
 `tests/role-fixtures.ts` e sem literal de enum, e põe `staff` e `nonStaff` no tenant que `TENANT_PROJECT.singleSlug` nomeia no modo cliente único (onde a escrita anônima pública grava) e no `cliente-de-teste` no multi-tenant (`DECISIONS.md` #711); sorteia a senha a cada execução, a imprime só na saída do
 comando (`E2E_ACCOUNTS=<json>`) e **recusa `NODE_ENV=production`**. As contas de domínio com vínculo (o conselheiro de uma turma, outro da mesma categoria, o representante) são o ponto de extensão `tests/e2e-project-accounts.ts`, que o sync cria vazio e nunca reescreve: `ProjectE2eAccounts.accounts` declara nome e papel de cada conta extra, e `ProjectE2eAccounts.link` recebe as contas criadas (`userOf('<nome>')`) e monta o dado de domínio pelos use cases e repositories do projeto, idempotente. O `link` roda depois de todas as contas e antes da impressão, então falha nele não imprime conta nenhuma, e nome que repete papel do kit (`staff`, `platformOwner`...) é recusado em tipo e em runtime, sem criar conta; `platformRole: OWNER` numa extra é aceito; a saída leva as extras em `project` no mesmo `E2E_ACCOUNTS=` (`DECISIONS.md` #611). Nada disso é chave de ambiente: não há
-`SEED_DEMO_PASSWORD`, `E2E_DEMO_PASSWORD` nem seeder de demonstração com senha fixa, e o catálogo segue
-com 28 chaves no backend e 10 no frontend (`DECISIONS.md` #443, #782, #783). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `TENANT_PROJECT.singleSlug` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
+`E2E_DEMO_PASSWORD` nem senha fixa no código, e o catálogo fica com 29 chaves no backend (a 29ª é a
+`SEED_DEMO_PASSWORD` da demonstração, que o `e2e:accounts` não usa) e 10 no frontend (`DECISIONS.md` #443,
+#782, #783, #802). **O comando não tem tenant dentro** (`DECISIONS.md` #778): o núcleo (`commands/e2e-accounts.command.ts`, `tests/e2e-guard.ts`, `tests/e2e-identity.ts`) tem a trava de `NODE_ENV` e de host loopback, a senha sorteada, o login `e2e-<papel>-<8 hex>@example.com` com o nome `E2E <papel>`, a linha `E2E_ACCOUNTS=`, a recusa de nome repetido e a ordem do `link`, e **não importa** o tenant, o `role-fixtures` nem a coluna `platformRole` (um spec unitário cobra). O que depende do esqueleto multi-tenant (os papéis do kit, o tenant que `TENANT_PROJECT.singleSlug` nomeia, o `platformRole`, o vínculo de membro) é o ponto de extensão `tests/e2e-skeleton-accounts.ts` (`E2eSkeletonAccounts.create`), cujo modelo é o do esqueleto do kit e que o sync nunca reescreve: projeto sem o esqueleto escreve a sua versão, cria os usuários que tem e devolve `null` para cada papel do mapa que não tem. **O mapa de papéis é do projeto**: `E2eSkeletonAccounts.roleNames` no backend e `PROJECT_E2E_ROLE_NAMES` no frontend (`e2e/support/project-accounts.ts`) listam os mesmos nomes, e o `E2eAccountsStore.create` falha se diferem. O modelo traz os cinco de tenant (`platformOwner`, `platformAdministrator`, `staff`, `nonStaff`, `customer`); projeto só com `ADMINISTRATOR` e `OPERATOR` lista `administrator` e `operator`, e esses nomes passam a ser os reservados no lugar dos cinco. `PROJECT_E2E_OWNER_ACCOUNT` (`e2e/support/project-accounts.ts`) nomeia a conta de quem é a sessão padrão do Playwright quando não há dono da plataforma, e `E2eAccountsStore.accountOf(accounts, '<papel>')` pede a conta de um papel e falha dizendo qual falta. As tabelas do esqueleto que a lista do `e2e:cleanup` não pode citar são `ProjectE2eCleanup.skeletonTables`, para o projeto sem o esqueleto poder ter uma tabela `cities` sua. Senha de E2E em chave de ambiente continua proibida (`DECISIONS.md` #417 e #443): é por isso que o projeto sem tenant usa este comando, e não uma chave `E2E_*` fora do catálogo.
 O spec de papel pede a sessão com
 `test.use({ storageState: E2eAccountsStore.stateOf('staff') })`, e o de uma conta de domínio pelo nome que o projeto declarou em `frontend/e2e/support/project-accounts.ts` (`stateOf('councilorA')`). Nem porta solta
 (`E2E_PORT`): a origem inteira é `E2E_BASE_URL`. Ajuste de execução (workers, matriz) fica no

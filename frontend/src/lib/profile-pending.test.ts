@@ -15,11 +15,11 @@ describe('ProfilePending.describe', () => {
 
   it('o rótulo do projeto vence o nome cru', () => {
     expect(
-      ProfilePending.describe(['pixKey', 'document'], {
+      ProfilePending.describe(['pixKey', 'campoSemRotulo'], {
         labels: { pixKey: 'a chave Pix' },
         locale: LOCALE.PT_BR,
       }),
-    ).toBe('a chave Pix, document')
+    ).toBe('a chave Pix, campoSemRotulo')
   })
 
   it('sem campos, o texto é vazio', () => {

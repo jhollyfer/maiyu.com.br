@@ -45,5 +45,11 @@ export default defineConfig({
     { match: '/robots.txt', exclude: true },
     { match: '/sitemap.xml', exclude: true },
     { match: '/.well-known/:path(.*)?', exclude: true },
+    // A file at the root (`/cv.pdf`, `/favicon.ico`) is never a page: it answers what the file
+    // server has, 404 included, instead of a 307 to `/pt-br/cv.pdf`. Only the root and the build
+    // output: a deeper path (`/blog/v1.2`, `/pt-br/produto/a.b`) can be a page with a dotted slug,
+    // and it keeps the locale redirect and the prefixed route.
+    { match: '/:file([^\\/]+\\.[A-Za-z0-9]+)', exclude: true },
+    { match: '/assets/:path(.*)', exclude: true },
   ],
 })

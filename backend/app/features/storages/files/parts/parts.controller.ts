@@ -7,6 +7,8 @@ import StoragesFilePartsUseCase from './parts.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
 import { IdentifierValidator } from '#core/validator'
+import StoragePolicy from '#policies/storage.policy'
+import { StorageRepository } from '#repositories/storage/storage.repository'
 import {
   PART_SIZE,
   PRESIGNED_BATCH,
@@ -33,10 +35,15 @@ export default class StoragesFilePartsController {
       'cliente retomando, e ler o `status` e parar é o desfecho certo.',
   })
 
-  constructor(private readonly useCase: StoragesFilePartsUseCase) {}
+  constructor(
+    private readonly useCase: StoragesFilePartsUseCase,
+    private readonly storages: StorageRepository,
+  ) {}
 
   async handle(context: HttpContext) {
     const { params } = await context.request.validateUsing(IdentifierValidator)
+    const storage = await this.storages.findById(params.id)
+    await context.bouncer.with(StoragePolicy).authorize('upload', storage)
     const result = await this.useCase.execute(params)
     if (result.isLeft()) throw result.value
     return context.response.ok(result.value)

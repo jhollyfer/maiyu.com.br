@@ -85,6 +85,26 @@ describe('documentHeaders', () => {
     expect(headers).toMatchObject(STATIC_SECURITY_HEADERS)
   })
 
+  it('when it builds any response, Permissions-Policy closes the microphone and keeps camera and geolocation to the site', () => {
+    const policy = documentHeaders(BASE)['Permissions-Policy']
+
+    expect(policy).toContain('camera=(self)')
+    expect(policy).toContain('microphone=()')
+    expect(policy).toContain('geolocation=(self)')
+  })
+
+  it('when it builds any response, HSTS covers the subdomains and does not preload', () => {
+    const hsts = documentHeaders(BASE)['Strict-Transport-Security']
+
+    expect(hsts).toContain('includeSubDomains')
+    expect(hsts).not.toContain('preload')
+  })
+
+  it('when there is a nonce, the policy has no unsafe-eval and no unsafe-inline in script-src', () => {
+    expect(csp(BASE)).not.toContain('unsafe-eval')
+    expect(csp(BASE)).not.toMatch(/script-src[^;]*unsafe-inline/)
+  })
+
   it('when the site is not indexable, it answers noindex', () => {
     expect(documentHeaders({ ...BASE, indexable: false })['X-Robots-Tag']).toBe(
       'noindex, nofollow',

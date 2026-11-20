@@ -7,6 +7,8 @@
  *   request, because the router strips the prefix itself (`rewrite` in `router.tsx`) and an
  *   already stripped URL is the redirect loop the page warns about (_doc-lib/paraglide.md#/middleware,
  *   https://paraglidejs.com/middleware);
+ * - the redirect `Location` made relative (`lib/relative-redirect.ts`): behind the TLS proxy the
+ *   request is `http://`, and the middleware's 307 would point to `http://<host>/pt-br`;
  * - the request scope with the nonce (`http.server.ts`), which `getRouter` reads for `ssr.nonce`;
  * - the security headers (`lib/security-headers.ts`): the static ones, which Nitro's route rule also
  *   sends for `.output/public` and drops on an error status, plus the CSP and `X-Robots-Tag`.
@@ -24,6 +26,7 @@ import handler, { createServerEntry } from '@tanstack/react-start/server-entry'
 import { env } from '#/env'
 import { runInRequestScope } from '#/integrations/tanstack-query/http.server'
 import { PROJECT_IMAGE_ORIGINS } from '#/lib/csp-project'
+import { RelativeRedirect } from '#/lib/relative-redirect'
 import { createNonce, documentHeaders } from '#/lib/security-headers'
 import { readRuntimeEnv } from '#/lib/server-env'
 import { paraglideMiddleware } from '#/paraglide/server'
@@ -45,7 +48,7 @@ export default createServerEntry({
     const runtime = readRuntimeEnv(process.env)
     const nonce = responseNonce()
 
-    const response = await runInRequestScope(
+    const rendered = await runInRequestScope(
       // `navigation`: a GET/HEAD that accepts HTML also gets the 307, not only `Sec-Fetch-Dest:
       // document`, so curl and crawlers never see a page without the prefix
       // (_doc-lib/paraglide.md#/middleware, server/middleware.d.ts `redirect`).
@@ -55,6 +58,7 @@ export default createServerEntry({
         }),
       nonce,
     )
+    const response = RelativeRedirect.apply(request, rendered)
 
     // A fresh `Response` over the same body: the handler's headers may be immutable, and
     // passing the body on unread keeps the SSR streaming.

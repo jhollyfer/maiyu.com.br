@@ -46,6 +46,7 @@ em development e test.
 | `STORAGE_FORCE_PATH_STYLE` | api | só com MinIO | não | endereço `endpoint/bucket/key`; sai em produção | `true` |
 | `SEED_OWNER_EMAIL` | api | não | não | e-mail do dono criado pelo seeder | `administrator@maiyu.com.br` |
 | `SEED_OWNER_PASSWORD` | api | não | **sim** | senha do dono; vazia pula o seeder | `<segredo>` |
+| `SEED_DEMO_PASSWORD` | api | não | **sim** | liga a demonstração do kit (#802): uma conta por papel e um tenant demo por tipo, fora das listas públicas; mínimo de 16 caracteres, vazia pula. O maiyu.com.br não tem entidade além de contatos (dado pessoal), então `database/demo/demo.project.ts` fica vazio. `node ace demo:purge` remove | vazio |
 | `SMTP_FROM`, `SMTP_HOST`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD` | api | não | `SMTP_PASSWORD` sim | bloco de e-mail, ligado por `SMTP_HOST`; vazio, o backend não manda e-mail. Com `SMTP_HOST` preenchido, `SMTP_FROM` e `SMTP_PORT` são obrigatórios (587 com STARTTLS, 465 com TLS implícito); `SMTP_USERNAME` e `SMTP_PASSWORD` só se o servidor exige login. Sem `REDIS_URL` o envio roda na hora, dentro do pedido | vazio (`SMTP_PORT=587`) |
 | `REDIS_URL` | api | não | **sim** | fila do e-mail; vazio, o envio roda na hora (fila `sync`); preenchida, a fila é o Redis e sobrevive a reinício | vazio |
 
@@ -55,7 +56,7 @@ usa as dele por padrão, e quem precisa de outra porta exporta `DB_PORT`, `STORA
 
 O tenant único e o seed do primeiro tenant não são chaves de ENV: vivem em `backend/config/tenant.project.ts`
 (`singleSlug` e `seed`), versionados, porque nome, slug e cidade não são segredo nem mudam entre ambientes
-(`_standards/DECISIONS.md` #782 do upstream). O catálogo do backend tem 28 chaves.
+(`_standards/DECISIONS.md` #782 do upstream). O catálogo do backend tem 29 chaves.
 
 O usuário e a senha do root do MinIO local também não são chaves do catálogo: são
 literais do `backend/docker-compose.yml`, no anchor `x-minio-root`, valores só desta máquina (127.0.0.1) que a

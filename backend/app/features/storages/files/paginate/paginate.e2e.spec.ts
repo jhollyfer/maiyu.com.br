@@ -11,17 +11,28 @@ import {
 
 import {
   authenticateAsAdministrator,
+  authenticateAsCustomer,
+  authenticateAsNonStaff,
+  authenticateAsPlatformAdministrator,
   body,
   resetDatabase,
+  signInWithFactory,
 } from '#tests/http-fixtures'
 import { QueryCount } from '#tests/query-count-fixtures'
-import { storageRow } from '#tests/storages-fixtures'
+import { NO_NON_STAFF_ROLE, ROLE_FIXTURES } from '#tests/role-fixtures'
+import {
+  customerUploadPath,
+  openUpload,
+  storageRow,
+  uploadFile,
+} from '#tests/storages-fixtures'
+import { Tenants } from '#tests/tenants-fixtures'
 
 const StoragesPage = ResponseRule.paginated(StoragesFileShowResponse)
 
 /**
- * The file as a neutral, shared record: it does not belong to the
- * form that submitted it, and ownership authorizes nothing. What rules is the state
+ * The file is a record the form does not own, and it is the one who uploaded it, or the staff of
+ * the tenant, who reaches it by id (`StoragePolicy`, DECISIONS.md #803). Besides that, what rules is the state
  * (`PENDING` or `UPLOADED`) and the live reference.
  */
 
@@ -223,5 +234,86 @@ test.group('storages > listagem', (group) => {
     const response = await client.get('/storages')
 
     response.assertStatus(401)
+  })
+})
+
+/**
+ * Who lists what (DECISIONS.md #803): the staff of the tenant lists every file, any other account
+ * only what it uploaded, and the end customer only what it owns. The same rule as the detail.
+ */
+test.group('storages > listagem > escopo', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  const idsOf = (response: Parameters<typeof body>[0]): string[] =>
+    body(response, StoragesPage).data.map((file) => file.id)
+
+  test("a member does not list another member's pending photo, and the staff lists both", async ({
+    client,
+    assert,
+  }) => {
+    const a = await authenticateAsNonStaff(client)
+    const b = await authenticateAsNonStaff(client)
+    const staff = await authenticateAsAdministrator(client)
+    const own = await uploadFile(client, a)
+    const opened = await openUpload(client, b, {
+      fileName: 'foto.png',
+      mimetype: 'image/png',
+      size: 1024,
+    })
+
+    const listedByA = await client.get('/storages').cookies(a)
+    const listedByB = await client.get('/storages').cookies(b)
+    const listedByStaff = await client.get('/storages').cookies(staff)
+
+    listedByA.assertStatus(200)
+    assert.deepEqual(idsOf(listedByA), [own.id])
+    assert.deepEqual(idsOf(listedByB), [opened.storage.id])
+    assert.sameMembers(idsOf(listedByStaff), [own.id, opened.storage.id])
+  }).skip(ROLE_FIXTURES.nonStaff === null, NO_NON_STAFF_ROLE)
+
+  test('the customer lists only its own files, and the staff of the store lists all of them', async ({
+    client,
+    assert,
+  }) => {
+    const store = await Tenants.create()
+    const customer = await authenticateAsCustomer(client)
+    const other = await authenticateAsCustomer(client)
+    const staff = await signInWithFactory(client, 'staff', store)
+    const path = await customerUploadPath(store)
+    const own = await uploadFile(client, customer, path)
+    const foreign = await uploadFile(client, other, path)
+
+    const listed = await client.get('/storages').cookies(customer)
+    const listedByStaff = await client.get('/storages').cookies(staff.session)
+
+    assert.deepEqual(idsOf(listed), [own.id])
+    assert.sameMembers(idsOf(listedByStaff), [own.id, foreign.id])
+  })
+
+  test('the staff of another tenant does not list the file', async ({
+    client,
+    assert,
+  }) => {
+    const author = await authenticateAsAdministrator(client)
+    const file = await uploadFile(client, author)
+    const elsewhere = await Tenants.create()
+    const { session } = await signInWithFactory(client, 'staff', elsewhere)
+
+    const listed = await client.get('/storages').cookies(session)
+
+    assert.notInclude(idsOf(listed), file.id)
+  })
+
+  test("the platform team lists the platform's files and no tenant's", async ({
+    client,
+    assert,
+  }) => {
+    const platformFile = await storageRow({ tenantId: null })
+    await storageRow()
+    const admin = await authenticateAsPlatformAdministrator(client)
+
+    const listed = await client.get('/storages').cookies(admin)
+
+    assert.deepEqual(idsOf(listed), [platformFile.id])
   })
 })

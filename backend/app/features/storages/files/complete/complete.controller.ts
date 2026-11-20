@@ -4,6 +4,8 @@ import type { HttpContext } from '@adonisjs/core/http'
 import StoragesFileCompleteUseCase from './complete.use-case.ts'
 
 import { OpenApiDocs } from '#core/openapi/types'
+import StoragePolicy from '#policies/storage.policy'
+import { StorageRepository } from '#repositories/storage/storage.repository'
 import { StoragesFileCompleteValidator } from '#validators/storages/files.validator'
 
 @inject()
@@ -23,12 +25,17 @@ export default class StoragesFileCompleteController {
       'Chamar duas vezes é seguro: a segunda devolve o mesmo registro.',
   })
 
-  constructor(private readonly useCase: StoragesFileCompleteUseCase) {}
+  constructor(
+    private readonly useCase: StoragesFileCompleteUseCase,
+    private readonly storages: StorageRepository,
+  ) {}
 
   async handle(context: HttpContext) {
     const { params, ...body } = await context.request.validateUsing(
       StoragesFileCompleteValidator,
     )
+    const storage = await this.storages.findById(params.id)
+    await context.bouncer.with(StoragePolicy).authorize('upload', storage)
     const result = await this.useCase.execute({ ...body, id: params.id })
     if (result.isLeft()) throw result.value
     return context.response.ok(result.value)

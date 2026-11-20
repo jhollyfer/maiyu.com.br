@@ -381,8 +381,24 @@ entrada.
   `src/server.ts`, nunca fixada no build pelo `vite.config.ts`), e o `img-src` também as origens de
   imagem de terceiros que o projeto lista em `lib/csp-project.ts` (`PROJECT_IMAGE_ORIGINS`, ponto de
   extensão vazio por padrão; ex. tile de mapa, `DECISIONS.md` #773), nada além (vídeo e áudio do bucket pelo `media-src`, `DECISIONS.md` #793), `X-Content-Type-Options: nosniff`,
-  `Referrer-Policy: strict-origin-when-cross-origin` e HSTS sem `preload`. Sem `frame-ancestors`, a
-  tela de login pode ser embutida em `iframe` por outro site (clickjacking).
+  `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (microfone, sensores,
+  pagamento e USB fechados; `camera=(self)` e `geolocation=(self)`, que só o próprio site pode pedir) e HSTS com
+  `includeSubDomains` e sem `preload` (`DECISIONS.md` #805). O CSP leva nonce em `script-src`, sem
+  `unsafe-eval`; `style-src` mantém `'unsafe-inline'` porque o Start inlina o CSS de rota em produção
+  (`lib/security-headers.ts`). Sem `frame-ancestors`, a tela de login pode ser embutida em `iframe` por
+  outro site (clickjacking).
+- **Redirect do servidor sai com `Location` relativo.** Atrás do proxy TLS (Traefik, Cloudflare) o Nitro
+  vê `http://`, e o 307 do Paraglide sairia `http://<host>/pt-br`. `src/server.ts` passa toda resposta por
+  `RelativeRedirect` (`lib/relative-redirect.ts`): `Location` da mesma origem vira caminho (menos o que começa com `//`, protocolo-relativo, que fica absoluto), sem confiar em
+  `X-Forwarded-Proto`; de outra origem fica como veio (_doc-lib/paraglide.md#/middleware,
+  https://paraglidejs.com/middleware: `onRedirect` só observa e `effectiveRequestUrl` exigiria cabeçalho
+  confiável). Arquivo na raiz (`/cv.pdf`, `/favicon.ico`) e `/assets/**` ficam fora do redirect de idioma por
+  `routeStrategies` (`paraglide.config.ts`); caminho mais fundo, com ponto ou não, é página e mantém o redirect: o que existe em `public/` o Nitro serve antes do servidor, o
+  que não existe responde 404; a guarda `$city` recusa segmento com ponto sem chamar a API.
+- **`/.well-known/security.txt` só existe com `SECURITY_CONTACT`.** O RFC 9116 exige `Contact` e
+  `Expires` (https://www.rfc-editor.org/rfc/rfc9116#section-2.5); sem contato não há arquivo válido, e a
+  rota responde 404 em vez de publicar um vazio. Todo projeto em produção preenche a chave (a chave é do
+  catálogo, `DECISIONS.md` #417); o `Expires` é um ano à frente de cada requisição.
 - **Endereço da API sem default de rede.** `src/env.ts` lê `VITE_API_URL` uma vez e o build falha
   sem ela; `http://localhost:3333` como fallback publica um site que manda senha para a máquina de
   quem visita. Em produção ela vem do `frontend/.env.production` versionado, que o build da imagem
@@ -665,8 +681,9 @@ monta a tela com os componentes do shadcn (Base UI) de `components/ui/`, ou com 
 - Campo de formulário é o `Field` do shadcn sob `AppField` (§4); ícone é Phosphor.
 - Peça que o registry não tem: procure no registry inteiro (`shadcn add --all` já instalado, #299)
   e nos blocos; não achou, a peça nasce no kit do upstream, composta por `ui/`, nunca no projeto.
-- Cobrança: o ESLint do modelo proíbe o JSX intrínseco interativo fora de `components/ui/`
-  (`no-restricted-syntax`) e o `pattern:check` lista o resto; exceção não existe.
+- Cobrança: o registry inteiro instalado (`scripts/check-ui-components.mjs`) e o ESLint do kit sobre
+  todo `src/**/*.tsx` fora de `components/ui/` (`no-restricted-syntax`, §6.5, `DECISIONS.md` #806);
+  o `pattern:check` lista o resto. Exceção só a que o §6.5 nomeia.
 
 
 ### `components/ui/` é arquivo do projeto, editável com marca
@@ -705,8 +722,22 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   de `id={id}` já sai nomeado no servidor, sem passar nada; `aria-label` ou `aria-labelledby` próprios
   vencem. `scripts/ui-accessible-name.test.ts` prova com `renderToString`.
 - **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
-  sai" da #146): `shadcn add --all` sem `--overwrite`, que é o padrão da CLI, para não apagar
-  arquivo que já tem linha `// casa:`. Antes, `--dry-run` mostra o que entra; depois, o arquivo marcado que o
+  sai" da #146) e **cobrado** (#806). A lista do que o registry traz (os itens `registry:ui` do estilo
+  `base-mira` com arquivo, mais os hooks e a lib que ele instala junto) mora num lugar só, como dado:
+  `frontend/scripts/ui-components.json` do kit. `scripts/check-ui-components.test.ts` roda no `test:unit`
+  (portanto no `check` e no `pre-commit`) e reprova o projeto sem algum `components/ui/<nome>.tsx`,
+  nomeando o arquivo. `node scripts/check-ui-components.mjs --fix` roda `shadcn add <nomes que faltam>
+  --yes --overwrite` (_doc-lib/shadcn.md#docs/cli, https://ui.shadcn.com/docs/cli, aberta: `-a, --all`,
+  `-y`, `-o`) e repõe, byte a byte, todo arquivo de `ui/`, `hooks/` e `lib/` que o projeto já tinha: a CLI
+  pergunta "already exists, overwrite?" por dependência de registry mesmo com `--yes` e para se ninguém
+  responde, então `-o` é a única via sem pergunta e o snapshot guarda as linhas `// casa:`. O que entrou
+  volta para a casa (import de `cn`, `import * as React` sem uso, fora do `package.json` toda dependência
+  que a CLI acrescentou e o `kit.deps.json` não tem (`cn`, `date-fns`, `next-themes`), versão exata do
+  `kit.deps.json`, Prettier, patches da lista exigida), mesmo quando a CLI sai com erro no meio; pacote
+  que um componente importa e ninguém declara é reportado e entra no `kit.deps.json`; depois, `pnpm install`. O manual
+  `shadcn add --all` continua valendo, com `--dry-run` antes. `--registry` compara a lista com o
+  registry vivo (rede; é do upstream, não do `check`). Item vazio do registry (`form`) não entra
+  (`excluded`). Depois do `add`, o arquivo marcado que o
   registry mudou se compara com `shadcn add <nome> --diff` e se reaplica à mão
   (_doc-lib/shadcn.md#docs/cli, https://ui.shadcn.com/docs/cli, aberta). Componente instalado
   e sem uso não pesa no bundle, porque só entra o que alguém importa; o ganho é a tela nova achar a
@@ -1005,20 +1036,39 @@ Só três exceções, e cada uma leva comentário de "por quê" na linha:
 - o elemento que o registry não tem (a tabela de "Componentes do shadcn" do `docs/DESIGN.md` diz
   qual foi procurado).
 
-**Cobrança**: `no-restricted-syntax` sobre `JSXOpeningElement` nos arquivos de `src/routes/**` e
-`src/components/common/**`, com o seletor
-`JSXOpeningElement[name.name=/^(button|input|select|textarea|table|dialog)$/]` e a mensagem
-apontando o componente de `ui/` (_doc-lib/eslint.md#docs/latest/rules/no-restricted-syntax,
-https://eslint.org/docs/latest/rules/no-restricted-syntax, aberta; seletor de atributo com regex em
-_doc-lib/eslint.md#docs/latest/extend/selectors, https://eslint.org/docs/latest/extend/selectors,
-aberta). `components/ui/` fica fora do `files`, porque é lá que o elemento cru mora. A exceção é
-`// eslint-disable-next-line no-restricted-syntax -- <motivo>`, e o `require-description` de
-`tooling.md` §4.1 já reprova a desativação sem motivo. O bloco do frontend repete o seletor de
-`new` da §4.1 ao lado deste: quando dois objetos de configuração casam o mesmo arquivo, o de baixo
-substitui as opções da regra em vez de somar (_doc-lib/eslint.md#docs/latest/use/configure/configuration-files,
+**Cobrança** (`DECISIONS.md` #806): `no-restricted-syntax` sobre `JSXOpeningElement` em todo
+`src/**/*.tsx`, menos `components/ui/`, os testes (`*.test.tsx`) e `lib/highlighter.tsx` (saída do
+registry). Antes só `routes/` e `common/` eram cobrados, e `components/<outra pasta>`, `integrations/` e
+`lib/` escapavam. A lista fica no `eslint.config.js` do kit (`RAW_ELEMENTS`, `RAW_ROLES`), com o par de
+cada item no comentário, e a régua não a repete. Três famílias: o **elemento** que tem par
+(`button`, `input`, `select`, `textarea`, `label`, `table` e partes, `dialog`, `form`, `progress`, `hr`,
+`details`/`summary`, `fieldset`/`legend`, `kbd`); o **`<a>` que age** (com `onClick` e sem `href`, que é
+`Button`); o **`role`** de widget que o registry entrega (`button`, `checkbox`, `radio`, `switch`,
+`slider`, `tab*`, `dialog`, `alertdialog`, `menu*`, `tooltip`, `progressbar`, `separator`, `combobox`,
+`listbox`, `option`, `alert`), só em tag minúscula: componente que recebe `role` é a via do registry.
+Ficam de fora, por não terem par no registry: `menu`, `meter`, `output`, `nav`, `img` (`Picture` do kit),
+os elementos de texto e os roles `status`, `list`, `region`, `group`, `presentation`, `navigation`
+(região viva ou marco, não widget). `components/ui/` fica fora, porque é lá que o elemento cru mora. A
+exceção é `// eslint-disable-next-line no-restricted-syntax -- <motivo>`, e o `require-description` de
+`tooling.md` §4.1 já reprova a desativação sem motivo. O bloco repete o seletor de `new` da §4.1 ao
+lado deste: quando dois objetos de configuração casam o mesmo arquivo, o de baixo substitui as opções
+da regra em vez de somar (_doc-lib/eslint.md#docs/latest/use/configure/configuration-files,
 https://eslint.org/docs/latest/use/configure/configuration-files, aberta, "Cascading Configuration
-Objects"). A configuração pronta ainda não entrou em `tooling.md` §4.2: está como pendência em
-`CHECKLIST.md`, até rodar num projeto.
+Objects"; seletor de atributo com regex em _doc-lib/eslint.md#docs/latest/extend/selectors,
+https://eslint.org/docs/latest/extend/selectors, aberta). `scripts/eslint-raw-interactive.test.ts` prova
+onde a regra vale e o que ela acusa.
+
+**O que é permitido, por escrito** (#806):
+
+- **Formulário.** O `<form>` existe em duas peças do kit, `FormShellContent` (tela de cadastro do painel)
+  e `PlainForm` (entrada, perfil), cada uma com o `eslint-disable-next-line` e o motivo na linha. O
+  registry tem o item `form`, mas ele é vazio (a entrada do índice do registry `base-mira` não tem `files`), então
+  não substitui nada. Tela nenhuma escreve `<form>`: usa `FormShell`/`PlainForm` e os `Field*` (§4).
+- **DOM de terceiro.** O que a biblioteca de terceiro renderiza por dentro (mapa Leaflet, editor,
+  gráfico) fica isento, porque não é JSX nosso; os controles em volta dele (zoom, busca, filtro,
+  botão, legenda clicável) são `ui/`.
+- **Estrutura semântica sem comportamento.** `<ul>`, `<ol>`, `<li>` e `<nav>` não interativos são
+  permitidos, como `div`, `section` e os títulos (§6, lista de estrutura).
 
 ### 6.6 Código exibido ao usuário *(`DECISIONS.md` #301)*
 

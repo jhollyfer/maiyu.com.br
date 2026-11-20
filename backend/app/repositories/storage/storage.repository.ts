@@ -24,6 +24,12 @@ export type StorageListCriteria = {
 }
 
 /**
+ * How the file library reads (`CustomerScoped.readable`, `TenantScope.readsOwned`): the platform's
+ * own files are read by the whole platform team (DECISIONS.md #803).
+ */
+export const STORAGE_READ = { platformOwn: true } as const
+
+/**
  * The file persistence, by intent (`_standards/domain.md` §5.1). A customer table
  * (`CustomerScoped`, DECISIONS.md #397): the end customer reaches the files it uploaded, in any
  * tenant, and the tenant's members every file of the tenant. The
@@ -97,6 +103,10 @@ export abstract class StorageRepository {
    * file a form is about to attach.
    */
   abstract findOrphans(before: Date): Promise<Storage[]>
+  /**
+   * The file library. The staff of the tenant lists every file it reads; any other account lists
+   * only what it uploaded itself, the same rule as `StoragePolicy.show` (DECISIONS.md #803).
+   */
   abstract paginate(
     criteria: StorageListCriteria,
   ): Promise<Paginated<StorageFileRead>>
