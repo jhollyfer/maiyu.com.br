@@ -14,6 +14,7 @@ import type { Registry } from '../.adonisjs/client/registry/schema.d.ts'
 import { corsOrigins } from '#config/cors'
 import env from '#start/env'
 import { DatabaseGuard } from '#tests/database-guard'
+import { SuiteEnv } from '#tests/suite-env'
 
 /**
  * This file is imported by the "bin/test.ts" entrypoint file
@@ -138,7 +139,11 @@ export const reporters: Config['reporters'] = REPORTERS[reporterMode]
  */
 export const runnerHooks: Required<Pick<Config, 'setup' | 'teardown'>> = {
   // Before any suite and the first migration: a database without `_test` brings the runner down.
-  setup: [() => DatabaseGuard.assertTestDatabase(env.get('DATABASE_URL'))],
+  setup: [
+    () => DatabaseGuard.assertTestDatabase(env.get('DATABASE_URL')),
+    // The demonstration is off in the suite: `resetDatabase` seeds on every test (DECISIONS.md #802).
+    () => SuiteEnv.quietDemo(),
+  ],
   teardown: [],
 }
 

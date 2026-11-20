@@ -182,12 +182,14 @@ export class TenantMembershipSchema extends BaseModel {
 }
 
 export class TenantSchema extends BaseModel {
-  static $columns = ['cityId', 'createdAt', 'id', 'name', 'parentId', 'slug', 'status', 'type', 'updatedAt'] as const
+  static $columns = ['cityId', 'createdAt', 'demo', 'id', 'name', 'parentId', 'slug', 'status', 'type', 'updatedAt'] as const
   $columns = TenantSchema.$columns
   @column()
   declare cityId: string
   @column.dateTime({ autoCreate: true })
   declare createdAt: DateTime
+  @column()
+  declare demo: boolean
   @column({ isPrimary: true })
   declare id: string
   @column()

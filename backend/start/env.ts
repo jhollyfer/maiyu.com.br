@@ -139,10 +139,13 @@ const env = await Env.create(new URL('../', import.meta.url), {
   | seed with one log line and the rest of `node ace db:seed` runs. The application boots
   | without these: only whoever seeds needs them.
   |
-  | The first administrator: the password goes with the e-mail.
+  | The first administrator: the password goes with the e-mail. The demonstration (one account per
+  | role, one demo tenant per type, DECISIONS.md #802): the password of its accounts, 16
+  | characters at least, and the value is what switches it on.
   */
   SEED_OWNER_EMAIL: Env.schema.string.optional(),
   SEED_OWNER_PASSWORD: Env.schema.string.optional(),
+  SEED_DEMO_PASSWORD: Env.schema.string.optional(),
 
   /*
   |----------------------------------------------------------------------------

@@ -37,6 +37,8 @@ type TenantRow = {
   cityId: string
   parentId: string | null
   status: ActiveStatus
+  /** The demonstration tenant (DECISIONS.md #802): in no public list and no count. */
+  demo: boolean
 }
 type MembershipRow = { userId: string; tenantId: string; role: UserRole }
 type StoredMembership = MembershipRow & { id: string }
@@ -69,11 +71,15 @@ export class TenantMemoryRepository extends TenantRepository {
 
   /** Test arrangement; active unless said otherwise. */
   addTenant(
-    tenant: Omit<TenantRow, 'status'> & { status?: ActiveStatus },
+    tenant: Omit<TenantRow, 'status' | 'demo'> & {
+      status?: ActiveStatus
+      demo?: boolean
+    },
   ): this {
     this.tenants.set(tenant.id, {
       ...tenant,
       status: tenant.status ?? ACTIVE_STATUS.ACTIVE,
+      demo: tenant.demo ?? false,
     })
     return this
   }
@@ -143,12 +149,21 @@ export class TenantMemoryRepository extends TenantRepository {
     const tenants = this.liveTenants().filter(
       (tenant) => tenant.cityId === city.id,
     )
-    const cityTenantIds = tenants.map((tenant) => tenant.id)
+    const cityTenantIds = tenants
+      .filter((tenant) => !tenant.demo)
+      .map((tenant) => tenant.id)
     if (tenantSlug === null)
       return { cityId: city.id, tenantId: null, cityTenantIds }
 
     const tenant = tenants.find((each) => each.slug === tenantSlug)
     if (!tenant) return null
+
+    if (tenant.demo)
+      return {
+        cityId: city.id,
+        tenantId: tenant.id,
+        cityTenantIds: [tenant.id],
+      }
 
     return { cityId: city.id, tenantId: tenant.id, cityTenantIds }
   }
@@ -167,7 +182,7 @@ export class TenantMemoryRepository extends TenantRepository {
 
   async listPublic(ids: ReadonlyArray<string>): Promise<TenantPublicRead[]> {
     return this.liveTenants()
-      .filter((tenant) => ids.includes(tenant.id))
+      .filter((tenant) => ids.includes(tenant.id) && !tenant.demo)
       .map(({ id, name, slug, type, parentId }) => ({
         id,
         name,
@@ -178,7 +193,7 @@ export class TenantMemoryRepository extends TenantRepository {
   }
 
   async overview(): Promise<PlatformOverviewResponse> {
-    const tenants = [...this.tenants.values()]
+    const tenants = [...this.tenants.values()].filter((tenant) => !tenant.demo)
 
     return {
       cities: [...this.cities.values()].map((city) => ({
@@ -263,7 +278,11 @@ export class TenantMemoryRepository extends TenantRepository {
 
   async save(tenant: Tenant): Promise<void> {
     const { createdAt, updatedAt, ...row } = tenant.snapshot()
-    this.tenants.set(row.id, row)
+    // The snapshot has no `demo`: a save never turns a tenant into a demo one or back, as in Lucid.
+    this.tenants.set(row.id, {
+      ...row,
+      demo: this.tenants.get(row.id)?.demo ?? false,
+    })
     this.stamps.set(row.id, { createdAt, updatedAt })
   }
 

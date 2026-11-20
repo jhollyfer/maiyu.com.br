@@ -2,6 +2,7 @@ import { test } from '@japa/runner'
 
 import { CitiesListResponse, CityTenantsResponse } from '@maiyu/shared'
 
+import Tenant from '#models/tenant'
 import { body, resetDatabase } from '#tests/http-fixtures'
 import { Tenants } from '#tests/tenants-fixtures'
 
@@ -21,6 +22,23 @@ test.group('storefront/tenants > list', (group) => {
   test("lists only the city's tenants", async ({ client, assert }) => {
     const here = await Tenants.create({ citySlug: 'tabatinga' })
     await Tenants.create({ citySlug: 'atalaia-do-norte' })
+
+    const response = await client.get('/storefront/cities/tabatinga/tenants')
+
+    response.assertStatus(200)
+    assert.deepEqual(
+      body(response, CityTenantsResponse).map((tenant) => tenant.id),
+      [here.id],
+    )
+  })
+
+  test('a demo tenant (DECISIONS.md #802) is not in the public list', async ({
+    client,
+    assert,
+  }) => {
+    const here = await Tenants.create({ citySlug: 'tabatinga' })
+    const demo = await Tenants.create({ citySlug: 'tabatinga' })
+    await Tenant.query().where('id', demo.id).update({ demo: true })
 
     const response = await client.get('/storefront/cities/tabatinga/tenants')
 

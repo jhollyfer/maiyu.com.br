@@ -152,8 +152,9 @@ backend/
 ├── database/
 │   ├── migrations/                  # nome do framework (backend.md §3)
 │   ├── seeders/{<nome>.seed.ts, dev/<nome>.ts}   # só seeder: o Lucid carrega todo .ts daqui como seeder
+│   ├── demo/{demo.config,demo-seed,demo-purge,demo-image}.ts, demo.project.ts   # a demonstração (backend.md §6.2, #802): lógica do `demo.seed.ts` e do `demo:purge`; `demo.project.ts` é do projeto. Fora de `seeders/` por isso
 │   ├── factories/<entidade>.factory.ts   # só para teste
-│   └── data/{<nome>.ts, <nome>/}    # dado de seed/conteúdo, fora de seeders/; a pasta guarda asset (DECISIONS #354)
+│   └── data/{<nome>.ts, <nome>/}    # dado de seed/conteúdo, fora de seeders/; a pasta guarda asset (DECISIONS #354); `data/demo/sample.png` é a imagem da demonstração
 ├── scripts/{pattern-check.ts, pattern-check.config.ts, pattern-check.rules.ts, authz-check.ts, check-report.ts, <nome>-check.ts} (+ .unit.spec.ts)
 ├── (operação é comando em `commands/`, nunca script em `scripts/`; shell de operação não existe, DECISIONS #348)
 ├── scripts/depcruise.config.ts      # regras de camada (domain.md §8), passado por `depcruise --config`
@@ -162,7 +163,7 @@ backend/
 └── tests/
     ├── bootstrap.ts | setup.<suíte>.ts
     ├── database-guard.ts (+ .unit.spec.ts)   # recusa banco sem `_test` no nome ou fora de host local (backend.md §7, DECISIONS #350)
-    ├── seeders/{<nome>.seed.e2e.spec.ts, dev/<nome>.seed.e2e.spec.ts}   # spec do seeder, espelha database/seeders/ (DECISIONS #380)
+    ├── seeders/{<nome>.seed.e2e.spec.ts, dev/<nome>.seed.e2e.spec.ts}   # spec do seeder, espelha database/seeders/ (DECISIONS #380); a demonstração tem também `demo.config.unit.spec.ts` e `demo-image.e2e.spec.ts` aqui (#802)
     ├── migrations/<nome>.e2e.spec.ts   # spec de migration de dado, mesmo nome do arquivo sem o timestamp (DECISIONS #380)
     └── <tema>-fixtures.ts           # helper usado por 2+ specs; sem helpers.ts genérico
 ```
