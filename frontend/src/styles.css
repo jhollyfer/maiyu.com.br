@@ -5,14 +5,17 @@
 /*
  * The three families, served from the bundle itself.
  *
- * Raleway is the brand's voice, headings and body. Michroma exists only for the MAIYU wordmark,
- * the logo's lettering; Geist Mono is for numbers and code.
+ * Newsreader is the display family (headings and the lead text, an editorial serif) and Instrument
+ * Sans the text family. Michroma exists only for the MAIYU wordmark, the logo's lettering; Geist
+ * Mono is for numbers and code.
  *
  * From the package and not from Google Fonts: the old site had already switched to the package
  * after seeing the page fall back to the reserve font when the Google domain did not answer. A
  * font that depends on a third party to arrive is a font that sometimes does not arrive.
  */
-@import '@fontsource-variable/raleway';
+@import '@fontsource-variable/newsreader';
+@import '@fontsource-variable/newsreader/wght-italic.css';
+@import '@fontsource-variable/instrument-sans';
 @import '@fontsource/michroma';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
@@ -44,7 +47,7 @@
  * is the thin ring at the end of this file.
  */
 :root {
-  --radius: 1rem;
+  --radius: 0.25rem;
   color-scheme: light;
 
   --background: #f6f2ea;
@@ -57,7 +60,7 @@
   --popover-foreground: #01111b;
 
   --primary: #01111b;
-  --primary-foreground: #88ff9a;
+  --primary-foreground: #f6f2ea;
 
   --secondary: #ede6d8;
   --secondary-foreground: #01111b;
@@ -70,7 +73,7 @@
   --muted: #ede6d8;
   --muted-foreground: #4a3f36;
 
-  --accent: #88ff9a;
+  --accent: #ece6d8;
   --accent-foreground: #01111b;
 
   --destructive: #d6336c;
@@ -91,15 +94,15 @@
    * The heading highlight. It is the brand cyan darkened: pure #31E1F7 over light
    * paper has no contrast for text.
    */
-  --highlight: #0bafc7;
-  --highlight-bar: #88ff9a;
+  --highlight: #b5402a;
+  --highlight-bar: #b5402a;
 
-  --tint-mint: #d3eee0;
-  --tint-peach: #f7d9c8;
-  --tint-mist: #ead6e6;
-  --tint-lime: #dcefc8;
-  --tint-green: #dcefc8;
-  --tint-peach-soft: #f3e8d2;
+  --tint-mint: #ede6d8;
+  --tint-peach: #ede6d8;
+  --tint-mist: #ede6d8;
+  --tint-lime: #ede6d8;
+  --tint-green: #ede6d8;
+  --tint-peach-soft: #f1ebde;
 
   --navy: #01111b;
   --navy-2: #0b1e2b;
@@ -121,11 +124,11 @@
 
   --badge-neutral: #ede6d8;
   --badge-neutral-fg: #01111b;
-  --badge-info: #d3eee0;
+  --badge-info: #ede6d8;
   --badge-info-fg: #01111b;
-  --badge-success: #dcefc8;
+  --badge-success: #ede6d8;
   --badge-success-fg: #01111b;
-  --badge-warning: #f7d9c8;
+  --badge-warning: #ede6d8;
   --badge-warning-fg: #01111b;
 }
 
@@ -142,8 +145,8 @@
   --popover: #0e1a15;
   --popover-foreground: #e8f6ff;
 
-  --primary: #88ff9a;
-  --primary-foreground: #01111b;
+  --primary: #f1ece2;
+  --primary-foreground: #07120e;
 
   --secondary: #14241e;
   --secondary-foreground: #e8f6ff;
@@ -151,15 +154,15 @@
   --muted: #14241e;
   --muted-foreground: #a6b5aa;
 
-  --accent: #88ff9a;
-  --accent-foreground: #01111b;
+  --accent: #1b2a24;
+  --accent-foreground: #e8f6ff;
 
   --destructive: #fb80c1;
   --destructive-foreground: #01111b;
 
   --border: rgba(232, 246, 255, 0.1);
   --input: rgba(232, 246, 255, 0.16);
-  --ring: #88ff9a;
+  --ring: #e8f6ff;
 
   --success: oklch(0.7 0.15 150);
   --success-foreground: oklch(0.8 0.15 150);
@@ -167,15 +170,15 @@
   --warning-foreground: oklch(0.85 0.12 85);
   --overlay: rgba(0, 0, 0, 0.6);
 
-  --highlight: #31e1f7;
-  --highlight-bar: #88ff9a;
+  --highlight: #e0704f;
+  --highlight-bar: #e0704f;
 
-  --tint-mint: #0c211b;
-  --tint-peach: #24140f;
-  --tint-mist: #1e1220;
-  --tint-lime: #122214;
-  --tint-green: #122214;
-  --tint-peach-soft: #1d1a10;
+  --tint-mint: #0e1a15;
+  --tint-peach: #0e1a15;
+  --tint-mist: #0e1a15;
+  --tint-lime: #0e1a15;
+  --tint-green: #0e1a15;
+  --tint-peach-soft: #101d17;
   --forest-front: #03100a;
 
   --urucum: #e0704f;
@@ -186,11 +189,11 @@
 
   --badge-neutral: #14241e;
   --badge-neutral-fg: #e8f6ff;
-  --badge-info: #0c211b;
+  --badge-info: #14241e;
   --badge-info-fg: #e8f6ff;
-  --badge-success: #122214;
+  --badge-success: #14241e;
   --badge-success-fg: #e8f6ff;
-  --badge-warning: #24140f;
+  --badge-warning: #14241e;
   --badge-warning-fg: #e8f6ff;
 }
 
@@ -269,10 +272,11 @@
   --color-brand-black: #272221;
   --color-brand-dark: #403937;
 
-  --font-display: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-sans: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-serif: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-brand: Michroma, 'Raleway Variable', system-ui, sans-serif;
+  --font-display: 'Newsreader Variable', Newsreader, Georgia, serif;
+  --font-sans:
+    'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
+  --font-serif: 'Newsreader Variable', Newsreader, Georgia, serif;
+  --font-brand: Michroma, 'Instrument Sans Variable', system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   /*
@@ -406,8 +410,8 @@
   }
 
   /*
-   * Headings in the brand's Raleway, at the heavy weight from before the redesign: the owner
-   * preferred the brand's voice to the editorial serif (`docs/DECISIONS.md` #16).
+   * Headings in the display serif (Newsreader), at a calm weight: the editorial direction of
+   * `docs/DESIGN.md`, which replaces the heavy sans of `docs/DECISIONS.md` #16.
    */
   h1,
   h2,
@@ -416,8 +420,8 @@
   h5,
   h6 {
     font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.012em;
+    font-weight: 500;
+    letter-spacing: -0.02em;
     text-wrap: balance;
     overflow-wrap: break-word;
   }
@@ -426,8 +430,8 @@
   h4,
   h5,
   h6 {
-    font-weight: 700;
-    letter-spacing: -0.005em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
   p {
@@ -435,28 +439,8 @@
   }
 
   ::selection {
-    background: #88ff9a;
-    color: #01111b;
-  }
-
-  /*
-   * The grain, on a fixed layer above everything. Fixed and not on the surface that
-   * scrolls: a texture that scrolls along repaints the whole page on every frame.
-   */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 60;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    mix-blend-mode: multiply;
-  }
-
-  .dark body::before {
-    opacity: 0.07;
-    mix-blend-mode: overlay;
+    background: #b5402a;
+    color: #f6f2ea;
   }
 }
 
@@ -488,35 +472,18 @@
   --tw-prose-quote-borders: var(--highlight-bar);
 }
 
-/* The short green bar under headings, taken from the promotional artwork. */
+/* The short rule under a heading: the single accent, thin, square. */
 @utility brand-bar {
   display: block;
-  height: 0.375rem;
-  width: 4.5rem;
-  border-radius: 9999px;
+  height: 2px;
+  width: 3rem;
   background: var(--highlight-bar);
 }
 
-/*
- * The weave: the basketry band that stitches one section to the next. Fiber diamonds
- * in annatto, earth and forest, drawn in SVG with the theme's colors, and not
- * the graphic pattern of a specific people: a graphic pattern has an owner, and only goes in here
- * with the authorization of whoever paints it.
- */
+/* The hairline that separates one section from the next: one pixel, no ornament. */
 @utility trancado {
-  height: 0.875rem;
-  background-color: var(--terra);
-  background-image:
-    linear-gradient(135deg, var(--urucum) 25%, transparent 25%),
-    linear-gradient(225deg, var(--urucum) 25%, transparent 25%),
-    linear-gradient(315deg, var(--forest-front) 25%, transparent 25%),
-    linear-gradient(45deg, var(--forest-front) 25%, transparent 25%);
-  background-size: 1.75rem 0.875rem;
-  background-position:
-    0 0,
-    0 0,
-    0.875rem 0,
-    0.875rem 0;
+  height: 1px;
+  background: var(--border);
 }
 
 /* The two vertical lines that frame the content like a ruled page. */

@@ -2,12 +2,12 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { CALL_URL } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../photo'
-import { PillButton, pillVariants } from '../pill-button'
 import { REVEAL } from '../reveal'
 
 /**
@@ -35,14 +35,17 @@ export function ClosingCta(): React.JSX.Element {
                 href={CALL_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className={cn(pillVariants({}), 'rounded-xl')}
+                className={buttonVariants({ size: 'lg' })}
               >
                 {m.home_start_project()}
                 <ArrowUpRightIcon />
               </a>
-              <PillButton tone="outline" className="rounded-xl" to="/portfolio">
+              <Link
+                to="/portfolio"
+                className={buttonVariants({ variant: 'outline', size: 'lg' })}
+              >
                 {m.home_view_work()}
-              </PillButton>
+              </Link>
             </div>
             <Link
               to="/contact"

@@ -2,7 +2,7 @@ import { ArrowUpRightIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
 import { Picture } from '#/components/common/picture/picture'
-import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { projects } from '#/lib/projects'
@@ -10,7 +10,6 @@ import type { Project } from '#/lib/projects'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
 
-import { pillVariants } from '../pill-button'
 import { ProjectStatusBadge } from '../project-status'
 import { REVEAL, STAGGER } from '../reveal'
 
@@ -18,21 +17,12 @@ type ProjectProps = {
   project: Project
 }
 
-/** The project's stack as labels, three at most: the rest is in the portfolio. */
+/** The project's stack as one line of text, three names at most: the rest is in the portfolio. */
 function Stack({ project }: ProjectProps): React.JSX.Element {
   return (
-    <ul className="flex flex-wrap gap-1.5">
-      {project.tech.slice(0, 3).map((tech) => (
-        <Badge
-          key={tech}
-          render={<li />}
-          variant="secondary"
-          className="h-auto px-3 py-1 text-micro font-normal"
-        >
-          {tech}
-        </Badge>
-      ))}
-    </ul>
+    <p className="text-small text-muted-foreground">
+      {project.tech.slice(0, 3).join(' · ')}
+    </p>
   )
 }
 
@@ -43,7 +33,7 @@ function Visit({ project }: ProjectProps): React.JSX.Element {
       href={project.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(pillVariants({ tone: 'outline' }), 'rounded-xl')}
+      className={buttonVariants({ variant: 'outline' })}
     >
       {m.home_work_visit()}
       <ArrowUpRightIcon />
@@ -65,7 +55,7 @@ function Shot({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-2xl border border-border bg-secondary',
+        'overflow-hidden border border-border bg-secondary',
         className,
       )}
     >

@@ -1,4 +1,5 @@
-import ralewayLatin from '@fontsource-variable/raleway/files/raleway-latin-wght-normal.woff2?url'
+import instrumentSansLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url'
+import newsreaderLatin from '@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2?url'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   HeadContent,
@@ -83,7 +84,14 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         rel: 'preload',
         as: 'font',
         type: 'font/woff2',
-        href: ralewayLatin,
+        href: newsreaderLatin,
+        crossOrigin: 'anonymous',
+      },
+      {
+        rel: 'preload',
+        as: 'font',
+        type: 'font/woff2',
+        href: instrumentSansLatin,
         crossOrigin: 'anonymous',
       },
       { rel: 'stylesheet', href: appCss },

@@ -6,35 +6,20 @@ import logo from '#/assets/brand/logo.svg'
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
 import { Picture } from '#/components/common/picture/picture'
 import { Button } from '#/components/ui/button'
-import { CONTACT, SITE_TITLE, SOCIALS } from '#/lib/site'
+import { CONTACT, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
 import { FOOTER_NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 
-// The giant signature is a drawing and not a paragraph: it is decoration at 15% opacity,
-// and as text axe measured its contrast (1.22:1) even with `aria-hidden`. The viewBox is
-// 0.9 em tall (the old line height) and 4.8123 em wide, the width of "MAIYU" in Michroma,
-// so the height keeps the old `clamp` and the width follows from it.
-const WORDMARK_FONT_SIZE = 100
-const WORDMARK_VIEW_BOX = '0 0 481.23 90'
-
 /**
- * The footer: the weave as the top, four columns separated by lines, the back-to-top button
- * and the giant "MAIYU" signature.
- *
- * The button sits in `relative z-10` and the wordmark in `pointer-events-none`: without
- * this the giant text, which rises over the button's line through the 0.9 line height,
- * swallowed the click.
+ * The footer: a hairline as the top, four columns separated by lines, the credit and a text
+ * link back to the top. No giant signature and no colored button (`docs/DESIGN.md` §7): the
+ * logo and the line of text already sign the page.
  */
 export function Footer(): React.JSX.Element {
   return (
-    <footer
-      data-slot="site-footer"
-      className="relative isolate overflow-hidden pt-20"
-    >
-      <div aria-hidden="true" className="trancado absolute inset-x-0 top-0" />
-
+    <footer data-slot="site-footer" className="relative pt-20">
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid grid-cols-1 border-y border-border md:grid-cols-4 md:divide-x md:divide-border">
           <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
@@ -117,37 +102,18 @@ export function Footer(): React.JSX.Element {
           </div>
         </div>
 
-        <div className="relative z-10 flex flex-col items-center gap-4 pt-16 pb-8 text-center">
+        <div className="flex flex-col items-start justify-between gap-4 py-10 md:flex-row md:items-center">
           <MaiyuCredit className="text-small text-foreground/70" />
           <Button
             type="button"
-            size="icon-lg"
+            variant="link"
             onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-            aria-label={m.footer_back_to_top()}
-            className="size-11 rounded-full bg-brand-green text-navy transition-transform duration-300 hover:-translate-y-0.5 hover:bg-brand-green motion-reduce:transition-none"
+            className="px-0"
           >
-            <ArrowUpIcon size={15} />
+            {m.footer_back_to_top()}
+            <ArrowUpIcon aria-hidden="true" />
           </Button>
         </div>
-
-        <svg
-          aria-hidden="true"
-          focusable="false"
-          viewBox={WORDMARK_VIEW_BOX}
-          className="pointer-events-none mx-auto block h-[calc(clamp(3.5rem,17vw,14rem)*0.9)] w-auto overflow-visible text-forest opacity-15 select-none dark:text-brand-green dark:opacity-15"
-        >
-          <text
-            x="50%"
-            y="50%"
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={WORDMARK_FONT_SIZE}
-            fill="currentColor"
-            className="font-brand uppercase"
-          >
-            {SITE_TITLE}
-          </text>
-        </svg>
       </div>
     </footer>
   )

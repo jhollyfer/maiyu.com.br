@@ -37,7 +37,7 @@ export function Audience(): React.JSX.Element {
     <section data-slot="home-audience" className="py-24 md:py-32">
       <div className="mx-auto grid max-w-7xl gap-12 px-4 md:grid-cols-12 md:px-8">
         <div className={cn(REVEAL, 'md:col-span-5')}>
-          <h2 className="text-display tracking-[-0.015em]">
+          <h2 className="text-h1 tracking-[-0.015em]">
             {m.home_audience_title()}
           </h2>
           <p className="mt-6 max-w-[42ch] font-serif text-body-lg text-foreground/80">
@@ -74,7 +74,7 @@ export function Audience(): React.JSX.Element {
           <p
             className={cn(
               REVEAL,
-              'mt-8 font-serif text-lead text-forest dark:text-brand-green',
+              'mt-8 font-serif text-lead text-muted-foreground',
             )}
           >
             {m.home_audience_reach()}

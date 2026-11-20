@@ -4,6 +4,7 @@ import type * as React from 'react'
 import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
 import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { featuredProject, projects } from '#/lib/projects'
@@ -11,7 +12,6 @@ import type { Project } from '#/lib/projects'
 import { m } from '#/paraglide/messages'
 
 import { PageHero } from '../../-components/page-hero'
-import { pillVariants } from '../../-components/pill-button'
 import { ProjectStatusBadge } from '../../-components/project-status'
 import { REVEAL, STAGGER } from '../../-components/reveal'
 
@@ -77,7 +77,7 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
       href={project.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(pillVariants({}), 'self-start')}
+      className={cn(buttonVariants({ size: 'lg' }), 'self-start')}
     >
       {m.portfolio_visit_site()}
       <ArrowUpRightIcon />

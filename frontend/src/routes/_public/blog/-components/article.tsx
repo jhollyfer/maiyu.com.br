@@ -20,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
+import { buttonVariants } from '#/components/ui/button'
 import { articles } from '#/lib/articles'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
@@ -28,7 +29,6 @@ import { localizedDate } from '#/lib/site-i18n'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../../-components/photo'
-import { PillButton } from '../../-components/pill-button'
 import { REVEAL } from '../../-components/reveal'
 
 const route = getRouteApi('/_public/blog/$slug')
@@ -202,10 +202,10 @@ export function Article(): React.JSX.Element {
               {m.blog_article_cta_description()}
             </p>
           </div>
-          <PillButton to="/contact">
+          <Link to="/contact" className={buttonVariants({ size: 'lg' })}>
             {m.nav_get_in_touch()}
             <ArrowUpRightIcon />
-          </PillButton>
+          </Link>
         </div>
       </section>
     </>

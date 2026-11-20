@@ -2,7 +2,7 @@ import { ArrowRightIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
 import {
   Item,
   ItemActions,
@@ -15,7 +15,6 @@ import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { m } from '#/paraglide/messages'
 
-import { PillButton } from '../pill-button'
 import { REVEAL, STAGGER } from '../reveal'
 
 type Role = {
@@ -71,23 +70,9 @@ export function NavyBand(): React.JSX.Element {
       data-slot="home-navy-band"
       className="relative isolate overflow-hidden bg-navy py-24 text-on-navy md:py-32"
     >
-      <div
-        aria-hidden="true"
-        className="trancado absolute inset-x-0 top-0 opacity-90"
-      />
-      <div
-        aria-hidden="true"
-        className="trancado absolute inset-x-0 bottom-0 opacity-90"
-      />
-      <div className="absolute inset-0 -z-10 [--border:rgba(49,225,247,0.12)]">
-        <div className="rails size-full" />
-      </div>
-
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className={cn(REVEAL, 'max-w-4xl')}>
-          <h2 className="text-display tracking-[-0.015em]">
-            {m.home_team_title()}
-          </h2>
+          <h2 className="text-h1 tracking-[-0.015em]">{m.home_team_title()}</h2>
           <p className="mt-6 max-w-[56ch] font-serif text-lead text-on-navy/80">
             {m.home_team_desc()}
           </p>
@@ -108,27 +93,21 @@ export function NavyBand(): React.JSX.Element {
           ))}
         </ul>
 
-        <div
-          aria-hidden="true"
-          className="mt-16 overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_15%,black_85%,transparent)]"
-        >
-          <ul className="marquee flex w-max gap-14 pr-14">
-            {[...STACK, ...STACK].map((name, index) => (
-              <li
-                key={index}
-                className="font-display text-h4 font-medium tracking-[-0.02em] text-on-navy/45"
-              >
-                {name}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <p className="mt-16 border-t border-on-navy/15 pt-6 text-small text-on-navy/60">
+          {STACK.join(' · ')}
+        </p>
 
         <div className="mt-10 flex">
-          <PillButton tone="neon" className="rounded-xl" to="/career">
+          <Link
+            to="/career"
+            className={cn(
+              buttonVariants({ size: 'lg' }),
+              'bg-on-navy text-navy hover:bg-on-navy/85',
+            )}
+          >
             {m.nav_career()}
             <ArrowUpRightIcon />
-          </PillButton>
+          </Link>
         </div>
 
         <div className="mt-28 md:mt-36">
@@ -165,17 +144,16 @@ export function NavyBand(): React.JSX.Element {
                     <ItemTitle className="line-clamp-none text-body-lg transition-opacity group-hover:opacity-75">
                       {localized(article.title)}
                     </ItemTitle>
-                    <Badge
-                      variant="secondary"
-                      className="h-auto rounded-md bg-tint-green px-2 py-0.5 text-micro font-normal text-foreground"
-                    >
+                    <span className="text-small text-on-navy/60">
                       {localized(article.readTime)}
-                    </Badge>
+                    </span>
                   </ItemContent>
                   <ItemActions>
-                    <span className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-green text-navy transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none">
-                      <ArrowRightIcon size={16} />
-                    </span>
+                    <ArrowRightIcon
+                      aria-hidden="true"
+                      size={18}
+                      className="shrink-0 text-on-navy/70 transition-transform duration-300 group-hover:translate-x-1 motion-reduce:transition-none"
+                    />
                   </ItemActions>
                 </Link>
               </Item>

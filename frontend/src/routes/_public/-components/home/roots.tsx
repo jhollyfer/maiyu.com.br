@@ -47,7 +47,7 @@ export function Roots(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid items-end gap-12 md:grid-cols-12">
           <div className={cn(REVEAL, 'md:col-span-10')}>
-            <h2 className="text-display tracking-[-0.015em] text-foreground">
+            <h2 className="text-h1 tracking-[-0.015em] text-foreground">
               {m.home_roots_title()}
             </h2>
             <p className="mt-8 max-w-[62ch] font-serif text-lead text-foreground/80">

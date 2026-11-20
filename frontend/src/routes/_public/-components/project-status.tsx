@@ -6,13 +6,13 @@ import { PROJECT_STATUS_LABELS } from '#/lib/labels'
 import type { ProjectStatus } from '@maiyu/shared'
 
 /**
- * The dot color per status: forest for what is live, annatto for what
+ * The dot color per status: ink for what is live, the single accent for what
  * is still in validation. A lookup and not a ternary, and a closed key: a new status
  * without a color does not compile.
  */
 const DOT = {
-  production: 'bg-forest dark:bg-brand-green',
-  validation: 'bg-urucum',
+  production: 'bg-foreground',
+  validation: 'bg-highlight',
 } satisfies Record<ProjectStatus, string>
 
 type ProjectStatusBadgeProps = {
@@ -33,13 +33,13 @@ export function ProjectStatusBadge({
 }: ProjectStatusBadgeProps): React.JSX.Element {
   return (
     <Badge
-      variant="outline"
-      className={cn('h-auto gap-2 px-3 py-1 text-micro font-medium', className)}
+      variant="ghost"
+      className={cn(
+        'h-auto gap-2 rounded-none px-0 py-0 text-micro font-medium tracking-[0.14em] text-muted-foreground uppercase',
+        className,
+      )}
     >
-      <span
-        aria-hidden="true"
-        className={cn('size-1.5 rounded-full', DOT[status])}
-      />
+      <span aria-hidden="true" className={cn('size-1.5', DOT[status])} />
       {PROJECT_STATUS_LABELS[status]()}
     </Badge>
   )

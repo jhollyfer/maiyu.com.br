@@ -58,7 +58,7 @@ export function Vision(): React.JSX.Element {
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-24 md:grid-cols-12 md:gap-12 md:px-8 md:motion-safe:sticky md:motion-safe:top-0 md:motion-safe:h-[100dvh]">
         <div className="flex flex-col md:col-span-5">
           <div className={REVEAL}>
-            <h2 className="text-display">{m.home_vision_title()}</h2>
+            <h2 className="text-h1">{m.home_vision_title()}</h2>
           </div>
           <ol className="mt-auto space-y-3 pt-10">
             {ITEMS.map((item, index) => (

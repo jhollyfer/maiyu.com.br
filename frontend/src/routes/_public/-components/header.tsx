@@ -6,7 +6,7 @@ import logo from '#/assets/brand/logo.svg'
 import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
 import { Picture } from '#/components/common/picture/picture'
 import { ThemeToggle } from '#/components/common/theme/theme-toggle'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -29,7 +29,6 @@ import { m } from '#/paraglide/messages'
 
 import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
-import { PillButton, pillVariants } from './pill-button'
 import { useScrolled } from './use-scrolled'
 
 /**
@@ -95,22 +94,20 @@ export function Header(): React.JSX.Element {
             <LocaleSwitcher className="w-36" />
           </div>
           <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
-          <PillButton
-            tone="outline"
-            scale="md"
-            className="ml-1 hidden rounded-xl md:inline-flex"
+          <Link
             to={CONTACT_LINK.to}
+            className={cn(
+              buttonVariants({ variant: 'outline' }),
+              'ml-1 hidden md:inline-flex',
+            )}
           >
             {CONTACT_LINK.label()}
-          </PillButton>
+          </Link>
           <a
             href={CALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(
-              pillVariants({ tone: 'neon', scale: 'md' }),
-              'hidden rounded-xl md:inline-flex',
-            )}
+            className={cn(buttonVariants(), 'hidden md:inline-flex')}
           >
             <WhatsappLogoIcon />
             {m.nav_get_in_touch()}
@@ -195,7 +192,7 @@ function MobileMenu(): React.JSX.Element {
             href={CALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={pillVariants({ tone: 'neon' })}
+            className={buttonVariants({ size: 'lg' })}
           >
             <WhatsappLogoIcon />
             {m.nav_get_in_touch()}
