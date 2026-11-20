@@ -1499,8 +1499,12 @@ export abstract class PaymentGatewayContract {
 - **Quem alcança o arquivo por id** (`GET /storages/:id`, `DELETE /storages/:id`, `GET /storages/:id/parts`,
   `POST /storages/:id/complete`, `GET /storages/:id/download`): a
   `StoragePolicy`, sempre, nunca só o filtro de tenant do repositório (`findWritable` não autoriza). Detalhar, apagar, retomar e fechar o envio é de quem
-  enviou (`uploaded_by`) e da equipe do tenant; arquivo de cliente final é só do cliente (a equipe lê o
-  comprovante pelo `download`); negação é 404, igual a arquivo inexistente. A listagem (`GET /storages`) aplica a mesma regra no repositório: a equipe do tenant lista tudo, qualquer outra conta só o que enviou (`DECISIONS.md` #803).
+  enviou (`uploaded_by`) e da equipe do tenant. Arquivo de cliente final: lê o cliente e a equipe do
+  próprio tenant (o comprovante), escreve (`upload`, `delete`) só o cliente. Arquivo da plataforma
+  (`tenant_id` nulo): lê a equipe da plataforma, escreve o dono; arquivo de tenant fica fora do alcance
+  dela. Negação é 404, igual a arquivo inexistente. A listagem (`GET /storages`) aplica a mesma regra no
+  repositório: a equipe do tenant lista tudo, qualquer outra conta só o que enviou (mais os arquivos da
+  plataforma, para a equipe dela) (`DECISIONS.md` #803).
 - Upload anônimo não existe: todo arquivo tem dono desde o `create`. Quem não tem conta (a denúncia
   do curupira) envia preso a um rascunho, por um token de uso único e curto que só existe como hash no
   banco; sem token válido o upload responde 404, e rascunho vencido sai com os arquivos pelo

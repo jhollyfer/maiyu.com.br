@@ -147,7 +147,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RS.1 | Sync da régua 532077d (#787, #788, #789) e `TRUSTED_PROXIES=uniquelocal` na API | M | Feita | branch `chore/sync-regua-787`; `sync --check` zerado, `pnpm check` verde (shared 150, backend 462, frontend 619); falta a prova de deploy (`docker build` das duas imagens e API subindo) e o merge do dono |
 | RS.2 | E-mail em produção: bloco `mail` do kit, prova com Mailpit e chaves SMTP do Coolify | M | Em revisão | branch `test/mailer-prova-envio`; falta o dono preencher `SMTP_*` no Coolify e aplicar o `r2-cors.json` no bucket |
 | RS.3 | Sync da régua b091182 (#796, #799, #800, #801) | M | Em revisão | branch `chore/sync-regua-799`; `sync --check` zerado, `pnpm check` verde (150/522/644) |
-| RS.4 | Sync da régua 66ec4ae (#802, demo mínima; #803) | P | Em revisão | branch `chore/sync-regua-802`; `demo.project.ts` vazio (só contatos, dado pessoal) |
+| RS.4 | Sync da régua 665aaf0 (#802, demo mínima; #803) | P | Em revisão | branch `chore/sync-regua-802`; `demo.project.ts` vazio (só contatos, dado pessoal) |
 
 ## Fase N · Ideias (fora do escopo atual)
 

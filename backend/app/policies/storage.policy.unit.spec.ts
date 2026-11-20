@@ -202,7 +202,7 @@ test.group('StoragePolicy > show and delete', () => {
       )
     })
 
-    test(`${action}: a customer file is the customer's alone, not even the tenant staff's`, ({
+    test(`${action}: another customer never reaches a customer file, nor a plain tenant member nor the parent tenant`, ({
       assert,
     }) => {
       const proof = fileOf({
@@ -213,11 +213,11 @@ test.group('StoragePolicy > show and delete', () => {
 
       assert.isTrue(policy[action](customer, proof))
       assert.instanceOf(
-        policy[action](actorOf('staff-1', role), proof),
+        policy[action]({ ...customer, id: 'customer-2' }, proof),
         AuthorizationResponse,
       )
       assert.instanceOf(
-        policy[action]({ ...customer, id: 'customer-2' }, proof),
+        policy[action](actorOf('staff-9', role, 'tenant-b'), proof),
         AuthorizationResponse,
       )
     })
@@ -264,4 +264,95 @@ test.group('StoragePolicy > show and delete', () => {
     assert.instanceOf(policy.show(moved, fileOf()), AuthorizationResponse)
     assert.instanceOf(policy.delete(moved, fileOf()), AuthorizationResponse)
   }).skip(skip, NO_NON_STAFF_ROLE)
+})
+
+/**
+ * Reading is wider than writing for a customer's file and for the platform's own files
+ * (DECISIONS.md #803): the staff of the store reads the proof and never writes it; the platform
+ * team reads the files of `tenant_id` null and no tenant's, and only its owner writes them.
+ */
+test.group('StoragePolicy > read wider than write', () => {
+  const policy = new StoragePolicy()
+  const [role] = STAFF_USER_ROLES
+  if (role === undefined) throw new Error('the project declares no staff role')
+  const plain: UserRole = ROLE_FIXTURES.nonStaff ?? role
+
+  const actorOf = (
+    id: string,
+    tenant: Actor['tenant'],
+    platformRole: Actor['platformRole'] = PLATFORM_ROLE.USER,
+  ): Actor => ({
+    id,
+    email: `${id}@mail.com`,
+    phone: null,
+    platformRole,
+    tenant,
+    avatarId: null,
+  })
+  const own = { id: 'tenant-a', cityId: 'city-1', childIds: ['tenant-c'] }
+  const fileOf = (overrides: Partial<ReturnType<Storage['snapshot']>>) =>
+    Storage.restore({
+      id: 'storage-1',
+      filename: 'a.png',
+      originalName: 'a.png',
+      mimetype: 'image/png',
+      size: 10,
+      path: 'a.png',
+      status: UPLOAD_STATUS.UPLOADED,
+      uploadId: null,
+      partSize: null,
+      tenantId: 'tenant-a',
+      customerId: null,
+      uploadedBy: 'someone',
+      createdAt: null,
+      updatedAt: null,
+      deletedAt: null,
+      ...overrides,
+    })
+
+  test("the staff of the store reads the customer's file and writes nothing of it", ({
+    assert,
+  }) => {
+    const proof = fileOf({ customerId: 'customer-1' })
+    const staff = actorOf('staff-1', { ...own, role })
+
+    assert.isTrue(policy.show(staff, proof))
+    assert.isTrue(policy.download(staff, proof))
+    assert.instanceOf(policy.delete(staff, proof), AuthorizationResponse)
+    assert.instanceOf(policy.upload(staff, proof), AuthorizationResponse)
+  })
+
+  test("a plain member and the parent tenant's staff do not read the customer's file", ({
+    assert,
+  }) => {
+    const proof = fileOf({ customerId: 'customer-1', tenantId: 'tenant-c' })
+    const member = actorOf('member-1', { ...own, id: 'tenant-c', role: plain })
+    const parent = actorOf('staff-1', { ...own, role })
+
+    assert.instanceOf(policy.show(parent, proof), AuthorizationResponse)
+    if (ROLE_FIXTURES.nonStaff !== null)
+      assert.instanceOf(policy.show(member, proof), AuthorizationResponse)
+  })
+
+  test("the platform team reads the platform's files and no tenant's; only its owner writes them", ({
+    assert,
+  }) => {
+    const platformFile = fileOf({ tenantId: null })
+    const tenantFile = fileOf({ tenantId: 'tenant-a' })
+    const owner = actorOf('owner-1', null, PLATFORM_ROLE.OWNER)
+    const admin = actorOf('admin-1', null, PLATFORM_ROLE.ADMINISTRATOR)
+
+    for (const actor of [owner, admin]) {
+      assert.isTrue(policy.show(actor, platformFile))
+      assert.instanceOf(policy.show(actor, tenantFile), AuthorizationResponse)
+    }
+    assert.isTrue(policy.delete(owner, platformFile))
+    assert.isTrue(policy.upload(owner, platformFile))
+    assert.instanceOf(policy.delete(admin, platformFile), AuthorizationResponse)
+    assert.instanceOf(policy.upload(admin, platformFile), AuthorizationResponse)
+    assert.instanceOf(
+      policy.show(actorOf('user-1', null), platformFile),
+      AuthorizationResponse,
+    )
+  })
 })

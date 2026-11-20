@@ -13,6 +13,7 @@ import {
   authenticateAsAdministrator,
   authenticateAsCustomer,
   authenticateAsNonStaff,
+  authenticateAsPlatformAdministrator,
   body,
   resetDatabase,
   signInWithFactory,
@@ -301,5 +302,18 @@ test.group('storages > listagem > escopo', (group) => {
     const listed = await client.get('/storages').cookies(session)
 
     assert.notInclude(idsOf(listed), file.id)
+  })
+
+  test("the platform team lists the platform's files and no tenant's", async ({
+    client,
+    assert,
+  }) => {
+    const platformFile = await storageRow({ tenantId: null })
+    await storageRow()
+    const admin = await authenticateAsPlatformAdministrator(client)
+
+    const listed = await client.get('/storages').cookies(admin)
+
+    assert.deepEqual(idsOf(listed), [platformFile.id])
   })
 })

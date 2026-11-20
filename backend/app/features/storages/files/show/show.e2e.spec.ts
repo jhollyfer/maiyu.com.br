@@ -10,6 +10,7 @@ import {
   authenticateAsAdministrator,
   authenticateAsCustomer,
   authenticateAsNonStaff,
+  authenticateAsPlatformAdministrator,
   body,
   resetDatabase,
   signInWithFactory,
@@ -183,7 +184,7 @@ test.group('storages > detalhe > autorização', (group) => {
     response.assertStatus(404)
   })
 
-  test("the customer sees the file it uploaded and nobody else's", async ({
+  test("the customer sees the file it uploaded, the store's staff sees it too, and nobody else", async ({
     client,
   }) => {
     const store = await Tenants.create()
@@ -204,8 +205,8 @@ test.group('storages > detalhe > autorização', (group) => {
 
     own.assertStatus(200)
     foreign.assertStatus(404)
-    // The staff reads the proof through `download`, not through the detail.
-    tenantStaff.assertStatus(404)
+    // The staff of the store reads the proof (DECISIONS.md #803); it never writes it.
+    tenantStaff.assertStatus(200)
   })
 
   test("the customer with no link to the store does not see a store's file: 404", async ({
@@ -218,5 +219,25 @@ test.group('storages > detalhe > autorização', (group) => {
     const response = await client.get(`/storages/${file.id}`).cookies(customer)
 
     response.assertStatus(404)
+  })
+})
+
+test.group('storages > detalhe > plataforma', (group) => {
+  group.each.setup(() => resetDatabase())
+
+  test("the platform team reads the platform's file and no tenant's", async ({
+    client,
+  }) => {
+    const platformFile = await storageRow({ tenantId: null })
+    const tenantFile = await storageRow()
+    const admin = await authenticateAsPlatformAdministrator(client)
+
+    const own = await client.get(`/storages/${platformFile.id}`).cookies(admin)
+    const foreign = await client
+      .get(`/storages/${tenantFile.id}`)
+      .cookies(admin)
+
+    own.assertStatus(200)
+    foreign.assertStatus(404)
   })
 })

@@ -2,6 +2,7 @@ import type { AuthorizationResponse } from '@adonisjs/bouncer'
 
 import type { Actor } from '@maiyu/shared'
 
+import { TenantScope } from '#core/tenant-scope'
 import type { Storage } from '#domain/storage/storage.entity'
 import SessionScopedPolicy from '#policies/session-scoped-policy.base'
 
@@ -21,17 +22,21 @@ import SessionScopedPolicy from '#policies/session-scoped-policy.base'
  * avatar, which the `actor` already carries, without a query (the policy does not go to the
  * database beyond the target, _standards/architecture.md §2). Closed by default.
  *
- * `show`, `delete` and `upload` (`parts`, `complete`; DECISIONS.md #803): the detail hands out a signed URL and the removal
- * destroys the binary, so both are narrower than the tenant's shared library. They reach a file
- * that the `actor` uploaded itself (`uploaded_by`: the pending photo, the orphan it discards, the
- * avatar it swaps) and, for the tenant's own files (`customer_id` null), the staff of the tenant.
- * A plain member never reaches another member's file. A file an end customer owns is the
- * customer's alone, in these two actions: the staff reads the proof through `download`. The
- * removal also needs the tenant to be one the `actor` writes in: a parent tenant reads its
- * children's files and never removes them. The listing (`GET /storages`) is not a policy
- * call, it is the same rule written as a `where` (`StorageRepository.paginate`, like the tenant
- * scope): the staff of the tenant lists every file it reads, any other account lists only what it
- * uploaded itself, so the list never shows what the detail refuses.
+ * `show`, `delete` and `upload` (`parts`, `complete`; DECISIONS.md #803): the detail hands out a
+ * signed URL, the removal destroys the binary and the upload routes sign the PUT, so they are
+ * narrower than the tenant's shared library. They reach a file that the `actor` uploaded itself
+ * (`uploaded_by`: the pending photo, the orphan it discards, the avatar it swaps) and, for the
+ * tenant's own files (`customer_id` null), the staff of the tenant. A plain member never reaches
+ * another member's file. A file an end customer owns is read by the customer and by the staff of
+ * its own tenant (the payment proof), never by a plain member nor by a parent tenant; it is
+ * written (`upload`, `delete`) by the customer alone. Writing also needs the tenant to be one the
+ * `actor` writes in: a parent tenant reads its children's files and never changes them. The
+ * platform's own files (`tenant_id` null, the global catalog's) are read by the platform team
+ * (`PLATFORM_STAFF_ROLES`) and written by its owner; no tenant's file is within the platform
+ * team's reach. The listing (`GET /storages`) is not a policy call, it is the same rule written as
+ * a `where` (`StorageRepository.paginate`, like the tenant scope): the staff of the tenant lists
+ * every file it reads, any other account lists only what it uploaded itself (plus the platform's
+ * own files, for the platform team), so the list never shows what the detail refuses.
  *
  * It receives `(actor, file | null)`. The denial is `404` and not `403`, the same
  * response as a nonexistent file: a 403 would confirm to whoever probes that this
@@ -79,18 +84,34 @@ export default class StoragePolicy extends SessionScopedPolicy {
     if (!storage) return this.hidden('STORAGE_NOT_FOUND', 'files.not_found')
     const { tenantId, customerId, uploadedBy } = storage.snapshot()
     if (actor.avatarId === storage.id) return true
-    // A customer's file is the customer's alone: the tenant staff downloads it, never browses it.
     if (customerId !== null) {
+      // Reading a customer's file (the payment proof) is the customer's and its own tenant's staff's;
+      // writing it (`upload`, `delete`) is the customer's alone.
       if (this.ownsRow(actor, customerId)) return true
+      if (
+        access === 'read' &&
+        this.reachesCustomerRow(actor, tenantId, customerId)
+      )
+        return true
 
       return this.hidden('STORAGE_NOT_FOUND', 'files.not_found')
     }
+    // The platform's own files (`tenant_id` null): its team reads them, its owner also writes them.
+    if (tenantId === null && this.servesPlatformFile(actor, access)) return true
     if (!this.reachesTenant(actor, tenantId, access))
       return this.hidden('STORAGE_NOT_FOUND', 'files.not_found')
     if (uploadedBy !== null && uploadedBy === actor.id) return true
     if (this.isStaffOf(actor, tenantId)) return true
 
     return this.hidden('STORAGE_NOT_FOUND', 'files.not_found')
+  }
+
+  /** Who reaches the platform's own files: its staff reads, its owner (no tenant) writes. */
+  private servesPlatformFile(actor: Actor, access: 'read' | 'write'): boolean {
+    const scope = TenantScope.ofAccess(actor)
+    if (access === 'write') return scope.platform
+
+    return scope.platformStaff
   }
 
   /** The tenant of the row is one the `actor` reads, or writes when the action removes. */

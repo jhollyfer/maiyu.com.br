@@ -3,7 +3,7 @@ import type {
   ModelQueryBuilderContract,
 } from '@adonisjs/lucid/types/model'
 
-import { TenantScope } from '#core/tenant-scope'
+import { TenantScope, type ReadOwnedOptions } from '#core/tenant-scope'
 import TenantScoped from '#repositories/shared/tenant-scoped'
 
 /**
@@ -17,7 +17,7 @@ import TenantScoped from '#repositories/shared/tenant-scoped'
  * same rule as a `where`, so a row the request may not reach is simply not found and the use case
  * answers the 404 of a missing id (`_standards/backend.md` §4.6).
  */
-export type CustomerReadOptions = {
+export type CustomerReadOptions = ReadOwnedOptions & {
   /**
    * The table is read by the platform's staff in every tenant (DECISIONS.md #511): the review queue
    * of a payment the platform checks. Off by default, so a table nobody declared (the file library)
@@ -63,7 +63,10 @@ export default class CustomerScoped {
             .whereNull(CustomerScoped.COLUMN)
         })
       // The platform's own rows only: a customer's row with no tenant is not one of them (#511).
-      if (scope.platform)
+      if (
+        scope.platform ||
+        (options.platformOwn === true && scope.platformStaff)
+      )
         rows.orWhere((platformOwn) => {
           platformOwn
             .whereNull(TenantScoped.COLUMN)

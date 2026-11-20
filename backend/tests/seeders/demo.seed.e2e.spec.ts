@@ -65,6 +65,10 @@ function domain(): string {
 test.group('seeders > demo', (group) => {
   group.each.setup(async () => {
     const teardown = await resetDatabase()
+    // Multi-tenant, whatever `TENANT_PROJECT.singleSlug` says (DECISIONS.md #410): the public
+    // resolution below addresses the demo tenant by its slug. The seed stays the project's.
+    const { seed: projectSeed } = await app.container.make(TenantConfig)
+    app.container.swap(TenantConfig, () => new TenantConfig(null, projectSeed))
 
     return async () => {
       env.set('SEED_DEMO_PASSWORD', '')
@@ -213,5 +217,28 @@ test.group('seeders > demo', (group) => {
       assert.equal(direct?.tenantId, demo.id)
       assert.deepEqual(direct?.cityTenantIds, [demo.id])
     }
+  })
+
+  test('in the single-client mode the demo tenant is reached by signing in with a demo account', async ({
+    assert,
+  }) => {
+    const { seed: projectSeed } = await app.container.make(TenantConfig)
+    app.container.swap(
+      TenantConfig,
+      () => new TenantConfig('single', projectSeed),
+    )
+    await seed(PASSWORD)
+    const tenants = await app.container.make(TenantLucidRepository)
+    const member = await User.findByOrFail(
+      'email',
+      `${DemoConfig.label(USER_ROLES[0] ?? '')}@${domain()}`,
+    )
+
+    const memberships = await tenants.membershipsOf(member.id)
+
+    assert.sameMembers(
+      memberships.map((each) => each.id),
+      (await demoTenants()).map((each) => each.id),
+    )
   })
 })

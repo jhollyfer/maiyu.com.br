@@ -2,6 +2,7 @@ import { UPLOAD_STATUS } from '@maiyu/shared'
 import type { Paginated, SortDirection } from '@maiyu/shared'
 
 import {
+  STORAGE_READ,
   StorageRepository,
   type StorageFileRead,
   type StorageListCriteria,
@@ -34,7 +35,7 @@ export class StorageMemoryRepository extends StorageRepository {
     if (
       !props ||
       props.deletedAt ||
-      !TenantScope.readsOwned(props.tenantId, props.customerId)
+      !TenantScope.readsOwned(props.tenantId, props.customerId, STORAGE_READ)
     )
       return null
 
@@ -61,7 +62,7 @@ export class StorageMemoryRepository extends StorageRepository {
       props.status !== UPLOAD_STATUS.UPLOADED ||
       props.tenantId === null ||
       props.customerId !== null ||
-      !TenantScope.readsOwned(props.tenantId, props.customerId)
+      !TenantScope.readsOwned(props.tenantId, props.customerId, STORAGE_READ)
     )
       return null
 
@@ -73,7 +74,7 @@ export class StorageMemoryRepository extends StorageRepository {
     if (
       !props ||
       props.deletedAt ||
-      !TenantScope.readsOwned(props.tenantId, props.customerId)
+      !TenantScope.readsOwned(props.tenantId, props.customerId, STORAGE_READ)
     )
       return null
 
@@ -87,7 +88,7 @@ export class StorageMemoryRepository extends StorageRepository {
       if (
         !props ||
         props.deletedAt ||
-        !TenantScope.readsOwned(props.tenantId, props.customerId)
+        !TenantScope.readsOwned(props.tenantId, props.customerId, STORAGE_READ)
       )
         return []
 
@@ -178,7 +179,9 @@ export class StorageMemoryRepository extends StorageRepository {
     const sign = SIGN[criteria.direction]
     const all = [...this.rows.values()]
       .filter((row) => !row.deletedAt)
-      .filter((row) => TenantScope.readsOwned(row.tenantId, row.customerId))
+      .filter((row) =>
+        TenantScope.readsOwned(row.tenantId, row.customerId, STORAGE_READ),
+      )
       .filter((row) => this.listedFor(row))
       .filter((row) => !criteria.status || row.status === criteria.status)
       .filter((row) => !criteria.mimetype || row.mimetype === criteria.mimetype)
@@ -205,8 +208,12 @@ export class StorageMemoryRepository extends StorageRepository {
   private listedFor(row: StorageProps): boolean {
     const scope = TenantScope.current()
     if (!scope || scope.servedTenantId() !== null) return true
+    if (row.uploadedBy !== null && row.uploadedBy === scope.accountId)
+      return true
 
-    return row.uploadedBy !== null && row.uploadedBy === scope.accountId
+    return (
+      scope.platformStaff && row.tenantId === null && row.customerId === null
+    )
   }
 
   private live(): StorageProps[] {
