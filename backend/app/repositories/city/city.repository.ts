@@ -8,6 +8,8 @@ export abstract class CityRepository {
   /** Every city, by name: the catalog is small and the selector shows it whole. */
   abstract list(): Promise<City[]>
   abstract findById(id: string): Promise<City | null>
+  /** The city of a URL segment (`/pt-br/<city>/...`), `null` when none holds the slug. */
+  abstract findBySlug(slug: string): Promise<City | null>
   /** Whether another city already holds the slug, the URL segment after the language. */
   abstract slugTaken(slug: string, exceptId: string | null): Promise<boolean>
   /** Whether a tenant still lives in the city: removing it would orphan the tenant. */

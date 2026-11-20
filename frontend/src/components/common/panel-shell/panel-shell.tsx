@@ -3,6 +3,7 @@ import * as React from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
+import { ProfileIncompleteNotice } from '#/components/common/profile-incomplete-notice/profile-incomplete-notice'
 import { NotFoundPageServerError } from '#/components/common/route-status/not-found-page-server-error'
 import { SidebarInset, SidebarProvider } from '#/components/ui/sidebar'
 import { cn } from '#/lib/cn'
@@ -11,7 +12,7 @@ import type { PanelMenuGroup } from '#/lib/panel-menu'
 import { m } from '#/paraglide/messages'
 import type { AccountProfileShowResponse } from '@maiyu/shared'
 
-import { PanelShellContext } from './panel-shell-context'
+import { PanelShellContext, usePanelShellContext } from './panel-shell-context'
 
 /** O alvo do link de pular e o `id` do `<main>` que o `SidebarInset` desenha. */
 const MAIN_ID = 'main-content'
@@ -23,6 +24,14 @@ type PanelShellProps = Readonly<{
   menu: ReadonlyArray<PanelMenuGroup>
   /** Contador por item, pelo `to`: a consulta é do projeto, o número chega por aqui. */
   badges?: Readonly<Partial<Record<string, number>>>
+  /**
+   * Os campos do perfil que faltam para alguma função da conta (DECISIONS.md #799): o projeto os lê do
+   * recurso que os exige e o painel mostra o aviso "complete o seu perfil" no topo do conteúdo. Vazio,
+   * sem aviso.
+   */
+  profilePending?: ReadonlyArray<string>
+  /** O rótulo do projeto por campo pendente; sem ele vale o `FIELD_LABELS` do `shared/`. */
+  profileFieldLabels?: Readonly<Record<string, string>>
   /** `PanelShellSidebar` e `PanelShellInset`, na ordem em que aparecem. */
   children: React.ReactNode
 }>
@@ -46,10 +55,18 @@ export function PanelShell({
   account,
   menu,
   badges = {},
+  profilePending = [],
+  profileFieldLabels,
   children,
 }: PanelShellProps): React.JSX.Element {
   // Sem `useMemo`: o React Compiler memoiza o objeto pelo que ele lê.
-  const value = { account, menu: PanelMenu.visible(menu, account), badges }
+  const value = {
+    account,
+    menu: PanelMenu.visible(menu, account),
+    badges,
+    profilePending,
+    profileFieldLabels,
+  }
 
   return (
     // `h-svh`, não `min-h-svh`: uma altura que cresce não limita ninguém, e a `PageShell` das telas
@@ -98,6 +115,9 @@ export function PanelShellContent({
   children,
   ...props
 }: React.ComponentProps<'div'>): React.JSX.Element {
+  const { profilePending, profileFieldLabels } =
+    usePanelShellContext('PanelShellContent')
+
   return (
     <div
       data-slot="panel-shell-content"
@@ -107,6 +127,10 @@ export function PanelShellContent({
       )}
       {...props}
     >
+      <ProfileIncompleteNotice
+        missing={profilePending}
+        labels={profileFieldLabels}
+      />
       <QueryErrorResetBoundary>
         {({ reset }) => (
           <ErrorBoundary

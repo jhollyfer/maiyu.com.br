@@ -2,7 +2,7 @@ import { middlewareInfo } from '@adonisjs/core/http/helpers'
 import app from '@adonisjs/core/services/app'
 import router from '@adonisjs/core/services/router'
 
-import { BASE_LOCALE, LOCALES, type z } from '@maiyu/shared'
+import { BASE_LOCALE, LOCALES, PLATFORM_ROLE, type z } from '@maiyu/shared'
 
 import openapi, { ACTION_OVERRIDES, type TagRule } from '#config/openapi'
 import { SESSION_TOKEN } from '#config/session-token'
@@ -357,6 +357,33 @@ type Protection = {
 /** What `route.middleware.all()` returns, without repeating the framework union. */
 type MiddlewareEntry = Parameters<typeof middlewareInfo>[0]
 
+/** The label `middleware.customer()` publishes: the buyer of a global storefront, no role list. */
+export const CUSTOMER_LABEL = 'customer'
+
+/**
+ * The list a middleware of the chain lets through, or `undefined` when it is not an access one.
+ * `info.args` is the one argument the route passed (`args: args[0]` in the framework's
+ * `middlewareReferenceBuilder`), never a list of arguments: `role([...])` carries the array,
+ * `platform({ roles })` the options object and `platform()` nothing. `roles` is already the
+ * evaluated list (the constant is resolved at runtime); `platform()` without it is the owner only
+ * (`platform.middleware.ts`); `customer()` has no roles, so it is the label above.
+ */
+function accessOf(name: string, args: unknown): string[] | undefined {
+  if (name === 'role') return toRoles(args)
+  if (name === 'customer') return [CUSTOMER_LABEL]
+  if (name !== 'platform') return undefined
+
+  if (
+    typeof args === 'object' &&
+    args !== null &&
+    'roles' in args &&
+    Array.isArray(args.roles)
+  )
+    return toRoles(args.roles)
+
+  return [PLATFORM_ROLE.OWNER]
+}
+
 function toRoles(args: unknown): string[] {
   if (!Array.isArray(args)) return []
 
@@ -367,7 +394,8 @@ function toRoles(args: unknown): string[] {
 
 /**
  * Reads the route protection from the middleware chain itself. The roles come from the
- * arguments of `middleware.role([...])`, so the documentation cannot
+ * arguments of `middleware.role([...])` and `middleware.platform({ roles })`, and
+ * `middleware.customer()` is its own label (DECISIONS.md #798), so the documentation cannot
  * diverge from who can actually call the endpoint.
  *
  * Role groups nest - deleting in the panel is inside
@@ -396,10 +424,12 @@ export async function readProtection(
       protection.throttled = true
     if (info.name === 'auth') protection.authenticated = true
     if (info.name === 'silentAuth') protection.optional = true
-    if (info.name !== 'role') continue
-    if (!('args' in info)) continue
 
-    const roles = toRoles(info.args)
+    let args: unknown = []
+    if ('args' in info) args = info.args
+
+    const roles = accessOf(info.name, args)
+    if (!roles) continue
 
     if (!allowed) allowed = roles
     if (allowed)

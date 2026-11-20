@@ -32,6 +32,8 @@ type Input = {
   readonly exceptions: ReadonlyArray<PatternException>
   readonly baseline: ReadonlyArray<BaselineEntry>
   readonly rules?: ReadonlyArray<Rule>
+  /** The public sign-up validators the project listed in its config (DECISIONS.md #799). */
+  readonly signupValidators?: ReadonlyArray<string>
 }
 
 const SECTION = 'backend.md §10'
@@ -44,7 +46,11 @@ const READ = /\.(ts|tsx|json)$|(^|\/)Dockerfile-production$/
  */
 export class PatternCheck {
   static run(input: Input): Finding[] {
-    const rules = input.rules ?? PatternRules.CATALOG
+    const signup = input.signupValidators ?? []
+    const rules = input.rules ?? [
+      ...PatternRules.CATALOG,
+      ...PatternRules.publicSignup(signup),
+    ]
     const raw: Finding[] = []
     for (const rule of rules) {
       for (const file of input.files) {
@@ -56,7 +62,7 @@ export class PatternCheck {
             line,
             rule: rule.id,
             section: rule.section,
-            message: rule.message,
+            message: PatternCheck.describe(rule, file, line),
           })
         }
       }
@@ -69,6 +75,22 @@ export class PatternCheck {
         !input.exceptions.some((e) => same(e, finding)) &&
         !input.baseline.some((b) => same(b, finding)),
     )
+
+    // A listed name that no validator declares would silently check nothing: it fails instead.
+    for (const name of signup) {
+      if (
+        !input.files.some((file) =>
+          PatternRules.declaresValidator(file.text, name),
+        )
+      )
+        findings.push(
+          PatternCheck.meta(
+            'backend/scripts/pattern-check.config.ts',
+            'unknown-signup-validator',
+            `\`${name}\` in PUBLIC_SIGNUP_VALIDATORS is not a \`vine.create\` validator exported by the backend: fix the name or remove it`,
+          ),
+        )
+    }
 
     for (const exception of input.exceptions) {
       if (!exception.reason.trim()) {
@@ -102,6 +124,14 @@ export class PatternCheck {
       }
     }
     return findings
+  }
+
+  /** The rule message, with what the rule adds for the line (the sign-up field name). */
+  private static describe(rule: Rule, file: SourceFile, line: number): string {
+    const detail = rule.detail?.(file, line)
+    if (!detail) return rule.message
+
+    return `${rule.message}: ${detail}`
   }
 
   static meta(file: string, rule: string, message: string): Finding {
@@ -153,8 +183,39 @@ export class PatternCheck {
       files: PatternCheck.read(root),
       exceptions,
       baseline,
+      signupValidators: PatternCheck.names(
+        PatternCheck.optional(config, 'PUBLIC_SIGNUP_VALIDATORS'),
+      ),
     })
     process.exitCode = CheckReport.print('pattern:check', findings)
+  }
+
+  /**
+   * What the config module exports under `key`, `[]` when it does not: a config made before the
+   * export existed (the model is an extension point and never rewritten) keeps working.
+   */
+  static optional(config: unknown, key: string): unknown {
+    if (config && typeof config === 'object' && key in config)
+      return Reflect.get(config, key)
+
+    return []
+  }
+
+  /** The names of a config list (`PUBLIC_SIGNUP_VALIDATORS`): an array of strings, narrowed from `unknown`. */
+  static names(value: unknown): ReadonlyArray<string> {
+    if (!Array.isArray(value))
+      throw new Error(
+        'pattern:check: PUBLIC_SIGNUP_VALIDATORS is an array of names',
+      )
+
+    return value.map((item: unknown) => {
+      if (typeof item !== 'string')
+        throw new Error(
+          'pattern:check: PUBLIC_SIGNUP_VALIDATORS holds names (strings)',
+        )
+
+      return item
+    })
   }
 
   /** Data from outside (config module, baseline JSON) is `unknown` until narrowed (typescript.md §2). */

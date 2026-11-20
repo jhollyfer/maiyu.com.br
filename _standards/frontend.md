@@ -474,6 +474,39 @@ célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel e
   #399) vale também para o slug do cliente. Projeto de **cliente único** (`TENANT_PROJECT.singleSlug` no
   backend, `backend.md` §4.14) não monta a rota `$city` nem usa `CityPath`/`CitySwitcher`: a URL é
   `/pt-br/agenda`, sem segmento de cidade.
+  Produto de **item por cidade, sem tenant** (bloco `city`, `DECISIONS.md` #795) usa o mesmo
+  segmento: `routes/$city/layout.tsx` é do kit, o `loader` chama `CityGuard.require` (`lib/city-guard.ts`,
+  `notFound()` se nenhuma cidade tem o slug, mensagem `kit_city_not_found`) e a subárvore lê
+  `useCity()` sob o `TenantProvider`. As chaves de cache são `cityKeys` (`queries/cities.ts`:
+  `all`, `list`, `bySlug`, `scoped(slug)`); o que o projeto lê de uma cidade nasce de `scoped(slug)`.
+  Param de rota: _doc-lib/tanstack-router.md#guide/path-params; loader:
+  _doc-lib/tanstack-router.md#guide/data-loading.
+
+### 3.6 Perfil incompleto: o aviso e a página que completa *(`DECISIONS.md` #799)*
+
+O cadastro público pede só o mínimo e o resto se completa depois do login (`backend.md` §4.16), então
+o frontend tem duas peças, ambas do kit:
+
+- **A página que completa** é `routes/_private/profile/` (§1.1), em qualquer nível de acesso. O que
+  o projeto pede de mais (documento, Pix, endereço) entra em `-profile-extra.tsx`, o ponto de extensão
+  que o `/profile` renderiza abaixo do formulário; o kit não o reescreve.
+- **O aviso** é `ProfileIncompleteNotice` (`components/common/profile-incomplete-notice/`, o `Alert` do
+  shadcn, _doc-lib/shadcn.md#alert): "Complete o seu perfil", o que falta e o link para `/profile`.
+  O `PanelShell` o põe no topo do conteúdo quando recebe `profilePending` (a lista de campos) e
+  `profileFieldLabels` (rótulo por campo, opcional). O dado entra por prop: o `layout.tsx` do projeto
+  lê a pendência do recurso que a exige (`<recurso>MeQueryOptions`, como o `ProfileExtra`, #765) e a
+  passa; nunca campo novo no `AccountProfileShowResponse`. Sem pendência, nada aparece, e o painel
+  inteiro segue usável: só a função que depende do dado fica travada.
+- **A recusa da API** é `409` com `code: 'PROFILE_INCOMPLETE'` e os campos que faltam nas chaves de
+  `errors` (`backend.md` §4.16). O cliente a reconhece (`HTTPError.isProfileIncomplete`,
+  `missingProfileFields`, `HTTPErrorCode.PROFILE_INCOMPLETE`), e `httpErrorMessage` diz o que falta
+  ("Complete o seu perfil para continuar. Falta informar: ..."), com o rótulo de `FIELD_LABELS` do
+  `shared/` (`ProfilePending.describe`). Não é erro de campo do formulário que a disparou, então vai
+  para o rodapé dele, e não oferece "Tentar de novo": a mesma requisição é recusada até o perfil ser
+  completado.
+
+Textos por i18n, chaves `kit_profile_incomplete_*` nos três idiomas do kit; interface só com peças do
+`components/ui/` (§6).
 
 ---
 
@@ -663,6 +696,14 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   nada. Arquivo que o projeto não tem é pulado; âncora que não casa com nada reprova (o registry mudou
   de forma e o patch precisa ser revisto). Patch obrigatório novo entra no JSON, e a régua aponta
   para ele em vez de repetir a lista.
+- **Nome acessível de `Radio`, `Checkbox` e `Switch` no HTML do servidor** (`DECISIONS.md` #800). O Base
+  UI renderiza `<span role="radio|checkbox|switch">` e liga o `aria-labelledby` só depois da hidratação
+  (_doc-lib/base-ui.md#react/components/radio-group), então o HTML do servidor saía sem nome (axe
+  `aria-toggle-field-name`). O `ui-patches.json` tem um segundo tipo de entrada, `element` +
+  `attribute` + `value`, que exige o atributo JSX antes do `{...props}`, com `// casa:`, e o `--fix`
+  aplica; os arquivos e os valores moram lá, não aqui. Quem usa `<Label htmlFor={id}>` com o controle
+  de `id={id}` já sai nomeado no servidor, sem passar nada; `aria-label` ou `aria-labelledby` próprios
+  vencem. `scripts/ui-accessible-name.test.ts` prova com `renderToString`.
 - **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
   sai" da #146): `shadcn add --all` sem `--overwrite`, que é o padrão da CLI, para não apagar
   arquivo que já tem linha `// casa:`. Antes, `--dry-run` mostra o que entra; depois, o arquivo marcado que o
@@ -1103,6 +1144,7 @@ A lista é fechada:
 | `components/common/panel-shell/` *(bloco `painel`)* | casca do painel autenticado, compound: `PanelShell` (provedor, link de pular, contexto de conta e menu), `PanelShellSidebar` (marca, grupos filtrados pela conta, contador por item), `PanelShellInset`, `PanelShellHeader` (trilha, idioma, tema), `PanelShellAccountMenu` (perfil, `TenantSwitcher`, sair), `PanelShellSignOutConfirm`, `PanelShellContent` (rola, limite de erro, `MaiyuCredit`) | `_private/layout.tsx` (§1.1); só depende da API pública do `ui/sidebar` do shadcn (`shadcn` de `kit.deps.json`) |
 | `components/common/auth-shell/` *(bloco `painel`)* | casca das telas de sessão: `AuthShell` (`<header>` com a marca, `<main>` com o cartão, `<footer>` com o crédito), `AuthShellHeader`, `AuthShellTitle` (o `h1`), `AuthShellDescription`, `AuthShellContent` | `_authentication/` (entrada do kit; cadastro e recuperação do projeto) |
 | `components/common/sign-in-form/` *(bloco `painel`)* | formulário de entrada: e-mail ou celular e senha, validator do `shared/`, mensagem do kit para `401 INVALID_CREDENTIALS` e `429`; depois de entrar só invalida o router, e a guarda inversa decide o destino | `/sign-in` |
+| `components/common/profile-incomplete-notice/` *(bloco `painel`)* | o aviso "complete o seu perfil": o que falta e o link para `/profile`; sem pendência não desenha nada | `PanelShellContent`, por `profilePending` (§3.6) |
 | `components/common/account-profile-form/` *(bloco `painel`)* | o perfil da própria conta: nome, celular, senha nova, tudo confirmado com a senha atual (`PUT /account/profile`); `AccountProfilePayload` traduz o texto dos campos para o validator do `shared/` | `/profile` |
 | `components/common/tenant-switcher/` *(bloco `painel`)* | grupo de itens de rádio para o menu de conta: troca o vínculo ativo, só aparece com dois ou mais | `PanelShellAccountMenu` |
 | `components/common/plain-form/` *(bloco `painel`)* | o `<form method="post">` das telas que não são cadastro do painel (entrada, perfil); o outro `<form>` do kit é o do `FormShell` | formulário de sessão |

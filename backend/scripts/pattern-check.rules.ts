@@ -22,6 +22,8 @@ export type Rule = {
   readonly exclude?: RegExp
   /** Lines (1-based) that break the rule; a file-level rule answers `[1]`. */
   readonly lines: (file: SourceFile) => ReadonlyArray<number>
+  /** What the finding adds to `message` for one of its lines (the field name, for a sign-up). */
+  readonly detail?: (file: SourceFile, line: number) => string
 }
 
 const SPEC = /\.(unit|e2e)\.spec\.ts$|\.test\.tsx?$/
@@ -207,6 +209,151 @@ export class PatternRules {
       if (name.test(code)) out.push(index + 1)
     })
     return out
+  }
+
+  /**
+   * The words that mark a field a public sign-up must not ask for (DECISIONS.md #799): document,
+   * contact beyond the e-mail, address, payment and personal data. The key is split into words
+   * (`pixKey` is `pix` + `key`, `emailAddress` is `email` + `address`), so `address` in a longer name
+   * is found and a name that merely contains the letters is not. English only: field names are
+   * English (`typescript.md` §12). `phone` itself is allowed, alone or next to `email`
+   * (`sensitiveSignupHits`): the login is e-mail and/or phone, at least one of the two, since the kit
+   * accepts both (DECISIONS.md #396). `whatsapp`, `ownerPhone` and the rest stay refused.
+   */
+  static readonly SENSITIVE_SIGNUP_WORDS: ReadonlySet<string> = new Set([
+    'cpf',
+    'cnpj',
+    'rg',
+    'document',
+    'passport',
+    'tax',
+    'phone',
+    'telephone',
+    'mobile',
+    'whatsapp',
+    'pix',
+    'bank',
+    'agency',
+    'iban',
+    'address',
+    'street',
+    'zip',
+    'postal',
+    'cep',
+    'birth',
+    'mother',
+    'father',
+    'photo',
+    'avatar',
+  ])
+
+  /** The words of a field name: `taxId` and `tax_id` are `tax`, `id`. */
+  static words(field: string): ReadonlyArray<string> {
+    return field
+      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+      .split(/[^A-Za-z0-9]+/)
+      .filter(Boolean)
+      .map((word) => word.toLowerCase())
+  }
+
+  /**
+   * The body of `export const <name> = vine.create(...)`, with its first line, or `null` when the
+   * file has no such validator. Comments are blanked (line count kept) so the JSDoc that explains
+   * why a field is absent is not read as the field.
+   * shortcut: a paren scan, not the TS AST; a string holding `(` escapes, upgrade to the AST then.
+   */
+  private static validatorBody(
+    text: string,
+    name: string,
+  ): { readonly body: string; readonly firstLine: number } | null {
+    const blank = (comment: string) => comment.replace(/[^\n]/g, ' ')
+    const code = text
+      .replace(/\/\*[\s\S]*?\*\//g, blank)
+      .replace(/\/\/[^\n]*/g, blank)
+    const declaration = new RegExp(
+      `export\\s+const\\s+${name}\\s*=\\s*vine\\s*\\.\\s*create\\s*\\(`,
+    ).exec(code)
+    if (!declaration) return null
+    const start = declaration.index + declaration[0].length
+    let index = start
+    for (let depth = 1; depth > 0 && index < code.length; index += 1) {
+      if (code[index] === '(') depth += 1
+      if (code[index] === ')') depth -= 1
+    }
+
+    return {
+      body: code.slice(start, index),
+      firstLine: code.slice(0, start).split('\n').length,
+    }
+  }
+
+  /** Whether `text` declares the validator `name`. */
+  static declaresValidator(text: string, name: string): boolean {
+    return PatternRules.validatorBody(text, name) !== null
+  }
+
+  /**
+   * The sensitive fields of the listed public sign-up validators, at any depth of the schema, with
+   * their line. The list is the project's (`PUBLIC_SIGNUP_VALIDATORS` in
+   * `scripts/pattern-check.config.ts`): the check does not guess which route is a sign-up.
+   *
+   * Exception (DECISIONS.md #396, #799): a field named exactly `phone` passes, with or without
+   * `email`, because the login is e-mail and/or phone (at least one) and the sign-up may ask for
+   * either. Any other phone field (`ownerPhone`, `whatsapp`) is profile data and is refused.
+   */
+  static sensitiveSignupHits(
+    text: string,
+    validators: ReadonlyArray<string>,
+  ): ReadonlyArray<{ readonly line: number; readonly field: string }> {
+    const out: Array<{ line: number; field: string }> = []
+    for (const name of validators) {
+      const found = PatternRules.validatorBody(text, name)
+      if (!found) continue
+      const declared = found.body.split('\n').map((line, index) => ({
+        line: found.firstLine + index,
+        field: /^\s*['"]?([A-Za-z_]\w*)['"]?\s*:/.exec(line)?.[1],
+      }))
+      for (const { line, field } of declared) {
+        if (!field) continue
+        if (field === 'phone') continue
+        if (
+          PatternRules.words(field).some((word) =>
+            PatternRules.SENSITIVE_SIGNUP_WORDS.has(word),
+          )
+        )
+          out.push({ line, field })
+      }
+    }
+
+    return out
+  }
+
+  /**
+   * The rule of the public sign-up minimum for the validators the project listed; no list, no rule
+   * (a project without a public sign-up has nothing to check).
+   */
+  static publicSignup(validators: ReadonlyArray<string>): ReadonlyArray<Rule> {
+    if (validators.length === 0) return []
+
+    return [
+      {
+        id: 'public-signup-minimum',
+        section: 'backend.md §4.16 (DECISIONS.md #799)',
+        message:
+          'a public sign-up asks only for the minimum (name, e-mail, password, consents, and the business name and city when it creates a business): document, address, Pix key, bank and birth data are completed after the login, on the profile page; the phone is allowed only as the `phone` login identifier, alone or with the e-mail',
+        scope: /^backend\/app\/validators\/.+\.validator\.ts$/,
+        exclude: SPEC,
+        lines: (file) =>
+          PatternRules.sensitiveSignupHits(file.text, validators).map(
+            (hit) => hit.line,
+          ),
+        detail: (file, line) =>
+          PatternRules.sensitiveSignupHits(file.text, validators)
+            .filter((hit) => hit.line === line)
+            .map((hit) => `\`${hit.field}\``)
+            .join(', '),
+      },
+    ]
   }
 
   static readonly CATALOG: ReadonlyArray<Rule> = [

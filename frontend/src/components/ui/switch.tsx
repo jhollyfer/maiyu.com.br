@@ -12,6 +12,8 @@ function Switch({
 }) {
   return (
     <SwitchPrimitive.Root
+      // casa: accessible name in the server HTML: Base UI links the label to the span role only after hydration, so the control points at the id its Label derives from htmlFor
+      aria-labelledby={props.id ? `${props.id}-label` : undefined}
       data-slot="switch"
       data-size={size}
       className={cn(

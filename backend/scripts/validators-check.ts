@@ -418,6 +418,7 @@ export class ValidatorsCheck {
             value instanceof shared.z.ZodType &&
             !this.#isGlobal(name) &&
             !this.#isClientData(name) &&
+            !this.#isRouteSegment(name) &&
             !backend.has(name),
         )
         .map(([name]) =>
@@ -437,6 +438,14 @@ export class ValidatorsCheck {
    */
   #isClientData(name: string): boolean {
     return name.startsWith('Client')
+  }
+
+  /**
+   * `CityParamsValidator` (block `city`) proves the `:city` segment in the frontend route; the
+   * backend resolves it in `public-city.middleware.ts` by `findBySlug`, so there is no VineJS pair.
+   */
+  #isRouteSegment(name: string): boolean {
+    return name === 'CityParamsValidator'
   }
 
   /** The globals (`IdentifierValidator`, `PaginationValidator`) live in `app/core/validator.ts`. */

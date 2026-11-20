@@ -11,7 +11,6 @@ import {
   type LoginIdentityValue,
 } from '@maiyu/shared'
 
-import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import type { User } from '#domain/user/user.entity'
 import HTTPException from '#exceptions/http.exception'
 import {
@@ -54,16 +53,15 @@ export default class AuthenticationSessionSignInUseCase {
         return left(this.invalidCredentials())
       }
 
-      const hasher = LegacyAwareHashDriver.hasher()
       const stored = user.snapshot().password
-      const passwordMatches = await hasher.verify(stored, payload.password)
+      const passwordMatches = await hash.verify(stored, payload.password)
 
       if (!passwordMatches || !user.canSignIn())
         return left(this.invalidCredentials())
 
-      // Sign-in is the only moment the plain password is at hand, so an old hash (scrypt, or
-      // argon with weaker parameters) is redone here (DECISIONS.md #314, #370).
-      if (hasher.needsReHash(stored))
+      // Sign-in is the only moment the plain password is at hand, so a hash with weaker
+      // parameters than `config/hash.ts` is redone here (DECISIONS.md #314).
+      if (hash.needsReHash(stored))
         await this.rehash(user.id, stored, payload.password)
 
       const tokens = await this.sessions.issue(user.id)

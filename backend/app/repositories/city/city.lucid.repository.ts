@@ -29,6 +29,15 @@ export class CityLucidRepository extends CityRepository {
     return this.toEntity(row)
   }
 
+  async findBySlug(slug: string): Promise<City | null> {
+    const row = await CityModel.query({ client: this.transaction.client() })
+      .where('slug', slug)
+      .first()
+    if (!row) return null
+
+    return this.toEntity(row)
+  }
+
   async slugTaken(slug: string, exceptId: string | null): Promise<boolean> {
     const query = CityModel.query({ client: this.transaction.client() }).where(
       'slug',

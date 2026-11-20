@@ -588,6 +588,205 @@ test.group('pattern:check > exceptions and baseline', () => {
   })
 })
 
+test.group('pattern:check > public sign-up minimum (DECISIONS.md #799)', () => {
+  const path = 'backend/app/validators/authentication/sign-up.validator.ts'
+  const validator = (fields: string) => ({
+    path,
+    text: [
+      "import { vine } from '#core/validator'",
+      '',
+      'export const AuthenticationSignUpValidator = vine.create({',
+      fields,
+      '',
+      'export const AuthenticationSignInValidator = vine.create({',
+      '  phone: vine.string().trim(),',
+      '})',
+    ].join('\n'),
+  })
+  const check = (file: SourceFile, signupValidators: ReadonlyArray<string>) =>
+    PatternCheck.run({
+      files: [file],
+      exceptions: [],
+      baseline: [],
+      signupValidators,
+    })
+
+  test('a sign-up with only the minimum passes', ({ assert }) => {
+    const file = validator(
+      [
+        '  name: vine.string().trim(),',
+        '  email: vine.string().trim().email(),',
+        '  password: Rule.password(),',
+        '  storeName: vine.string().trim(),',
+        '  cityId: vine.string().uuid(),',
+        '  acceptTerms: vine.boolean(),',
+        '})',
+      ].join('\n'),
+    )
+
+    assert.deepEqual(check(file, ['AuthenticationSignUpValidator']), [])
+  })
+
+  test('a sensitive field in the listed sign-up is refused, at the line of the field', ({
+    assert,
+  }) => {
+    const file = validator(
+      [
+        '  name: vine.string().trim(),',
+        '  cpf: vine.string().trim(),',
+        '  profile: vine.object({',
+        '    pixKey: vine.string().trim(),',
+        '    taxId: vine.string().trim(),',
+        '    birth_date: vine.string().trim(),',
+        '    emailAddress: vine.string().trim(),',
+        '  }),',
+        '})',
+      ].join('\n'),
+    )
+
+    const findings = check(file, ['AuthenticationSignUpValidator'])
+
+    assert.deepEqual(
+      findings.map((finding) => [finding.rule, finding.line]),
+      [
+        ['public-signup-minimum', 5],
+        ['public-signup-minimum', 7],
+        ['public-signup-minimum', 8],
+        ['public-signup-minimum', 9],
+        ['public-signup-minimum', 10],
+      ],
+    )
+  })
+
+  test('phone next to the e-mail passes too', ({ assert }) => {
+    const file = validator(
+      [
+        '  name: vine.string().trim(),',
+        '  email: vine.string().trim().email(),',
+        '  phone: vine.string().trim(),',
+        '  password: Rule.password(),',
+        '})',
+      ].join('\n'),
+    )
+
+    assert.deepEqual(check(file, ['AuthenticationSignUpValidator']), [])
+  })
+
+  test('phone alone passes: the login is e-mail and/or phone, at least one of the two', ({
+    assert,
+  }) => {
+    const file = validator(
+      [
+        '  name: vine.string().trim(),',
+        '  phone: vine.string().trim(),',
+        '  password: Rule.password(),',
+        '})',
+      ].join('\n'),
+    )
+
+    assert.deepEqual(check(file, ['AuthenticationSignUpValidator']), [])
+  })
+
+  test('with phone accepted, whatsapp, ownerPhone and the document are still refused', ({
+    assert,
+  }) => {
+    const file = validator(
+      [
+        '  email: vine.string().trim().email(),',
+        '  phone: vine.string().trim(),',
+        '  whatsapp: vine.string().trim(),',
+        '  ownerPhone: vine.string().trim(),',
+        '  cpf: vine.string().trim(),',
+        '})',
+      ].join('\n'),
+    )
+
+    assert.deepEqual(
+      check(file, ['AuthenticationSignUpValidator']).map((f) => f.line),
+      [6, 7, 8],
+    )
+  })
+
+  test('the finding names the field, besides the line', ({ assert }) => {
+    const file = validator(
+      [
+        '  name: vine.string().trim(),',
+        '  taxId: vine.string().trim(),',
+        '})',
+      ].join('\n'),
+    )
+
+    const [finding] = check(file, ['AuthenticationSignUpValidator'])
+
+    assert.equal(finding?.line, 5)
+    assert.include(finding?.message ?? '', '`taxId`')
+  })
+
+  test('only the listed validators are read: a sign-in may ask for the phone', ({
+    assert,
+  }) => {
+    const file = validator('  name: vine.string().trim(),\n})')
+
+    assert.deepEqual(check(file, ['AuthenticationSignUpValidator']), [])
+  })
+
+  test('a field named in a comment is not a field', ({ assert }) => {
+    const file = validator(
+      [
+        '  // cpf: the document is asked on the profile page, after the login',
+        '  name: vine.string().trim(),',
+        '})',
+      ].join('\n'),
+    )
+
+    assert.deepEqual(check(file, ['AuthenticationSignUpValidator']), [])
+  })
+
+  test('a listed name that no validator declares fails instead of checking nothing', ({
+    assert,
+  }) => {
+    const findings = check(validator('  name: vine.string().trim(),\n})'), [
+      'AuthenticationSignUpMissingValidator',
+    ])
+
+    assert.deepEqual(
+      findings.map((finding) => finding.rule),
+      ['unknown-signup-validator'],
+    )
+  })
+
+  test('without a list there is no rule, so a project that has none keeps passing', ({
+    assert,
+  }) => {
+    const file = validator('  cpf: vine.string().trim(),\n})')
+
+    assert.deepEqual(check(file, []), [])
+  })
+
+  test('the sensitive list covers the documented fields', ({ assert }) => {
+    for (const word of [
+      'cpf',
+      'cnpj',
+      'document',
+      'phone',
+      'whatsapp',
+      'pix',
+      'address',
+      'birth',
+      'bank',
+    ])
+      assert.isTrue(PatternRules.SENSITIVE_SIGNUP_WORDS.has(word), word)
+  })
+
+  test('the list of names from outside is narrowed', ({ assert }) => {
+    assert.throws(() => PatternCheck.names({}))
+    assert.throws(() => PatternCheck.names([1]))
+    assert.deepEqual(PatternCheck.names(['AuthenticationSignUpValidator']), [
+      'AuthenticationSignUpValidator',
+    ])
+  })
+})
+
 test.group('check-report', () => {
   test('groups by section and returns the exit code', ({ assert }) => {
     const lines: string[] = []

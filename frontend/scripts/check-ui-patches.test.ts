@@ -56,6 +56,38 @@ const PATCHED_BUTTON = `const buttonVariants = cva('inline-flex items-center', {
 })
 `
 
+const NAME_PATCH = {
+  file: 'radio-group.tsx',
+  element: 'RadioPrimitive.Root',
+  attribute: 'aria-labelledby',
+  value: 'props.id ? `${props.id}-label` : undefined',
+  reason: 'accessible name in the server HTML',
+}
+
+const REGISTRY_RADIO = `function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
+  return (
+    <RadioPrimitive.Root
+      data-slot="radio-group-item"
+      className={cn('size-4', className)}
+      {...props}
+    />
+  )
+}
+`
+
+const PATCHED_RADIO = `function RadioGroupItem({ className, ...props }: RadioPrimitive.Root.Props) {
+  return (
+    <RadioPrimitive.Root
+      // casa: accessible name in the server HTML
+      aria-labelledby={props.id ? \`\${props.id}-label\` : undefined}
+      data-slot="radio-group-item"
+      className={cn('size-4', className)}
+      {...props}
+    />
+  )
+}
+`
+
 describe('check-ui-patches', () => {
   it('refuses the registry output without the patch, naming the line and the missing token', () => {
     const problems = checkSource(REGISTRY_BUTTON, 'button.tsx', [BUTTON_PATCH])
@@ -165,12 +197,99 @@ describe('check-ui-patches', () => {
     expect(once).toContain('"size-7 max-sm:min-h-11 max-sm:min-w-11 [&_svg')
   })
 
+  it('passes the radio with the accessible-name attribute before the spread', () => {
+    expect(checkSource(PATCHED_RADIO, 'radio-group.tsx', [NAME_PATCH])).toEqual(
+      [],
+    )
+  })
+
+  it('refuses the radio without the attribute, naming the line and the attribute', () => {
+    const problems = checkSource(REGISTRY_RADIO, 'radio-group.tsx', [
+      NAME_PATCH,
+    ])
+
+    expect(problems).toHaveLength(1)
+    expect(problems[0]?.line).toBe(3)
+    expect(problems[0]?.comment).toBe(true)
+    expect(problems[0]?.missing).toEqual([
+      'aria-labelledby={props.id ? `${props.id}-label` : undefined}',
+    ])
+    expect(problems.map(describeProblem)[0]).toMatch(
+      /^ui-patch: radio-group\.tsx:3: falta "aria-labelledby=.*--fix$/,
+    )
+  })
+
+  it('refuses the attribute after the spread, where the next prop of the caller would lose', () => {
+    const after = PATCHED_RADIO.replace(
+      /(\s+\/\/ casa:[^\n]*\n\s+aria-labelledby=\{[^\n]*\}\n)([\s\S]*?)(\s+\{\.\.\.props\}\n)/,
+      '$2$3$1',
+    )
+
+    expect(
+      checkSource(after, 'radio-group.tsx', [NAME_PATCH]).map((p) => p.missing),
+    ).toEqual([[`aria-labelledby={${NAME_PATCH.value}}`]])
+  })
+
+  it('refuses the attribute with another value, or without the // casa: mark', () => {
+    const other = PATCHED_RADIO.replace('-label', '-nome')
+    const unmarked = PATCHED_RADIO.replace(/\s+\/\/ casa:[^\n]*/, '')
+
+    expect(checkSource(other, 'radio-group.tsx', [NAME_PATCH])).toHaveLength(1)
+    expect(
+      checkSource(unmarked, 'radio-group.tsx', [NAME_PATCH]).map(
+        (p) => p.comment,
+      ),
+    ).toEqual([false])
+  })
+
+  it('refuses a file without the element, instead of passing a registry that changed shape', () => {
+    const problems = checkSource('export const A = 1\n', 'radio-group.tsx', [
+      NAME_PATCH,
+    ])
+
+    expect(problems.map((p) => p.line)).toEqual([0])
+  })
+
+  it('--fix inserts the attribute before the spread, replaces a wrong one and is idempotent', () => {
+    const once = fixSource(REGISTRY_RADIO, NAME_PATCH)
+    const wrong = fixSource(
+      PATCHED_RADIO.replace('-label', '-nome'),
+      NAME_PATCH,
+    )
+
+    expect(checkSource(once, 'radio-group.tsx', [NAME_PATCH])).toEqual([])
+    expect(once.indexOf('aria-labelledby')).toBeLessThan(
+      once.indexOf('{...props}'),
+    )
+    expect(fixSource(once, NAME_PATCH)).toBe(once)
+    expect(checkSource(wrong, 'radio-group.tsx', [NAME_PATCH])).toEqual([])
+    expect(wrong.match(/aria-labelledby/g)).toHaveLength(1)
+  })
+
+  it('--fix keeps a comment of someone else above the wrong attribute', () => {
+    const foreign = PATCHED_RADIO.replace(
+      '      // casa: accessible name in the server HTML\n      aria-labelledby={props.id ? `${props.id}-label` : undefined}',
+      '      // keep this one\n      aria-labelledby={props.id}',
+    )
+    const fixed = fixSource(foreign, NAME_PATCH)
+
+    expect(fixed).toContain('// keep this one')
+    expect(fixed.match(/aria-labelledby/g)).toHaveLength(1)
+    expect(checkSource(fixed, 'radio-group.tsx', [NAME_PATCH])).toEqual([])
+  })
+
   it('every entry of ui-patches.json is well formed', () => {
     for (const patch of loadPatches()) {
       expect(patch.file).toMatch(/^[a-z-]+\.tsx$/)
-      expect(() => new RegExp(patch.anchor)).not.toThrow()
-      expect(patch.add.length).toBeGreaterThan(0)
       expect(patch.reason.length).toBeGreaterThan(0)
+      if ('element' in patch) {
+        expect(patch.element.length).toBeGreaterThan(0)
+        expect(patch.attribute).toMatch(/^[a-z-]+$/)
+        expect(patch.value.length).toBeGreaterThan(0)
+      } else {
+        expect(() => new RegExp(patch.anchor)).not.toThrow()
+        expect(patch.add.length).toBeGreaterThan(0)
+      }
     }
   })
 

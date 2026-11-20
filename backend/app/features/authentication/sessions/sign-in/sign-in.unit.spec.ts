@@ -1,5 +1,5 @@
-import hash from '@adonisjs/core/services/hash'
 import { test } from '@japa/runner'
+import argon2 from 'argon2'
 
 import AuthenticationSessionSignInUseCase from './sign-in.use-case.ts'
 
@@ -26,11 +26,16 @@ async function setup() {
   return { ...doubles, useCase }
 }
 
-/** Seeds the account and serves it with the password hashed by scrypt, as before #314. */
-async function setupWithScrypt() {
+/** Seeds the account and serves it with the password in argon2id at a lower cost than `config/hash.ts`. */
+async function setupWithWeakHash() {
   const context = await setup()
   const seeded = await seedUser(context.users)
-  const legacyHash = await hash.use('scrypt').make(PASSWORD)
+  const legacyHash = await argon2.hash(PASSWORD, {
+    type: argon2.argon2id,
+    timeCost: 1,
+    memoryCost: 8192,
+    parallelism: 1,
+  })
   const legacy = User.restore({ ...seeded.snapshot(), password: legacyHash })
   context.users.findByEmail = async () => legacy
 
@@ -140,10 +145,11 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     })
   })
 
-  test('when the hash is scrypt, signs in and asks for the conditional rehash', async ({
+  test('when the hash is weaker than the current cost, signs in and asks for the conditional rehash', async ({
     assert,
   }) => {
-    const { sessions, legacyHash, rehashed, useCase } = await setupWithScrypt()
+    const { sessions, legacyHash, rehashed, useCase } =
+      await setupWithWeakHash()
 
     rightOf(
       await useCase.execute({ login: 'ana@mail.com', password: PASSWORD }),
@@ -169,10 +175,10 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
     assert.deepEqual(rehashed, [])
   })
 
-  test('when the password is wrong on a scrypt hash, gives 401 and redoes nothing', async ({
+  test('when the password is wrong on a weak hash, gives 401 and redoes nothing', async ({
     assert,
   }) => {
-    const { rehashed, useCase } = await setupWithScrypt()
+    const { rehashed, useCase } = await setupWithWeakHash()
 
     const result = await useCase.execute({
       login: 'ana@mail.com',
@@ -189,7 +195,7 @@ test.group('authentication/sessions > sign-in (unit)', (group) => {
   test('when the rehash fails, still accepts the right password', async ({
     assert,
   }) => {
-    const { users, sessions, useCase } = await setupWithScrypt()
+    const { users, sessions, useCase } = await setupWithWeakHash()
     users.rehashPassword = async () => {
       throw new Error('database down')
     }

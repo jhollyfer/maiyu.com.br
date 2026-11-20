@@ -12,5 +12,7 @@
   "email_same_as_current": "The new email must be different from the current one",
   "email_same_as_current_field": "The new email must be different from the current one",
   "email_change_unavailable": "Changing the email by yourself is not available",
-  "email_change_unavailable_field": "Ask the administrator to change the email"
+  "email_change_unavailable_field": "Ask the administrator to change the email",
+  "profile_incomplete": "Complete your profile to use this feature",
+  "profile_incomplete_field": "Fill in this data in your profile"
 }

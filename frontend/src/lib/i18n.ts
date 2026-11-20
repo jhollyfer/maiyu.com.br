@@ -109,6 +109,17 @@ export function formatLocalDate(
   return localDateTime(value, timeZone).toLocaleString(options)
 }
 
+/**
+ * A `YYYY-MM-DD` day from the API (`ResponseRule.date()`, `toISODate()`) in the current language,
+ * short and without time. Read as a calendar day in `TIME_ZONE`, never converted: a day has no
+ * instant, so moving it between zones would shift it ("17/05/2024" in pt-BR).
+ */
+export function formatApiDay(value: string): string {
+  return DateTime.fromISO(value, { zone: TIME_ZONE })
+    .setLocale(getLocale())
+    .toLocaleString(DateTime.DATE_SHORT)
+}
+
 /** `2026-12-14T08:30` on the local clock to ISO in UTC. */
 export function localInputToIso(
   value: string,

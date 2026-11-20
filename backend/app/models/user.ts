@@ -4,6 +4,7 @@ import {
 } from '@adonisjs/auth/access_tokens'
 import { withAuthFinder } from '@adonisjs/auth/mixins/lucid'
 import { compose } from '@adonisjs/core/helpers'
+import hash from '@adonisjs/core/services/hash'
 import { column, scope } from '@adonisjs/lucid/orm'
 
 import {
@@ -13,7 +14,6 @@ import {
   type TrashedMode,
 } from '@maiyu/shared'
 
-import LegacyAwareHashDriver from '#core/legacy-aware-hash-driver'
 import { UserSchema } from '#database/schema'
 
 /**
@@ -26,8 +26,8 @@ export const ACCESS_TOKEN_TABLE = 'auth_access_tokens'
 /**
  * Hashing before save and `verifyCredentials` (lookup by uid, hash checked in constant
  * time) come together from the mixin: split, they leave a creation path that saves the
- * plain-text password. The mixin takes one hasher, so it gets the one that still reads the
- * legacy scrypt hashes (DECISIONS.md #370). The account has two identities, e-mail and phone
+ * plain-text password. The mixin takes one hasher: Argon2id, the only one in `config/hash.ts`
+ * (DECISIONS.md #314, #796). The account has two identities, e-mail and phone
  * (DECISIONS.md #396), and both are uids: the doc says "if you assign a user a username or phone
  * number, you can also use them as a UID"
  * (_doc-lib/adonisjs.md#guides/auth/verifying-user-credentials,
@@ -37,7 +37,7 @@ export const ACCESS_TOKEN_TABLE = 'auth_access_tokens'
  * delete, the status that may sign in and the login normalization. The sign-in use-case reads
  * the account through the repository and checks the hash itself; do not call it from a feature.
  */
-const AuthFinder = withAuthFinder(() => LegacyAwareHashDriver.hasher(), {
+const AuthFinder = withAuthFinder(() => hash.use('argon'), {
   uids: ['email', 'phone'],
   passwordColumnName: 'password',
 })

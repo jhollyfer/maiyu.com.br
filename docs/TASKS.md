@@ -146,6 +146,7 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 | RD.4 | `frontend/README.md`, `frontend/AGENTS.md` e `components/common/CLAUDE.md` pela régua | P | Feita | README em pt-BR, `AGENTS.md` com ponteiros e `CLAUDE.md` com `@AGENTS.md` (`documentation.md` §3); `common/CLAUDE.md` removido |
 | RS.1 | Sync da régua 532077d (#787, #788, #789) e `TRUSTED_PROXIES=uniquelocal` na API | M | Feita | branch `chore/sync-regua-787`; `sync --check` zerado, `pnpm check` verde (shared 150, backend 462, frontend 619); falta a prova de deploy (`docker build` das duas imagens e API subindo) e o merge do dono |
 | RS.2 | E-mail em produção: bloco `mail` do kit, prova com Mailpit e chaves SMTP do Coolify | M | Em revisão | branch `test/mailer-prova-envio`; falta o dono preencher `SMTP_*` no Coolify e aplicar o `r2-cors.json` no bucket |
+| RS.3 | Sync da régua b091182 (#796, #799, #800, #801) | M | Em revisão | branch `chore/sync-regua-799`; `sync --check` zerado, `pnpm check` verde (150/522/644) |
 
 ## Fase N · Ideias (fora do escopo atual)
 
