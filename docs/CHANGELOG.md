@@ -8,7 +8,7 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ### Alterado
 
-- A home abre pela lista dos apps da casa (nome, o que resolve, para quem, ano, estado, link), depois quem somos e o contato. Fonte única do sistema, sem serifa nem itálico. Os cinco apps sem dado (Toru, Delivery, Mangangá, Simple Hub, LowCodeJS) aparecem como `[dado do dono]`.
+- A home abre pela lista dos apps da casa (nome, o que resolve, para quem, ano, estado, link), depois quem somos e o contato. Fonte única do sistema, sem serifa nem itálico. Um app só entra na lista quando o dono manda os dados completos (aguardam: Toru, Delivery, Mangangá, Simple Hub e LowCodeJS).
 
 ### Adicionado
 

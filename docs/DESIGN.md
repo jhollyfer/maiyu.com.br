@@ -12,7 +12,7 @@
 **Direção: conteúdo primeiro, voz factual** (decisão do dono, 2026-11-21; substitui a #18 "sóbria e editorial",
 `DECISIONS.md` #19). A home abre direto na lista do que a Maiyu fez (nome, o que resolve, cliente ou cidade,
 ano, link), depois um "quem somos" curto, depois o contato. Voz de primeira pessoa do plural, frases curtas e
-concretas, nome e número reais; dado que falta aparece como `[dado do dono]`, nunca inventado.
+concretas, nome e número reais; app sem dado completo não aparece na lista pública (sem linha e sem marcador), e nada é inventado.
 
 - **Regra (vale para qualquer projeto):** uma família sans neutra (a do sistema), hierarquia só por tamanho e
   peso, sem serifa nem itálico de efeito; uma ação de contato discreta no topo (o cabeçalho) e uma no fim;
@@ -220,7 +220,7 @@ que for detectável vira regra de lint no kit.
 | Frases curtas, primeira pessoa do plural, nome e número reais | Texto de marketing vazio, "revolucione", "soluções de ponta" |
 | Um contato discreto no topo e um no fim                       | Botão escuro repetido a cada seção                           |
 | Linha com fio de 1 px que organiza a lista                    | Fio decorativo, faixa de ornamento, grão                     |
-| Dado ausente como `[dado do dono]`                            | Contador, depoimento, logo ou cliente inventado              |
+| App sem dado completo fora da lista pública                   | Contador, depoimento, logo ou cliente inventado              |
 | Lista e texto em coluna única, linhas diferentes              | Três colunas simétricas com ícone, seção de "valores"        |
 | Estado e tecnologia como texto                                | Chip, pílula, ícone em círculo ou quadrado, emoji            |
 | Cor chapada, sem sombra                                       | Gradiente, brilho, vidro (`backdrop-blur`), sombra           |

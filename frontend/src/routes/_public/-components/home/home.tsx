@@ -10,7 +10,6 @@ import {
 import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
-import { MISSING, pendingApps } from '#/lib/pending-apps'
 import { projects } from '#/lib/projects'
 import { CALL_URL } from '#/lib/site'
 import { m } from '#/paraglide/messages'
@@ -30,11 +29,13 @@ type Row = {
   client: string
   year: string
   status: string
-  /** False while the owner has not sent the facts: the row shows one `[dado do dono]`, not three. */
-  known: boolean
 }
 
-/** Every app of the house in one list: the ones with data first, the ones waiting for it after. */
+/**
+ * The apps that go public. An app only gets a row when its facts are complete (it is in
+ * `lib/projects.ts`, whose type requires every field): one still waiting for the owner's data
+ * does not appear, with no placeholder, because this page goes to production.
+ */
 function rows(): Row[] {
   const live = projects.map((project) => ({
     slug: project.slug,
@@ -44,20 +45,8 @@ function rows(): Row[] {
     client: localized(project.client),
     year: project.year,
     status: STATUS_LABEL[project.status](),
-    known: true,
   }))
-  const waiting = pendingApps.map((app) => ({
-    slug: app.slug,
-    title: app.title,
-    url: app.url,
-    summary: localized(app.summary),
-    client: MISSING,
-    year: MISSING,
-    status: MISSING,
-    known: false,
-  }))
-
-  return [...live, ...waiting]
+  return live
 }
 
 /** The name, a link when the app has an address. */
@@ -88,28 +77,26 @@ function App({ row }: { row: Row }): React.JSX.Element {
         <AppName row={row} />
       </h2>
       <p className="text-foreground md:col-span-4">{row.summary}</p>
-      {row.known && (
-        <DescriptionList className="gap-2 md:col-span-5">
-          <DescriptionItem>
-            <DescriptionTerm>{m.home_label_client()}</DescriptionTerm>
-            <DescriptionDetails className="text-small">
-              {row.client}
-            </DescriptionDetails>
-          </DescriptionItem>
-          <DescriptionItem>
-            <DescriptionTerm>{m.home_label_year()}</DescriptionTerm>
-            <DescriptionDetails className="tabular-nums">
-              {row.year}
-            </DescriptionDetails>
-          </DescriptionItem>
-          <DescriptionItem>
-            <DescriptionTerm>{m.home_label_status()}</DescriptionTerm>
-            <DescriptionDetails className="text-small">
-              {row.status}
-            </DescriptionDetails>
-          </DescriptionItem>
-        </DescriptionList>
-      )}
+      <DescriptionList className="gap-2 md:col-span-5">
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_client()}</DescriptionTerm>
+          <DescriptionDetails className="text-small">
+            {row.client}
+          </DescriptionDetails>
+        </DescriptionItem>
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_year()}</DescriptionTerm>
+          <DescriptionDetails className="tabular-nums">
+            {row.year}
+          </DescriptionDetails>
+        </DescriptionItem>
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_status()}</DescriptionTerm>
+          <DescriptionDetails className="text-small">
+            {row.status}
+          </DescriptionDetails>
+        </DescriptionItem>
+      </DescriptionList>
     </li>
   )
 }

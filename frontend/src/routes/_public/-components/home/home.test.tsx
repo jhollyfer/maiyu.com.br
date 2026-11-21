@@ -2,7 +2,6 @@
 import { cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { pendingApps } from '#/lib/pending-apps'
 import { projects } from '#/lib/projects'
 
 import { Home } from './home'
@@ -22,7 +21,7 @@ describe('Home', () => {
     )
     const apps = slots.filter((slot) => slot === 'home-app')
 
-    expect(apps).toHaveLength(projects.length + pendingApps.length)
+    expect(apps).toHaveLength(projects.length)
     expect(slots.filter((slot) => slot !== 'home-app')).toEqual([
       'home-apps',
       'home-about',
@@ -30,9 +29,17 @@ describe('Home', () => {
     ])
   })
 
-  it('shows the owner placeholder, never an invented sentence, for an app without data', () => {
+  it('does not show an app whose data has not arrived, nor a placeholder', () => {
     const { container } = render(<Home />)
 
-    expect(container.textContent).toContain('[dado do dono]')
+    expect(container.textContent).not.toContain('[dado do dono]')
+    for (const name of [
+      'Toru',
+      'Delivery',
+      'Mangangá',
+      'Simple Hub',
+      'LowCodeJS',
+    ])
+      expect(container.textContent).not.toContain(name)
   })
 })
