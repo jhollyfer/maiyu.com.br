@@ -53,7 +53,7 @@ function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
       <dt className="text-muted-foreground">{m.portfolio_stack_label()}</dt>
       <dd>
         <span className="text-small text-muted-foreground">
-          {project.tech.join(' · ')}
+          {project.tech.join(', ')}
         </span>
       </dd>
     </dl>
@@ -128,7 +128,7 @@ export function Portfolio(): React.JSX.Element {
                   'flex flex-col gap-8 delay-300 md:col-span-7',
                 )}
               >
-                <p className="max-w-[62ch] font-serif text-lead leading-snug text-foreground/85">
+                <p className="max-w-[62ch] text-lead leading-snug text-foreground/85">
                   {localized(featuredProject.description)}
                 </p>
                 <ProjectFacts project={featuredProject} />
@@ -171,7 +171,7 @@ export function Portfolio(): React.JSX.Element {
                       className="self-start"
                     />
                     <h2 className="text-h1 leading-none">{project.title}</h2>
-                    <p className="font-serif text-lead leading-snug text-foreground/85">
+                    <p className="text-lead leading-snug text-foreground/85">
                       {localized(project.summary)}
                     </p>
                     <p className="max-w-[62ch] text-body text-foreground/75">

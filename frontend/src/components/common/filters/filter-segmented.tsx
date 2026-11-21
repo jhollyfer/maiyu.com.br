@@ -56,7 +56,7 @@ export function FilterSegmented({
             value={segment.value}
             variant="outline"
             className={cn(
-              'focus-ring h-10 flex-1 rounded-control text-xs font-medium',
+              'focus-ring flex-1 text-xs font-medium',
               !active && 'text-muted-foreground',
               active && 'border-primary text-primary',
             )}

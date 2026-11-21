@@ -349,7 +349,9 @@ frontend/
     ├── hooks/
     │   ├── use-mutation-form.ts  use-resource-form.ts  use-read-paginated-infinite.ts  use-multipart-upload.ts   # kit
     │   ├── use-async-combobox-source.ts  use-selected-options.ts  use-items-by-id.ts  use-is-below.ts   # kit: AsyncCombobox (frontend.md §2.1)
+    │   ├── use-upload-queue.ts  use-file-drop.ts  use-is-overflowing.ts  use-shortcut-modifier.ts   # kit: MultiFileUpload, TruncatedText, GlobalSearch (frontend.md §8)
     │   ├── use-filter-draft.ts   # kit: rascunho do painel de filtro do ListShell (frontend.md §2.1)
+    │   ├── use-geolocation.ts    # [vitrine] kit: posição só no clique (frontend.md §3.5)
     │   ├── use-<recurso>-permission.ts  use-<nome>.ts (+ .test.ts)
     │   ├── use-channel.ts                  # opcional: SSE (DECISIONS #351)
     │   └── tanstack-query/_query-keys.ts
@@ -361,8 +363,9 @@ frontend/
     │   └── theme/get-theme.ts
     └── lib/
         ├── cn.ts labels.ts i18n.ts form-errors.ts form-a11y.ts list-search.ts filter-draft.ts grid-navigation.ts fit-columns.ts scroll-frame.ts redirect-search.ts page-head.ts
-        ├── sitemap.ts load-or-not-found.ts local-store.ts bulk.ts chunking.ts upload-transport.ts upload-resume.ts
-        ├── server-env.ts security-headers.ts mask.ts city-path.ts
+        ├── sitemap.ts load-or-not-found.ts local-store.ts bulk.ts chunking.ts upload-transport.ts upload-resume.ts dropped-files.ts accept-files.ts csv-export.ts
+        ├── server-env.ts security-headers.ts mask.ts city-path.ts city-guard.ts
+        ├── vitrine-search.ts geolocation.ts nearest-city.ts legacy-city-redirect.ts   # [vitrine] kit (frontend.md §3.5)
         ├── area-capability.ts session-guard.ts breadcrumbs.ts panel-menu.ts account-name.ts static-data.d.ts   # [painel] kit
         ├── areas.ts panel.ts               # [painel] do projeto: AREAS e homeOf; PANEL_MENU (nenhum arquivo `menu` em _private/-components)
         ├── messages.test.ts                # meta-teste das mensagens

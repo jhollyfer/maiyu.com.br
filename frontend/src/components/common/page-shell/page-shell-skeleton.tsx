@@ -1,5 +1,11 @@
 import type * as React from 'react'
 
+import {
+  DescriptionDetails,
+  DescriptionItem,
+  DescriptionList,
+  DescriptionTerm,
+} from '#/components/common/description-list/description-list'
 import { Skeleton } from '#/components/ui/skeleton'
 import { m } from '#/paraglide/messages'
 
@@ -77,17 +83,18 @@ export function DetailRowsSkeleton({
   return (
     <DetailSkeletonShell>
       <section className="flex flex-col gap-3">
-        <div className="rounded-md border bg-muted/30">
+        <DescriptionList layout="rows" labelWidth="default">
           {Array.from({ length: fields }, (_, row) => (
-            <div
-              key={row}
-              className="grid gap-1 border-b border-border/60 px-3 py-2 last:border-b-0 sm:grid-cols-[140px_1fr] sm:gap-3"
-            >
-              <Skeleton className="h-4 w-24" />
-              <Skeleton className="h-4 w-56 max-w-full" />
-            </div>
+            <DescriptionItem key={row}>
+              <DescriptionTerm>
+                <Skeleton className="h-4 w-24" />
+              </DescriptionTerm>
+              <DescriptionDetails>
+                <Skeleton className="h-4 w-56 max-w-full" />
+              </DescriptionDetails>
+            </DescriptionItem>
           ))}
-        </div>
+        </DescriptionList>
         <Skeleton className="h-4 w-24" />
         <Skeleton className="h-40 w-full rounded-md" />
       </section>

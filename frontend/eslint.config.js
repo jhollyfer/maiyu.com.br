@@ -49,6 +49,31 @@ const RAW_ELEMENTS =
 const RAW_ROLES =
   'button|checkbox|radio|radiogroup|switch|slider|tab|tablist|tabpanel|dialog|alertdialog|menu|menubar|menuitem|menuitemcheckbox|menuitemradio|tooltip|progressbar|separator|combobox|listbox|option|alert'
 
+// The size and the radius of a catalog piece are the registry's (`base-nova`) and the theme's
+// `--radius`, never a class on the screen (frontend.md §6, DECISIONS.md #818): `h-*`, `min-h-*`,
+// `max-h-*`, `size-*` and `rounded-*` in the `className` of the piece that sets them. `h-auto` stays
+// (a button with a wrapped label), and `Avatar`, `Skeleton` and the containers are not in the list.
+const CATALOG_CONTROLS =
+  'Button|Input|Textarea|NativeSelect|SelectTrigger|ComboboxInput|OptionComboboxInput|AsyncComboboxInput|InputGroup|Badge|TabsList|TabsTrigger|ToggleGroupItem|Toggle'
+// Containers (`Card`, `DialogContent`...) are sized by their layout: only the radius is the theme's.
+const CATALOG_CONTAINERS =
+  'Card|DialogContent|SheetContent|PopoverContent|DropdownMenuContent'
+const CATALOG_SIZE_CLASS =
+  '(^|\\s)!?([a-z-]+:)*((h|min-h|max-h|size)-(?!auto$|auto\\s)|rounded(-|\\s|$))'
+const CATALOG_ROUNDED_CLASS = '(^|\\s)!?([a-z-]+:)*rounded(-|\\s|$)'
+const CATALOG_SIZE = [
+  {
+    selector: `JSXOpeningElement[name.name=/^(${CATALOG_CONTROLS})$/] > JSXAttribute[name.name="className"] Literal[value=/${CATALOG_SIZE_CLASS}/]`,
+    message:
+      'Altura, tamanho ou raio de peça do catálogo na tela: o tamanho é o do shadcn (`size` da peça) e o raio vem de `--radius` (frontend.md §6, DECISIONS.md #818). `rounded-full` só em avatar, indicador ou círculo de verdade, que não são estas peças.',
+  },
+  {
+    selector: `JSXOpeningElement[name.name=/^(${CATALOG_CONTAINERS})$/] > JSXAttribute[name.name="className"] Literal[value=/${CATALOG_ROUNDED_CLASS}/]`,
+    message:
+      'Raio de contêiner do catálogo na tela: o raio vem de `--radius` (frontend.md §6, DECISIONS.md #818); só o tema o muda.',
+  },
+]
+
 const RAW_INTERACTIVE = [
   {
     selector: `JSXOpeningElement[name.name=/^(${RAW_ELEMENTS})$/]${NOT_THE_RENDER_PROP}`,
@@ -73,6 +98,7 @@ const RAW_INTERACTIVE = [
     message:
       'Componente escrito à mão com `role`: use Button, Checkbox, RadioGroup, Switch, Slider, Tabs, Dialog, AlertDialog, DropdownMenu, Menubar, Tooltip, Progress, Separator, Combobox/Select, Alert ou FieldError (mensagem de campo) de `#/components/ui` (frontend.md §6, DECISIONS.md #806).',
   },
+  ...CATALOG_SIZE,
 ]
 
 // A route that loads data answers the click with the skeleton of its final screen, never with a blank
@@ -367,6 +393,8 @@ export default defineConfig([
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+      // The registry's `slider.tsx` returns the `any` of `Array.isArray` narrowing.
+      '@typescript-eslint/no-unsafe-return': 'off',
       'react-hooks/set-state-in-effect': 'off',
       'react/no-danger': 'off',
       'jsx-a11y/no-noninteractive-tabindex': 'off',

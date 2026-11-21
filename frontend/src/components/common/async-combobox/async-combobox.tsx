@@ -245,7 +245,7 @@ function AsyncComboboxTrigger({
       aria-haspopup="dialog"
       aria-expanded={ctx.sheetOpen}
       disabled={ctx.disabled}
-      className={cn('min-h-11 w-full justify-between font-normal', className)}
+      className={cn('w-full justify-between font-normal', className)}
       onClick={() => ctx.setSheetOpen(true)}
       {...props}
     >

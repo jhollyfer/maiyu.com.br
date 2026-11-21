@@ -3,8 +3,8 @@ import type { Page } from '@playwright/test'
 import { RepeatedNames } from './repeated-names'
 import type { NamedNode } from './repeated-names'
 
-/** The house touch target, in CSS pixels, charged on every screen (`docs/DESIGN.md` §4). */
-export const TOUCH_TARGET = 44
+/** The WCAG 2.2 AA minimum target (2.5.8), in CSS pixels: the size shadcn ships is charged, never a house one (DECISIONS.md #818). */
+export const TOUCH_TARGET = 24
 
 /** What the browser can say about a page's layout; each method returns the offenders, empty when fine. */
 export class ResponsiveAudit {

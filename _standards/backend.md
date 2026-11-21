@@ -1275,6 +1275,31 @@ repete o grupo com `middleware.auth()` antes. Produto com tenant por cliente con
 `middleware.publicTenant()`; os dois não se misturam numa mesma tabela. O papel que modera itens de
 todas as cidades (o moderador do aporta) é papel global do projeto, sem escopo de cidade no kit.
 
+#### Vitrine global *(DECISIONS.md #823)*
+
+O produto de tenant por cliente cuja vitrine pública junta **todas as cidades** (Toru, Simple Hub) não
+tem `:city` na URL: o filtro de cidade é opcional, `?city=<slug>`. É o escopo `public` sem tenant que o
+`TenantScope.ofPublic(null, ids)` já tinha, e o `public-tenant.middleware.ts` o liga por
+`middleware.publicTenant({ scope: 'global' })` (`TenantRepository.resolveGlobal`, núcleo), sem segundo
+caminho: a lista de ids sai dos tenants **ativos e não demo**, e passa pelo **mesmo** `PublicTenantFilter`
+e pela mesma prévia de membro e equipe (§4.16, #812) de qualquer rota pública, então tenant não
+liberado não vaza e quem tem prévia o vê.
+
+- **`?city=`** é o slug de `Rule.slug()`; vazio é ausente. Malformado, repetido ou de cidade que não existe
+  é `404 RESOURCE_NOT_FOUND`, igual ao `:city` desconhecido: nunca vira leitura sem filtro.
+- **Só leitura**, por tipo: `scope: 'global'` não se combina com `access: 'insert' | 'customer'`, que pedem o
+  tenant que a URL nomeia. Os parâmetros de rota são ignorados.
+- **Cliente único** (`TENANT_PROJECT.singleSlug`, #399): vence o global. A rota global devolve o único tenant
+  configurado, sem ler `?city=`, como toda rota pública nesse modo.
+- **A listagem do projeto** (produtos, lojas) lê pelo `TenantScoped` como em qualquer rota pública e herda o
+  escopo; nenhum caso de uso escreve `where tenant_id` nem `where city_id` à mão. A cidade do filtro não
+  é coluna do item: é a cidade do tenant, já resolvida em `cityTenantIds`.
+- **O bloco `vitrine`** (`--com=vitrine`, `OPTIONAL_CODE`) traz a rota `GET /storefront/tenants` (região
+  `vitrine` de `start/routes.ts`, a lista de clientes global, mesmo controller da lista por cidade) e o
+  spec A×B; o resto do modo global é do núcleo, e o frontend está em `frontend.md` §3.5. Rota global nova
+  entra no `authz-baseline.json` como as outras públicas. **Custo:** a lista de ids cresce com o número
+  de tenants e a leitura dos itens vira `tenant_id IN (...)`; o cache do filtro é do projeto (#812).
+
 ### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
 
 - **Foto.** `PUT /account/profile` aceita `avatarId`, o id de um arquivo `UPLOADED` e vivo que a
@@ -2113,7 +2138,7 @@ O spec de papel pede a sessão com
 
 **O que o E2E cria, o E2E apaga** (`node ace e2e:cleanup`, `commands/e2e-cleanup.command.ts`, `DECISIONS.md` #713). O
 `teardown` do projeto `setup` do Playwright (`e2e/cleanup.teardown.ts`, projeto `cleanup`) chama o comando, que apaga
-as contas que o `e2e:accounts` criou (e-mail `e2e-<papel>-<8 hex>@example.com` **e** nome `E2E <papel>`, os dois) e,
+as contas de e-mail ou telefone de E2E (`e2e-<rótulo>-<8 hex>@example.com` ou `+55<DDD>90000<4 dígitos>`, só o contato: o nome não é marcador, porque o sign-up copia o nome do formulário; as do `e2e:accounts` e as que um spec cria por `E2eFreshAccount`, `DECISIONS.md` #819), os tenants cujo `name` começa com `E2E-` (tabela do esqueleto, que `markers` não pode citar; o comando a trata sozinho se existir, com `charges` e `storages` deles) e os dados ligados às contas por `ON DELETE CASCADE` (tabela do projeto que aponta para `users` tem a chave em cascata, ou entra em `markers` antes) e,
 nas tabelas do projeto, as linhas cuja coluna de marcador começa com `E2E-`, com o hífen (`E2eEnv.marker`; título real que só começa com as letras `E2E` não é marcador): o spec escreve `E2eEnv.marker` no começo
 do título ou do nome do que cria, e o projeto declara tabela e coluna em `tests/e2e-project-cleanup.ts`
 (`ProjectE2eCleanup.markers`, ponto de extensão que o sync cria vazio e nunca reescreve; filhos antes dos pais quando

@@ -88,6 +88,15 @@
   "channels_notice_whatsapp": "Chamar no WhatsApp",
   "career_contact_title": "Fale com a gente sobre a sua área",
   "career_contact_subtitle": "Diga em que você trabalha e, se tiver, mande um link do seu portfólio. Lemos cada mensagem pessoalmente.",
+  "home_apps_title": "Os sistemas que fizemos",
+  "home_apps_intro": "Somos a Maiyu, de Benjamin Constant (AM). Fazemos software sob encomenda. Estes são os sistemas que estão no ar.",
+  "home_status_production": "No ar",
+  "home_status_validation": "Em validação com quem vai usar",
+  "home_about_title": "Quem somos",
+  "home_about_p1": "Somos uma equipe de indígenas e pessoas originárias do Alto Solimões. Nosso escritório fica em Benjamin Constant, na fronteira entre Brasil, Peru e Colômbia.",
+  "home_about_p2": "Atendemos em português, espanhol e inglês, do primeiro contato até o sistema no ar.",
+  "home_contact_title": "Contato",
+  "home_contact_text": "Escreva pelo WhatsApp e conte o que a sua organização precisa.",
   "kit_access_denied": "Acesso negado",
   "kit_access_denied_do_not_have_permission_access": "Você não tem permissão para acessar esta página.",
   "kit_actions": "Ações",
@@ -153,6 +162,36 @@
   "kit_combobox_empty": "Nenhuma opção encontrada.",
   "kit_combobox_open": "Abrir lista",
   "kit_combobox_placeholder": "Selecione",
+  "kit_confirm_challenge_label": "Para confirmar, responda: quanto é {question}?",
+  "kit_confirm_challenge_placeholder": "Digite a resposta",
+  "kit_confirm_challenge_regenerate": "Gerar outra pergunta",
+  "kit_confirm_warning_items": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} item será excluído de vez.",
+        "countPlural=*": "{count} itens serão excluídos de vez."
+      }
+    }
+  ],
+  "kit_confirm_warning_title": "Esta ação não pode ser desfeita",
+  "kit_csv_export": "Exportar CSV",
+  "kit_csv_exported": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} registros exportados.",
+        "countExact=*, countPlural=one": "{count} registro exportado.",
+        "countExact=*, countPlural=*": "{count} registros exportados."
+      }
+    }
+  ],
   "kit_date_picker_placeholder": "Escolha uma data",
   "kit_delete": "Excluir",
   "kit_discard": "Descartar",
@@ -175,6 +214,28 @@
   "kit_form_shell_leave_guard_leave_without_saving": "Sair sem salvar",
   "kit_form_shell_leave_guard_leave_without_saving_2": "Sair sem salvar?",
   "kit_form_unsaved_changes_confirm": "Há alterações não salvas. Sair desta tela descarta tudo o que foi digitado.",
+  "kit_global_search": "Buscar",
+  "kit_global_search_description": "Busque telas e registros do sistema.",
+  "kit_global_search_empty": "Nenhum resultado para “{term}”.",
+  "kit_global_search_error": "Não foi possível buscar em {heading}.",
+  "kit_global_search_pending": "Buscando em {heading}…",
+  "kit_global_search_placeholder": "Buscar telas e registros…",
+  "kit_global_search_title": "Busca global",
+  "kit_global_search_total": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} resultados.",
+        "countExact=*, countPlural=one": "{count} resultado.",
+        "countExact=*, countPlural=*": "{count} resultados."
+      }
+    }
+  ],
   "kit_hide_password": "Ocultar a senha",
   "kit_image_formats": "JPG, PNG, WEBP ou GIF.",
   "kit_layout_load_error_there_problem": "Houve um problema",
@@ -239,12 +300,36 @@
   "kit_sign_out": "Sair",
   "kit_sign_out_description": "Você vai precisar entrar de novo para continuar.",
   "kit_sign_out_title": "Sair da conta?",
+  "kit_stat_card_down": "Queda",
+  "kit_stat_card_flat": "Sem variação",
+  "kit_stat_card_up": "Aumento",
   "kit_tenant_switcher_label": "Cliente ativo",
   "kit_theme_dark": "Escuro",
   "kit_theme_light": "Claro",
   "kit_theme_system": "Sistema",
   "kit_toggle_password": "Mostrar/ocultar senha",
   "kit_try_again": "Tentar de novo",
+  "kit_ui_breadcrumb_label": "Trilha de navegação",
+  "kit_ui_carousel_next": "Próximo slide",
+  "kit_ui_carousel_previous": "Slide anterior",
+  "kit_ui_close": "Fechar",
+  "kit_ui_code_copied": "Copiado",
+  "kit_ui_code_copy": "Copiar",
+  "kit_ui_command_description": "Busque um comando para executar",
+  "kit_ui_command_title": "Paleta de comandos",
+  "kit_ui_more": "Mais",
+  "kit_ui_pagination_label": "Paginação",
+  "kit_ui_pagination_more": "Mais páginas",
+  "kit_ui_pagination_next": "Ir para a próxima página",
+  "kit_ui_pagination_next_text": "Próxima",
+  "kit_ui_pagination_previous": "Ir para a página anterior",
+  "kit_ui_pagination_previous_text": "Anterior",
+  "kit_ui_scroll_end": "Rolar até o fim",
+  "kit_ui_scroll_start": "Rolar até o início",
+  "kit_ui_sidebar_description": "Exibe a barra lateral no celular.",
+  "kit_ui_sidebar_title": "Barra lateral",
+  "kit_ui_sidebar_toggle": "Alternar barra lateral",
+  "kit_ui_toast_close": "Fechar aviso",
   "kit_upload_attachments": "Anexos",
   "kit_upload_choose_files": "Escolher arquivos",
   "kit_upload_error_cancelled": "Upload cancelado",
@@ -256,17 +341,27 @@
   "kit_upload_error_stalled": "A conexão parou de responder",
   "kit_upload_error_type": "Tipo de arquivo não aceito: {type}",
   "kit_upload_failed": "Falha no envio",
+  "kit_upload_rejected": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} arquivos não são de um tipo aceito aqui.",
+        "countExact=*, countPlural=one": "{count} arquivo não é de um tipo aceito aqui.",
+        "countExact=*, countPlural=*": "{count} arquivos não são de um tipo aceito aqui."
+      }
+    }
+  ],
   "kit_upload_remove_item": "Remover {name}",
   "kit_upload_retry_item": "Tentar de novo: {name}",
   "kit_upload_summary": "{completed} de {total} enviados · {size} · arraste, cole ou escolha",
+  "kit_upload_too_many": "Arquivos demais de uma vez. Envie até {limit} por vez.",
   "kit_upload_unknown_type": "desconhecido",
-  "home_apps_title": "Os sistemas que fizemos",
-  "home_apps_intro": "Somos a Maiyu, de Benjamin Constant (AM). Fazemos software sob encomenda. Estes são os sistemas que estão no ar.",
-  "home_status_production": "No ar",
-  "home_status_validation": "Em validação com quem vai usar",
-  "home_about_title": "Quem somos",
-  "home_about_p1": "Somos uma equipe de indígenas e pessoas originárias do Alto Solimões. Nosso escritório fica em Benjamin Constant, na fronteira entre Brasil, Peru e Colômbia.",
-  "home_about_p2": "Atendemos em português, espanhol e inglês, do primeiro contato até o sistema no ar.",
-  "home_contact_title": "Contato",
-  "home_contact_text": "Escreva pelo WhatsApp e conte o que a sua organização precisa."
+  "home_label_client": "Cliente",
+  "home_label_year": "Ano",
+  "home_label_status": "Estado"
 }

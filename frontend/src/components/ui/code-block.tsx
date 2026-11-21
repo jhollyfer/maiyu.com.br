@@ -1,14 +1,14 @@
-'use client'
-
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '#/lib/cn'
+// casa: translated labels, the registry ships English
+import { m } from '#/paraglide/messages'
 
 import { Button } from '#/components/ui/button.tsx'
 import { CheckIcon, CopyIcon } from '@phosphor-icons/react'
 
 const codeBlockVariants = cva(
-  'group/code-block relative flex w-full min-w-0 flex-col overflow-hidden rounded-md text-sm has-[>[data-slot=code-block-content]:focus-visible]:ring-2 has-[>[data-slot=code-block-content]:focus-visible]:ring-ring/30 data-[size=sm]:text-xs',
+  'group/code-block relative flex w-full min-w-0 flex-col overflow-hidden rounded-lg text-sm has-[>[data-slot=code-block-content]:focus-visible]:ring-3 has-[>[data-slot=code-block-content]:focus-visible]:ring-ring/50 data-[size=sm]:text-xs',
   {
     variants: {
       variant: {
@@ -47,7 +47,7 @@ function CodeBlockHeader({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="code-block-header"
       className={cn(
-        'flex min-w-0 shrink-0 items-center gap-2 px-3 pt-3 text-muted-foreground group-data-[size=sm]/code-block:px-2 group-data-[size=sm]/code-block:pt-2 group-data-[variant=destructive]/code-block:text-destructive *:has-[>[data-slot=code-block-title]]:min-w-0',
+        'flex min-w-0 shrink-0 items-center gap-2 px-3 pt-3 text-muted-foreground group-data-[size=sm]/code-block:px-2.5 group-data-[size=sm]/code-block:pt-2.5 group-data-[variant=destructive]/code-block:text-destructive *:has-[>[data-slot=code-block-title]]:min-w-0',
         className,
       )}
       {...props}
@@ -60,7 +60,7 @@ function CodeBlockTitle({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="code-block-title"
       className={cn(
-        "min-w-0 truncate font-sans text-xs font-medium text-foreground group-data-[variant=destructive]/code-block:text-destructive [&_svg]:pointer-events-none [&_svg]:inline-block [&_svg]:align-middle [&_svg:not([class*='size-'])]:size-3.5 *:[svg]:me-1.5",
+        "min-w-0 truncate font-sans text-sm font-medium text-foreground group-data-[size=sm]/code-block:text-xs group-data-[variant=destructive]/code-block:text-destructive [&_svg]:pointer-events-none [&_svg]:inline-block [&_svg]:align-middle [&_svg:not([class*='size-'])]:size-3.5 *:[svg]:me-1.5",
         className,
       )}
       {...props}
@@ -110,7 +110,8 @@ function CodeBlockCopyButton({
         data-copied={copied || undefined}
         variant={variant}
         size={size}
-        aria-label={copied ? 'Copied' : 'Copy'}
+        // casa: translated label
+        aria-label={copied ? m.kit_ui_code_copied() : m.kit_ui_code_copy()}
         className={cn(className)}
         onClick={(event) => {
           onClick?.(event)
@@ -124,7 +125,8 @@ function CodeBlockCopyButton({
         {copied ? <CheckIcon /> : <CopyIcon />}
       </Button>
       <span aria-live="polite" className="sr-only">
-        {copied ? 'Copied' : ''}
+        {/* casa: translated label */}
+        {copied ? m.kit_ui_code_copied() : ''}
       </span>
     </>
   )
@@ -152,7 +154,7 @@ function CodeBlockContent({
       tabIndex={0}
       style={{ counterReset: `line ${startLine - 1}`, ...style }}
       className={cn(
-        'min-h-0 min-w-0 scroll-fade-x scrollbar-thin overflow-auto px-3 py-3 text-start font-mono leading-relaxed outline-none group-has-data-[slot=code-block-footer]/code-block:pb-2 group-has-data-[slot=code-block-header]/code-block:pt-2 group-data-[size=sm]/code-block:px-2 group-data-[size=sm]/code-block:py-2 group-data-[size=sm]/code-block:group-has-data-[slot=code-block-header]/code-block:pt-1.5 data-wrap:scroll-fade-y data-wrap:wrap-break-word data-wrap:whitespace-pre-wrap',
+        'min-h-0 min-w-0 scroll-fade-x scrollbar-thin overflow-auto px-3 py-3 text-start font-mono leading-relaxed outline-none group-has-data-[slot=code-block-footer]/code-block:pb-2 group-has-data-[slot=code-block-header]/code-block:pt-2 group-data-[size=sm]/code-block:px-2.5 group-data-[size=sm]/code-block:py-2.5 group-data-[size=sm]/code-block:group-has-data-[slot=code-block-header]/code-block:pt-1.5 data-wrap:scroll-fade-y data-wrap:wrap-break-word data-wrap:whitespace-pre-wrap',
         className,
       )}
       {...props}
@@ -175,7 +177,7 @@ function CodeBlockContent({
 }
 
 const codeBlockLineVariants = cva(
-  "relative -mx-3 block min-h-lh px-3 group-data-[size=sm]/code-block:-mx-2 group-data-[size=sm]/code-block:px-2 before:min-w-6 before:text-end before:text-muted-foreground after:absolute after:start-1 after:top-0 after:text-muted-foreground after:select-none in-data-numbered:col-span-2 in-data-numbered:grid in-data-numbered:grid-cols-subgrid in-data-numbered:gap-x-3 in-data-numbered:[counter-increment:line] in-data-numbered:before:content-[counter(line)] in-data-numbered:before:select-none in-data-numbered:supports-[content:counter(line)_/_'']:before:content-[counter(line)_/_'']",
+  "relative -mx-3 block min-h-lh px-3 group-data-[size=sm]/code-block:-mx-2.5 group-data-[size=sm]/code-block:px-2.5 before:min-w-6 before:text-end before:text-muted-foreground after:absolute after:start-1 after:top-0 after:text-muted-foreground after:select-none in-data-numbered:col-span-2 in-data-numbered:grid in-data-numbered:grid-cols-subgrid in-data-numbered:gap-x-3 in-data-numbered:[counter-increment:line] in-data-numbered:before:content-[counter(line)] in-data-numbered:before:select-none in-data-numbered:supports-[content:counter(line)_/_'']:before:content-[counter(line)_/_'']",
   {
     variants: {
       variant: {
@@ -223,7 +225,7 @@ function CodeBlockFooter({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="code-block-footer"
       className={cn(
-        'flex min-w-0 shrink-0 items-center gap-2 px-3 pb-3 text-muted-foreground group-data-[size=sm]/code-block:px-2 group-data-[size=sm]/code-block:pb-2',
+        'flex min-w-0 shrink-0 items-center gap-2 px-3 pb-3 text-muted-foreground group-data-[size=sm]/code-block:px-2.5 group-data-[size=sm]/code-block:pb-2.5',
         className,
       )}
       {...props}

@@ -18,7 +18,7 @@ export function ArticleSkeleton(): React.JSX.Element {
           <Skeleton className="mt-8 h-5 w-3/5" />
           <Skeleton className="mt-3 h-5 w-2/5" />
           <div className="mt-10 flex items-center gap-4 border-t border-border pt-6">
-            <Skeleton className="size-10 rounded-full" />
+            <Skeleton className="size-10" />
             <Skeleton className="h-4 w-40" />
           </div>
         </div>

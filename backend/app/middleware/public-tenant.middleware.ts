@@ -2,7 +2,7 @@ import { inject } from '@adonisjs/core'
 import type { HttpContext } from '@adonisjs/core/http'
 import type { NextFn } from '@adonisjs/core/types/http'
 
-import { z } from '@maiyu/shared'
+import { Rule, z } from '@maiyu/shared'
 
 import { TenantConfig } from '#config/tenant'
 import {
@@ -21,6 +21,27 @@ const PublicParams = z.object({
   city: z.string().min(1).max(80),
   tenant: z.string().min(1).max(80).optional(),
 })
+
+/**
+ * The optional `?city=` of the global storefront (DECISIONS.md #823): the same slug rule as the city
+ * of a URL, never a body. An empty value is the same as none.
+ */
+const GlobalQuery = z.object({
+  city: z.preprocess((value) => {
+    if (value === '') return undefined
+
+    return value
+  }, Rule.slug().optional()),
+})
+
+/**
+ * What a route declares: the access it grants (below) or, for a read only, the global storefront.
+ * `scope: 'global'` and a write do not combine: a write needs the tenant the URL names, and the global route
+ * names none.
+ */
+type Options =
+  | { access?: 'read'; scope?: 'global' }
+  | { access: Exclude<Access, 'read'>; scope?: never }
 
 /** What a route may do in the tenant its URL names (DECISIONS.md #390, #397). */
 type Access =
@@ -52,6 +73,11 @@ type Access =
  * account the end customer of the URL's tenant (`TenantScope.ofCustomer`); an account with a membership, or the platform owner, gets
  * 403 there. Both need a tenant: with
  * the city alone they have nowhere to write.
+ *
+ * `{ scope: 'global' }` is the global storefront (DECISIONS.md #823, block `vitrine`): the route has no
+ * `:city` nor `:tenant`, and the request reads every active, released, non-demo tenant of every city,
+ * or those of the city `?city=<slug>` names. Read only, and the same `PublicTenantFilter` and
+ * preview as any public route.
  */
 @inject()
 export default class PublicTenantMiddleware {
@@ -61,16 +87,12 @@ export default class PublicTenantMiddleware {
     private readonly visibility: PublicTenantVisibility,
   ) {}
 
-  async handle(
-    context: HttpContext,
-    next: NextFn,
-    options: { access?: Access } = {},
-  ) {
+  async handle(context: HttpContext, next: NextFn, options: Options = {}) {
     const notFound = HTTPException.NotFound(
       context.i18n.t('errors.not_found'),
       'RESOURCE_NOT_FOUND',
     )
-    const resolved = await this.resolve(context.params)
+    const resolved = await this.resolve(context, options.scope === 'global')
     if (!resolved) throw notFound
     const target = await this.released(resolved, context.auth.user ?? null)
     if (!target) throw notFound
@@ -123,16 +145,32 @@ export default class PublicTenantMiddleware {
    * Single-client mode (`TENANT_PROJECT.singleSlug`, DECISIONS.md #399): the route carries no segment and
    * the configured tenant is the address, whatever the params say. Otherwise the segments.
    */
-  private async resolve(params: HttpContext['params']) {
+  private async resolve(context: HttpContext, global: boolean) {
+    // Single-client mode wins over the global scope: the one configured tenant is the whole address.
     if (this.config.singleSlug !== null)
       return this.tenants.resolveSingle(this.config.singleSlug)
 
-    const segments = PublicParams.safeParse(params)
+    if (global) return this.resolveGlobal(context.request.qs())
+
+    const segments = PublicParams.safeParse(context.params)
     if (!segments.success) return null
 
     return this.tenants.resolvePublic(
       segments.data.city,
       segments.data.tenant ?? null,
     )
+  }
+
+  /**
+   * The global storefront (DECISIONS.md #823): no `:city` nor `:tenant` segment, every active tenant
+   * the project releases, narrowed by the optional `?city=<slug>`. A malformed or unknown city is the
+   * same 404 as a city segment that does not exist. The release and the preview go through the same
+   * `released` as every public route, so the filter and a member's preview (#812) hold here too.
+   */
+  private async resolveGlobal(query: Record<string, unknown>) {
+    const filter = GlobalQuery.safeParse(query)
+    if (!filter.success) return null
+
+    return this.tenants.resolveGlobal(filter.data.city ?? null)
   }
 }

@@ -39,7 +39,9 @@ export function LoadError({
         <EmptyMedia variant="icon">
           <CloudWarningIcon />
         </EmptyMedia>
-        <EmptyTitle>{m.kit_layout_load_error_there_problem()}</EmptyTitle>
+        <EmptyTitle role="heading" aria-level={2}>
+          {m.kit_layout_load_error_there_problem()}
+        </EmptyTitle>
         <EmptyDescription>{message}</EmptyDescription>
       </EmptyHeader>
       <EmptyContent>

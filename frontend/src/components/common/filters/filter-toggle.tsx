@@ -28,7 +28,7 @@ export function FilterToggle({
     <FieldLabel
       htmlFor={id}
       data-slot="filter-toggle"
-      className="min-h-11 cursor-pointer rounded-chip px-2 py-1.5 text-sm hover:bg-link-hover"
+      className="cursor-pointer rounded-md px-2 py-1.5 text-sm hover:bg-link-hover"
     >
       <Field orientation="horizontal">
         {icon}

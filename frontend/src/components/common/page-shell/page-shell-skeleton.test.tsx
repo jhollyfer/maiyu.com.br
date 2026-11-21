@@ -30,9 +30,13 @@ describe('DetailSkeleton', () => {
 describe('DetailRowsSkeleton', () => {
   it('draws label/value rows that stack on the phone', () => {
     const { container } = render(<DetailRowsSkeleton fields={3} />)
-    const rows = container.querySelectorAll('.border-b.border-border\\/60')
+    const list = container.querySelector('dl[data-slot="description-list"]')
+    const rows = container.querySelectorAll('[data-slot="description-item"]')
 
+    expect(list?.getAttribute('data-layout')).toBe('rows')
     expect(rows).toHaveLength(3)
-    expect(rows[0]?.className).toContain('sm:grid-cols-[140px_1fr]')
+    expect(rows[0]?.className).toContain(
+      'sm:grid-cols-[var(--description-label-width)',
+    )
   })
 })

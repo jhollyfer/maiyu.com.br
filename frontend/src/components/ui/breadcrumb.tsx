@@ -2,12 +2,15 @@ import * as React from 'react'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
 import { cn } from '#/lib/cn'
+// casa: translated labels, the registry ships English
+import { m } from '#/paraglide/messages'
 import { CaretRightIcon, DotsThreeIcon } from '@phosphor-icons/react'
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
-      aria-label="breadcrumb"
+      // casa: translated label
+      aria-label={m.kit_ui_breadcrumb_label()}
       data-slot="breadcrumb"
       className={cn(className)}
       {...props}
@@ -20,7 +23,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
     <ol
       data-slot="breadcrumb-list"
       className={cn(
-        'flex flex-wrap items-center gap-1.5 text-xs/relaxed wrap-break-word text-muted-foreground',
+        'flex flex-wrap items-center gap-1.5 text-sm wrap-break-word text-muted-foreground',
         className,
       )}
       {...props}
@@ -99,13 +102,14 @@ function BreadcrumbEllipsis({
       role="presentation"
       aria-hidden="true"
       className={cn(
-        'flex size-4 items-center justify-center [&>svg]:size-3.5',
+        'flex size-5 items-center justify-center [&>svg]:size-4',
         className,
       )}
       {...props}
     >
       <DotsThreeIcon />
-      <span className="sr-only">More</span>
+      {/* casa: translated label */}
+      <span className="sr-only">{m.kit_ui_more()}</span>
     </span>
   )
 }

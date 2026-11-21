@@ -2,9 +2,8 @@ import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import logo from '#/assets/brand/logo.svg'
+import { BrandMark } from '#/components/common/brand-mark/brand-mark'
 import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
-import { Picture } from '#/components/common/picture/picture'
 import { ThemeToggle } from '#/components/common/theme/theme-toggle'
 import { Button, buttonVariants } from '#/components/ui/button'
 import {
@@ -58,17 +57,7 @@ export function Header(): React.JSX.Element {
           aria-label={m.a11y_home()}
           className="flex items-center gap-2 justify-self-start py-2"
         >
-          <Picture
-            src={logo}
-            alt=""
-            width={28}
-            height={28}
-            placement="lcp"
-            className="size-7"
-          />
-          <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase">
-            {SITE_TITLE}
-          </span>
+          <BrandMark />
         </Link>
 
         <NavigationMenu
@@ -138,7 +127,7 @@ function MobileMenu(): React.JSX.Element {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="size-11 lg:hidden"
+            className="lg:hidden"
             aria-label={m.a11y_open_menu()}
           >
             <ListIcon />

@@ -202,7 +202,15 @@ test.group('seeders > demo', (group) => {
     assert.lengthOf(await User.query().where('email', rejected), 0)
     assert.lengthOf(await demoUsers(), ACCOUNTS - 1)
     assert.lengthOf(await demoTenants(), TENANTS)
-    assert.lengthOf(await TenantMembership.all(), MEMBERSHIPS)
+    // Only the memberships of the demo accounts: the test environment may already seed the
+    // owner's own (single-tenant mode, #410), and that one is not the demonstration's.
+    assert.lengthOf(
+      await TenantMembership.query().whereIn(
+        'userId',
+        (await demoUsers()).map((user) => user.id),
+      ),
+      MEMBERSHIPS,
+    )
   })
 
   // DECISIONS.md #812: only an integrity constraint is skipped; a failure of another kind is the

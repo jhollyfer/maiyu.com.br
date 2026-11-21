@@ -1,3 +1,5 @@
+'use client'
+
 import * as React from 'react'
 import {
   MessageScroller as MessageScrollerPrimitive,
@@ -6,6 +8,8 @@ import {
   useMessageScrollerVisibility,
 } from '@shadcn/react/message-scroller'
 import { cn } from '#/lib/cn'
+// casa: translated labels, the registry ships English
+import { m } from '#/paraglide/messages'
 
 import { Button } from '#/components/ui/button.tsx'
 import { ArrowDownIcon } from '@phosphor-icons/react'
@@ -107,7 +111,10 @@ function MessageScrollerButton({
         <>
           <ArrowDownIcon />
           <span className="sr-only">
-            {direction === 'end' ? 'Scroll to end' : 'Scroll to start'}
+            {/* casa: translated label */}
+            {direction === 'end'
+              ? m.kit_ui_scroll_end()
+              : m.kit_ui_scroll_start()}
           </span>
         </>
       )}

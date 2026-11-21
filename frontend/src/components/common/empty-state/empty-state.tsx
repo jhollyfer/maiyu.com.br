@@ -94,13 +94,26 @@ export function EmptyStateMedia(
   return <EmptyMedia {...props} />
 }
 
+/**
+ * O título do estado vazio é um heading: o `EmptyTitle` do `base-nova` desenha um `div`, e o leitor de
+ * tela que navega por títulos pularia a tela. `role="heading"` com `aria-level` 2, o mesmo do
+ * `RouteError`, sem editar o `ui/empty` (WAI-ARIA, https://www.w3.org/TR/wai-aria-1.2/#heading); a
+ * tela com outro nível passa `aria-level` (vem depois do default, nas `props`).
+ */
 export function EmptyStateTitle({
   className,
   ...props
 }: React.ComponentProps<typeof EmptyTitle>): React.JSX.Element {
   const size = useEmptyStateSize()
 
-  return <EmptyTitle className={cn(TITLE_CLASS[size], className)} {...props} />
+  return (
+    <EmptyTitle
+      role="heading"
+      aria-level={2}
+      className={cn(TITLE_CLASS[size], className)}
+      {...props}
+    />
+  )
 }
 
 export function EmptyStateDescription({

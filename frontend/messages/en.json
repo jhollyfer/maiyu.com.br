@@ -88,6 +88,15 @@
   "channels_notice_whatsapp": "Message on WhatsApp",
   "career_contact_title": "Tell us about your field",
   "career_contact_subtitle": "Tell us what you work on and, if you have one, send a link to your portfolio. We read every message personally.",
+  "home_apps_title": "The systems we built",
+  "home_apps_intro": "We are Maiyu, from Benjamin Constant (AM, Brazil). We build custom software. These are the systems that are live.",
+  "home_status_production": "Live",
+  "home_status_validation": "Being validated with the people who will use it",
+  "home_about_title": "Who we are",
+  "home_about_p1": "We are a team of Indigenous and native people of the Alto Solimões. Our office is in Benjamin Constant, on the border between Brazil, Peru and Colombia.",
+  "home_about_p2": "We work in Portuguese, Spanish and English, from the first contact to the system going live.",
+  "home_contact_title": "Contact",
+  "home_contact_text": "Write to us on WhatsApp and tell us what your organization needs.",
   "kit_access_denied": "Access denied",
   "kit_access_denied_do_not_have_permission_access": "You do not have permission to access this page.",
   "kit_actions": "Actions",
@@ -153,6 +162,36 @@
   "kit_combobox_empty": "No options found.",
   "kit_combobox_open": "Open list",
   "kit_combobox_placeholder": "Select",
+  "kit_confirm_challenge_label": "To confirm, answer: what is {question}?",
+  "kit_confirm_challenge_placeholder": "Type the answer",
+  "kit_confirm_challenge_regenerate": "Generate another question",
+  "kit_confirm_warning_items": [
+    {
+      "declarations": ["input count", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{count} item will be permanently deleted.",
+        "countPlural=*": "{count} items will be permanently deleted."
+      }
+    }
+  ],
+  "kit_confirm_warning_title": "This action cannot be undone",
+  "kit_csv_export": "Export CSV",
+  "kit_csv_exported": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} records exported.",
+        "countExact=*, countPlural=one": "{count} record exported.",
+        "countExact=*, countPlural=*": "{count} records exported."
+      }
+    }
+  ],
   "kit_date_picker_placeholder": "Pick a date",
   "kit_delete": "Delete",
   "kit_discard": "Discard",
@@ -175,6 +214,28 @@
   "kit_form_shell_leave_guard_leave_without_saving": "Leave without saving",
   "kit_form_shell_leave_guard_leave_without_saving_2": "Leave without saving?",
   "kit_form_unsaved_changes_confirm": "You have unsaved changes. Leaving this screen discards everything you typed.",
+  "kit_global_search": "Search",
+  "kit_global_search_description": "Look for screens and records in the system.",
+  "kit_global_search_empty": "No results for “{term}”.",
+  "kit_global_search_error": "Could not search {heading}.",
+  "kit_global_search_pending": "Searching {heading}…",
+  "kit_global_search_placeholder": "Search screens and records…",
+  "kit_global_search_title": "Global search",
+  "kit_global_search_total": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} results.",
+        "countExact=*, countPlural=one": "{count} result.",
+        "countExact=*, countPlural=*": "{count} results."
+      }
+    }
+  ],
   "kit_hide_password": "Hide the password",
   "kit_image_formats": "JPG, PNG, WEBP or GIF.",
   "kit_layout_load_error_there_problem": "There was a problem",
@@ -239,12 +300,36 @@
   "kit_sign_out": "Sign out",
   "kit_sign_out_description": "You will need to sign in again to continue.",
   "kit_sign_out_title": "Sign out?",
+  "kit_stat_card_down": "Decrease",
+  "kit_stat_card_flat": "No change",
+  "kit_stat_card_up": "Increase",
   "kit_tenant_switcher_label": "Active client",
   "kit_theme_dark": "Dark",
   "kit_theme_light": "Light",
   "kit_theme_system": "System",
   "kit_toggle_password": "Show or hide password",
   "kit_try_again": "Try again",
+  "kit_ui_breadcrumb_label": "Breadcrumb",
+  "kit_ui_carousel_next": "Next slide",
+  "kit_ui_carousel_previous": "Previous slide",
+  "kit_ui_close": "Close",
+  "kit_ui_code_copied": "Copied",
+  "kit_ui_code_copy": "Copy",
+  "kit_ui_command_description": "Search for a command to run",
+  "kit_ui_command_title": "Command palette",
+  "kit_ui_more": "More",
+  "kit_ui_pagination_label": "Pagination",
+  "kit_ui_pagination_more": "More pages",
+  "kit_ui_pagination_next": "Go to next page",
+  "kit_ui_pagination_next_text": "Next",
+  "kit_ui_pagination_previous": "Go to previous page",
+  "kit_ui_pagination_previous_text": "Previous",
+  "kit_ui_scroll_end": "Scroll to end",
+  "kit_ui_scroll_start": "Scroll to start",
+  "kit_ui_sidebar_description": "Displays the mobile sidebar.",
+  "kit_ui_sidebar_title": "Sidebar",
+  "kit_ui_sidebar_toggle": "Toggle sidebar",
+  "kit_ui_toast_close": "Close toast",
   "kit_upload_attachments": "Attachments",
   "kit_upload_choose_files": "Choose files",
   "kit_upload_error_cancelled": "Upload cancelled",
@@ -256,17 +341,27 @@
   "kit_upload_error_stalled": "The connection stopped responding",
   "kit_upload_error_type": "File type not accepted: {type}",
   "kit_upload_failed": "Upload failed",
+  "kit_upload_rejected": [
+    {
+      "declarations": [
+        "input count",
+        "local countExact = count",
+        "local countPlural = count: plural"
+      ],
+      "selectors": ["countExact", "countPlural"],
+      "match": {
+        "countExact=0, countPlural=*": "{count} files are not a type accepted here.",
+        "countExact=*, countPlural=one": "{count} file is not a type accepted here.",
+        "countExact=*, countPlural=*": "{count} files are not a type accepted here."
+      }
+    }
+  ],
   "kit_upload_remove_item": "Remove {name}",
   "kit_upload_retry_item": "Try again: {name}",
   "kit_upload_summary": "{completed} of {total} uploaded · {size} · drag, paste or choose",
+  "kit_upload_too_many": "Too many files at once. Send up to {limit} at a time.",
   "kit_upload_unknown_type": "unknown",
-  "home_apps_title": "The systems we built",
-  "home_apps_intro": "We are Maiyu, from Benjamin Constant (AM, Brazil). We build custom software. These are the systems that are live.",
-  "home_status_production": "Live",
-  "home_status_validation": "Being validated with the people who will use it",
-  "home_about_title": "Who we are",
-  "home_about_p1": "We are a team of Indigenous and native people of the Alto Solimões. Our office is in Benjamin Constant, on the border between Brazil, Peru and Colombia.",
-  "home_about_p2": "We work in Portuguese, Spanish and English, from the first contact to the system going live.",
-  "home_contact_title": "Contact",
-  "home_contact_text": "Write to us on WhatsApp and tell us what your organization needs."
+  "home_label_client": "Client",
+  "home_label_year": "Year",
+  "home_label_status": "Status"
 }

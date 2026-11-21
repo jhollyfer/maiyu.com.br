@@ -232,7 +232,7 @@ errado.
 
 ```jsonc
 {
-  "style": "base-mira",
+  "style": "base-nova",
   "rsc": false,
   // iconLibrary decide o import dos ícones dentro do componente GERADO.
   // Trocar depois não reescreve o que já está no disco.

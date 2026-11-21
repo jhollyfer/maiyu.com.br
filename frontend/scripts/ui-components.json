@@ -1,6 +1,6 @@
 {
-  "registry": "base-mira",
-  "source": "https://ui.shadcn.com/r/styles/base-mira/registry.json",
+  "registry": "base-nova",
+  "source": "https://ui.shadcn.com/r/styles/base-nova/registry.json",
   "components": [
     "accordion",
     "alert",

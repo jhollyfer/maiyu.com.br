@@ -4,7 +4,7 @@ import type {
   MutationFunctionContext,
   UseMutationResult,
 } from '@tanstack/react-query'
-import { renderHook } from '@testing-library/react'
+import { act, renderHook } from '@testing-library/react'
 import { fromPartial } from '@total-typescript/shoehorn'
 import { toast } from 'sonner'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -138,6 +138,23 @@ describe('useMutationForm', () => {
 
     expect(result.current.form.formState.errors.root).toBeUndefined()
     expect(mutate).toHaveBeenCalledWith({ name: 'ANA' })
+  })
+
+  it('sends once when the submit fires twice before the validation resolves (double click)', async () => {
+    const { result, mutate } = setup()
+
+    await act(async () => {
+      result.current.onSubmit()
+      result.current.onSubmit()
+    })
+
+    expect(mutate).toHaveBeenCalledTimes(1)
+
+    await act(async () => {
+      result.current.onSubmit()
+    })
+
+    expect(mutate).toHaveBeenCalledTimes(2)
   })
 
   it('carries the API error to the fields the form declares', () => {

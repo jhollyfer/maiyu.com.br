@@ -37,7 +37,7 @@ export function PageHero({
         <h1
           className={cn(
             REVEAL,
-            'max-w-5xl text-display leading-[0.98] tracking-[-0.02em] text-balance text-foreground',
+            'max-w-5xl text-display leading-[0.98] text-balance text-foreground',
           )}
         >
           {title}

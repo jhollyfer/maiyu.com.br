@@ -1,7 +1,8 @@
 import * as React from 'react'
 
-export type UploadStatus =
-  'pending' | 'uploading' | 'complete' | 'error' | 'cancelled'
+import type { UploadStatus } from '#/hooks/use-upload-queue'
+
+export type { UploadStatus }
 
 /**
  * A queue row, as the visible parts see it.

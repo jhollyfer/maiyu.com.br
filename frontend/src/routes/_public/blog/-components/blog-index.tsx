@@ -2,7 +2,7 @@ import { ArrowRightIcon } from '@phosphor-icons/react'
 import { Link, getRouteApi } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
 import { articles, featuredArticle } from '#/lib/articles'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
@@ -34,6 +34,12 @@ const FILTERS: ReadonlyArray<{
     label: ARTICLE_CATEGORY_LABELS[category],
   })),
 ]
+
+/** The active filter is the filled button, the others outlined (a lookup, no ternary). */
+const ACTIVE_VARIANT = {
+  true: 'default',
+  false: 'outline',
+} as const satisfies Record<`${boolean}`, 'default' | 'outline'>
 
 /**
  * The journal: the featured text with the photo of a place and the filterable list in
@@ -96,7 +102,7 @@ export function BlogIndex(): React.JSX.Element {
                   {localized(featuredArticle.title)}
                 </Link>
               </h2>
-              <p className="max-w-[46ch] font-serif text-lead leading-snug text-foreground/85">
+              <p className="max-w-[46ch] text-lead leading-snug text-foreground/85">
                 {localized(featuredArticle.excerpt)}
               </p>
               <Link
@@ -127,28 +133,19 @@ export function BlogIndex(): React.JSX.Element {
               {FILTERS.map((filter) => {
                 const active = filter.category === category
 
-                /*
-                  `min-h-11` on every width: a Badge is not covered by the `ui/` touch
-                  patch (#461), and the chip keeps 44px on the desktop as well, so the
-                  layout does not move between widths.
-                */
                 return (
-                  <Badge
+                  <Link
                     key={String(filter.category)}
-                    variant="outline"
-                    data-active={active}
-                    render={
-                      <Link
-                        to="/blog"
-                        search={{ category: filter.category }}
-                        resetScroll={false}
-                        aria-current={active}
-                      />
-                    }
-                    className="h-auto min-h-11 border-foreground/20 bg-transparent px-4 py-0 text-small font-medium text-foreground/70 transition-colors duration-300 hover:border-foreground/45 hover:text-foreground data-[active=true]:border-foreground data-[active=true]:bg-foreground data-[active=true]:text-background dark:data-[active=true]:bg-foreground motion-reduce:transition-none"
+                    to="/blog"
+                    search={{ category: filter.category }}
+                    resetScroll={false}
+                    aria-current={active}
+                    className={buttonVariants({
+                      variant: ACTIVE_VARIANT[`${active}`],
+                    })}
                   >
                     {filter.label()}
-                  </Badge>
+                  </Link>
                 )
               })}
             </nav>
@@ -181,7 +178,7 @@ export function BlogIndex(): React.JSX.Element {
                     </span>
                   </p>
                   <div className="md:col-span-8">
-                    <h3 className="font-serif text-h3 leading-tight text-balance underline-offset-4 group-hover:underline">
+                    <h3 className="text-h3 leading-tight text-balance underline-offset-4 group-hover:underline">
                       {localized(article.title)}
                     </h3>
                     <p className="mt-3 max-w-[62ch] text-body text-foreground/70">

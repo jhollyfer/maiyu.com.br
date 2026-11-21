@@ -52,7 +52,7 @@ export function ThemeToggle({
         data-slot="theme-toggle"
         data-test-id="theme-toggle"
         className={cn(
-          'relative flex size-11 items-center justify-center overflow-hidden rounded-full outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 md:size-8',
+          'relative flex size-8 items-center justify-center overflow-hidden rounded-lg outline-none transition-colors hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50',
           className,
         )}
       >

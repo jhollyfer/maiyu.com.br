@@ -10,6 +10,7 @@ import type {
 } from 'react-hook-form'
 import { toast } from 'sonner'
 
+import { useSingleFlightSubmit } from '#/hooks/use-single-flight-submit'
 import { useUnsavedChangesBlocker } from '#/hooks/use-unsaved-changes-blocker'
 import type {
   HTTPError,
@@ -79,7 +80,7 @@ export type UseMutationFormReturn<
   onValid: (values: TValues) => void
   /**
    * The `<form>`'s `onSubmit`, ready: `handleSubmit(onValid)` returns a promise,
-   * and the JSX attribute expects `void`.
+   * and the JSX attribute expects `void`. It runs one at a time (`useSingleFlightSubmit`).
    */
   onSubmit: (event?: React.BaseSyntheticEvent) => void
 }>
@@ -157,9 +158,9 @@ export function useMutationForm<
     mutation.mutate(toPayload(submitted))
   }
 
-  function onSubmit(event?: React.BaseSyntheticEvent): void {
-    void form.handleSubmit(onValid)(event)
-  }
+  // One submit at a time: a double click starts two `handleSubmit` (the validation is async)
+  // before `isPending` renders, and the second one would send the payload again.
+  const onSubmit = useSingleFlightSubmit(form.handleSubmit(onValid))
 
   return { form, mutation, onValid, onSubmit }
 }

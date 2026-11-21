@@ -13,12 +13,20 @@
  * fails as well, so a registry that changed shape is reported instead of passing silently. A file
  * the project does not have is skipped: there is nothing to patch.
  *
+ * A class entry may also carry `remove`, the tokens of the registry the house does not want in that
+ * literal (`transition-all` of the `Button`): present, they are a problem, and `--fix` drops them.
+ *
  * A second kind of entry, `element` + `attribute` + `value`, requires a JSX attribute and not a class:
  * every `<element>` of the file must carry `attribute={value}` before its `{...props}` spread (so a
  * prop of the caller still wins) with the `// casa:` mark. It exists for what a class cannot say, the
  * accessible name of `Radio`/`Checkbox`/`Switch`: Base UI links the label to the `<span role=...>` only
  * after hydration, so the server HTML has no name unless the attribute is there. `--fix` inserts it
  * right after the tag name (or rewrites a different value), idempotent. DECISIONS.md #800.
+ *
+ * A third kind, `from` + `to`, swaps a piece of the registry's text for the house's (frontend.md §6,
+ * DECISIONS.md #818): the English `sr-only` and `aria-label` strings for `m.kit_ui_*()`, and the
+ * `next-themes` hook of the `sonner` for the `theme` prop. It is satisfied when `to` is in the file
+ * (compared without whitespace, so Prettier may move it); `--fix` swaps `from` for `to`, once.
  *
  * Usage: `node scripts/check-ui-patches.mjs [--fix] [dir]` - `dir` defaults to `../src/components/ui` from this file, so it runs from any cwd; a missing dir fails.
  * `--fix` adds the missing tokens right after the anchor token and the missing `// casa:` comment,
@@ -30,10 +38,11 @@ import { fileURLToPath } from 'node:url'
 
 import ts from 'typescript'
 
-/** @typedef {{ file: string, anchor: string, add: string[], reason: string }} ClassPatch */
+/** @typedef {{ file: string, anchor: string, add: string[], remove?: string[], reason: string }} ClassPatch */
 /** @typedef {{ file: string, element: string, attribute: string, value: string, reason: string }} AttributePatch */
-/** @typedef {ClassPatch | AttributePatch} UiPatch */
-/** @typedef {{ file: string, line: number, missing: string[], comment: boolean, reason: string }} UiPatchProblem */
+/** @typedef {{ file: string, from: string, to: string, reason: string }} ReplacePatch */
+/** @typedef {ClassPatch | AttributePatch | ReplacePatch} UiPatch */
+/** @typedef {{ file: string, line: number, missing: string[], extra?: string[], comment: boolean, reason: string }} UiPatchProblem */
 
 const RULE = 'frontend.md §6 e §10.2, DECISIONS.md #461'
 
@@ -79,6 +88,61 @@ export function stringLiterals(source) {
 
 /** @param {UiPatch} patch @returns {patch is AttributePatch} */
 const isAttributePatch = (patch) => 'element' in patch
+
+/** @param {UiPatch} patch @returns {patch is ReplacePatch} */
+const isReplacePatch = (patch) => 'from' in patch
+
+/** Whitespace is Prettier's to move, so a replacement is compared without it. @param {string} text */
+const bare = (text) => text.replace(/\s+/g, '')
+
+/**
+ * A `replace` entry swaps one piece of the registry's output for the house's: a sentence in English
+ * for `m.kit_*()`, a hook of `next-themes` for the prop the kit passes. It is done when `to` is in
+ * the file (Prettier may have re-laid it out); otherwise `from` must be there to be swapped, or the
+ * registry changed shape and the entry reports it. `to` carries its own `// casa:` mark.
+ *
+ * @param {string} source
+ * @param {ReplacePatch} patch
+ * @returns {'done' | 'todo' | 'lost'}
+ */
+export function replaceState(source, patch) {
+  if (bare(source).includes(bare(patch.to))) return 'done'
+  if (source.includes(patch.from)) return 'todo'
+  return 'lost'
+}
+
+/**
+ * @param {string} source
+ * @param {string} file
+ * @param {ReplacePatch} patch
+ * @returns {UiPatchProblem[]}
+ */
+function checkReplace(source, file, patch) {
+  const state = replaceState(source, patch)
+  if (state === 'done') return []
+  let reason = patch.reason
+  if (state === 'lost')
+    reason = `${patch.reason}; o trecho \`${patch.from.trim()}\` não está mais no arquivo`
+  const wanted = `trocar \`${patch.from.trim()}\` por \`${patch.to.trim()}\``
+  return [
+    {
+      file,
+      line: 0,
+      missing: [wanted],
+      comment: true,
+      reason,
+    },
+  ]
+}
+
+/**
+ * @param {string} source
+ * @param {ReplacePatch} patch
+ */
+function fixReplace(source, patch) {
+  if (replaceState(source, patch) !== 'todo') return source
+  return source.replace(patch.from, () => patch.to)
+}
 
 /** @param {string} text */
 const squash = (text) => text.replace(/\s+/g, ' ').trim()
@@ -183,9 +247,17 @@ export function matchPatch(source, patch) {
     const token = tokens.find((each) => anchor.test(each))
     if (token === undefined) return []
     const missing = patch.add.filter((each) => !tokens.includes(each))
+    const extra = (patch.remove ?? []).filter((each) => tokens.includes(each))
     const line = lineOf(source, literal.start)
     return [
-      { literal, token, missing, line, comment: hasCasaComment(source, line) },
+      {
+        literal,
+        token,
+        missing,
+        extra,
+        line,
+        comment: hasCasaComment(source, line),
+      },
     ]
   })
 }
@@ -199,6 +271,7 @@ export function matchPatch(source, patch) {
 export function checkSource(source, file, patches) {
   return patches.flatMap((patch) => {
     if (isAttributePatch(patch)) return checkAttribute(source, file, patch)
+    if (isReplacePatch(patch)) return checkReplace(source, file, patch)
     const matches = matchPatch(source, patch)
     if (matches.length === 0) {
       return [
@@ -212,11 +285,15 @@ export function checkSource(source, file, patches) {
       ]
     }
     return matches
-      .filter((each) => each.missing.length > 0 || !each.comment)
+      .filter(
+        (each) =>
+          each.missing.length > 0 || each.extra.length > 0 || !each.comment,
+      )
       .map((each) => ({
         file,
         line: each.line,
         missing: each.missing,
+        ...(each.extra.length > 0 && { extra: each.extra }),
         comment: each.comment,
         reason: patch.reason,
       }))
@@ -290,12 +367,20 @@ function fixAttribute(source, patch) {
  */
 export function fixSource(source, patch) {
   if (isAttributePatch(patch)) return fixAttribute(source, patch)
+  if (isReplacePatch(patch)) return fixReplace(source, patch)
   let out = source
   // Back to front, so the offsets of the earlier literals still hold.
   for (const match of matchPatch(source, patch).reverse()) {
-    if (match.missing.length === 0 && match.comment) continue
-    const { literal, token, missing } = match
+    if (match.missing.length === 0 && match.extra.length === 0 && match.comment)
+      continue
+    const { literal, token, missing, extra } = match
     let text = out.slice(literal.start, literal.end)
+    for (const gone of extra) {
+      const escaped = gone.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      text = text
+        .replace(new RegExp(`(^|\\s)${escaped}(?=\\s|$)`, 'g'), '')
+        .replace(/^\s+/, '')
+    }
     if (missing.length > 0) {
       const at = new RegExp(
         `(^|\\s)${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?=\\s|$)`,
@@ -319,6 +404,8 @@ export function describe(problem) {
   const parts = []
   if (problem.missing.length > 0)
     parts.push(`falta ${problem.missing.map((each) => `"${each}"`).join(', ')}`)
+  if (problem.extra !== undefined && problem.extra.length > 0)
+    parts.push(`sobra ${problem.extra.map((each) => `"${each}"`).join(', ')}`)
   if (!problem.comment) parts.push('falta a marca // casa:')
   return `ui-patch: ${where}: ${parts.join('; ')} (${problem.reason}). Régua: ${RULE}; lista em scripts/ui-patches.json; aplicar: node scripts/check-ui-patches.mjs --fix`
 }

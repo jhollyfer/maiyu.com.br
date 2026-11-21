@@ -1,4 +1,3 @@
-import logo512 from '#/assets/brand/logo-512.png'
 import { env } from '#/env'
 import {
   alternateLinks,
@@ -9,8 +8,9 @@ import {
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
 
-/** The link card image: the games logo. */
-const OG_IMAGE = new URL(logo512, env.VITE_SITE_URL).href
+/** The link card image and the logo: the files `scripts/generate-icons.mjs` writes to `public/`. */
+const OG_IMAGE = new URL('/og-image.png', env.VITE_SITE_URL).href
+const LOGO = new URL('/icon-512.png', env.VITE_SITE_URL).href
 
 type PageHeadInput = Readonly<{
   /** The page's subject; the site suffix is added here. When absent, only the site name applies. */
@@ -128,7 +128,7 @@ export function organizationJsonLd(): string {
     '@type': 'Organization',
     name: m.site_title(),
     url: env.VITE_SITE_URL,
-    logo: OG_IMAGE,
+    logo: LOGO,
   })
 }
 

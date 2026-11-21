@@ -2,9 +2,8 @@ import { ArrowUpIcon, ArrowUpRightIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import logo from '#/assets/brand/logo.svg'
+import { BrandMark } from '#/components/common/brand-mark/brand-mark'
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
-import { Picture } from '#/components/common/picture/picture'
 import { Button } from '#/components/ui/button'
 import { CONTACT, SOCIALS } from '#/lib/site'
 import { m } from '#/paraglide/messages'
@@ -23,15 +22,8 @@ export function Footer(): React.JSX.Element {
       <div className="mx-auto max-w-7xl px-4 md:px-8">
         <div className="grid grid-cols-1 border-y border-border md:grid-cols-4 md:divide-x md:divide-border">
           <div className="border-b border-border py-8 md:border-b-0 md:px-8 md:first:pl-0">
-            <Picture
-              src={logo}
-              alt=""
-              width={36}
-              height={36}
-              placement="fold"
-              className="mb-5 size-9"
-            />
-            <p className="max-w-xs font-serif text-body-lg leading-snug text-foreground/85">
+            <BrandMark className="mb-5" />
+            <p className="max-w-xs text-body-lg leading-snug text-foreground/85">
               {m.footer_tagline()}
             </p>
           </div>

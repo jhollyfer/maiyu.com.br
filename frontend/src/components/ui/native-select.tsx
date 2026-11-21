@@ -20,18 +20,15 @@ function NativeSelect({
       data-slot="native-select-wrapper"
       data-size={size}
     >
-      {/* casa: 44px touch target and 16px text on mobile (frontend.md §10.2): the minimum applies only below
-          sm, the dense size stays; below 16px iOS Safari zooms the page on focus. min-h and not h-11 sm:h-7:
-          tailwind-merge does not join a class with and without a variant. */}
       <select
         data-slot="native-select"
         data-size={size}
-        // casa: 44px touch target and 16px text below sm (iOS zooms under 16px)
-        className="max-sm:min-h-11 max-sm:text-base h-7 w-full min-w-0 appearance-none rounded-md border border-input bg-input/20 py-0.5 pr-6 pl-2 text-xs/relaxed transition-colors outline-none select-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 disabled:pointer-events-none disabled:cursor-not-allowed aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/20 data-[size=sm]:h-6 data-[size=sm]:text-[0.625rem] dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
+        // casa: font size only, never height (DECISIONS.md #818 keeps the registry's size): the registry's `text-sm` (14px) makes iOS Safari zoom the page when the select takes focus, which happens below 16px; `max-sm:text-base` is 16px on the phone and leaves the desktop at the registry's size (frontend.md §6, DECISIONS.md #821)
+        className="h-8 w-full min-w-0 appearance-none max-sm:text-base rounded-lg border border-input bg-transparent py-1 pr-8 pl-2.5 text-sm transition-colors outline-none select-none selection:bg-primary selection:text-primary-foreground placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 data-[size=sm]:h-7 data-[size=sm]:rounded-[min(var(--radius-md),10px)] data-[size=sm]:py-0.5 dark:bg-input/30 dark:hover:bg-input/50 dark:aria-invalid:border-destructive/50 dark:aria-invalid:ring-destructive/40"
         {...props}
       />
       <CaretDownIcon
-        className="pointer-events-none absolute top-1/2 right-1.5 size-3.5 -translate-y-1/2 text-muted-foreground select-none group-data-[size=sm]/native-select:size-3 group-data-[size=sm]/native-select:-translate-y-[calc(--spacing(1.25))]"
+        className="pointer-events-none absolute top-1/2 right-2.5 size-4 -translate-y-1/2 text-muted-foreground select-none"
         aria-hidden="true"
         data-slot="native-select-icon"
       />

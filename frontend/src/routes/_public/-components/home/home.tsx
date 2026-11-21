@@ -1,6 +1,12 @@
 import { WhatsappLogoIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
+import {
+  DescriptionDetails,
+  DescriptionItem,
+  DescriptionList,
+  DescriptionTerm,
+} from '#/components/common/description-list/description-list'
 import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
@@ -44,7 +50,7 @@ function rows(): Row[] {
     summary: localized(app.summary),
     client: MISSING,
     year: MISSING,
-    status: '',
+    status: MISSING,
   }))
 
   return [...live, ...waiting]
@@ -66,24 +72,31 @@ function AppName({ row }: { row: Row }): React.JSX.Element {
   )
 }
 
-/** One app: name as the link, what it solves, for whom and where, year and state. */
+/** One app: the name as the link, what it solves, and the facts as a description list. */
 function App({ row }: { row: Row }): React.JSX.Element {
   return (
     <li
       data-slot="home-app"
-      className="grid gap-1 border-t border-border py-5 md:grid-cols-12 md:gap-x-8"
+      className="grid gap-3 border-t border-border py-5 md:grid-cols-12 md:gap-x-8"
     >
       <h3 className="text-lg md:col-span-3">
         <AppName row={row} />
       </h3>
       <p className="text-foreground md:col-span-4">{row.summary}</p>
-      <p className="text-muted-foreground md:col-span-3">{row.client}</p>
-      <p className="text-muted-foreground md:col-span-2">{row.year}</p>
-      {row.status && (
-        <p className="text-sm text-muted-foreground md:col-span-4 md:col-start-4">
-          {row.status}
-        </p>
-      )}
+      <DescriptionList className="gap-2 md:col-span-5">
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_client()}</DescriptionTerm>
+          <DescriptionDetails>{row.client}</DescriptionDetails>
+        </DescriptionItem>
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_year()}</DescriptionTerm>
+          <DescriptionDetails>{row.year}</DescriptionDetails>
+        </DescriptionItem>
+        <DescriptionItem>
+          <DescriptionTerm>{m.home_label_status()}</DescriptionTerm>
+          <DescriptionDetails>{row.status}</DescriptionDetails>
+        </DescriptionItem>
+      </DescriptionList>
     </li>
   )
 }

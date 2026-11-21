@@ -17,7 +17,7 @@ describe('Home', () => {
   it('lists every app of the house, then about, then contact', () => {
     const { container } = render(<Home />)
 
-    const slots = [...container.querySelectorAll('[data-slot]')].map(
+    const slots = [...container.querySelectorAll('[data-slot^="home-"]')].map(
       (element) => element.getAttribute('data-slot'),
     )
     const apps = slots.filter((slot) => slot === 'home-app')

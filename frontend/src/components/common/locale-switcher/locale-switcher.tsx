@@ -31,9 +31,12 @@ type LocaleSwitcherProps = Omit<
   'value' | 'onChange' | 'children'
 > & {
   /**
-   * Below `lg` it shows a globe and the code (PT, ES, EN) in a 44 px target instead of the
-   * language's name, which the panel header has no room for; the list the select opens
-   * still names each language in full.
+   * Below `lg` it shows a globe and the code (PT, ES, EN) instead of the language's name, which the
+   * panel header has no room for, in a target of 44 px by the registry's 32 px, above the 24 px of
+   * WCAG 2.5.8 (https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html); the list the
+   * select opens still names each language in full. The accessible name starts with the visible code
+   * (WCAG 2.5.3, Label in Name, https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html), so
+   * whoever says "PT" to a voice control reaches it.
    */
   readonly compact?: boolean
 }
@@ -54,10 +57,18 @@ export function LocaleSwitcher({
   className,
   ...props
 }: LocaleSwitcherProps): React.JSX.Element {
+  /** Compact: the code the screen shows comes first; otherwise the name is the label alone. */
+  const nameOf = (short: boolean): string => {
+    const label = m.kit_locale_switcher_label()
+    if (!short) return label
+
+    return `${LOCALE_CODES[getLocale()]}: ${label}`
+  }
+
   const select = (
     <NativeSelect
       data-slot="locale-switcher"
-      aria-label={m.kit_locale_switcher_label()}
+      aria-label={nameOf(compact)}
       value={getLocale()}
       onChange={(event) => {
         const next = event.target.value
