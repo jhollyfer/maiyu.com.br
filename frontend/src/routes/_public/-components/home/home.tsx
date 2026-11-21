@@ -1,6 +1,8 @@
+import { WhatsappLogoIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
 import { buttonVariants } from '#/components/ui/button'
+import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { MISSING, pendingApps } from '#/lib/pending-apps'
 import { projects } from '#/lib/projects'
@@ -119,8 +121,9 @@ export function Home(): React.JSX.Element {
           href={CALL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className={buttonVariants({ variant: 'outline' }) + ' mt-6'}
+          className={cn(buttonVariants(), 'mt-6')}
         >
+          <WhatsappLogoIcon />
           {m.nav_get_in_touch()}
         </a>
       </section>
