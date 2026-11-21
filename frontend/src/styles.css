@@ -513,12 +513,6 @@
     min(calc(100% - 1rem), calc(50% + 40rem)) 0;
 }
 
-@utility vision-pulse {
-  animation: vision-pulse 2.4s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
 /*
  * The stroke that draws itself, in the vision illustrations. The element declares
  * `pathLength="1"`, so a dash of one unit covers the whole stroke

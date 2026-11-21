@@ -30,6 +30,8 @@ type Row = {
   client: string
   year: string
   status: string
+  /** False while the owner has not sent the facts: the row shows one `[dado do dono]`, not three. */
+  known: boolean
 }
 
 /** Every app of the house in one list: the ones with data first, the ones waiting for it after. */
@@ -39,9 +41,10 @@ function rows(): Row[] {
     title: project.title,
     url: project.url,
     summary: localized(project.summary),
-    client: localized(project.client).replaceAll(' · ', ', '),
+    client: localized(project.client),
     year: project.year,
     status: STATUS_LABEL[project.status](),
+    known: true,
   }))
   const waiting = pendingApps.map((app) => ({
     slug: app.slug,
@@ -51,6 +54,7 @@ function rows(): Row[] {
     client: MISSING,
     year: MISSING,
     status: MISSING,
+    known: false,
   }))
 
   return [...live, ...waiting]
@@ -65,9 +69,10 @@ function AppName({ row }: { row: Row }): React.JSX.Element {
       href={row.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="underline underline-offset-4 hover:text-primary"
+      className="focus-ring underline underline-offset-4 hover:text-highlight"
     >
       {row.title}
+      <span className="sr-only">{m.home_new_tab()}</span>
     </a>
   )
 }
@@ -79,24 +84,32 @@ function App({ row }: { row: Row }): React.JSX.Element {
       data-slot="home-app"
       className="grid gap-3 border-t border-border py-5 md:grid-cols-12 md:gap-x-8"
     >
-      <h3 className="text-lg md:col-span-3">
+      <h2 className="text-h4 md:col-span-3">
         <AppName row={row} />
-      </h3>
+      </h2>
       <p className="text-foreground md:col-span-4">{row.summary}</p>
-      <DescriptionList className="gap-2 md:col-span-5">
-        <DescriptionItem>
-          <DescriptionTerm>{m.home_label_client()}</DescriptionTerm>
-          <DescriptionDetails>{row.client}</DescriptionDetails>
-        </DescriptionItem>
-        <DescriptionItem>
-          <DescriptionTerm>{m.home_label_year()}</DescriptionTerm>
-          <DescriptionDetails>{row.year}</DescriptionDetails>
-        </DescriptionItem>
-        <DescriptionItem>
-          <DescriptionTerm>{m.home_label_status()}</DescriptionTerm>
-          <DescriptionDetails>{row.status}</DescriptionDetails>
-        </DescriptionItem>
-      </DescriptionList>
+      {row.known && (
+        <DescriptionList className="gap-2 md:col-span-5">
+          <DescriptionItem>
+            <DescriptionTerm>{m.home_label_client()}</DescriptionTerm>
+            <DescriptionDetails className="text-small">
+              {row.client}
+            </DescriptionDetails>
+          </DescriptionItem>
+          <DescriptionItem>
+            <DescriptionTerm>{m.home_label_year()}</DescriptionTerm>
+            <DescriptionDetails className="tabular-nums">
+              {row.year}
+            </DescriptionDetails>
+          </DescriptionItem>
+          <DescriptionItem>
+            <DescriptionTerm>{m.home_label_status()}</DescriptionTerm>
+            <DescriptionDetails className="text-small">
+              {row.status}
+            </DescriptionDetails>
+          </DescriptionItem>
+        </DescriptionList>
+      )}
     </li>
   )
 }
@@ -108,9 +121,9 @@ function App({ row }: { row: Row }): React.JSX.Element {
  */
 export function Home(): React.JSX.Element {
   return (
-    <main className="mx-auto max-w-5xl px-4 pt-28 pb-24 md:px-8 md:pt-36">
+    <div className="mx-auto max-w-5xl px-4 pt-28 pb-24 md:px-8 md:pt-36">
       <section data-slot="home-apps">
-        <h1 className="text-3xl md:text-4xl">{m.home_apps_title()}</h1>
+        <h1 className="text-h1">{m.home_apps_title()}</h1>
         <p className="mt-3 max-w-[60ch] text-muted-foreground">
           {m.home_apps_intro()}
         </p>
@@ -122,24 +135,25 @@ export function Home(): React.JSX.Element {
       </section>
 
       <section data-slot="home-about" className="mt-24 max-w-[60ch]">
-        <h2 className="text-2xl">{m.home_about_title()}</h2>
+        <h2 className="text-h2">{m.home_about_title()}</h2>
         <p className="mt-4">{m.home_about_p1()}</p>
         <p className="mt-3">{m.home_about_p2()}</p>
       </section>
 
       <section data-slot="home-contact" className="mt-24 max-w-[60ch]">
-        <h2 className="text-2xl">{m.home_contact_title()}</h2>
+        <h2 className="text-h2">{m.home_contact_title()}</h2>
         <p className="mt-4">{m.home_contact_text()}</p>
         <a
           href={CALL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className={cn(buttonVariants(), 'mt-6')}
+          className={cn(buttonVariants(), 'mt-6 min-h-11')}
         >
           <WhatsappLogoIcon />
-          {m.nav_get_in_touch()}
+          {m.home_contact_cta()}
+          <span className="sr-only">{m.home_new_tab()}</span>
         </a>
       </section>
-    </main>
+    </div>
   )
 }

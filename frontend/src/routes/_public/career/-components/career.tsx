@@ -62,6 +62,7 @@ export function Career(): React.JSX.Element {
         <Photo
           name="river"
           ratio={2}
+          priority
           sizes="(min-width: 1280px) 1216px, 100vw"
         />
       </div>

@@ -26,7 +26,7 @@ import { cn } from '#/lib/cn'
 import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
-import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
+import { MOBILE_NAVIGATION, NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
 import { useScrolled } from './use-scrolled'
 
@@ -49,7 +49,7 @@ export function Header(): React.JSX.Element {
     <header
       data-slot="site-header"
       data-scrolled={scrolled}
-      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-500 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background motion-reduce:transition-none"
+      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-200 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background motion-reduce:transition-none"
     >
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 md:px-8 lg:grid-cols-[auto_1fr_auto]">
         <Link
@@ -83,15 +83,6 @@ export function Header(): React.JSX.Element {
             <LocaleSwitcher className="w-36" />
           </div>
           <ThemeToggle className="hidden size-9 md:inline-flex" />
-          <Link
-            to={CONTACT_LINK.to}
-            className={cn(
-              buttonVariants({ variant: 'outline' }),
-              'ml-1 hidden md:inline-flex',
-            )}
-          >
-            {CONTACT_LINK.label()}
-          </Link>
           <a
             href={CALL_URL}
             target="_blank"
@@ -159,10 +150,6 @@ function MobileMenu(): React.JSX.Element {
                   className={navLinkVariants({ tone: 'sheet' })}
                 >
                   {item.label()}
-                  <span
-                    aria-hidden="true"
-                    className="brand-bar hidden w-10 group-data-[status=active]:block"
-                  />
                 </Link>
               }
             />

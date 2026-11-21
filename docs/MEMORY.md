@@ -5,9 +5,9 @@
 > O agente lê **no início** de toda sessão e atualiza **no fim**. Curto: é um ponto de
 > retomada, não um diário. Histórico vai para `CHANGELOG.md` e `DECISIONS.md`.
 
-| Atualizado | Fase atual | Progresso | Status |
-|---|---|---|---|
-| 2026-11-16 | Pausa para deploy (régua `maiyu-pattern` em eedebc4) | 7 de 47 itens | Pausado após o deploy |
+| Atualizado | Fase atual                                           | Progresso     | Status                |
+| ---------- | ---------------------------------------------------- | ------------- | --------------------- |
+| 2026-11-21 | Pausa para deploy (régua `maiyu-pattern` em eedebc4) | 7 de 47 itens | Pausado após o deploy |
 
 ## Já feito
 
@@ -68,7 +68,7 @@ R4.6 feita: scripts do `frontend/package.json` pela régua (`tooling.md` §6, §
 
 RD.3 feita: `ARCHITECTURE.md` §9.1 descreve os dois recursos do Coolify (site e API) pelo quadro da régua, sem workflows de entrega. RD.2 feita: `docs/` posto em dia (SECURITY, TEST-PLAN, ENV, ARCHITECTURE, RULES, PRD) e as decisões locais substituídas marcadas em `DECISIONS.md`. RD.4 feita: `frontend/README.md` e `frontend/AGENTS.md` pela régua, `frontend/CLAUDE.md` com `@AGENTS.md`, `components/common/CLAUDE.md` removido. Régua D fechada na branch `docs/regua-docs`.
 
-R4.1 e R4.3: os sete workflows saíram de `.github/workflows/` (`--remover-workflows`); `dependabot.yml` e `.editorconfig` já estavam iguais ao kit. Falta o dono: ligar o *Auto Deploy* no Coolify e apagar os secrets do Actions (`ENV.md` §3). O `AGENTS.md` (seção Produção, ainda cita workflows e smoke por `revision.txt`) não diverge do modelo no `sync --check` e não foi editado.
+R4.1 e R4.3: os sete workflows saíram de `.github/workflows/` (`--remover-workflows`); `dependabot.yml` e `.editorconfig` já estavam iguais ao kit. Falta o dono: ligar o _Auto Deploy_ no Coolify e apagar os secrets do Actions (`ENV.md` §3). O `AGENTS.md` (seção Produção, ainda cita workflows e smoke por `revision.txt`) não diverge do modelo no `sync --check` e não foi editado.
 
 R4.2: `frontend/Dockerfile-production` e `backend/Dockerfile-production` iguais ao kit (multi-stage, base por digest). `docker build` a partir da raiz: com a CA do proxy do ambiente e dois acréscimos fora do repositório, os dois constroem; o frontend sobe, `/health-check` 200, `/` 307 para `/pt-br` e o container fica `healthy`. Sem esses acréscimos reprovam por duas lacunas do kit, a levar à régua: o `prepare` da raiz roda `node .husky/install.mjs`, que o Dockerfile não copia; e o `frontend` depende de `@maiyu/backend`, cujo `build` roda no filtro `{./frontend}...` sem o código do `backend/` na imagem.
 
@@ -118,8 +118,7 @@ ficou fora, por decisão do dono. Verde com `shared/` em 79 testes, backend unit
 Conta do dono no backend (R2.10, spec `.specs/features/conta/`, mesma branch) feita: `GET /account/profile`
 e `PUT /account/profile` (sessão, sem `role`), com troca de nome e de senha exigindo `currentPassword`,
 senha nova pela regra do `Rule` (422 `PASSWORD_SAME_AS_CURRENT` se igual à atual), revogação de todas as
-sessões na mesma `UnitOfWork` do save quando a senha troca (a da chamada inclusive, com cookies limpos na
-200) e limite do kit, 10 por 15 minutos por usuário (`accountThrottle`). Trocar só o nome responde 200 e
+sessões na mesma `UnitOfWork` do save quando a senha troca (a da chamada inclusive, com cookies limpos na 200) e limite do kit, 10 por 15 minutos por usuário (`accountThrottle`). Trocar só o nome responde 200 e
 mantém a sessão. A troca de e-mail ficou fora por decisão do dono (sem o link de confirmação da
 `backend.md` §7 item 7): bloqueada até existir o bloco de e-mail. O `Rule.email()` do kit passou a baixar a
 caixa (upstream a8462c8, pelo sync). A funcional prova 200 seguido de 401 para a senha. Falta a
@@ -142,7 +141,7 @@ Na retomada: recriar as sub-sessões de backend, frontend e shared em Sonnet 5.5
 
 0. Deploy, nesta ordem:
    1. O dono faz o merge da PR de sync de deploy na `main`; ela já traz a #29, a #30 e a #32.
-   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SMTP_FROM` (era `MAIL_FROM`, renomear se existir; #783), `SEED_OWNER_*` e `SITE_ENV=production`; `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` não existem mais, e se já foram criadas no Coolify podem sair, #782). Ligar o *Auto Deploy* dos dois apps.
+   2. No Coolify: recriar o PostgreSQL da API (o post-deployment roda `migration:run --force && db:seed`). Conferir as variáveis de produção (`ENV.md` §4: `TRUSTED_PROXIES=uniquelocal`, `SMTP_FROM` (era `MAIL_FROM`, renomear se existir; #783), `SEED_OWNER_*` e `SITE_ENV=production`; `SINGLE_TENANT_SLUG` e os `SEED_TENANT_*` não existem mais, e se já foram criadas no Coolify podem sair, #782). Ligar o _Auto Deploy_ dos dois apps.
    3. Conferir o `/health-check` da API e o site em produção nos três idiomas.
    4. Agendar o `node ace contacts:prune`.
    5. Depois da pausa, retomar a #31 (painel de contatos) com o comentário do dono aprovando a spec: rebase sobre a `main` e sync com `--sem=pix --com=table --com=painel`.
@@ -183,25 +182,25 @@ O que toca este projeto, com o estado de cada uma:
 > Uma linha por correção do dono (`AGENTS.md`, "Modo de trabalho" item 3). Lida no início de toda
 > sessão. Lição que vale para todo projeto sobe para a régua e sai daqui.
 
-| Data | Erro | Regra que evita | Vale para |
-|---|---|---|---|
-| 2026-11-04 | Commit trazido por cherry-pick sem rodar o `format:check` de novo | rodar os passos do CI no estado final da branch, depois do último commit, e não antes dele | todo projeto |
-| 2026-11-04 | Fonte da marca trocada (Raleway por Fraunces) sem perguntar | identidade visual (fonte, cor, logo) só muda com o dono escolhendo; a direção do redesign não autoriza trocar a fonte do guia | todo projeto |
-| 2026-11-04 | Healthcheck passado ao dono como `/health` | o sinal de vida é `GET /health-check`, nome exato e sem alias (régua #184); conferir a régua antes de dar instrução de deploy | todo projeto |
-| 2026-11-04 | Contexto descrito só como amazônico | a Maiyu atende povos originários de qualquer país, não só da Amazônia; a origem é o Alto Solimões | este projeto |
-| 2026-11-04 | Workflows deixados fora do sync por conta própria | seguir os irmãos e a régua; regra que não serve muda no upstream, não se contorna no projeto | todo projeto |
-| 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge | todo projeto |
-| 2026-11-04 | Merge feito pelo agente | o merge é do dono; o agente abre o PR verificado e para | todo projeto |
-| 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados) | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu" | todo projeto |
-| 2026-11-13 | Pilha de PRs mergeada com a base ainda na branch de baixo: a #29, a #30 e a #32 ficaram fora da `main` (12/11) | depois do merge da PR de baixo, a de cima é reapontada para a `main` na hora, ou o merge cai na branch já mergeada | todo PR empilhado |
-| 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`) | todo projeto com rota lazy |
+| Data       | Erro                                                                                                                                       | Regra que evita                                                                                                               | Vale para                  |
+| ---------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| 2026-11-04 | Commit trazido por cherry-pick sem rodar o `format:check` de novo                                                                          | rodar os passos do CI no estado final da branch, depois do último commit, e não antes dele                                    | todo projeto               |
+| 2026-11-04 | Fonte da marca trocada (Raleway por Fraunces) sem perguntar                                                                                | identidade visual (fonte, cor, logo) só muda com o dono escolhendo; a direção do redesign não autoriza trocar a fonte do guia | todo projeto               |
+| 2026-11-04 | Healthcheck passado ao dono como `/health`                                                                                                 | o sinal de vida é `GET /health-check`, nome exato e sem alias (régua #184); conferir a régua antes de dar instrução de deploy | todo projeto               |
+| 2026-11-04 | Contexto descrito só como amazônico                                                                                                        | a Maiyu atende povos originários de qualquer país, não só da Amazônia; a origem é o Alto Solimões                             | este projeto               |
+| 2026-11-04 | Workflows deixados fora do sync por conta própria                                                                                          | seguir os irmãos e a régua; regra que não serve muda no upstream, não se contorna no projeto                                  | todo projeto               |
+| 2026-11-04 | "Pronto" sem scan de segurança, revisão, testes e lições                                                                                   | o fluxo da régua (etapas 6 a 8) vale inteiro antes de declarar pronto e antes do merge                                        | todo projeto               |
+| 2026-11-04 | Merge feito pelo agente                                                                                                                    | o merge é do dono; o agente abre o PR verificado e para                                                                       | todo projeto               |
+| 2026-11-04 | Conteúdo de exemplo no ar (autores, vagas e benefícios inventados)                                                                         | não publicar pessoa, vaga, benefício nem número que não exista; na falta, banco de talentos e "Equipe Maiyu"                  | todo projeto               |
+| 2026-11-13 | Pilha de PRs mergeada com a base ainda na branch de baixo: a #29, a #30 e a #32 ficaram fora da `main` (12/11)                             | depois do merge da PR de baixo, a de cima é reapontada para a `main` na hora, ou o merge cai na branch já mergeada            | todo PR empilhado          |
+| 2026-11-12 | O unitário do componente não prova a rota: o gerador de rotas trocou o `index.lazy.tsx` pelo placeholder ao mover a tela, e só o E2E pegou | toda rota `.lazy` tem teste de rota (`lazy-routes.test.tsx`)                                                                  | todo projeto com rota lazy |
 
 ## Problemas conhecidos
 
-| Problema | Onde | Contorno |
-|---|---|---|
-| `sync --check` acusa `workflow-diverge` | `.github/workflows/` | a #6 foi substituída: o sync resolve o resto no R1.1, e os workflows saem no R4.1, na PR do Dockerfile (`DECISIONS.md` #371 do upstream) |
-| `.env.example` com chaves que o site não usa | `frontend/.env.example` | `ENV.md` explica; ajuste no upstream (`DECISIONS.md` #9) |
+| Problema                                     | Onde                    | Contorno                                                                                                                                 |
+| -------------------------------------------- | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `sync --check` acusa `workflow-diverge`      | `.github/workflows/`    | a #6 foi substituída: o sync resolve o resto no R1.1, e os workflows saem no R4.1, na PR do Dockerfile (`DECISIONS.md` #371 do upstream) |
+| `.env.example` com chaves que o site não usa | `frontend/.env.example` | `ENV.md` explica; ajuste no upstream (`DECISIONS.md` #9)                                                                                 |
 
 ## Links úteis
 

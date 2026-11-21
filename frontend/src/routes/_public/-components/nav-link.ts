@@ -12,7 +12,7 @@ import { cva } from 'class-variance-authority'
  * comparison.
  */
 export const navLinkVariants = cva(
-  'transition-colors duration-300 motion-reduce:transition-none',
+  'transition-colors duration-150 motion-reduce:transition-none',
   {
     variants: {
       tone: {

@@ -89,7 +89,7 @@
   "career_contact_title": "Cuéntenos sobre su área",
   "career_contact_subtitle": "Díganos en qué trabaja y, si lo tiene, envíe un enlace a su portafolio. Leemos cada mensaje personalmente.",
   "home_apps_title": "Los sistemas que hicimos",
-  "home_apps_intro": "Somos Maiyu, de Benjamin Constant (AM, Brasil). Hacemos software a medida. Estos son los sistemas que están en línea.",
+  "home_apps_intro": "Somos Maiyu, de Benjamin Constant (AM, Brasil). Hacemos software a medida. Estos son los sistemas de Maiyu.",
   "home_status_production": "En línea",
   "home_status_validation": "En validación con quienes lo van a usar",
   "home_about_title": "Quiénes somos",
@@ -361,7 +361,9 @@
   "kit_upload_summary": "{completed} de {total} enviados · {size} · arrastre, pegue o elija",
   "kit_upload_too_many": "Demasiados archivos a la vez. Envíe hasta {limit} por vez.",
   "kit_upload_unknown_type": "desconocido",
-  "home_label_client": "Cliente",
+  "home_label_client": "Para quién",
   "home_label_year": "Año",
-  "home_label_status": "Estado"
+  "home_label_status": "Estado",
+  "home_new_tab": "(se abre en una pestaña nueva)",
+  "home_contact_cta": "Escribir por WhatsApp"
 }

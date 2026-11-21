@@ -89,7 +89,7 @@
   "career_contact_title": "Tell us about your field",
   "career_contact_subtitle": "Tell us what you work on and, if you have one, send a link to your portfolio. We read every message personally.",
   "home_apps_title": "The systems we built",
-  "home_apps_intro": "We are Maiyu, from Benjamin Constant (AM, Brazil). We build custom software. These are the systems that are live.",
+  "home_apps_intro": "We are Maiyu, from Benjamin Constant (AM, Brazil). We build custom software. These are Maiyu's systems.",
   "home_status_production": "Live",
   "home_status_validation": "Being validated with the people who will use it",
   "home_about_title": "Who we are",
@@ -361,7 +361,9 @@
   "kit_upload_summary": "{completed} of {total} uploaded · {size} · drag, paste or choose",
   "kit_upload_too_many": "Too many files at once. Send up to {limit} at a time.",
   "kit_upload_unknown_type": "unknown",
-  "home_label_client": "Client",
+  "home_label_client": "For",
   "home_label_year": "Year",
-  "home_label_status": "Status"
+  "home_label_status": "Status",
+  "home_new_tab": "(opens in a new tab)",
+  "home_contact_cta": "Write on WhatsApp"
 }

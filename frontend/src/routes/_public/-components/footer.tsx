@@ -99,7 +99,7 @@ export function Footer(): React.JSX.Element {
           <Button
             type="button"
             variant="link"
-            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            onClick={() => window.scrollTo({ top: 0 })}
             className="px-0"
           >
             {m.footer_back_to_top()}
