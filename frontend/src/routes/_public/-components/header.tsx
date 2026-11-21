@@ -2,11 +2,10 @@ import { ListIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
-import logo from '#/assets/brand/logo.svg'
+import { BrandMark } from '#/components/common/brand-mark/brand-mark'
 import { LocaleSwitcher } from '#/components/common/locale-switcher/locale-switcher'
-import { Picture } from '#/components/common/picture/picture'
 import { ThemeToggle } from '#/components/common/theme/theme-toggle'
-import { Button } from '#/components/ui/button'
+import { Button, buttonVariants } from '#/components/ui/button'
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -27,9 +26,8 @@ import { cn } from '#/lib/cn'
 import { CALL_URL, SITE_TITLE } from '#/lib/site'
 import { m } from '#/paraglide/messages'
 
-import { CONTACT_LINK, MOBILE_NAVIGATION, NAVIGATION } from './menu'
+import { MOBILE_NAVIGATION, NAVIGATION } from './menu'
 import { navLinkVariants } from './nav-link'
-import { PillButton, pillVariants } from './pill-button'
 import { useScrolled } from './use-scrolled'
 
 /**
@@ -51,7 +49,7 @@ export function Header(): React.JSX.Element {
     <header
       data-slot="site-header"
       data-scrolled={scrolled}
-      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-500 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background/85 data-[scrolled=true]:backdrop-blur-xl motion-reduce:transition-none"
+      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-200 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background motion-reduce:transition-none"
     >
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 md:px-8 lg:grid-cols-[auto_1fr_auto]">
         <Link
@@ -59,17 +57,7 @@ export function Header(): React.JSX.Element {
           aria-label={m.a11y_home()}
           className="flex items-center gap-2 justify-self-start py-2"
         >
-          <Picture
-            src={logo}
-            alt=""
-            width={28}
-            height={28}
-            placement="lcp"
-            className="size-7"
-          />
-          <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase dark:text-brand-green">
-            {SITE_TITLE}
-          </span>
+          <BrandMark />
         </Link>
 
         <NavigationMenu
@@ -94,23 +82,12 @@ export function Header(): React.JSX.Element {
           <div className="hidden md:block">
             <LocaleSwitcher className="w-36" />
           </div>
-          <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
-          <PillButton
-            tone="outline"
-            scale="md"
-            className="ml-1 hidden rounded-xl md:inline-flex"
-            to={CONTACT_LINK.to}
-          >
-            {CONTACT_LINK.label()}
-          </PillButton>
+          <ThemeToggle className="hidden size-9 md:inline-flex" />
           <a
             href={CALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={cn(
-              pillVariants({ tone: 'neon', scale: 'md' }),
-              'hidden rounded-xl md:inline-flex',
-            )}
+            className={cn(buttonVariants(), 'hidden md:inline-flex')}
           >
             <WhatsappLogoIcon />
             {m.nav_get_in_touch()}
@@ -141,17 +118,14 @@ function MobileMenu(): React.JSX.Element {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="size-11 rounded-full lg:hidden"
+            className="lg:hidden"
             aria-label={m.a11y_open_menu()}
           >
             <ListIcon />
           </Button>
         }
       />
-      <SheetContent
-        side="top"
-        className="h-dvh bg-background/95 px-4 pt-20 pb-10 backdrop-blur-2xl"
-      >
+      <SheetContent side="top" className="h-dvh bg-background px-4 pt-20 pb-10">
         {/*
           Title and description always, as the Sheet pattern asks: it is what the screen
           reader announces on opening. Here both are only for it, because the brand
@@ -176,10 +150,6 @@ function MobileMenu(): React.JSX.Element {
                   className={navLinkVariants({ tone: 'sheet' })}
                 >
                   {item.label()}
-                  <span
-                    aria-hidden="true"
-                    className="brand-bar hidden w-10 group-data-[status=active]:block"
-                  />
                 </Link>
               }
             />
@@ -189,13 +159,13 @@ function MobileMenu(): React.JSX.Element {
         <SheetFooter className="flex-row items-center justify-between gap-4 px-0">
           <div className="flex items-center gap-2">
             <LocaleSwitcher className="w-36" />
-            <ThemeToggle className="size-11 rounded-full" />
+            <ThemeToggle className="size-11" />
           </div>
           <a
             href={CALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={pillVariants({ tone: 'neon' })}
+            className={buttonVariants({ size: 'lg' })}
           >
             <WhatsappLogoIcon />
             {m.nav_get_in_touch()}

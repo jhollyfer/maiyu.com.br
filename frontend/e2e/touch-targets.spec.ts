@@ -6,8 +6,8 @@ test.use({ storageState: PagesList.anonymous })
 
 /**
  * The touch targets of every public page on the phone (`mobile` project only, see
- * `playwright.config.ts`), charged the house goal, 44 px (`docs/DESIGN.md` §4), with no spacing
- * exception: the kit grows its controls below `sm` (`_standards/frontend.md` §10.2).
+ * `playwright.config.ts`), charged the WCAG 2.2 AA minimum, 24 px (2.5.8), with no spacing
+ * exception: the controls are the size shadcn ships, none grown by the house (`_standards/frontend.md` §10.2).
  *
  * The pages are the project's list in `support/pages.md`, the same one `pages.spec.ts` opens: the
  * spec assumes no screen of the project. One language is enough, the targets do not change with it.

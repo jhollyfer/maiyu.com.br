@@ -13,6 +13,7 @@ function mount(element: React.JSX.Element): void {
     [
       { path: '/painel', component: () => element },
       { path: '/profile', component: () => <p>perfil</p> },
+      { path: '/', component: () => <p>dados</p> },
     ],
     '/painel',
   )
@@ -47,5 +48,17 @@ describe('ProfileIncompleteNotice', () => {
         .getByRole('link', { name: m.kit_profile_incomplete_action() })
         .getAttribute('href'),
     ).toBe('/profile')
+  })
+
+  it('o destino vem por prop quando o perfil mora em outra rota', async () => {
+    mount(<ProfileIncompleteNotice missing={['pixKey']} to="/" />)
+
+    expect(
+      (
+        await screen.findByRole('link', {
+          name: m.kit_profile_incomplete_action(),
+        })
+      ).getAttribute('href'),
+    ).toBe('/')
   })
 })

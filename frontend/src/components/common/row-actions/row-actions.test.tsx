@@ -76,6 +76,25 @@ describe('RowActions', () => {
     await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
   })
 
+  it('when the alert is cancelled, focus goes back to the menu button and not to the page', async () => {
+    render(<Row onConfirm={vi.fn()} />)
+
+    await openMenu()
+    await userEvent.click(
+      await screen.findByRole('menuitem', { name: m.kit_delete() }),
+    )
+    await userEvent.click(
+      await screen.findByRole('button', { name: m.kit_cancel() }),
+    )
+
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+    await waitFor(() =>
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: m.kit_open_actions() }),
+      ),
+    )
+  })
+
   it('when confirmed in the alert, runs the action once', async () => {
     const onConfirm = vi.fn()
     render(<Row onConfirm={onConfirm} />)

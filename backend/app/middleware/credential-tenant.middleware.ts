@@ -11,6 +11,10 @@ import {
   type CredentialRecord,
   type CredentialSource,
 } from '#core/credential'
+import {
+  PublicTenantVisibility,
+  type PublicViewer,
+} from '#core/public-tenant-visibility'
 import { TenantScope } from '#core/tenant-scope'
 import HTTPException from '#exceptions/http.exception'
 import { TenantRepository } from '#repositories/tenant/tenant.repository'
@@ -67,7 +71,10 @@ const NO_TENANT = '00000000-0000-0000-0000-000000000000'
  */
 @inject()
 export default class CredentialTenantMiddleware {
-  constructor(private readonly tenants: TenantRepository) {}
+  constructor(
+    private readonly tenants: TenantRepository,
+    private readonly visibility: PublicTenantVisibility,
+  ) {}
 
   async handle(context: HttpContext, next: NextFn, options: Options) {
     const raw = CredentialTenantMiddleware.read(context, options.from)
@@ -75,8 +82,10 @@ export default class CredentialTenantMiddleware {
       raw,
       options.secret === true,
     )
+    // The account `silent-auth` checked previews its own tenant (DECISIONS.md #812).
+    const viewer = context.auth.user ?? null
     const lookup = async (): Promise<CredentialMatch> => {
-      const found = await this.resolve(context, options, parsed)
+      const found = await this.resolve(context, options, parsed, viewer)
       if (!found)
         throw HTTPException.NotFound(
           context.i18n.t('errors.not_found'),
@@ -104,6 +113,7 @@ export default class CredentialTenantMiddleware {
     context: HttpContext,
     options: Options,
     parsed: { locator: string; secret: string } | null,
+    viewer: PublicViewer | null,
   ): Promise<CredentialMatch | null> {
     const source = await context.containerResolver.make(options.source)
 
@@ -114,13 +124,17 @@ export default class CredentialTenantMiddleware {
     const secretKept =
       !options.secret ||
       CredentialSecret.matches(parsed?.secret ?? '', record?.secretHash ?? null)
-    const tenant = await this.tenants.findById(record?.tenantId ?? NO_TENANT)
+    const tenantId = record?.tenantId ?? NO_TENANT
+    const tenant = await this.tenants.findById(tenantId)
+    // The project's `PublicTenantFilter` (DECISIONS.md #812): a credential of a tenant that is not
+    // released is the same single 404; asked on every path, so the cost does not tell them apart.
+    const released = (await this.visibility.of(viewer, [tenantId])).length === 1
 
     const fresh =
       record !== null &&
       (record.expiresAt === null || record.expiresAt.getTime() > Date.now())
     const active = tenant?.snapshot().status === ACTIVE_STATUS.ACTIVE
-    if (!record || !secretKept || !fresh || !active) return null
+    if (!record || !secretKept || !fresh || !active || !released) return null
 
     return { tenantId: record.tenantId, targetId: record.targetId }
   }

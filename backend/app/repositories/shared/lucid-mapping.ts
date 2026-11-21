@@ -135,6 +135,19 @@ export default class LucidMapping {
   }
 
   /**
+   * Whether the error the database returned is an integrity constraint violation (SQLSTATE class
+   * `23`: `NOT NULL`, `UNIQUE`, `FOREIGN KEY`, `CHECK`). Any other failure is not one (a lost
+   * connection, a syntax error) and a caller that skips a row for a constraint rethrows it
+   * (DECISIONS.md #812; https://www.postgresql.org/docs/current/errcodes-appendix.html).
+   */
+  static isConstraintViolation(error: unknown): boolean {
+    if (typeof error !== 'object' || error === null) return false
+    if (!('code' in error)) return false
+
+    return typeof error.code === 'string' && error.code.startsWith('23')
+  }
+
+  /**
    * The write, or the `UniqueConflict` fact when the `UNIQUE` index blocked it.
    * Any other database failure is rethrown: it is infrastructure, not a domain fact, and
    * rises to the use-case's `catch`, which logs it and answers `500` (`DECISIONS.md` #352).

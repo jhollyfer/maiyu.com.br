@@ -883,6 +883,16 @@ teste que não depende de estado do servidor (_doc-lib/playwright.md#docs/auth, 
 e nunca chama `/authentication/sign-in`; só o setup e o spec da própria tela de entrada o fazem, e
 `scripts/e2e-sign-in-once.test.ts` reprova o resto. O limiter de produção não se afrouxa para o E2E.
 
+**Conta nova por teste entra pelo helper do kit, nunca por conta compartilhada** (`DECISIONS.md` #819). O caso legítimo
+fora do setup: o spec cria uma conta NOVA por sign-up e entra uma única vez com ela, porque o endpoint que exercita
+exige sessão. A conta nasce no teste, o balde dela do `signInAccountThrottle` começa vazio e ela entra uma vez, a
+intenção da #712. O caminho é `E2eFreshAccount.create({ label, signUp })` (`e2e/support/fresh-account.ts`): o `signUp`
+é do projeto (rota e corpo dele entram por prop), o helper sorteia o login `e2e-<rótulo>-<8 hex>@example.com` e a
+senha, entra uma vez de um endereço próprio (`X-Forwarded-For`, #742) respeitando o 429 (`SignInRetry`) e devolve
+`{ identity, context }` com a sessão no `context` (`contact: 'phone'` para o morador sem e-mail), que o spec descarta no `afterEach`. O teste estático aceita a
+chamada de entrada da API só nesse arquivo, no setup e nos specs da tela de entrada; conta de `E2eAccountsStore`
+segue só no setup, com o `storageState`. O `e2e:cleanup` apaga a conta pelo e-mail (`backend.md` §6.2).
+
 **O setup entra de um endereço por conta e respeita o 429** (`DECISIONS.md` #742). O `signInThrottle` conta 5 por
 minuto por IP, e as contas do kit mais as do projeto saíam todas de `127.0.0.1`: a sexta tomava 429 e o bloqueio de
 10 minutos derrubava as rodadas seguintes. Cada entrada do `auth.setup.ts` leva um `X-Forwarded-For` próprio

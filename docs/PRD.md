@@ -2,9 +2,9 @@
 
 **Maiyu** · site institucional da primeira empresa de consultoria e desenvolvimento de software sob demanda da tríplice fronteira Brasil, Peru e Colômbia
 
-| Versão | Status | Data | Dono do produto | Meta |
-|---|---|---|---|---|
-| 1.1 | Rascunho | 2026-11-04 | Jhollyfer Rodrigues | Site reposicionado no ar em `maiyu.com.br`, nos três idiomas |
+| Versão | Status   | Data       | Dono do produto     | Meta                                                         |
+| ------ | -------- | ---------- | ------------------- | ------------------------------------------------------------ |
+| 1.1    | Rascunho | 2026-11-04 | Jhollyfer Rodrigues | Site reposicionado no ar em `maiyu.com.br`, nos três idiomas |
 
 > Escopo é decisão do dono do produto. O agente não altera este arquivo sem pedido; viu
 > contradição entre a tarefa e o PRD, pergunta.
@@ -20,13 +20,13 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 
 ## 2. Para quem
 
-| Perfil | Quem é | O que precisa |
-|---|---|---|
-| Organização de qualquer setor | empresa, órgão ou entidade que contrata software sob demanda | entender o que a Maiyu faz, ver projetos no ar e chamar para uma conversa |
+| Perfil                                                | Quem é                                                          | O que precisa                                                                                                     |
+| ----------------------------------------------------- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Organização de qualquer setor                         | empresa, órgão ou entidade que contrata software sob demanda    | entender o que a Maiyu faz, ver projetos no ar e chamar para uma conversa                                         |
 | Povo, associação, organização ou instituição indígena | da Amazônia, do Brasil, do Peru, da Colômbia e de outros países | confiar que o trabalho é feito com integridade e inclusão, por quem conhece o contexto, e falar na própria língua |
-| Organização do Alto Solimões | microrregião da sede, em Benjamin Constant e vizinhança | achar uma equipe local, reconhecer o território no site e contatar por e-mail ou WhatsApp |
-| Candidato a vaga | pessoa que quer trabalhar na Maiyu | ver as vagas abertas e se candidatar |
-| Leitor do diário | quem chega por busca ou link compartilhado | ler artigos e, a partir deles, conhecer a Maiyu |
+| Organização do Alto Solimões                          | microrregião da sede, em Benjamin Constant e vizinhança         | achar uma equipe local, reconhecer o território no site e contatar por e-mail ou WhatsApp                         |
+| Candidato a vaga                                      | pessoa que quer trabalhar na Maiyu                              | ver as vagas abertas e se candidatar                                                                              |
+| Leitor do diário                                      | quem chega por busca ou link compartilhado                      | ler artigos e, a partir deles, conhecer a Maiyu                                                                   |
 
 ## 3. Objetivos
 
@@ -37,15 +37,15 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 
 ## 4. Primeira versão (MVP)
 
-| # | Funcionalidade | Para quem | Fluxo |
-|---|---|---|---|
-| 1 | Home com a proposta, a capacidade, o processo, o trabalho e o mapa da borda | todos | `USER-FLOWS.md#conhecer-a-maiyu` |
-| 2 | Portfólio de projetos no ar | organizações | `USER-FLOWS.md#ver-o-portfólio` |
-| 3 | Diário (blog) com filtro por categoria e artigo | leitor | `USER-FLOWS.md#ler-o-diário` |
-| 4 | Carreiras: áreas do banco de talentos e canais para escrever | candidato | `USER-FLOWS.md#candidatar-se-a-uma-vaga` |
-| 5 | Contato por e-mail, telefone e WhatsApp | todos | `USER-FLOWS.md#falar-com-a-maiyu` |
-| 6 | Três idiomas, com troca de idioma e de tema | todos | `USER-FLOWS.md#trocar-idioma-e-tema` |
-| 7 | SEO: sitemap, `robots.txt`, JSON-LD com `areaServed` em Brasil, Peru e Colômbia | buscadores | `USER-FLOWS.md#conhecer-a-maiyu` |
+| #   | Funcionalidade                                                                  | Para quem    | Fluxo                                    |
+| --- | ------------------------------------------------------------------------------- | ------------ | ---------------------------------------- |
+| 1   | Home com a lista dos apps, quem somos e o contato                               | todos        | `USER-FLOWS.md#conhecer-a-maiyu`         |
+| 2   | Portfólio de projetos no ar                                                     | organizações | `USER-FLOWS.md#ver-o-portfólio`          |
+| 3   | Diário (blog) com filtro por categoria e artigo                                 | leitor       | `USER-FLOWS.md#ler-o-diário`             |
+| 4   | Carreiras: áreas do banco de talentos e canais para escrever                    | candidato    | `USER-FLOWS.md#candidatar-se-a-uma-vaga` |
+| 5   | Contato por e-mail, telefone e WhatsApp                                         | todos        | `USER-FLOWS.md#falar-com-a-maiyu`        |
+| 6   | Três idiomas, com troca de idioma e de tema                                     | todos        | `USER-FLOWS.md#trocar-idioma-e-tema`     |
+| 7   | SEO: sitemap, `robots.txt`, JSON-LD com `areaServed` em Brasil, Peru e Colômbia | buscadores   | `USER-FLOWS.md#conhecer-a-maiyu`         |
 
 ## 5. Fica de fora (nesta versão)
 
@@ -56,14 +56,14 @@ fronteira. O site é a porta de entrada: precisa dizer quem é a Maiyu, o que el
 
 ## 6. Requisitos não funcionais
 
-| Tema | Requisito |
-|---|---|
-| Idiomas | pt-BR, en e es, com paridade de mensagens cobrada por `lib/messages.test.ts` |
-| Desempenho | SSR do TanStack Start com rotas `.lazy`; animação em CSS |
-| Disponibilidade | imagem Nitro na porta 3000, healthcheck em `/health-check` |
-| Acessibilidade | WCAG 2.1 AA, `motion-reduce` em toda animação (`DESIGN.md` §10) |
-| Dispositivos | celular primeiro; desktop com a barra completa |
-| Dados pessoais | o site não grava dado pessoal; o site não tem formulário e não envia nada (`SECURITY.md` §8) |
+| Tema            | Requisito                                                                                    |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| Idiomas         | pt-BR, en e es, com paridade de mensagens cobrada por `lib/messages.test.ts`                 |
+| Desempenho      | SSR do TanStack Start com rotas `.lazy`; animação em CSS                                     |
+| Disponibilidade | imagem Nitro na porta 3000, healthcheck em `/health-check`                                   |
+| Acessibilidade  | WCAG 2.1 AA, `motion-reduce` em toda animação (`DESIGN.md` §10)                              |
+| Dispositivos    | celular primeiro; desktop com a barra completa                                               |
+| Dados pessoais  | o site não grava dado pessoal; o site não tem formulário e não envia nada (`SECURITY.md` §8) |
 
 ## 7. Métricas de sucesso
 
@@ -80,7 +80,7 @@ pelo dono (§8).
 
 ## Histórico
 
-| Versão | Data | Mudança |
-|---|---|---|
-| 1.0 | 2026-11-04 | Primeira versão, a partir do `CLAUDE.md` e do código |
-| 1.1 | 2026-11-04 | Posicionamento novo: tríplice fronteira, equipe indígena, público indígena e do Alto Solimões |
+| Versão | Data       | Mudança                                                                                       |
+| ------ | ---------- | --------------------------------------------------------------------------------------------- |
+| 1.0    | 2026-11-04 | Primeira versão, a partir do `CLAUDE.md` e do código                                          |
+| 1.1    | 2026-11-04 | Posicionamento novo: tríplice fronteira, equipe indígena, público indígena e do Alto Solimões |

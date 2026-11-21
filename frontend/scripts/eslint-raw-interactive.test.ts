@@ -195,3 +195,46 @@ describe('RAW_INTERACTIVE: roles with a pair in the registry', () => {
     ).toEqual([])
   })
 })
+
+describe('CATALOG_SIZE: size and radius of a catalog piece (DECISIONS.md #818)', () => {
+  const sized = (code: string) =>
+    rawHits(`export const A = () => ${code}`).then((hits) =>
+      hits.filter(
+        (each) => each.startsWith('Altura') || each.startsWith('Raio'),
+      ),
+    )
+
+  it.each([
+    '<Button className="h-10">x</Button>',
+    '<Button className="max-sm:min-h-11 w-full">x</Button>',
+    '<Button className={cn("flex", "rounded-full")}>x</Button>',
+    '<Button className="sm:size-9">x</Button>',
+    '<Input className="h-12" />',
+    '<SelectTrigger className="rounded-md w-40" />',
+    '<ComboboxInput className="min-h-11" />',
+    '<Card className="rounded-xl" />',
+    '<DialogContent className="rounded-lg" />',
+  ])('reports %s', async (code) => {
+    expect(await sized(code)).toHaveLength(1)
+  })
+
+  it.each([
+    '<Button className="w-full justify-between" size="sm">x</Button>',
+    '<Button className="h-auto py-2">x</Button>',
+    '<Avatar className="size-8 rounded-full" />',
+    '<Skeleton className="h-4 w-full rounded-md" />',
+    '<div className="rounded-full size-2" />',
+    '<Card className="h-full" />',
+    '<Input className="w-40 roundedness" />',
+    // Icon size is the icon's own (`size-4` on the icon) or a child selector of the piece, never the
+    // piece's: neither the icon inside the Button nor the `[&_svg]:` forms count as the Button's size.
+    '<Button><PlusIcon className="size-4" /></Button>',
+    '<Button render={<Link className="size-4" />}>x</Button>',
+    '<Button className="[&_svg]:size-4">x</Button>',
+    '<Button className="[&>svg]:size-4 has-[>svg]:px-2">x</Button>',
+    '<Button className="*:size-4">x</Button>',
+    '<Button className="data-[state=open]:size-4">x</Button>',
+  ])('does not report %s', async (code) => {
+    expect(await sized(code)).toEqual([])
+  })
+})

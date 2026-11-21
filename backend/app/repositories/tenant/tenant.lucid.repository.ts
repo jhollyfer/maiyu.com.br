@@ -207,6 +207,30 @@ export class TenantLucidRepository extends TenantRepository {
     return { cityId: city.id, tenantId: tenant.id, cityTenantIds }
   }
 
+  async resolveGlobal(
+    citySlug: string | null,
+  ): Promise<PublicTenantTarget | null> {
+    const client = this.transaction.client()
+    let cityId: string | null = null
+    if (citySlug !== null) {
+      const [city] = IdRows.parse(
+        await client.from('cities').where('slug', citySlug).select('id'),
+      )
+      if (!city) return null
+      cityId = city.id
+    }
+
+    const query = client
+      .from('tenants')
+      .where('status', ACTIVE_STATUS.ACTIVE)
+      // The demo tenant (DECISIONS.md #802) is opened only by its own slug, never by a list.
+      .where('demo', false)
+    if (cityId !== null) query.where('city_id', cityId)
+    const rows = IdRows.parse(await query.select('id'))
+
+    return { cityId, tenantId: null, cityTenantIds: rows.map((row) => row.id) }
+  }
+
   async resolveSingle(slug: string): Promise<PublicTenantTarget | null> {
     const rows = z
       .array(z.object({ id: z.string(), city_id: z.string() }))

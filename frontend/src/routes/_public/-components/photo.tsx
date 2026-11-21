@@ -49,10 +49,7 @@ export function Photo({
 
   return (
     <figure data-slot="photo" className={cn('flex flex-col gap-3', className)}>
-      <AspectRatio
-        ratio={ratio}
-        className="overflow-hidden rounded-[1.25rem] bg-secondary"
-      >
+      <AspectRatio ratio={ratio} className="overflow-hidden bg-secondary">
         <Picture
           src={photo.src}
           srcSet={photo.srcSet}

@@ -3,7 +3,7 @@ import type * as React from 'react'
 
 import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
-import { Badge } from '#/components/ui/badge'
+import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
 import { featuredProject, projects } from '#/lib/projects'
@@ -11,7 +11,6 @@ import type { Project } from '#/lib/projects'
 import { m } from '#/paraglide/messages'
 
 import { PageHero } from '../../-components/page-hero'
-import { pillVariants } from '../../-components/pill-button'
 import { ProjectStatusBadge } from '../../-components/project-status'
 import { REVEAL, STAGGER } from '../../-components/reveal'
 
@@ -27,7 +26,7 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
   return (
     <AspectRatio
       ratio={1863 / 927}
-      className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
+      className="overflow-hidden bg-secondary ring-1 ring-border"
     >
       <Picture
         src={project.image}
@@ -53,18 +52,9 @@ function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
       </dd>
       <dt className="text-muted-foreground">{m.portfolio_stack_label()}</dt>
       <dd>
-        <ul className="flex flex-wrap gap-1.5">
-          {project.tech.map((tech) => (
-            <li key={tech}>
-              <Badge
-                variant="outline"
-                className="h-auto px-2.5 py-1 text-micro"
-              >
-                {tech}
-              </Badge>
-            </li>
-          ))}
-        </ul>
+        <span className="text-small text-muted-foreground">
+          {project.tech.join(', ')}
+        </span>
       </dd>
     </dl>
   )
@@ -77,7 +67,7 @@ function VisitLink({ project }: ProjectProps): React.JSX.Element {
       href={project.url}
       target="_blank"
       rel="noopener noreferrer"
-      className={cn(pillVariants({}), 'self-start')}
+      className={cn(buttonVariants({ size: 'lg' }), 'self-start')}
     >
       {m.portfolio_visit_site()}
       <ArrowUpRightIcon />
@@ -107,7 +97,7 @@ export function Portfolio(): React.JSX.Element {
             <div className={cn(REVEAL, 'zoom-in-95 duration-1000')}>
               <AspectRatio
                 ratio={1863 / 927}
-                className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
+                className="overflow-hidden bg-secondary ring-1 ring-border"
               >
                 <Picture
                   src={featuredProject.image}
@@ -138,7 +128,7 @@ export function Portfolio(): React.JSX.Element {
                   'flex flex-col gap-8 delay-300 md:col-span-7',
                 )}
               >
-                <p className="max-w-[62ch] font-serif text-lead leading-snug text-foreground/85">
+                <p className="max-w-[62ch] text-lead leading-snug text-foreground/85">
                   {localized(featuredProject.description)}
                 </p>
                 <ProjectFacts project={featuredProject} />
@@ -181,7 +171,7 @@ export function Portfolio(): React.JSX.Element {
                       className="self-start"
                     />
                     <h2 className="text-h1 leading-none">{project.title}</h2>
-                    <p className="font-serif text-lead leading-snug text-foreground/85">
+                    <p className="text-lead leading-snug text-foreground/85">
                       {localized(project.summary)}
                     </p>
                     <p className="max-w-[62ch] text-body text-foreground/75">

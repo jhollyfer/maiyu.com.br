@@ -13,9 +13,23 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  */
 const VIEWPORTS = ['mobile', 'tablet', 'desktop']
 
-/** Where the API sign-in may be called: the setup, and the specs of the sign-in screen itself. */
+/**
+ * Where the API sign-in may be called: the setup, the specs of the sign-in screen itself and the
+ * helper of the fresh account (`E2eFreshAccount`, DECISIONS.md #819): a spec that signs a NEW
+ * account up and signs in once with it. A shared account never signs in outside the setup.
+ */
 const SIGN_IN_DOORS =
-  /(^|\/)(auth\.setup\.ts|[^/]*(sign-in|authentication)[^/]*\.spec\.ts)$/
+  /(^|\/)(auth\.setup\.ts|support\/fresh-account\.ts|[^/]*(sign-in|authentication)[^/]*\.spec\.ts)$/
+
+/** The files, by path and text, that call the API sign-in and are not a door. */
+function callersOutsideDoors(files: Record<string, string>): string[] {
+  return Object.entries(files)
+    .filter(
+      ([file, text]) =>
+        !SIGN_IN_DOORS.test(file) && text.includes('/authentication/sign-in'),
+    )
+    .map(([file]) => file)
+}
 
 describe('E2E sign-in happens once per account', () => {
   beforeEach(() => {
@@ -73,13 +87,44 @@ describe('E2E sign-in happens once per account', () => {
     expect(new Set(roles).size).toBe(roles.length)
   })
 
-  it('no file of e2e/ calls the API sign-in outside the setup and the sign-in screen specs', () => {
-    const callers = globSync('e2e/**/*.ts').filter(
-      (file) =>
-        !SIGN_IN_DOORS.test(file) &&
-        readFileSync(file, 'utf8').includes('/authentication/sign-in'),
+  it('no file of e2e/ calls the API sign-in outside the setup, the sign-in screen specs and the fresh account helper', () => {
+    const files = Object.fromEntries(
+      globSync('e2e/**/*.ts').map((file) => [file, readFileSync(file, 'utf8')]),
     )
 
-    expect(callers).toEqual([])
+    expect(callersOutsideDoors(files)).toEqual([])
+  })
+
+  it('accepts the fresh account helper and rejects a loose sign-in, in a spec or in another support file', () => {
+    const call = 'await request.post(`${api}/authentication/sign-in`)'
+
+    expect(
+      callersOutsideDoors({
+        'e2e/auth.setup.ts': call,
+        'e2e/support/fresh-account.ts': call,
+        'e2e/sign-in.spec.ts': call,
+      }),
+    ).toEqual([])
+    expect(
+      callersOutsideDoors({
+        'e2e/orders.spec.ts': call,
+        'e2e/support/session.ts': call,
+        'e2e/support/fresh-account-copy.ts': call,
+        'e2e/fresh-account.ts': call,
+      }),
+    ).toEqual([
+      'e2e/orders.spec.ts',
+      'e2e/support/session.ts',
+      'e2e/support/fresh-account-copy.ts',
+      'e2e/fresh-account.ts',
+    ])
+  })
+
+  it('a spec that needs a session of a new account goes through E2eFreshAccount, not through a shared one', () => {
+    const helper = readFileSync('e2e/support/fresh-account.ts', 'utf8')
+
+    // The helper signs in only the account it just signed up, once, and never with a stored one.
+    expect(helper.match(/\/authentication\/sign-in/g)).toHaveLength(1)
+    expect(helper).not.toContain('E2eAccountsStore')
   })
 })

@@ -1,65 +1,11 @@
 {
-  "source": "_standards/frontend.md §6 and §10.2, DECISIONS.md #461 and #800",
+  "source": "_standards/frontend.md §6 e §10.2, DECISIONS.md #461, #800, #818 e #821 (sem patch de altura, raio ou toque: o tamanho é o do shadcn; só o `text-base` do celular no `NativeSelect` e o `Button` sem `transition-all` e com `touch-manipulation`)",
   "patches": [
     {
-      "file": "button.tsx",
-      "anchor": "^h-\\d",
-      "add": ["max-sm:min-h-11"],
-      "reason": "44px touch target below sm, dense height kept"
-    },
-    {
-      "file": "button.tsx",
-      "anchor": "^size-\\d",
-      "add": ["max-sm:min-h-11", "max-sm:min-w-11"],
-      "reason": "44px touch target below sm, dense icon size kept"
-    },
-    {
-      "file": "toggle.tsx",
-      "anchor": "^h-\\d",
-      "add": ["max-sm:min-h-11", "max-sm:min-w-11"],
-      "reason": "44px touch target below sm, inside the cva so ToggleGroupItem gets it too"
-    },
-    {
-      "file": "input.tsx",
-      "anchor": "^h-\\d",
-      "add": ["max-sm:min-h-11", "max-sm:text-base"],
-      "reason": "44px touch target and 16px text below sm (iOS zooms under 16px)"
-    },
-    {
-      "file": "textarea.tsx",
-      "anchor": "^field-sizing-content$",
-      "add": ["max-sm:text-base"],
-      "reason": "16px text below sm (iOS zooms under 16px)"
-    },
-    {
-      "file": "native-select.tsx",
-      "anchor": "^h-\\d",
-      "add": ["max-sm:min-h-11", "max-sm:text-base"],
-      "reason": "44px touch target and 16px text below sm (iOS zooms under 16px)"
-    },
-    {
-      "file": "select.tsx",
-      "anchor": "^data-\\[size=default\\]:h-",
-      "add": ["max-sm:min-h-11"],
-      "reason": "44px touch target below sm on the trigger, dense height kept"
-    },
-    {
-      "file": "tabs.tsx",
-      "anchor": "^h-[\\d[]",
-      "add": ["max-sm:min-h-11"],
-      "reason": "44px touch target below sm on the trigger, dense height kept"
-    },
-    {
-      "file": "input-group.tsx",
-      "anchor": "^group/input-group$",
-      "add": ["max-sm:min-h-11"],
-      "reason": "44px floor on the group root, so the input inside does not overflow the border"
-    },
-    {
-      "file": "input-group.tsx",
-      "anchor": "^size-\\d",
-      "add": ["max-sm:min-w-11"],
-      "reason": "44px width below sm on icon sizes, the Button height floor already applies"
+      "file": "skeleton.tsx",
+      "anchor": "^animate-pulse$",
+      "add": ["motion-reduce:animate-none"],
+      "reason": "every loading skeleton stops pulsing for who asked for reduced motion (frontend.md §10.5, DECISIONS.md #808)"
     },
     {
       "file": "radio-group.tsx",
@@ -88,6 +34,250 @@
       "attribute": "id",
       "value": "props.htmlFor ? `${props.htmlFor}-label` : undefined",
       "reason": "Label gets the id its control points at with aria-labelledby (radio-group, checkbox, switch), so the control has a name in the server HTML"
+    },
+    {
+      "file": "breadcrumb.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "breadcrumb.tsx",
+      "from": "aria-label=\"breadcrumb\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_breadcrumb_label()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "breadcrumb.tsx",
+      "from": "<span className=\"sr-only\">More</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_more()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "carousel.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "carousel.tsx",
+      "from": "<span className=\"sr-only\">Previous slide</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_carousel_previous()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "carousel.tsx",
+      "from": "<span className=\"sr-only\">Next slide</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_carousel_next()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "code-block.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "code-block.tsx",
+      "from": "aria-label={copied ? 'Copied' : 'Copy'}",
+      "to": "// casa: translated label\naria-label={copied ? m.kit_ui_code_copied() : m.kit_ui_code_copy()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "code-block.tsx",
+      "from": "{copied ? 'Copied' : ''}",
+      "to": "{/* casa: translated label */}\n{copied ? m.kit_ui_code_copied() : ''}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "dialog.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "dialog.tsx",
+      "from": "<span className=\"sr-only\">Close</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_close()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sheet.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "sheet.tsx",
+      "from": "<span className=\"sr-only\">Close</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_close()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "command.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "command.tsx",
+      "from": "title = 'Command Palette',",
+      "to": "// casa: translated label\ntitle = m.kit_ui_command_title(),",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "command.tsx",
+      "from": "description = 'Search for a command to run...',",
+      "to": "// casa: translated label\ndescription = m.kit_ui_command_description(),",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "aria-label=\"pagination\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_pagination_label()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "aria-label=\"Go to previous page\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_pagination_previous()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "aria-label=\"Go to next page\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_pagination_next()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "text = 'Previous',",
+      "to": "// casa: translated label\ntext = m.kit_ui_pagination_previous_text(),",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "text = 'Next',",
+      "to": "// casa: translated label\ntext = m.kit_ui_pagination_next_text(),",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "pagination.tsx",
+      "from": "<span className=\"sr-only\">More pages</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_pagination_more()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "<SheetTitle>Sidebar</SheetTitle>",
+      "to": "{/* casa: translated label */}\n<SheetTitle>{m.kit_ui_sidebar_title()}</SheetTitle>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "<SheetDescription>Displays the mobile sidebar.</SheetDescription>",
+      "to": "{/* casa: translated label */}\n<SheetDescription>{m.kit_ui_sidebar_description()}</SheetDescription>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "<span className=\"sr-only\">Toggle Sidebar</span>",
+      "to": "{/* casa: translated label */}\n<span className=\"sr-only\">{m.kit_ui_sidebar_toggle()}</span>",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "aria-label=\"Toggle Sidebar\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_sidebar_toggle()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sidebar.tsx",
+      "from": "title=\"Toggle Sidebar\"",
+      "to": "// casa: translated label\ntitle={m.kit_ui_sidebar_toggle()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "spinner.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "spinner.tsx",
+      "from": "aria-label=\"Loading\"",
+      "to": "// casa: translated label (the kit's `kit_loading`)\naria-label={m.kit_loading()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "toast.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "toast.tsx",
+      "from": "aria-label=\"Close toast\"",
+      "to": "// casa: translated label\naria-label={m.kit_ui_toast_close()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "message-scroller.tsx",
+      "from": "import { cn } from '#/lib/cn'",
+      "to": "import { cn } from '#/lib/cn'\n// casa: translated labels, the registry ships English\nimport { m } from '#/paraglide/messages'",
+      "reason": "the `m` import the translated labels below use"
+    },
+    {
+      "file": "message-scroller.tsx",
+      "from": "{direction === 'end' ? 'Scroll to end' : 'Scroll to start'}",
+      "to": "{/* casa: translated label */}\n{direction === 'end' ? m.kit_ui_scroll_end() : m.kit_ui_scroll_start()}",
+      "reason": "translated label: the registry ships English, the kit ships `m.kit_ui_*()` (frontend.md §6, i18n.md, DECISIONS.md #818)"
+    },
+    {
+      "file": "sonner.tsx",
+      "from": "import { useTheme } from 'next-themes'\n",
+      "to": "// casa: theme comes from the cookie, not from next-themes (the `theme` prop)\n",
+      "reason": "the theme comes from the cookie, not from `next-themes`: `common/theme/theme-provider-toaster.tsx` passes it as a prop (frontend.md §6, DECISIONS.md #818)"
+    },
+    {
+      "file": "sonner.tsx",
+      "from": "const Toaster = ({ ...props }: ToasterProps) => {\n  const { theme = 'system' } = useTheme()\n\n  return (",
+      "to": "const Toaster = ({ ...props }: ToasterProps) => {\n  // casa: no theme hook here, the `theme` prop carries the cookie's theme\n  return (",
+      "reason": "the theme comes from the cookie, not from `next-themes`: `common/theme/theme-provider-toaster.tsx` passes it as a prop (frontend.md §6, DECISIONS.md #818)"
+    },
+    {
+      "file": "sonner.tsx",
+      "from": "theme={theme as ToasterProps['theme']}",
+      "to": "// casa: the cookie's theme arrives in `props`, which spread after this default\ntheme=\"system\"",
+      "reason": "the theme comes from the cookie, not from `next-themes`: `common/theme/theme-provider-toaster.tsx` passes it as a prop (frontend.md §6, DECISIONS.md #818)"
+    },
+    {
+      "file": "native-select.tsx",
+      "anchor": "^appearance-none$",
+      "add": ["max-sm:text-base"],
+      "reason": "font size only, never height (DECISIONS.md #818 keeps the registry's size): the registry's `text-sm` (14px) makes iOS Safari zoom the page when the select takes focus, which happens below 16px; `max-sm:text-base` is 16px on the phone and leaves the desktop at the registry's size (frontend.md §6, DECISIONS.md #821)"
+    },
+    {
+      "file": "button.tsx",
+      "anchor": "^group/button$",
+      "add": [
+        "touch-manipulation",
+        "transition-[color,background-color,border-color,box-shadow,translate]"
+      ],
+      "reason": "the registry's `transition-all` animates a property nobody asked for, `height` and `width` among them, and the button only changes color, border, shadow and the `active:translate-y-px` press: the transition lists them (_doc-lib/tailwindcss.md#transition-property, https://tailwindcss.com/docs/transition-property); `touch-manipulation` (`touch-action: manipulation`, tailwindcss.com/docs/touch-action, página oficial não conferida) drops the double-tap-zoom wait, so a tap answers at once on the phone (DECISIONS.md #821)",
+      "remove": ["transition-all"]
     }
   ]
 }

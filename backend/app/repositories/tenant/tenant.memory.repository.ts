@@ -168,6 +168,28 @@ export class TenantMemoryRepository extends TenantRepository {
     return { cityId: city.id, tenantId: tenant.id, cityTenantIds }
   }
 
+  async resolveGlobal(
+    citySlug: string | null,
+  ): Promise<PublicTenantTarget | null> {
+    let cityId: string | null = null
+    if (citySlug !== null) {
+      const city = [...this.cities.values()].find(
+        (each) => each.slug === citySlug,
+      )
+      if (!city) return null
+      cityId = city.id
+    }
+
+    const cityTenantIds = this.liveTenants()
+      .filter(
+        (tenant) =>
+          !tenant.demo && (cityId === null || tenant.cityId === cityId),
+      )
+      .map((tenant) => tenant.id)
+
+    return { cityId, tenantId: null, cityTenantIds }
+  }
+
   async resolveSingle(slug: string): Promise<PublicTenantTarget | null> {
     const matches = this.liveTenants().filter((each) => each.slug === slug)
     const [tenant] = matches

@@ -10,6 +10,7 @@ import {
 import type { Merge } from '@maiyu/shared'
 
 import { ConfirmDialogProvider } from './confirm-dialog-context'
+import type { ConfirmChallengeStatus } from './confirm-dialog-context'
 
 /**
  * Opens the confirmation **without a trigger**, for whoever opens it through an effect and not by
@@ -66,6 +67,10 @@ export type ConfirmDialogProps = Merge<
  * `<Alert>` in the description without that becoming one more optional prop for the
  * other thirty-three.
  *
+ * **A strong confirmation is a part, not a flag.** `ConfirmDialogWarning` and
+ * `ConfirmDialogChallenge` inside the content turn on the red warning and the question the
+ * confirm button waits for; without them it is the plain alert.
+ *
  * **`children` is the alert content, not the trigger one.** What shows
  * inside the button that opens it lives in the `render` element
  * (`render={<Button><TrashIcon />Excluir</Button>}`); a bare trigger, opened through
@@ -84,8 +89,11 @@ export function ConfirmDialog({
 }: ConfirmDialogProps): React.JSX.Element {
   const { closeRef, close } = useDismissableDialog()
 
+  const [challenge, reportChallenge] =
+    React.useState<ConfirmChallengeStatus>('absent')
+
   const confirm = (): void => {
-    if (isPending) return
+    if (isPending || challenge === 'pending') return
     onConfirm(close)
   }
 
@@ -93,7 +101,14 @@ export function ConfirmDialog({
   // write an inline arrow, and then the object is new on every render
   // anyway. It stays because it costs nothing and pays off when the caller memoizes; do not
   // count on it to avoid re-renders.
-  const value = { isPending, destructive, closeRef, confirm }
+  const value = {
+    isPending,
+    destructive,
+    closeRef,
+    confirm,
+    challenge,
+    reportChallenge,
+  }
 
   return (
     <AlertDialog handle={handle}>

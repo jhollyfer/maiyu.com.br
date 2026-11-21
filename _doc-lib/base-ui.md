@@ -7,7 +7,7 @@ As primitivas headless que ficam **por baixo** dos componentes do shadcn.
 
 **O que é:** uma biblioteca de componentes React sem estilo nenhum. Ela entrega comportamento —
 foco, teclado, ARIA, posicionamento, animação de saída, estado — e não entrega uma linha de CSS. É a
-sucessora do Radix na stack do shadcn: com `"style": "base-mira"` no `components.json`, todo arquivo
+sucessora do Radix na stack do shadcn: com `"style": "base-nova"` no `components.json`, todo arquivo
 que a CLI grava importa `@base-ui/react/<primitiva>`.
 
 **Para que serve:** responder a pergunta que a doc do shadcn não responde. A página do shadcn mostra

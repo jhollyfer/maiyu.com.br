@@ -6,6 +6,10 @@ Mudanças de Maiyu que quem usa percebe. Formato
 
 ## [Não lançado]
 
+### Alterado
+
+- A home abre pela lista dos apps da casa (nome, o que resolve, para quem, ano, estado, link), depois quem somos e o contato. Fonte única do sistema, sem serifa nem itálico. Um app só entra na lista quando o dono manda os dados completos (aguardam: Toru, Delivery, Mangangá, Simple Hub e LowCodeJS).
+
 ### Adicionado
 
 - Texto novo do site nos três idiomas: a Maiyu se apresenta como a primeira empresa de consultoria e desenvolvimento de software sob demanda da tríplice fronteira Brasil, Peru e Colômbia, em Benjamin Constant, feita por indígenas e pessoas originárias da região.

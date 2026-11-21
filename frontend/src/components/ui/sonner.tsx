@@ -1,3 +1,6 @@
+'use client'
+
+// casa: theme comes from the cookie, not from next-themes (the `theme` prop)
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 import {
   CheckCircleIcon,
@@ -7,11 +10,12 @@ import {
   SpinnerIcon,
 } from '@phosphor-icons/react'
 
-// casa: theme comes from the cookie, not from next-themes: it enters as a ToasterProps prop, passed by ThemeProviderToaster
-const Toaster = ({ theme = 'system', ...props }: ToasterProps) => {
+const Toaster = ({ ...props }: ToasterProps) => {
+  // casa: no theme hook here, the `theme` prop carries the cookie's theme
   return (
     <Sonner
-      theme={theme}
+      // casa: the cookie's theme arrives in `props`, which spread after this default
+      theme="system"
       className="toaster group"
       icons={{
         success: <CheckCircleIcon className="size-4" />,

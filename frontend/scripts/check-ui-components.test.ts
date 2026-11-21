@@ -34,8 +34,8 @@ import {
  * project's own `src/`, so the unit gate of every commit refuses an incomplete `ui/`.
  */
 const MANIFEST = {
-  registry: 'base-mira',
-  source: 'https://ui.shadcn.com/r/styles/base-mira/registry.json',
+  registry: 'base-nova',
+  source: 'https://ui.shadcn.com/r/styles/base-nova/registry.json',
   components: ['button', 'dialog', 'sidebar'],
   support: [{ file: 'hooks/use-mobile.ts', item: 'use-mobile' }],
   excluded: {},

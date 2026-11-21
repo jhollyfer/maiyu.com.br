@@ -1,6 +1,16 @@
 import * as React from 'react'
 
 /**
+ * Whether the confirmation asks a challenge before it releases the action.
+ *
+ * `absent` is the default: no `ConfirmDialogChallenge` in the tree. The part reports `pending`
+ * when it mounts and `solved` once answered, and goes back to `absent` when it unmounts (the
+ * alert closed). The challenge is on by the **part being present**, never by a prop of the
+ * dialog (`frontend.md` §6.1).
+ */
+export type ConfirmChallengeStatus = 'absent' | 'pending' | 'solved'
+
+/**
  * What the whole confirmation shares -- and nothing else.
  *
  * The action, its weight and the pending state stay here because whoever declares them is the screen,
@@ -22,6 +32,9 @@ export type ConfirmDialogContextValue = {
   readonly closeRef: React.RefObject<HTMLButtonElement | null>
   /** The screen `onConfirm`, already with `close` bound. */
   readonly confirm: () => void
+  readonly challenge: ConfirmChallengeStatus
+  /** Called only by `ConfirmDialogChallenge`. */
+  readonly reportChallenge: (status: ConfirmChallengeStatus) => void
 }
 
 const ConfirmDialogContext =

@@ -1,3 +1,4 @@
+import type { LinkProps } from '@tanstack/react-router'
 import * as React from 'react'
 
 import type { PanelMenuGroup } from '#/lib/panel-menu'
@@ -18,6 +19,8 @@ export type PanelShellContextValue = {
   readonly profilePending: ReadonlyArray<string>
   /** O rótulo do projeto por campo pendente. */
   readonly profileFieldLabels: Readonly<Record<string, string>> | undefined
+  /** A rota do perfil da conta, do projeto. */
+  readonly profileTo: NonNullable<LinkProps['to']>
 }
 
 export const PanelShellContext =

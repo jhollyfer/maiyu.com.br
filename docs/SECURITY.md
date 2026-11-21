@@ -33,49 +33,49 @@ flowchart LR
   git[GitHub] -->|GitHub App, push na main| cool[Coolify]
 ```
 
-| Fronteira | Entre | O que a protege | Evidência |
-|---|---|---|---|
-| internet para o SSR | navegador e Nitro | TLS no proxy; rotas só de leitura | `frontend/src/routes/` |
-| internet para a API | navegador e API | TLS no proxy; CORS por `CORS_ORIGINS`; cookie `httpOnly`; checagem de origem em toda escrita | `backend/config/`, `backend/app/features/authentication/` |
-| API para o banco e o bucket | API, Postgres e S3 | Postgres só na rede interna; bucket privado com URL assinada | `backend/app/services/storage/`, `ARCHITECTURE.md` §9.1 |
-| Git para o Coolify | GitHub e Coolify | GitHub App do Coolify com acesso só ao repositório; o repositório não tem secret de deploy | `ARCHITECTURE.md` §9.1 |
+| Fronteira                   | Entre              | O que a protege                                                                              | Evidência                                                 |
+| --------------------------- | ------------------ | -------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| internet para o SSR         | navegador e Nitro  | TLS no proxy; rotas só de leitura                                                            | `frontend/src/routes/`                                    |
+| internet para a API         | navegador e API    | TLS no proxy; CORS por `CORS_ORIGINS`; cookie `httpOnly`; checagem de origem em toda escrita | `backend/config/`, `backend/app/features/authentication/` |
+| API para o banco e o bucket | API, Postgres e S3 | Postgres só na rede interna; bucket privado com URL assinada                                 | `backend/app/services/storage/`, `ARCHITECTURE.md` §9.1   |
+| Git para o Coolify          | GitHub e Coolify   | GitHub App do Coolify com acesso só ao repositório; o repositório não tem secret de deploy   | `ARCHITECTURE.md` §9.1                                    |
 
 ### 2.3 Ativos
 
-| Ativo | Por quê importa | C / I / D | Onde fica | Quem acessa |
-|---|---|---|---|---|
-| Credencial do dono da API | publicar e apagar anexos, ler a conta | C, I | hash Argon2 no Postgres; senha inicial só no painel (`SEED_OWNER_PASSWORD`) | o dono |
-| Acesso ao painel do Coolify e ao GitHub App | publicar código no ar | C, I | conta do dono | o dono |
-| Conteúdo do site | reputação e posicionamento da Maiyu | I, D | repositório e imagem | o dono |
-| Contatos públicos (e-mail, telefone, endereço) | já são públicos | I | `frontend/src/lib/site.ts` | qualquer visitante |
+| Ativo                                          | Por quê importa                       | C / I / D | Onde fica                                                                   | Quem acessa        |
+| ---------------------------------------------- | ------------------------------------- | --------- | --------------------------------------------------------------------------- | ------------------ |
+| Credencial do dono da API                      | publicar e apagar anexos, ler a conta | C, I      | hash Argon2 no Postgres; senha inicial só no painel (`SEED_OWNER_PASSWORD`) | o dono             |
+| Acesso ao painel do Coolify e ao GitHub App    | publicar código no ar                 | C, I      | conta do dono                                                               | o dono             |
+| Conteúdo do site                               | reputação e posicionamento da Maiyu   | I, D      | repositório e imagem                                                        | o dono             |
+| Contatos públicos (e-mail, telefone, endereço) | já são públicos                       | I         | `frontend/src/lib/site.ts`                                                  | qualquer visitante |
 
 ### 2.4 Atacante
 
-| Pode | Não pode (premissa) |
-|---|---|
+| Pode                                                                         | Não pode (premissa)                                           |
+| ---------------------------------------------------------------------------- | ------------------------------------------------------------- |
 | chamar qualquer rota pública do site e da API, enviar corpo arbitrário à API | ler o código-fonte privado ou os valores do painel do Coolify |
-| abrir PR de fork (sem acesso a secrets) | interceptar TLS |
+| abrir PR de fork (sem acesso a secrets)                                      | interceptar TLS                                               |
 
 ### 2.5 Superfícies
 
-| Superfície | Como chega | Fronteira | Evidência |
-|---|---|---|---|
-| páginas SSR | `GET` em `/`, `/portfolio`, `/blog`, `/career`, `/contact` | internet para o SSR | `frontend/src/routes/_public/` |
-| filtro do diário | `?category=` | internet para o SSR | `frontend/src/routes/_public/blog/-search.ts` |
-| aviso de contato | sem formulário e sem envio (`DECISIONS.md` #17); só links `mailto:` e WhatsApp | cliente | `frontend/src/routes/_public/-components/channels-notice.tsx` |
-| `/health-check`, `/sitemap.xml` | `GET` | internet para o SSR | `frontend/src/routes/health-check.ts` |
-| sessão do dono | `POST /authentication/{sign-in,sign-out,refresh}` | internet para a API | `backend/app/features/authentication/sessions` |
-| anexos | `/storages`, só com sessão | internet para a API | `backend/app/features/storages/files` |
-| deploy | push na `main` e *Auto Deploy* do Coolify | Git para o Coolify | `ARCHITECTURE.md` §9.1 |
+| Superfície                      | Como chega                                                                     | Fronteira           | Evidência                                                     |
+| ------------------------------- | ------------------------------------------------------------------------------ | ------------------- | ------------------------------------------------------------- |
+| páginas SSR                     | `GET` em `/`, `/portfolio`, `/blog`, `/career`, `/contact`                     | internet para o SSR | `frontend/src/routes/_public/`                                |
+| filtro do diário                | `?category=`                                                                   | internet para o SSR | `frontend/src/routes/_public/blog/-search.ts`                 |
+| aviso de contato                | sem formulário e sem envio (`DECISIONS.md` #17); só links `mailto:` e WhatsApp | cliente             | `frontend/src/routes/_public/-components/channels-notice.tsx` |
+| `/health-check`, `/sitemap.xml` | `GET`                                                                          | internet para o SSR | `frontend/src/routes/health-check.ts`                         |
+| sessão do dono                  | `POST /authentication/{sign-in,sign-out,refresh}`                              | internet para a API | `backend/app/features/authentication/sessions`                |
+| anexos                          | `/storages`, só com sessão                                                     | internet para a API | `backend/app/features/storages/files`                         |
+| deploy                          | push na `main` e _Auto Deploy_ do Coolify                                      | Git para o Coolify  | `ARCHITECTURE.md` §9.1                                        |
 
 ### 2.6 Abusos priorizados
 
-| Id | Abuso | Probabilidade | Impacto | Prioridade | Mitigação | Evidência |
-|---|---|---|---|---|---|---|
-| TM-001 | valor arbitrário em `?category=` | alta | baixo | baixa | valor fora da lista cai para "tudo" | `frontend/src/routes/_public/blog/-search.test.ts` |
-| TM-002 | injeção por texto de registro no JSON-LD | baixa | médio | média | JSON-LD montado por objeto e serializado em um ponto, com `<` escapado como `\u003c` | `frontend/src/lib/structured-data.test.ts` |
-| TM-003 | força bruta ou reuso de token na sessão do dono | média | alto | alta | limite de taxa nomeado no Postgres (`rate_limits`), Argon2, refresh rotativo com detecção de reuso (`consumed_refresh_tokens`) | `backend/start/limiter.ts` |
-| TM-004 | dependência com CVE | média | médio | média | versões recentes; lockfile; `pnpm install --frozen-lockfile` no build do Docker | `pnpm-lock.yaml` |
+| Id     | Abuso                                           | Probabilidade | Impacto | Prioridade | Mitigação                                                                                                                      | Evidência                                          |
+| ------ | ----------------------------------------------- | ------------- | ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------- |
+| TM-001 | valor arbitrário em `?category=`                | alta          | baixo   | baixa      | valor fora da lista cai para "tudo"                                                                                            | `frontend/src/routes/_public/blog/-search.test.ts` |
+| TM-002 | injeção por texto de registro no JSON-LD        | baixa         | médio   | média      | JSON-LD montado por objeto e serializado em um ponto, com `<` escapado como `\u003c`                                           | `frontend/src/lib/structured-data.test.ts`         |
+| TM-003 | força bruta ou reuso de token na sessão do dono | média         | alto    | alta       | limite de taxa nomeado no Postgres (`rate_limits`), Argon2, refresh rotativo com detecção de reuso (`consumed_refresh_tokens`) | `backend/start/limiter.ts`                         |
+| TM-004 | dependência com CVE                             | média         | médio   | média      | versões recentes; lockfile; `pnpm install --frozen-lockfile` no build do Docker                                                | `pnpm-lock.yaml`                                   |
 
 ### 2.7 Calibragem de criticidade
 
@@ -116,13 +116,13 @@ Perfis: `ADMINISTRATOR` (o dono) e `MEMBER`, que nenhuma rota cria hoje (`shared
 O `frontend/src/server.ts` aplica em toda resposta que passa pelo SSR os cabeçalhos de
 `frontend/src/lib/security-headers.ts`, arquivo do kit (`_standards/frontend.md` §3.3):
 
-| Cabeçalho | Valor | Por quê |
-|---|---|---|
-| `Content-Security-Policy` | `default-src 'self'`; `script-src` com `'self'` e nonce por resposta; `style-src` com `'unsafe-inline'`; `img-src`, `connect-src` e `font-src` do kit; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` | `frame-ancestors` impede clickjacking; o nonce autoriza os scripts de hidratação do Start sem `unsafe-inline` em script; a origem da API e a do bucket entram por `VITE_API_URL` e `STORAGE_PUBLIC_URL` |
-| `X-Content-Type-Options` | `nosniff` | o navegador não adivinha tipo de arquivo |
-| `Referrer-Policy` | `strict-origin-when-cross-origin` | link de saída leva só a origem |
-| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains` | sem `preload`, que não se desfaz |
-| `X-Robots-Tag` | `noindex, nofollow` | só quando `SITE_ENV` não é `production`, lida por requisição (`ENV.md`) |
+| Cabeçalho                   | Valor                                                                                                                                                                                                                                         | Por quê                                                                                                                                                                                                 |
+| --------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Content-Security-Policy`   | `default-src 'self'`; `script-src` com `'self'` e nonce por resposta; `style-src` com `'unsafe-inline'`; `img-src`, `connect-src` e `font-src` do kit; `frame-ancestors 'none'`; `base-uri 'self'`; `form-action 'self'`; `object-src 'none'` | `frame-ancestors` impede clickjacking; o nonce autoriza os scripts de hidratação do Start sem `unsafe-inline` em script; a origem da API e a do bucket entram por `VITE_API_URL` e `STORAGE_PUBLIC_URL` |
+| `X-Content-Type-Options`    | `nosniff`                                                                                                                                                                                                                                     | o navegador não adivinha tipo de arquivo                                                                                                                                                                |
+| `Referrer-Policy`           | `strict-origin-when-cross-origin`                                                                                                                                                                                                             | link de saída leva só a origem                                                                                                                                                                          |
+| `Strict-Transport-Security` | `max-age=31536000; includeSubDomains`                                                                                                                                                                                                         | sem `preload`, que não se desfaz                                                                                                                                                                        |
+| `X-Robots-Tag`              | `noindex, nofollow`                                                                                                                                                                                                                           | só quando `SITE_ENV` não é `production`, lida por requisição (`ENV.md`)                                                                                                                                 |
 
 Pendências conhecidas:
 
@@ -141,10 +141,10 @@ Pendências conhecidas:
 
 ## 8. Dados pessoais (LGPD)
 
-| Dado | Finalidade | Base legal | Retenção | Exclusão |
-|---|---|---|---|---|
+| Dado                                                                  | Finalidade                | Base legal                                                                          | Retenção                                             | Exclusão                                                                                                                                   |
+| --------------------------------------------------------------------- | ------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | nome, e-mail, mensagem e idioma do formulário de contato (`contacts`) | responder a quem escreveu | consentimento do titular, que envia a mensagem pedindo a resposta (LGPD art. 7º, I) | 12 meses a partir de `created_at`, respondido ou não | `DELETE /administrator/contacts/:id` a pedido do titular, e o comando `node ace contacts:prune`, que apaga de vez o que passou de 12 meses |
-| e-mail, nome e hash da senha do dono, no `users` da API | acesso do dono | Não se aplica: dado do operador, não de titular externo | enquanto a conta existir | arquivar a conta apaga as sessões |
+| e-mail, nome e hash da senha do dono, no `users` da API               | acesso do dono            | Não se aplica: dado do operador, não de titular externo                             | enquanto a conta existir                             | arquivar a conta apaga as sessões                                                                                                          |
 
 O expurgo roda como tarefa agendada do Coolify (`ARCHITECTURE.md` §9.1). Não há lixeira: apagar é de vez. A API não envia e-mail ao dono: ele lê a caixa de entrada no painel e responde do próprio e-mail. O contato por e-mail e WhatsApp também acontece fora do site, nos serviços do próprio visitante.
 

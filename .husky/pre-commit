@@ -6,9 +6,9 @@
 staged=$(git diff --cached --name-only)
 
 # git exports GIT_DIR to the hook; with it, a `git` run inside an app (the `git ls-files` of
-# `pattern:check`) takes the current folder as the root and lists the whole repository as if it
+# `pattern:check`, which drops these variables itself too, DECISIONS.md #809) takes the current folder as the root and lists the whole repository as if it
 # were the app's. Holds in a worktree too (DECISIONS.md #311).
-unset GIT_DIR GIT_WORK_TREE
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE
 
 touches() {
   printf '%s\n' "$staged" | grep -q "^$1/"

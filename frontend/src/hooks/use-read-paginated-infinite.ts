@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { keepPreviousData, useInfiniteQuery } from '@tanstack/react-query'
 import type {
   InfiniteData,
   QueryKey,
@@ -18,15 +18,23 @@ import { useDebouncedValue } from './use-debounced-value'
  */
 const SEARCH_DELAY = 300
 
-/** Uma página do envelope paginado de `shared/` (`{ data, meta }`); aqui só `data` importa. */
-type Page<TItem> = { readonly data: ReadonlyArray<TItem> }
+/**
+ * Uma página do envelope paginado de `shared/` (`{ data, meta }`); aqui só `data` importa.
+ * `Array` e não `ReadonlyArray`: é o que o `z.infer` do envelope devolve, e o tipo da página
+ * entra invariante nos callbacks das opções (`enabled`, `select`), então uma página `readonly`
+ * recusaria a `queryFn` de toda entidade.
+ */
+type Page<TItem> = { data: Array<TItem> }
 
 /** As `infiniteQueryOptions` da entidade, com a página do envelope e `page` como cursor. */
-export type PaginatedInfiniteQueryOptions<TItem> = UseInfiniteQueryOptions<
+export type PaginatedInfiniteQueryOptions<
+  TItem,
+  TQueryKey extends QueryKey = QueryKey,
+> = UseInfiniteQueryOptions<
   Page<TItem>,
   HTTPError,
   InfiniteData<Page<TItem>, number>,
-  QueryKey,
+  TQueryKey,
   number
 >
 
@@ -39,21 +47,43 @@ export type PaginatedInfiniteQueryOptions<TItem> = UseInfiniteQueryOptions<
  * mecanismo uma vez, a entidade por cima. O `useInfiniteQuery` nunca fica solto
  * no componente do combobox.
  *
- * Devolve três coisas: `combobox`, pronto para espalhar no `OptionCombobox`;
- * `items`, os registros carregados, para quem precisa de mais que o rótulo; e
+ * `keepPreviousData` (antes das opções da entidade, que podem trocá-lo): a lista
+ * antiga fica na tela enquanto a busca nova chega, em vez de piscar o esqueleto a
+ * cada tecla (_doc-lib/tanstack-query.md#guides/placeholder-query-data,
+ * https://tanstack.com/query/latest/docs/framework/react/guides/placeholder-query-data).
+ *
+ * **A `queryFn` da entidade não consome o `signal`.** Uma página de "carregar mais" em
+ * voo quando a busca muda não pode ser abortada: ela termina e fica no cache, e a volta à
+ * busca anterior a encontra pronta; abortar pedia a mesma página de novo
+ * (_doc-lib/tanstack-query.md#guides/query-cancellation,
+ * https://tanstack.com/query/latest/docs/framework/react/guides/query-cancellation).
+ *
+ * Devolve três coisas: `combobox`, pronto para o `useAsyncComboboxSource` ou para
+ * espalhar no `OptionCombobox`; `items`, os registros carregados (com a mesma
+ * identidade enquanto a query não muda), para quem precisa de mais que o rótulo; e
  * `query`, para estado de carga.
  */
-export function useReadPaginatedInfinite<TItem>(
-  options: (search: string) => PaginatedInfiniteQueryOptions<TItem>,
+export function useReadPaginatedInfinite<
+  TItem,
+  TQueryKey extends QueryKey = QueryKey,
+>(
+  options: (search: string) => PaginatedInfiniteQueryOptions<TItem, TQueryKey>,
   toOption: (item: TItem) => OptionComboboxItem,
   /** Desliga a leitura enquanto falta o recorte - a aula sem curso escolhido. */
   enabled = true,
 ) {
   const [search, setSearch] = React.useState('')
   const debounced = useDebouncedValue(search, SEARCH_DELAY)
-  const query = useInfiniteQuery({ ...options(debounced), enabled })
+  const query = useInfiniteQuery({
+    placeholderData: keepPreviousData,
+    ...options(debounced),
+    enabled,
+  })
 
-  const items = query.data?.pages.flatMap((page) => page.data) ?? []
+  const items = React.useMemo(
+    () => query.data?.pages.flatMap((page) => page.data) ?? [],
+    [query.data],
+  )
 
   return {
     items,
@@ -63,6 +93,9 @@ export function useReadPaginatedInfinite<TItem>(
       onSearchChange: setSearch,
       onLoadMore: fireAndForget(() => query.fetchNextPage()),
       hasMore: query.hasNextPage,
+      isFetchingNextPage: query.isFetchingNextPage,
+      /** A lista na tela é a da busca anterior; a nova ainda não chegou. */
+      isRefreshing: query.isPlaceholderData,
       status: query.status,
     },
   }

@@ -82,6 +82,7 @@ export default defineConfig({
   // top-level await (`limiter/services/main`), and `start/routes.ts` already imports it statically;
   // the duplicate import could make `routes` read a throttle before it existed (ReferenceError at boot).
   preloads: [
+    () => import('#start/mail'),
     () => import('#start/routes'),
     () => import('#start/kernel'),
     () => import('#start/validator'),
@@ -103,7 +104,10 @@ export default defineConfig({
     // Two suites (_standards/architecture.md §3.2 and §8): `unit` opens no database
     // or HTTP and runs the rule fast; `functional` boots the real application
     // and talks to Postgres and MinIO. The suffix separates the runner, and the spec lives
-    // next to what it covers.
+    // next to what it covers. The spec of a seeder or of a `database/` piece lives in
+    // `tests/seeders/`, never in `database/` (Lucid loads every script file of `database/seeders/`
+    // as a seeder, DECISIONS.md #380); `tests/suite-globs.unit.spec.ts` fails on a spec no glob
+    // reaches (DECISIONS.md #812).
     suites: [
       {
         files: [

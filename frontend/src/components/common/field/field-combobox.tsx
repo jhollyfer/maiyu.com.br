@@ -2,6 +2,7 @@ import {
   OptionCombobox,
   OptionComboboxDot,
   OptionComboboxIcon,
+  OptionComboboxClear,
   OptionComboboxInput,
   OptionComboboxList,
 } from '#/components/common/option-combobox/option-combobox'
@@ -95,12 +96,12 @@ export function FieldCombobox({
           id={controlId}
           name={field.name}
           placeholder={placeholder}
-          showClear={!required}
           onBlur={field.onBlur}
           aria-invalid={isInvalid}
           aria-required={required || undefined}
           aria-describedby={describedBy}
         >
+          {!required && <OptionComboboxClear />}
           {leading}
         </OptionComboboxInput>
         <OptionComboboxList empty={empty} />

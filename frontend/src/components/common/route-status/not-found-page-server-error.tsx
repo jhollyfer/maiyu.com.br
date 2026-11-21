@@ -35,7 +35,7 @@ export function NotFoundPageServerError({
       <NotFoundPageActions>
         <Button
           data-slot="not-found-page-retry-button"
-          className="w-fit rounded-md"
+          className="w-fit"
           onClick={onRetry}
         >
           {m.kit_try_again()}

@@ -100,8 +100,11 @@ export function PageShellContent({
     <div
       data-slot="page-shell-content"
       data-scroll-restoration-id={SCROLL_ID}
+      // `*:shrink-0`: o filho de uma coluna flex encolhe abaixo do próprio conteúdo por default, e o
+      // `Card` (`overflow-hidden`) encolhido tem o conteúdo cortado em vez de a área rolar. Com os
+      // filhos sem encolher, é o `overflow-auto` desta área que absorve o excesso.
       className={cn(
-        'relative flex min-h-0 flex-1 flex-col overflow-auto',
+        'relative flex min-h-0 flex-1 flex-col overflow-auto *:shrink-0',
         className,
       )}
       {...props}

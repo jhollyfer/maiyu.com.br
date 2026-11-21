@@ -16,6 +16,7 @@ import { createIsomorphicFn } from '@tanstack/react-start'
 
 import { NotFoundPage } from '#/components/common/route-status/not-found-page'
 import { RouteError } from '#/components/common/route-status/route-error'
+import { RoutePending } from '#/components/common/route-status/route-pending'
 import { requestScope } from '#/integrations/tanstack-query/http.server'
 import { getContext } from '#/integrations/tanstack-query/query-context'
 import {
@@ -63,6 +64,19 @@ export function getRouter() {
     // (_doc-lib/tanstack-router.md#guide/preloading).
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    // The skeleton shows 100 ms into the wait, not after the default 1000 ms (which would keep the
+    // previous screen frozen for a second), and stays 200 ms at least so a loader that answers in
+    // 30 ms does not draw one frame of skeleton and swap it (the doc's "pending component flash";
+    // the default floor is 500 ms, which would hold a ready screen back). Not 0: `pendingMs` is a
+    // timer, so with 0 even a loader that returns at once (a listing whose only change is the search,
+    // `cause === 'stay'`) shows the skeleton for the 200 ms floor and takes the whole screen with it.
+    // 100 and 200 are the house's picks, measured on the panel's listing and nothing more
+    // (_doc-lib/tanstack-router.md#guide/data-loading,
+    // https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md,
+    // "Showing a pending component" and "Avoiding Pending Component Flash"; DECISIONS.md #808, #814).
+    defaultPendingMs: 100,
+    defaultPendingMinMs: 200,
+    defaultPendingComponent: RoutePending,
     scrollRestoration: true,
     defaultNotFoundComponent: () => <NotFoundPage />,
     // Without a default, an unhandled loader failure falls to the router's unstyled built-in

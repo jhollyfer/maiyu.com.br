@@ -11,7 +11,7 @@ export class E2eGuard {
 
   /**
    * The tables every project has (accounts, sessions, tokens): `e2e:cleanup` reaches the accounts
-   * only by the rule of e-mail and name together, never through the project's list. The tables of
+   * only by the anchored e-mail or phone pattern of `tests/e2e-identity.ts` (DECISIONS.md #819), never through the project's list. The tables of
    * the multi-tenant skeleton are not here: a project without it may own a `cities` table, and a
    * project with it lists its own in `ProjectE2eCleanup.skeletonTables` (DECISIONS.md #778).
    */
