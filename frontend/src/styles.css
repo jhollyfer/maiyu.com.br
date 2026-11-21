@@ -39,12 +39,11 @@
  *
  * Two layers, as in the siblings. The shadcn names (`--primary`, `--card`,
  * `--border`) are what the whole page reads and what switches between light and
- * dark. The brand colors (`--color-brand-*`) are fixed in both themes: they are
- * a signature, not a surface.
+ * dark. The brand colors (green, cyan...) are only in the logo file: the interface has one
+ * accent, `--highlight` (`docs/DESIGN.md` §2).
  *
- * The pastels (`--tint-*`) are the brand colors lightened to serve as a card
- * background. In dark they become night surfaces, and what gives the color back
- * is the thin ring at the end of this file.
+ * The `--tint-*` tokens are the same paper tone (the pastels left with the editorial direction):
+ * they stay because the kit's pieces read them.
  */
 :root {
   --radius: 0.25rem;
@@ -109,7 +108,6 @@
   --on-navy: #e8f6ff;
 
   /* The forest: the green of the reach phrase and of the weave's diamonds. */
-  --forest-front: #2c7652;
 
   /*
    * The region's earth: the annatto of the body paint, the acai and the clay of the Solimões, which
@@ -117,8 +115,6 @@
    * Only for the weave and details, never a surface.
    */
   --urucum: #b5402a;
-  --acai: #4b1f45;
-  --terra: #a8643d;
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
@@ -179,11 +175,8 @@
   --tint-lime: #0e1a15;
   --tint-green: #0e1a15;
   --tint-peach-soft: #101d17;
-  --forest-front: #03100a;
 
   --urucum: #e0704f;
-  --acai: #c58bc0;
-  --terra: #c08a5c;
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
@@ -245,10 +238,7 @@
   --color-tint-lime: var(--tint-lime);
   --color-tint-green: var(--tint-green);
   --color-tint-peach-soft: var(--tint-peach-soft);
-  --color-forest: var(--forest-front);
   --color-urucum: var(--urucum);
-  --color-acai: var(--acai);
-  --color-terra: var(--terra);
   --color-navy: var(--navy);
   --color-navy-2: var(--navy-2);
   --color-on-navy: var(--on-navy);
@@ -261,16 +251,6 @@
   --color-badge-success-foreground: var(--badge-success-fg);
   --color-badge-warning: var(--badge-warning);
   --color-badge-warning-foreground: var(--badge-warning-fg);
-
-  /* The brand colors, the same in both themes. */
-  --color-brand-green: #88ff9a;
-  --color-brand-blue: #77eed7;
-  --color-brand-cyan: #31e1f7;
-  --color-brand-azure: #3168f7;
-  --color-brand-purple: #a480f5;
-  --color-brand-pink: #fb80c1;
-  --color-brand-black: #272221;
-  --color-brand-dark: #403937;
 
   --font-display: 'Newsreader Variable', Newsreader, Georgia, serif;
   --font-sans:
@@ -500,10 +480,6 @@
     min(calc(100% - 1rem), calc(50% + 40rem)) 0;
 }
 
-@utility marquee {
-  animation: marquee 40s linear infinite;
-}
-
 @utility vision-pulse {
   animation: vision-pulse 2.4s ease-out infinite;
   transform-box: fill-box;
@@ -520,34 +496,6 @@
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/*
- * At night the pastel becomes a dark surface, and the brand color comes back as a thin
- * ring: the same design as the personal portfolio's cards.
- */
-.dark .bg-tint-mint {
-  box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.3);
-}
-
-.dark .bg-tint-lime,
-.dark .bg-tint-green,
-.dark .bg-tint-peach-soft {
-  box-shadow: inset 0 0 0 1px rgba(136, 255, 154, 0.3);
-}
-
-.dark .bg-tint-mist {
-  box-shadow: inset 0 0 0 1px rgba(164, 128, 245, 0.32);
-}
-
-.dark .bg-tint-peach {
-  box-shadow: inset 0 0 0 1px rgba(251, 128, 193, 0.3);
-}
-
-@keyframes marquee {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
 }
 
 @keyframes vision-pulse {

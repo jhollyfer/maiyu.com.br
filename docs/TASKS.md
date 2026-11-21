@@ -114,8 +114,8 @@ shared/package.json`). Tamanho: `P` até um dia, `M` alguns dias, `G` item que s
 |---|---|---|---|---|
 | R3.1 | Cópias locais trocadas pelo kit (`lib/utils`, `form-a11y`, `highlighter`, hooks) | M | Feita | kit inteiro no frontend, menos `table/` e `list-shell/` (R3.7) |
 | R3.2 | Formulários com `FormShell`, `AppField`, `SubmitButton`, `HydratedFieldset` | M | Feita | #325, #366; sem formulário no site agora (`DECISIONS.md` #17), volta com o recurso de contato do backend |
-| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Feita | #366; `MaiyuCredit` no rodapé e `Picture` em todo `img`; `Photo` ficou só como legenda com crédito CC sobre o `Picture`; imagens em `src/assets`; `PillButton` segue local (desvio, sem variante no `ui/`) |
-| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Feita | varredura sem elemento interativo cru fora de `ui/`; `<a>` externo só como `render` do `Button`; `PillButton` local é invólucro do `Button`, desvio relatado à régua |
+| R3.3 | Peças do kit no lugar das locais: seletor de idioma e de tema, `route-status`, `MaiyuCredit`, `Picture` | M | Feita | #366; `MaiyuCredit` no rodapé e `Picture` em todo `img`; `Photo` ficou só como legenda com crédito CC sobre o `Picture`; imagens em `src/assets`; `PillButton` saiu na #60 (DECISIONS #18; era desvio, sem variante no `ui/`) |
+| R3.4 | #366 no resto: cards, badges e links crus trocados por `ui/` | M | Feita | varredura sem elemento interativo cru fora de `ui/`; `<a>` externo só como `render` do `Button`; o `PillButton` local saiu na #60 (`DECISIONS.md` #18): link com cara de botão é `Link` com `buttonVariants` |
 | R3.5 | Chaves de mensagem em `snake_case` por área, `kit_*` fundidas | G | Feita | `i18n.md` §2; 117 chaves renomeadas nos três idiomas e nos usos, `kit_*` intactas |
 | R3.6 | Registry inteiro pela #299, sem `@radix-ui` | M | Bloqueada | `frontend.md` §6; #299 do upstream; confirma a #11 local |
 | R3.7 | `components/common/table/` e `list-shell/` do kit no frontend | M | Bloqueada | lacuna do kit (leva 9): `table/` e `list-shell/` exigem search paginado |

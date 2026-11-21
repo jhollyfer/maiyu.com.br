@@ -50,7 +50,7 @@ export function Header(): React.JSX.Element {
     <header
       data-slot="site-header"
       data-scrolled={scrolled}
-      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-500 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background/85 data-[scrolled=true]:backdrop-blur-xl motion-reduce:transition-none"
+      className="fixed inset-x-0 top-0 z-50 border-b border-transparent transition-[background-color,border-color] duration-500 ease-out-expo data-[scrolled=true]:border-border data-[scrolled=true]:bg-background motion-reduce:transition-none"
     >
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[1fr_auto] items-center gap-4 px-4 md:px-8 lg:grid-cols-[auto_1fr_auto]">
         <Link
@@ -93,7 +93,7 @@ export function Header(): React.JSX.Element {
           <div className="hidden md:block">
             <LocaleSwitcher className="w-36" />
           </div>
-          <ThemeToggle className="hidden size-9 rounded-full md:inline-flex" />
+          <ThemeToggle className="hidden size-9 md:inline-flex" />
           <Link
             to={CONTACT_LINK.to}
             className={cn(
@@ -138,17 +138,14 @@ function MobileMenu(): React.JSX.Element {
           <Button
             variant="ghost"
             size="icon-lg"
-            className="size-11 rounded-full lg:hidden"
+            className="size-11 lg:hidden"
             aria-label={m.a11y_open_menu()}
           >
             <ListIcon />
           </Button>
         }
       />
-      <SheetContent
-        side="top"
-        className="h-dvh bg-background/95 px-4 pt-20 pb-10 backdrop-blur-2xl"
-      >
+      <SheetContent side="top" className="h-dvh bg-background px-4 pt-20 pb-10">
         {/*
           Title and description always, as the Sheet pattern asks: it is what the screen
           reader announces on opening. Here both are only for it, because the brand
@@ -186,7 +183,7 @@ function MobileMenu(): React.JSX.Element {
         <SheetFooter className="flex-row items-center justify-between gap-4 px-0">
           <div className="flex items-center gap-2">
             <LocaleSwitcher className="w-36" />
-            <ThemeToggle className="size-11 rounded-full" />
+            <ThemeToggle className="size-11" />
           </div>
           <a
             href={CALL_URL}
