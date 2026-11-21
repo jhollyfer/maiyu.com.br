@@ -63,7 +63,9 @@ export function Roots(): React.JSX.Element {
               className={cn(REVEAL, 'md:px-8 md:first:pl-0 md:last:pr-0')}
               style={{ animationDelay: `${(index + 2) * STAGGER}ms` }}
             >
-              <dt className="text-h3 font-bold text-urucum">{fact.title()}</dt>
+              <dt className="font-display text-h3 text-foreground">
+                {fact.title()}
+              </dt>
               <dd className="mt-3 max-w-[32ch] font-serif text-body-lg text-foreground/80">
                 {fact.description()}
               </dd>

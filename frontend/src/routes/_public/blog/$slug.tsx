@@ -9,6 +9,8 @@ import { blogPostingJsonLd } from '#/lib/structured-data'
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
 
+import { ArticleSkeleton } from './-components/article-skeleton'
+
 /**
  * A journal article.
  *
@@ -17,6 +19,7 @@ import { getLocale } from '#/paraglide/runtime'
  * (in the `.lazy.tsx`) instead of an empty page with a success status.
  */
 export const Route = createFileRoute('/_public/blog/$slug')({
+  pendingComponent: ArticleSkeleton,
   loader: ({ params }) => {
     const article = getArticleBySlug(params.slug)
     if (!article) throw notFound()

@@ -7,7 +7,8 @@ import { cn } from '#/lib/cn'
  * as the reading goes down.
  *
  * The colors are literals and not tokens: the scene always lives over the navy stage,
- * in both themes, so the light theme's `--foreground` would erase it.
+ * in both themes, so the light theme's `--foreground` would erase it. Pale ink for the lines and
+ * the single accent (annatto) for what the step is about (`docs/DESIGN.md` §2): no flags, no glow.
  *
  * No ternary: what changes from one point to another (radius, weight, label
  * anchor) comes in the data itself, and the ring's style choice comes from a
@@ -44,10 +45,10 @@ function delay(seconds: number): React.CSSProperties {
 const INK = '#E8F6FF'
 const NAVY = '#01111B'
 const PANEL = '#0B1E2B'
-const GREEN = '#88FF9A'
-const CYAN = '#31E1F7'
-const BLUE = '#77EED7'
-const PURPLE = '#A480F5'
+const GREEN = '#E0704F'
+const CYAN = '#9FB4BD'
+const BLUE = '#9FB4BD'
+const PURPLE = '#9FB4BD'
 
 /** The Solimões, from west (Peru) to east, going up toward São Paulo de Olivença. */
 const RIVER =
@@ -63,38 +64,12 @@ const BORDERS = ['M 150 -10 L 104 172', 'M 398 238 L 438 -10'] as const
 /** The point where the three countries meet, between Leticia, Tabatinga and Santa Rosa. */
 const TRIPOINT = { x: 392, y: 250 } as const
 
-/** The three countries, each with its flag and the name in its own language. */
+/** The three countries, named in their own language. */
 const COUNTRIES = [
-  { x: 262, y: 52, name: 'COLOMBIA', flag: 'co' },
-  { x: 120, y: 254, name: 'PERÚ', flag: 'pe' },
-  { x: 470, y: 392, name: 'BRASIL', flag: 'br' },
+  { x: 262, y: 52, name: 'COLOMBIA' },
+  { x: 120, y: 254, name: 'PERÚ' },
+  { x: 470, y: 392, name: 'BRASIL' },
 ] as const
-
-type Flag = (typeof COUNTRIES)[number]['flag']
-
-/** An 18 by 12 flag, drawn from the top left corner. */
-const FLAGS = {
-  co: (
-    <>
-      <rect width="18" height="6" fill="#FCD116" />
-      <rect y="6" width="18" height="3" fill="#003893" />
-      <rect y="9" width="18" height="3" fill="#CE1126" />
-    </>
-  ),
-  pe: (
-    <>
-      <rect width="18" height="12" fill="#D91023" />
-      <rect x="6" width="6" height="12" fill="#FFFFFF" />
-    </>
-  ),
-  br: (
-    <>
-      <rect width="18" height="12" fill="#009C3B" />
-      <path d="M 9 1.5 L 16.5 6 L 9 10.5 L 1.5 6 Z" fill="#FFDF00" />
-      <circle cx="9" cy="6" r="2.6" fill="#002776" />
-    </>
-  ),
-} satisfies Record<Flag, React.JSX.Element>
 
 /**
  * The border's cities, on one side and the other of the river; Benjamin Constant is
@@ -252,22 +227,9 @@ function EdgeScene(): React.JSX.Element {
         strokeWidth="2"
       />
       {COUNTRIES.map((country, i) => (
-        <g key={country.flag} className={APPEAR} style={delay(0.1 + i * 0.1)}>
-          <g transform={`translate(${country.x - 40} ${country.y - 10})`}>
-            <rect
-              x="-1"
-              y="-1"
-              width="20"
-              height="14"
-              rx="2"
-              fill={NAVY}
-              stroke={INK}
-              strokeOpacity="0.3"
-            />
-            {FLAGS[country.flag]}
-          </g>
+        <g key={country.name} className={APPEAR} style={delay(0.1 + i * 0.1)}>
           <text
-            x={country.x - 14}
+            x={country.x - 40}
             y={country.y}
             fill={INK}
             fillOpacity="0.6"

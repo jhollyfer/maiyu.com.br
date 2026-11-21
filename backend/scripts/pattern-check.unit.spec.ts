@@ -1,3 +1,8 @@
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+
 import { test } from '@japa/runner'
 
 import { CheckReport } from './check-report.ts'
@@ -803,3 +808,105 @@ test.group('check-report', () => {
     )
   })
 })
+
+test.group(
+  'pattern:check > shared sign-up validator (DECISIONS.md #809)',
+  () => {
+    const file = {
+      path: 'shared/src/validators/authentication/sign-up.validator.ts',
+      text: [
+        "import { z } from '../../validator.js'",
+        '',
+        'export const AuthenticationSignUpValidator = z.object({',
+        '  name: z.string().trim(),',
+        '  document: z.string().trim(),',
+        '  phone: z.string().trim(),',
+        '})',
+      ].join('\n'),
+    }
+    const check = (names: ReadonlyArray<string>) =>
+      PatternCheck.run({
+        files: [file],
+        exceptions: [],
+        baseline: [],
+        signupValidators: names,
+      })
+
+    test('a sensitive field in a Zod sign-up of shared/ is refused, at its line', ({
+      assert,
+    }) => {
+      assert.deepEqual(
+        check(['AuthenticationSignUpValidator']).map((f) => [f.rule, f.line]),
+        [['public-signup-minimum', 5]],
+      )
+    })
+
+    test('a name declared nowhere still fails', ({ assert }) => {
+      assert.deepEqual(
+        check(['Missing']).map((f) => f.rule),
+        ['unknown-signup-validator'],
+      )
+    })
+  },
+)
+
+test.group(
+  'pattern:check > git inherited from a hook (DECISIONS.md #809)',
+  (group) => {
+    const git = (cwd: string, ...args: string[]) =>
+      execFileSync('git', args, {
+        cwd,
+        env: PatternCheck.gitEnv(),
+        stdio: 'pipe',
+      })
+    let base = ''
+    let project = ''
+    let other = ''
+
+    group.each.setup(() => {
+      base = mkdtempSync(join(tmpdir(), 'pattern-check-git-'))
+      project = join(base, 'project')
+      other = join(base, 'other')
+      for (const dir of [project, other]) {
+        mkdirSync(dir)
+        git(dir, 'init', '-q')
+      }
+      mkdirSync(join(project, 'backend/app'), { recursive: true })
+      writeFileSync(join(project, 'backend/app/a.ts'), 'export const a = 1\n')
+      git(project, 'add', '.')
+    })
+    group.each.teardown(() => rmSync(base, { recursive: true, force: true }))
+
+    test('gitEnv drops what git exports to a hook', ({ assert }) => {
+      const env = PatternCheck.gitEnv({
+        PATH: '/bin',
+        GIT_DIR: 'x',
+        GIT_WORK_TREE: 'y',
+        GIT_INDEX_FILE: 'z',
+      })
+      assert.deepEqual(env, { PATH: '/bin' })
+    })
+
+    test('with GIT_DIR of another repository it still reads the files of the root', ({
+      assert,
+    }) => {
+      const files = PatternCheck.read(project, {
+        ...process.env,
+        GIT_DIR: join(other, '.git'),
+        GIT_WORK_TREE: other,
+        GIT_INDEX_FILE: join(other, '.git/index'),
+      })
+      assert.deepEqual(
+        files.map((f) => f.path),
+        ['backend/app/a.ts'],
+      )
+    })
+
+    test('zero files in a project with backend/app fails instead of passing', ({
+      assert,
+    }) => {
+      git(project, 'rm', '-rq', '--cached', '.')
+      assert.throws(() => PatternCheck.read(project), /read 0 files/)
+    })
+  },
+)

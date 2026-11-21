@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 
 import {
   OptionCombobox,
+  OptionComboboxClear,
   OptionComboboxDot,
   OptionComboboxInput,
   OptionComboboxList,
@@ -133,10 +134,12 @@ describe('OptionCombobox, nome acessível dos botões', () => {
     ).toBeTruthy()
   })
 
-  it('when showClear is on, the clear button has an accessible name', () => {
+  it('when the clear part is present, the clear button has an accessible name', () => {
     render(
       <OptionCombobox options={OPTIONS} value="draft" onValueChange={vi.fn()}>
-        <OptionComboboxInput aria-label="Situação" showClear />
+        <OptionComboboxInput aria-label="Situação">
+          <OptionComboboxClear />
+        </OptionComboboxInput>
       </OptionCombobox>,
     )
 
@@ -153,7 +156,9 @@ describe('OptionCombobox, nome acessível dos botões', () => {
         value="draft"
         onValueChange={onValueChange}
       >
-        <OptionComboboxInput aria-label="Situação" showClear />
+        <OptionComboboxInput aria-label="Situação">
+          <OptionComboboxClear />
+        </OptionComboboxInput>
       </OptionCombobox>,
     )
 

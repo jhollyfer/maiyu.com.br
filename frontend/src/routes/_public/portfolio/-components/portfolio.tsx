@@ -3,7 +3,6 @@ import type * as React from 'react'
 
 import { Picture } from '#/components/common/picture/picture'
 import { AspectRatio } from '#/components/ui/aspect-ratio'
-import { Badge } from '#/components/ui/badge'
 import { buttonVariants } from '#/components/ui/button'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
@@ -27,7 +26,7 @@ function ProjectShot({ project }: ProjectProps): React.JSX.Element {
   return (
     <AspectRatio
       ratio={1863 / 927}
-      className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
+      className="overflow-hidden bg-secondary ring-1 ring-border"
     >
       <Picture
         src={project.image}
@@ -53,18 +52,9 @@ function ProjectFacts({ project }: ProjectProps): React.JSX.Element {
       </dd>
       <dt className="text-muted-foreground">{m.portfolio_stack_label()}</dt>
       <dd>
-        <ul className="flex flex-wrap gap-1.5">
-          {project.tech.map((tech) => (
-            <li key={tech}>
-              <Badge
-                variant="outline"
-                className="h-auto px-2.5 py-1 text-micro"
-              >
-                {tech}
-              </Badge>
-            </li>
-          ))}
-        </ul>
+        <span className="text-small text-muted-foreground">
+          {project.tech.join(' · ')}
+        </span>
       </dd>
     </dl>
   )
@@ -107,7 +97,7 @@ export function Portfolio(): React.JSX.Element {
             <div className={cn(REVEAL, 'zoom-in-95 duration-1000')}>
               <AspectRatio
                 ratio={1863 / 927}
-                className="overflow-hidden rounded-xl bg-secondary ring-1 ring-border"
+                className="overflow-hidden bg-secondary ring-1 ring-border"
               >
                 <Picture
                   src={featuredProject.image}

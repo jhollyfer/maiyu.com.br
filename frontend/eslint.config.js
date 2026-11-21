@@ -75,6 +75,48 @@ const RAW_INTERACTIVE = [
   },
 ]
 
+// A route that loads data answers the click with the skeleton of its final screen, never with a blank
+// page or the spinner (frontend.md §5, DECISIONS.md #808). The first selector is the route options
+// object of `createFileRoute('/x')({ ... })` whose `loader` calls anything but `notFound()` or
+// `redirect()` and that has no `pendingComponent`: a loader that only throws (the wildcard `$.tsx`, a
+// redirect) fetches nothing, so there is nothing to draw. The second and third are the full-screen
+// spinner as the route's own pending, as the component or inside a function, which only the router's
+// root fallback uses. The fourth is the `Outlet` as the pending of a layout whose server HTML has no
+// shell (`ssr: 'data-only'`, `false`); the fifth, a listing loader that waits when only the search
+// changed.
+const ROUTE_PENDING = [
+  {
+    selector:
+      'CallExpression[callee.type="CallExpression"][callee.callee.name="createFileRoute"] > ObjectExpression:has(> Property[key.name="loader"]:has(CallExpression:not([callee.name=/^(notFound|redirect)$/]))):not(:has(> Property[key.name="pendingComponent"]))',
+    message:
+      'Rota com `loader` que busca dado sem `pendingComponent`: declare o esqueleto no formato da tela final (TableSkeleton, DetailSkeleton, FormShellSkeleton ou `-components/<nome>-skeleton.tsx`), ou `Outlet` num layout sem tela própria (frontend.md §5, DECISIONS.md #808).',
+  },
+  {
+    selector:
+      'Property[key.name="pendingComponent"][value.name="RoutePending"]',
+    message:
+      '`RoutePending` é o fallback raiz do router (`defaultPendingComponent`), não o `pendingComponent` de uma rota: use o esqueleto da tela (frontend.md §5, DECISIONS.md #808).',
+  },
+  {
+    selector:
+      'Property[key.name="pendingComponent"]:has(JSXOpeningElement[name.name="RoutePending"])',
+    message:
+      '`RoutePending` é o fallback raiz do router (`defaultPendingComponent`), não o `pendingComponent` de uma rota: use o esqueleto da tela (frontend.md §5, DECISIONS.md #808).',
+  },
+  {
+    selector:
+      'CallExpression[callee.type="CallExpression"][callee.callee.name="createFileRoute"] > ObjectExpression:has(> Property[key.name="pendingComponent"][value.name="Outlet"]):has(> :matches(Property[key.name="ssr"][value.value="data-only"], Property[key.name="ssr"][value.raw="false"]))',
+    message:
+      "Layout com `ssr: 'data-only'` ou `false` não usa `pendingComponent: Outlet`: o servidor desenha o filho sem a casca, e a hidratação troca o DOM depois (foco perdido, tela que pula). Sem `pendingComponent`, vale o fallback raiz (frontend.md §5, DECISIONS.md #814).",
+  },
+  {
+    selector:
+      'CallExpression[callee.type="CallExpression"][callee.callee.name="createFileRoute"] > ObjectExpression:has(> Property[key.name="validateSearch"]):has(> Property[key.name="loaderDeps"]):has(> Property[key.name="loader"]:has(CallExpression:not([callee.name=/^(notFound|redirect)$/]))):not(:has(> Property[key.name="loader"]:has(Identifier[name="cause"]))):not(:has(> Property[key.name="loader"]:has(Identifier[name="params"])))',
+    message:
+      "Listagem com `loaderDeps` e `loader` que busca dado sem olhar `cause`: busca, filtro e página caem em `cause === 'stay'`, e o loader que espera desmonta a tela (campo de busca incluso) sob o esqueleto. Não vale para detalhe (loader que usa `params`). Devolva `undefined` no `stay` e deixe a tela (`useQuery` com `placeholderData: keepPreviousData`) buscar (frontend.md §5, DECISIONS.md #814).",
+  },
+]
+
 // One library per role (tooling.md §0.1). `paths` matches the exact name; a subpath only falls in `patterns`.
 const OUTSIDE_THE_HOUSE = [
   { name: 'date-fns', message: 'Data e hora: Luxon (tooling.md §0.1).' },
@@ -292,6 +334,20 @@ export default defineConfig([
     },
   },
   {
+    // The route files (`*.lazy.tsx` has no `loader`; `__root.tsx` is the one place the spinner is the
+    // pending). Flat config replaces the rule options, so the selectors above are repeated.
+    files: ['src/routes/**/*.tsx'],
+    ignores: ['**/*.test.tsx', '**/*.lazy.tsx', 'src/routes/__root.tsx'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        NEW_RULE,
+        ...RAW_INTERACTIVE,
+        ...ROUTE_PENDING,
+      ],
+    },
+  },
+  {
     // The registry's output (`shadcn add --all`, `_standards/frontend.md` §6, `DECISIONS.md` #391):
     // the CLI writes these files and `shadcn add <name> --diff` compares them with the registry, so
     // the house style is not charged on them, or every project would rewrite the registry and lose
@@ -319,6 +375,19 @@ export default defineConfig([
       'jsx-a11y/label-has-associated-control': 'off',
       'jsx-a11y/anchor-has-content': 'off',
     },
+  },
+  {
+    // The two files that call `useVirtualizer` (the rows and the phone's cards). The adapter returns functions the React Compiler
+    // cannot memoize, so the compiler skips this component: React's documented fallback, and what is
+    // wanted here (the scroll re-renders this child and nothing above it). The rule names that skip as
+    // a warning, and the lint runs with `--max-warnings 0`; it is turned off for the file in the
+    // config, never with a comment at the call (`DECISIONS.md` #813). Any other file that needs the
+    // virtualizer is a reason to move it into one of these children, not to widen this list.
+    files: [
+      'src/components/common/table/table-virtual-rows.tsx',
+      'src/components/common/table/table-virtual-cards.tsx',
+    ],
+    rules: { 'react-hooks/incompatible-library': 'off' },
   },
   {
     // Declaration merging requires `interface`: a language limit, not style.

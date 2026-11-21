@@ -278,6 +278,36 @@ describe('check-ui-patches', () => {
     expect(checkSource(fixed, 'radio-group.tsx', [NAME_PATCH])).toEqual([])
   })
 
+  it('--fix twice on a skeleton Prettier wrapped keeps one mark, and the check passes (DECISIONS.md #815)', () => {
+    const patch = {
+      file: 'skeleton.tsx',
+      anchor: '^animate-pulse$',
+      add: ['motion-reduce:animate-none'],
+      reason: 'stops pulsing for reduced motion',
+    }
+    const registry = `<div
+  data-slot="skeleton"
+  className={cn('animate-pulse rounded-md bg-muted', className)}
+/>
+`
+    // What Prettier makes of the first `--fix`: the line grew past 80 columns, the call broke and
+    // the mark stayed above `className=`, two lines away from the literal.
+    const wrapped = `<div
+  data-slot="skeleton"
+  // casa: stops pulsing for reduced motion
+  className={cn(
+    'animate-pulse motion-reduce:animate-none rounded-md bg-muted',
+    className,
+  )}
+/>
+`
+    expect(checkSource(wrapped, 'skeleton.tsx', [patch])).toEqual([])
+    expect(fixSource(wrapped, patch)).toBe(wrapped)
+    expect(
+      fixSource(fixSource(registry, patch), patch).match(/casa:/g),
+    ).toHaveLength(1)
+  })
+
   it('every entry of ui-patches.json is well formed', () => {
     for (const patch of loadPatches()) {
       expect(patch.file).toMatch(/^[a-z-]+\.tsx$/)

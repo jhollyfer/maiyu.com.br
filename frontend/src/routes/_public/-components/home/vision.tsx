@@ -86,12 +86,12 @@ export function Vision(): React.JSX.Element {
         <div
           className={cn(
             REVEAL,
-            'relative isolate min-h-[420px] overflow-hidden rounded-2xl bg-navy delay-200 md:col-span-7',
+            'relative isolate min-h-[420px] overflow-hidden bg-navy delay-200 md:col-span-7',
           )}
         >
-          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(49,225,247,0.07)_1px,transparent_1px),linear-gradient(90deg,rgba(49,225,247,0.07)_1px,transparent_1px)] bg-[size:64px_64px]" />
+          <div className="absolute inset-0 -z-10 bg-[linear-gradient(rgba(232,246,255,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(232,246,255,0.05)_1px,transparent_1px)] bg-[size:64px_64px]" />
           <VisionScene step={step} />
-          <span className="absolute bottom-6 left-6 rounded-lg border border-on-navy/30 px-3 py-1.5 text-small text-on-navy">
+          <span className="absolute bottom-6 left-6 border border-on-navy/30 px-3 py-1.5 text-small text-on-navy">
             {current.title()}
           </span>
           <span className="absolute top-6 right-6 text-small text-on-navy/50">

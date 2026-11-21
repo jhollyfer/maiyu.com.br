@@ -1,5 +1,7 @@
 import type { ApplicationService } from '@adonisjs/core/types'
 
+import { AllPublicTenantFilter } from '#core/all-public-tenant-filter'
+import { PublicTenantFilter } from '#core/public-tenant-filter'
 import { CityLucidRepository } from '#repositories/city/city.lucid.repository'
 import { CityRepository } from '#repositories/city/city.repository'
 import { ContactLucidRepository } from '#repositories/contact/contact.lucid.repository'
@@ -46,6 +48,11 @@ export default class RepositoryProvider {
     )
     this.app.container.bind(ContactRepository, () =>
       this.app.container.make(ContactLucidRepository),
+    )
+    // The public storefront shows every tenant (DECISIONS.md #812): a project with a profile rule
+    // writes its own `PublicTenantFilter` and binds it here instead.
+    this.app.container.bind(PublicTenantFilter, () =>
+      this.app.container.make(AllPublicTenantFilter),
     )
     this.app.container.bind(UserRepository, () =>
       this.app.container.make(UserLucidRepository),

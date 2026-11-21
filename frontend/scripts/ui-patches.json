@@ -2,6 +2,12 @@
   "source": "_standards/frontend.md §6 and §10.2, DECISIONS.md #461 and #800",
   "patches": [
     {
+      "file": "skeleton.tsx",
+      "anchor": "^animate-pulse$",
+      "add": ["motion-reduce:animate-none"],
+      "reason": "every loading skeleton stops pulsing for who asked for reduced motion (frontend.md §10.5, DECISIONS.md #808)"
+    },
+    {
       "file": "button.tsx",
       "anchor": "^h-\\d",
       "add": ["max-sm:min-h-11"],

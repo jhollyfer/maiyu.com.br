@@ -66,7 +66,7 @@ export function Header(): React.JSX.Element {
             placement="lcp"
             className="size-7"
           />
-          <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase dark:text-brand-green">
+          <span className="font-brand text-lg tracking-[0.08em] text-foreground uppercase">
             {SITE_TITLE}
           </span>
         </Link>

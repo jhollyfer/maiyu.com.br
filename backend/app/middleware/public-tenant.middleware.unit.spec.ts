@@ -13,6 +13,8 @@ import {
 } from '@maiyu/shared'
 
 import { TenantConfig } from '#config/tenant'
+import { AllPublicTenantFilter } from '#core/all-public-tenant-filter'
+import { PublicTenantFilter } from '#core/public-tenant-filter'
 import { TenantScope } from '#core/tenant-scope'
 import HTTPException from '#exceptions/http.exception'
 import PublicTenantMiddleware from '#middleware/public-tenant.middleware'
@@ -45,14 +47,18 @@ async function run(
   singleSlug: string | null,
   options: Parameters<PublicTenantMiddleware['handle']>[2] = {},
   tenant: Actor['tenant'] = null,
+  filter: PublicTenantFilter = new AllPublicTenantFilter(),
 ) {
   const middleware = await makeWithMemory(PublicTenantMiddleware, [
     [TenantRepository, repository()],
     [TenantConfig, new TenantConfig(singleSlug)],
+    [PublicTenantFilter, filter],
   ])
   const request = new RequestFactory().create()
   const context = new HttpContextFactory().merge({ request }).create()
   context.params = params
+  // `silent-auth` is not in a unit test: nobody is signed in (the e2e spec signs in for real).
+  Object.assign(context, { auth: { user: undefined } })
   context.i18n = i18nManager.locale(BASE_LOCALE)
   context.actor = {
     id: 'customer-1',
@@ -176,5 +182,35 @@ test.group('middleware > public-tenant (unit)', () => {
     )
 
     assert.equal(result.status, 403)
+  })
+
+  // DECISIONS.md #812: the project releases a tenant for the public (e.g. a complete profile).
+  class OnlyT1 extends PublicTenantFilter {
+    released(ids: ReadonlyArray<string>) {
+      return Promise.resolve(ids.filter((id) => id === 't1'))
+    }
+  }
+  const byUrl = { city: 'tabatinga', tenant: 'bia' }
+
+  test('the project filter keeps an unreleased tenant out of the city-wide read of a visitor', async ({
+    assert,
+  }) => {
+    const result = await run(
+      { city: 'tabatinga' },
+      null,
+      {},
+      null,
+      new OnlyT1(),
+    )
+
+    assert.equal(result.status, 200)
+    assert.deepEqual([...(result.scope?.tenantIds() ?? [])], ['t1'])
+  })
+
+  test('the URL of an unreleased tenant is 404 for a visitor', async ({
+    assert,
+  }) => {
+    assert.equal((await run(byUrl, null, {}, null, new OnlyT1())).status, 404)
+    assert.equal((await run(byUrl, null)).status, 200)
   })
 })

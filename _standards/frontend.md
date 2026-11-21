@@ -120,6 +120,9 @@ export function getRouter() {
     context: { queryClient },
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    defaultPendingMs: 100,                     // esqueleto após 100 ms, sem os 1000 ms do padrão; 0 desmonta a listagem (§5, #814)
+    defaultPendingMinMs: 200,                  // sem o quadro que pisca; o padrão de 500 ms seguraria tela pronta
+    defaultPendingComponent: RoutePending,     // só o fallback raiz; a rota com `loader` declara o esqueleto
     scrollRestoration: true,
   })
 }
@@ -255,15 +258,112 @@ dado declara `meta.label`. `TableEmpty` trata como filtro qualquer chave da busc
 zera todas elas (`withoutFilters`). Os cartões do celular são lista (`ul`/`li`); com `onRowClick` o título é
 `Button` esticado sobre o cartão, nunca `div` clicável (§10.2).
 
+**Filtros da listagem: rascunho, URL e painel** *(opinião da casa, `DECISIONS.md` #811)*. O filtro
+aplicado mora na URL (§2); o que a pessoa edita antes de aplicar mora no **rascunho** do `ListShell`
+(`<ListShell filterKeys={[...]}>` + `useFilterDraft`, `hooks/use-filter-draft.ts`), acima da coluna e
+da `Sheet` para os dois mostrarem a mesma edição. O controle lê `useListShellFilters().values` e edita
+com `set`; `ListShellFilterActions` (rodapé de `ListShellFilters`) aplica ou limpa. `apply` e `clear`
+empurram uma entrada de histórico e voltam à página 1; `commit` (chip removido, toggle) escreve a
+chave na hora com `replace`, porque desfazer um estreitamento não é passo de volta. **A URL vence**: se
+a busca muda de fora (voltar, "limpar filtros", link), o rascunho volta a ela no render, sem
+`useEffect` (§2, "reset de estado no render"); voltar/avançar com rascunho sujo descarta a edição, por
+desenho, e o `commit` de uma chave preserva a edição suja das outras. Id que está na URL e que nenhuma página carregou
+continua no rascunho e sai de volta no `apply`; o rótulo é do `AsyncCombobox` (§2.1), nunca motivo para
+largar o valor. Valor de filtro é texto ou lista de texto (`FilterDraftValue`); a rota converte pelo
+`validateSearch`. **Painel**: coluna lateral a partir de `xl`, `Sheet` abaixo (a coluna ao lado da
+grade a espremia a uma faixa em tablet); os dois são CSS (`max-xl:hidden`/`xl:flex`), sem hook de
+largura, e a `Sheet` fecha ao aplicar ou limpar. **Celular**: abaixo de `sm` a grade vira cartões e
+`TableMobileSort` ("Ordenar por", um `Select`) ordena pelas colunas que declaram `meta.sortKey`, a
+mesma declaração do menu do cabeçalho (`meta.sortKey` vence; a prop `sortKey` do `TableColumnHeader` é
+só compatibilidade e sai num próximo ciclo, e coluna que só a declara por prop não aparece no
+"Ordenar por"); escreve `?sort`/`?direction` na URL como ele. **Colunas
+visíveis** (`ListShellColumnToggle`) ficam no layout da tabela (`localStorage` por `persistKey`), não
+na URL: é preferência de quem vê, não parte do resultado que o link compartilhado reproduz, e é estado
+cliente que cruza telas (§2). Os cartões leem as mesmas colunas visíveis. _doc-lib/tanstack-router.md#guide/navigation
+(`replace`, `search`: https://tanstack.com/router/latest/docs/guide/navigation),
+#guide/search-params; _doc-lib/tanstack-table.md#framework/react/guide/column-visibility
+(estado de preferência do usuário, https://tanstack.com/table/latest/docs/framework/react/guide/column-visibility),
+#framework/react/guide/sorting (ordem do servidor, `manualSorting`); _doc-lib/base-ui.md#react/components/dialog
+(a `Sheet` é `Dialog`, https://base-ui.com/react/components/dialog.md).
+
+**Tabela pesada: virtualização, grade por teclado e colunas ao quadro** *(opinião da casa, `DECISIONS.md`
+#813)*. Três peças opcionais do `TableGrid` (`components/common/table/`) que a tela liga e a `Table`
+raiz não conhece; nenhuma é flag (§6.1): cada uma é uma parte que se compõe, presente liga, ausente não muda nada. O estado de layout continua um só, o `tableLayoutStore`
+(largura, ordem, visibilidade e fixação, `localStorage` por `persistKey`, vazio no servidor, §2): não
+há segundo store de tabela.
+
+- **Virtualização** (`body={TableVirtualRows}` e `cards={TableVirtualCards}`, sempre as duas): para
+  lista inteira no cliente (planilha, log). Lista de servidor pagina e fica no `TableRows` (§9.9); sem
+  `cards` o celular desenha cada linha como cartão. O `useVirtualizer` mora **no filho**, para a
+  rolagem rerenderizar só ele e não o cabeçalho nem o dnd; o índice é `table.getRowModel().rows`; a
+  altura é medida (`measureElement` + `data-index`, o `estimateSize` é só o chute); `useFlushSync: false`
+  (o padrão dá o aviso do `flushSync` no React 19); o layout nativo da tabela fica, com duas linhas-espaço
+  para o que saiu do DOM; `aria-rowcount` e `aria-rowindex` valem para a lista inteira. No servidor o `initialRect` (uma tela de 800 px) já desenha as
+  primeiras linhas, que hidratam iguais; o que vem depois só aparece com o quadro medido. A regra
+  `react-hooks/incompatible-library` (o compilador pula esses componentes, o recuo documentado) fica
+  desligada só nesses dois arquivos, **na config do ESLint**, nunca com comentário no código.
+  _doc-lib/tanstack-virtual.md#framework/react/react-virtual
+  (https://tanstack.com/virtual/latest/docs/framework/react/react-virtual),
+  _doc-lib/tanstack-table.md#framework/react/guide/virtualization
+  (https://tanstack.com/table/latest/docs/framework/react/guide/virtualization, "Performance Tips" e
+  "Common Pitfalls").
+- **Grade por teclado** (`<TableKeyboardNavigation />` entre os filhos do `TableGrid`): presente, a tabela vira `role="grid"` e **uma**
+  célula é o tab stop (`tabindex` 0, as outras -1; o foco visível é o `focus-ring` do tema por dentro da
+  célula). Setas, `Home`/`End`, `Ctrl+Home`/`Ctrl+End` e `PageUp`/`PageDown` (10 linhas) movem o cursor
+  sem dar volta; `Enter` entra no controle da célula ou, sem controle, abre o registro; `Espaço` marca a
+  linha; `Esc` devolve o foco do controle à célula. O cursor mora **no `TableGrid`** (a parte só se registra nele), nunca na tela: na tela
+  ele rerenderizaria a cada seta, e uma tela com `actions` inline refaz as colunas a cada render e
+  remontaria o menu sob o foco. Na lista virtual, o cursor que sai da janela rola até a linha, que monta
+  já focada. Limites: o cabeçalho não entra nas setas; o controle dentro da célula (caixa de seleção,
+  menu) continua na ordem de Tab, em vez de sair dela como o APG sugere; e a tabela só vira grade depois
+  do mount (o servidor desenha a tabela comum). Rolar com a roda do mouse até a linha focada sair da
+  janela a desmonta e o foco cai no `body`; o tab stop continua no grid (a primeira linha da janela
+  assume), então `Tab` volta a ele.
+  https://www.w3.org/WAI/ARIA/apg/patterns/grid/ (o w3.org não abriu da sessão; lido no fonte da
+  página em `w3c/aria-practices`, `content/patterns/grid/grid-pattern.html`).
+- **Colunas ao quadro** (`<TableFitColumns table persistKey>` entre os filhos do `TableGrid`): na
+  **primeira visita** só ficam as colunas que cabem na largura do quadro (as fixadas entram primeiro, a
+  primeira de dado nunca sai); o resto fica no menu de colunas. Escolha de colunas já salva, a da pessoa
+  ou este ajuste, vence e o ajuste não roda de novo; escreve pelo mesmo `setColumnVisibility`. Abaixo
+  de `sm` o quadro está oculto e mede zero, então não ajusta nada.
+
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
 4xx e devolve `false` no servidor: retry no SSR segura a resposta da página (`DECISIONS.md` #352).
 _doc-lib/tanstack-query.md#guides/query-retries.
 
-**Combobox com busca no servidor**: um hook por entidade,
-`hooks/use-<entidade>-read-paginated-infinite.ts` (`useInfiniteQuery` + `keepPreviousData`),
-nunca `useInfiniteQuery` solto no combobox. O debounce é no valor que entra na chave, não na
-`queryFn` *(opinião da casa)*. _doc-lib/tanstack-query.md#guides/infinite-queries.
+**Busca de entidade em campo ou filtro: `AsyncCombobox` do kit, sempre** *(opinião da casa,
+`DECISIONS.md` #810)*. Todo campo de formulário e todo filtro de listagem que escolhe um registro
+por busca no servidor usa `components/common/async-combobox/`, pelos wrappers `FieldAsyncCombobox`
+(`field/`) e `FilterAsyncCombobox` (`filters/`); a receita não se copia por entidade, e
+`useInfiniteQuery` nunca fica solto no componente. O projeto só declara, em `queries/<entidade>.ts`
+e num objeto `AsyncComboboxQuery`: a `infiniteQueryOptions` da busca, a `queryOptions` de um
+registro por id (`fetchOne`) e `toOption` (`{ value: id, label }`). O que o kit resolve, e a
+tela não refaz:
+
+- **Debounce de 300 ms** no valor que entra na chave, não na `queryFn`; `placeholderData:
+  keepPreviousData` (a lista antiga fica enquanto a nova chega); a `queryFn` da lista **não
+  consome o `signal`**, para o "carregar mais" em voo terminar e ficar no cache em vez de ser
+  abortado e pedido de novo. _doc-lib/tanstack-query.md#guides/query-cancellation.
+- **Carregar mais** por `IntersectionObserver`, **uma vez por página** (desconecta no primeiro
+  acerto; `fetchNextPage` repetido cancela a página em voo), com botão de fallback e `role="status"`
+  no "carregando mais". _doc-lib/tanstack-query.md#guides/infinite-queries.
+- **Rótulo de id já escolhido** (id da URL, valor salvo no formulário de edição): cache das páginas
+  vistas preenchido **no render**, depois `useItemsById` (um `fetchOne` por id que falta), depois o
+  próprio id. O valor é a fonte da verdade e nunca perde um id; chip de id ainda sem rótulo é
+  esqueleto. _doc-lib/base-ui.md#react/components/combobox ("Async search": `items` são os
+  registros conhecidos, `filteredItems` a janela do resultado).
+- **Seleção única e múltipla** (chips com "+N" por `visibleChips`, remover por botão nomeado),
+  busca limpa depois de escolher, Enter não envia o formulário, `aria-live` no "carregando mais".
+- **Carregando é esqueleto de linhas**, nunca spinner (§10.1); vazio com texto; erro com texto.
+- **Abaixo de `md` a lista abre num `Sheet`** com a busca no topo (`useIsBelow`), sem overflow em 375 px.
+- **Filtro na URL**: `FilterAsyncCombobox` recebe os ids e devolve os novos por prop; a tela liga isso
+  ao rascunho do `ListShell` (`set`/`commit`, §2.1 "Filtros da listagem") ou, fora do `ListShell`, à
+  rota (`navigate` com `replace`).
+
+A lista do `AsyncCombobox` segue paginada pelo "carregar mais", sem virtualizar, mesmo com o
+`@tanstack/react-virtual` já no `kit.deps.json`: a lista do Base UI virtualizada não está coberta
+pela `_doc-lib/base-ui.md` ("não coberto"), e a página de cada vez já mantém o DOM pequeno.
 
 **Job assíncrono por WebSocket** (importação, migração): hook genérico
 `useJobSocket<TProgress, TCompleted, TError>` que conecta, entra na sala, ouve
@@ -633,12 +733,77 @@ de novo" sem recarregar a página: um `try/catch` por componente não limpa o es
 boundary guardou. Rota declara `errorComponent` próprio só quando o erro pede tela diferente.
 _doc-lib/tanstack-query.md#guides/important-defaults; _doc-lib/tanstack-start.md#guide/error-boundaries.
 
-- **Carregamento**: rota de listagem declara `pendingComponent` com o `table-skeleton` do kit
-  (§8), do mesmo tamanho da tela final; nunca `<Loading />` genérico nem tela em branco
-  *(opinião da casa)*. `defaultPendingMs` fica no padrão até haver medida.
+- **Carregamento: esqueleto é a regra, spinner é a exceção** *(opinião da casa, `DECISIONS.md` #808, revê
+  a #87)*. Onde há conteúdo a carregar (rota, seção, lista, card, sheet ou dialog que busca dado,
+  paginação, troca de filtro) a tela mostra o **esqueleto no formato do conteúdo final**, e já na
+  navegação. Cada caso tem a peça:
+
+  | Onde | Esqueleto |
+  |---|---|
+  | rota com `loader` (declara `pendingComponent` no arquivo crítico, nunca no `.lazy.tsx`) | listagem: `TableSkeleton` com os mesmos `headers` da tabela; detalhe: `DetailSkeleton` (campos) ou `DetailRowsSkeleton` (leitura); criar/editar: `FormShellSkeleton` com o nº de campos; painel de métricas: `MetricCardSkeleton`, `ChartSkeleton`, `ActivitySkeleton`; outra forma: `routes/**/-components/<nome>-skeleton.tsx`, componente `<Nome>Skeleton` |
+  | layout sem tela própria com SSR (`$city`) | `pendingComponent: Outlet`: o esqueleto do filho aparece no lugar do spinner; o layout já carregado fica e só o filho mostra o esqueleto |
+  | layout com `ssr: 'data-only'` ou `false` (`_private`) | **sem** `pendingComponent`: o servidor desenha o pending, e `Outlet` mandaria o filho sem a casca, que a hidratação troca depois pelo painel (foco perdido, tela que pula). Vale o fallback raiz no primeiro quadro; dentro do painel a casca fica e o esqueleto é do filho (`DECISIONS.md` #814) |
+  | seção que carrega sozinha (`useQuery`) | esqueleto por `isPending`; com `useSuspenseQuery`, `<Suspense fallback={<…Skeleton />}>` próprio |
+  | lista paginada, troca de filtro | `keepPreviousData` (§2.1) mantém a lista; sem dado anterior, esqueleto das linhas. O `loader` da listagem abre com `if (cause === 'stay') return undefined` (só a busca, o filtro ou a página mudaram): a rota não pende e a tela, com o campo de busca, não é trocada pelo esqueleto |
+  | Sheet ou Dialog que busca dado | esqueleto do conteúdo dentro do painel, com `aria-busy`; o `lazy` do painel em si (`SheetOnDemand`) fica sem fallback, porque antes do gesto não há o que desenhar (§9.4) |
+  | peça pesada `lazy` (§9.4) | `<Suspense>` com esqueleto da mesma altura (`RichEditorSkeleton` no campo de texto rico) |
+
+  **No celular primeiro.** Muito acesso é por telefone: o esqueleto tem a forma do layout que o
+  aparelho vai receber (a listagem vira cards abaixo de `sm`, como o `TableGrid`), com largura e
+  quantidade de linhas responsivas, e nunca passa de 375px (`min-w-0`, `max-w-full`, nada de largura
+  fixa maior que a tela). Todo esqueleto leva `data-slot`, `aria-busy="true"` e um
+  `role="status"` com `m.kit_loading()`, desenha o que é decorativo com `aria-hidden`, tem as mesmas
+  medidas do conteúdo (a tela não pula na chegada) e para de pulsar com `motion-reduce` (o `Skeleton`
+  de `ui/` leva o patch `// casa:` de `scripts/ui-patches.json`).
+
+  **Spinner só onde não há o que desenhar**: ação curta (botão enviando, upload em progresso) e o
+  fallback raiz do router (`defaultPendingComponent: RoutePending`), e mesmo aí o esqueleto vence se
+  houver forma. Nunca `<Loading />` genérico nem tela em branco onde há conteúdo.
+  O lint do kit reprova rota (`src/routes/**`, fora do `.lazy.tsx`) com `loader:` que busca dado (chama algo além de `notFound()` e `redirect()`) sem `pendingComponent:`
+  e `pendingComponent: RoutePending`, em referência ou dentro de função, fora do `__root` (`eslint.config.js`, `ROUTE_PENDING`).
+
+  **Quando o esqueleto aparece**: `defaultPendingMs: 100` e `defaultPendingMinMs: 200` (§1.4). A doc
+  mostra o `pendingComponent` só depois de 1000 ms e o segura 500 ms depois de mostrado
+  (`pendingMs`, `pendingMinMs`); o padrão deixaria a tela anterior parada por um segundo, que no toque
+  parece travamento. **Não 0** (`DECISIONS.md` #814, revê a #808): `pendingMs` é um timer, e com 0 até
+  o loader que devolve na hora mostra o esqueleto pelo piso de 200 ms; na listagem isso trocava a tela
+  inteira, campo de busca incluso, a cada termo digitado. Com 100 a tela anterior fica um instante e o
+  loader que responde antes não desenha nada. **Custo do piso**: o esqueleto que aparece fica no mínimo
+  200 ms, mesmo que o dado chegue em 30. 100 e 200 são escolha da casa, medidos só na listagem do painel.
+  **Listagem**: o `loader` pré-carrega só na entrada (`cause !== 'stay'`); busca, filtro e página caem
+  em `stay`, e a tela lê por `useQuery` com `placeholderData: keepPreviousData` (§2.1), com o esqueleto
+  só nas linhas. **O guard é só de listagem, nunca de detalhe**: rota cujo `loader` usa `params` (`$id`)
+  cai em `stay` quando o `$id` muda, e devolver `undefined` deixaria o dado do id anterior. Detalhe com
+  lista paginada dentro (inscritos de um evento): o `loader` do detalhe carrega só o registro (sem o
+  `search` em `loaderDeps`) e a sub-lista lê por `useQuery` com `keepPreviousData`, com o esqueleto nas
+  linhas; se o loader precisar da sub-lista, guarde só quando o param não mudou
+  (`cause === 'stay' && params.id === <id anterior>`, guardado pela tela), e na dúvida prefira o
+  `useQuery`. Listagem por `$city` (ou outro param de escopo) também lê `params`, então o lint não a cobra:
+  o guard de `stay` ali só vale se a tela ler por `useQuery` com a chave inteira (cidade + busca); isso
+  fica para a revisão humana. O `ROUTE_PENDING` reprova rota com `validateSearch`, `loaderDeps` e `loader` que
+  busca sem olhar `cause` e sem usar `params`, e `pendingComponent: Outlet` em layout `ssr: 'data-only'` ou `false`
+  (`eslint.config.js`). _doc-lib/tanstack-router.md#guide/data-loading
+  (https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md,
+  "Showing a pending component", "Avoiding Pending Component Flash", `cause` nos parâmetros do `loader`);
+  `RouterOptionsType` (`defaultPendingMs`, `defaultPendingMinMs`); demais páginas na #808 e #814.
+
+```tsx
+// routes/_private/posts/index.tsx
+export const Route = createFileRoute('/_private/posts/')({
+  loader: ({ context }) =>
+    context.queryClient.query({ ...postsQueryOptions(), staleTime: 'static' }),
+  pendingComponent: () => (
+    <TableSkeleton headers={[m.posts_title(), m.posts_status(), m.posts_created()]} widths={['w-56', 'w-20', 'w-28']} />
+  ),
+})
+```
+
 - `useSuspenseQuery` só abaixo de uma boundary. A rota inteira é o `pendingComponent`; dentro da
   tela, seção que carrega sozinha tem `<Suspense>` próprio com esqueleto.
-  _doc-lib/tanstack-query.md#guides/suspense.
+  _doc-lib/tanstack-query.md#guides/suspense
+  (https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/suspense.md,
+  aberta em 2026-11-20: "wrap your updates that change the QueryKey into startTransition" evita o
+  fallback voltar sobre conteúdo já na tela).
 - **Não encontrado**: o loader de detalhe passa por `loadOrNotFound` (`lib/load-or-not-found.ts`):
   404 da API vira `throw notFound()`, todo o resto relança. A rota declara `notFoundComponent`.
   5xx nunca vira 404, e "não encontrado" nunca responde 200 (soft 404).
@@ -926,7 +1091,8 @@ A forma única está nas skills `dialog-pattern` e `sheet-pattern`; o resumo que
 - Dialog aberto de menu é irmão do `DropdownMenu`, fora do `DropdownMenuContent`; um handle por
   Dialog, não por lugar que abre.
 - Dialog de formulário foca o primeiro campo (`initialFocus`); conteúdo montado só aberto (§4).
-- Sheet de filtro não guarda filtro: desenha os controles e navega search params (§2). Link de menu
+- Sheet de filtro não guarda o filtro aplicado: desenha os controles; o aplicado mora nos search
+  params e a edição pendente no rascunho do `ListShell` (§2.1, "Filtros da listagem"). Link de menu
   mobile vai em `<SheetClose nativeButton={false} render={<Link ... />} />`: `SheetClose` é
   `DialogClose`, que renderiza `<button>`; sem `nativeButton={false}` o Base UI acusa o elemento que
   não é botão no console e o teclado (Enter e Espaço) não fecha (`NativeButtonProps` em
@@ -1143,7 +1309,7 @@ tempo. Uma linha é `TraceLine` com `TraceIcon` e `TraceTitle`; o detalhe abre p
 | Chaves | `queryKeys.<módulo>.<recurso>.<forma>` | `queryKeys.administrator.posts.detail(id)` |
 | `queryOptions` | plural para lista, singular para detalhe | `postsQueryOptions(search)`, `postQueryOptions(id)` |
 | Hook de mutation | `use<Recurso><Ação>Mutation` | `usePostArchiveMutation` |
-| Hook de combobox | `use-<entidade>-read-paginated-infinite.ts` | `use-team-read-paginated-infinite.ts` |
+| Query de combobox por entidade | `<entidade>sInfiniteQueryOptions(search)` e `<entidade>QueryOptions(id)` em `queries/<módulo>.ts`, ligadas num `AsyncComboboxQuery` (§2.1) | `teamsInfiniteQueryOptions`, `teamQueryOptions` |
 | Módulo de `lib/` | `<tema>.ts`, nome do domínio | `lib/list-search.ts`, `lib/page-head.ts` |
 | Teste Vitest | `<x>.test.ts(x)` ao lado | `lib/bulk.test.ts` |
 | Teste E2E | `e2e/<fluxo>.spec.ts` | `e2e/post-publish.spec.ts` |
@@ -1171,21 +1337,23 @@ A lista é fechada:
 
 | Onde | Peça | Para quê |
 |---|---|---|
-| `components/common/page-shell/` | casca de tela: título, ações, corpo, breadcrumb, esqueleto | toda tela do painel |
-| `components/common/list-shell/` | casca de listagem: cabeçalho, filtro, corpo, rodapé | toda lista do painel |
+| `components/common/page-shell/` | casca de tela: título, ações, corpo, breadcrumb, `DetailSkeleton` e `DetailRowsSkeleton` | toda tela do painel |
+| `components/common/list-shell/` | casca de listagem: cabeçalho, filtro (rascunho + aplicar/limpar), colunas visíveis, corpo, rodapé | toda lista do painel (§2.1, "Filtros da listagem") |
 | `components/common/form-shell/` | casca de formulário: título, corpo, ações; `FormShellContent` é `<form method="post">` com `HydratedFieldset` | submit travado por upload em voo (§4) |
 | `components/common/submit-button/` | botão de envio com estado de envio | sem duplo envio (§10.1) |
-| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, redimensionar, esqueleto, virtualização opcional (§9.9); o quadro que rola é `role="region"` com `tabIndex={0}`, `focus-ring` e nome (`label`, senão `kit_table_region`), §10.2 | toda listagem; layout persistido validado pelo schema de `shared/` |
-| `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção) e o `FiltersSheet` | filtro de lista igual em toda tela |
+| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, ordenar no celular (`TableMobileSort`), redimensionar, esqueleto, virtualização, grade por teclado e colunas ao quadro opcionais (§2.1 "Tabela pesada", §9.9); o quadro que rola é `role="region"` com `tabIndex={0}`, `focus-ring` e nome (`label`, senão `kit_table_region`), §10.2 | toda listagem; layout persistido validado pelo schema de `shared/` |
+| `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção, `FilterAsyncCombobox` por busca de entidade) e o `FiltersSheet` | filtro de lista igual em toda tela |
 | `components/common/row-actions/` | menu de ações por linha | ação de linha igual em toda tabela |
 | `components/common/bulk-archive/` | arquivar, restaurar, remover em massa | detalhe e lista não reescrevem o ciclo |
 | `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog), com `confirm-dialog-handle.ts` | §10.6 |
 | `components/common/empty-state/` | estado vazio por motivo, sobre `ui/empty` | §10.1; _doc-lib/shadcn.md#empty |
 | `components/common/rail/` | trilho de rolagem lateral: lista com nome (`label`, por `m.*()`), `tabIndex={0}` e anel de foco do tema; `list` `ordered`/`unordered`; o utilitário `rail` mora no `styles.css` | §10.2, §10.4; _doc-lib/tailwindcss.md#adding-custom-styles |
-| `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending`, `AccessDenied`, `QueryBoundary` | §5 |
-| `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox local e paginado |
+| `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending` (fallback raiz), `AccessDenied`, `QueryBoundary` | §5 |
+| `components/common/card-skeleton/` | `MetricCardSkeleton`, `ChartSkeleton`, `ActivitySkeleton`: esqueleto do painel de métricas | §5 |
+| `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox de lista fechada |
+| `components/common/async-combobox/` | busca assíncrona com autocompletar, compound: `AsyncCombobox` (raiz, recebe a `source` de `useAsyncComboboxSource`), `AsyncComboboxInput` (um valor) ou `AsyncComboboxChips` (vários), `AsyncComboboxList` (+ `AsyncComboboxItem`, `AsyncComboboxLoadMore`, `AsyncComboboxPending`); I/O por prop (`AsyncComboboxQuery`) | todo campo e filtro que busca entidade no servidor (§2.1) |
 | `components/common/date-picker/` | data e intervalo, valor no formato da API (Luxon) | campo de data |
-| `components/common/field/` | campos do `AppField`: texto, área de texto, senha, número, seleção, combobox, data, switch, checkbox, imagem, arquivos, texto rico e máscara (`FieldMask`) | §4 |
+| `components/common/field/` | campos do `AppField`: texto, área de texto, senha, número, seleção, combobox, `FieldAsyncCombobox`, data, switch, checkbox, imagem, arquivos, texto rico e máscara (`FieldMask`) | §4 |
 | `components/common/hydrated-fieldset/` | trava os campos até a hidratação | formulário antes do JavaScript (§4) |
 | `components/common/input-password/` | senha com mostrar/ocultar | formulário de sessão |
 | `components/common/picture/` | imagem com dimensão, `alt` e carregamento por posição | §9.6 |
@@ -1202,13 +1370,13 @@ A lista é fechada:
 | `components/common/locale-switcher/` | troca de idioma (nome único) | `i18n.md` §2 |
 | `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha; I/O por prop | registra no `uploading-context` |
 | `components/common/uploading-context/` | registro de upload em voo (`UploadingProvider`, `useRegisterUpload`, `useIsUploading`) | §4 |
-| `components/common/rich-editor/` | editor de texto rico, carregado sob demanda (§9.4); grava o JSON do Tiptap | _doc-lib/tiptap.md |
+| `components/common/rich-editor/` | editor de texto rico, carregado sob demanda (§9.4, `FieldRichText` o carrega por `lazy` com `RichEditorSkeleton`); grava o JSON do Tiptap | _doc-lib/tiptap.md |
 | `components/common/rich-text/` | leitura de conteúdo rico (JSON do editor ou Markdown de fora via `MarkdownManager.parse`) por `renderToReactElement` do `@tiptap/static-renderer`, sem editor e sem `innerHTML` | _doc-lib/tiptap.md#api/utilities/static-renderer |
 | `lib/cn.ts` | `cn()` | §6 |
 | `lib/labels.ts` | rótulo e variante visual de enum (do projeto, não do kit) | abaixo |
 | `lib/i18n.ts` | `localized()`, formatador de data (Luxon) e de número e moeda (`Intl`) | `i18n.md` §2, §3.5 |
 | `lib/form-errors.ts`, `lib/form-a11y.ts` | `applyHTTPErrorToForm`; `invalidProps`, `errorId` | §4, §10.3 |
-| `lib/list-search.ts`, `lib/redirect-search.ts` | fábrica de search de lista; `validateRedirectSearch` | §2.1, §3.5 |
+| `lib/list-search.ts`, `lib/redirect-search.ts`, `lib/filter-draft.ts` | fábrica de search de lista; `validateRedirectSearch`; leitura e comparação do rascunho de filtro | §2.1, §3.5 |
 | `lib/page-head.ts`, `lib/load-or-not-found.ts` | `pageHead()`; `loadOrNotFound` | §9.7, §5 |
 | `lib/local-store.ts` | `localStorage` versionado e validado | §2 |
 | `lib/bulk.ts` | ação em massa sem endpoint dedicado | abaixo |
@@ -1361,7 +1529,7 @@ const RichEditor = lazy(async () => {
   return { default: module.RichEditor }
 })
 
-<Suspense fallback={<Skeleton className="h-64" />}>
+<Suspense fallback={<RichEditorSkeleton />}>
   <RichEditor name="body" />
 </Suspense>
 ```
@@ -1489,7 +1657,8 @@ Mais:
 ### 9.9 Virtualização
 
 Paginação de servidor é o padrão. Virtualizar só lista longa onde a paginação não serve (planilha,
-combobox com milhares de opções, log), com `@tanstack/react-virtual`, nunca `react-window`. O
+combobox com milhares de opções, log), com `@tanstack/react-virtual`, nunca `react-window`. Na tabela
+do kit são as peças `TableVirtualRows` e `TableVirtualCards` (§2.1, "Tabela pesada"). O
 índice virtual indexa `table.getRowModel().rows`; lista virtualizada mantém rolagem por teclado e
 `aria-rowcount`/`aria-rowindex`. Lista estática longa da vitrine tenta `content-visibility: auto`
 com `contain-intrinsic-size` antes. _doc-lib/tanstack-table.md#framework/react/guide/virtualization.
@@ -1546,7 +1715,7 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 ### 10.1 Estados de tela
 
 - Toda tela que lê dado tem **quatro estados**: carregando, vazio, erro, preenchido. Carregando é
-  esqueleto com a forma do conteúdo; spinner só no botão que enviou.
+  esqueleto com a forma do conteúdo (§5, onde estão as peças, o celular e a exceção do spinner).
 - **Vazio distingue o motivo**, pela peça `components/common/empty-state/` (compound sobre
   `ui/empty`, _doc-lib/shadcn.md#empty): primeiro uso (o que vai aparecer + ação de criar), busca
   ou filtro sem resultado ("limpar filtros"), sem permissão (por quê + como obter). Nunca "Nenhum

@@ -21,13 +21,13 @@ export const navLinkVariants = cva(
          * replacement: the catalog link is born with height, padding and a hover
          * background, and here it is a text pill that only changes color.
          */
-        bar: 'h-auto rounded-full px-4 py-2 text-small font-medium text-foreground/70 hover:bg-transparent hover:text-foreground focus:bg-transparent data-[status=active]:bg-foreground/[0.06] data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:underline data-[status=active]:decoration-brand-green data-[status=active]:decoration-2 data-[status=active]:underline-offset-[6px] dark:data-[status=active]:text-brand-green',
+        bar: 'h-auto rounded-none px-4 py-2 text-small font-medium text-foreground/70 hover:bg-transparent hover:text-foreground focus:bg-transparent data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:underline data-[status=active]:decoration-highlight data-[status=active]:decoration-2 data-[status=active]:underline-offset-[6px] dark:data-[status=active]:text-brand-green',
         /**
-         * The phone panel: large headings, one per line, and the green bar
+         * The phone panel: large headings, one per line, and the accent bar
          * on the active one. `min-h-11` clears WCAG 2.5.5's 44px with room to spare.
          */
         sheet:
-          'group flex min-h-11 items-center justify-between border-b border-foreground/[0.08] py-5 font-display text-4xl font-bold tracking-[-0.015em] text-foreground/60 data-[status=active]:text-foreground',
+          'group flex min-h-11 items-center justify-between border-b border-foreground/[0.08] py-5 font-display text-4xl font-medium tracking-[-0.015em] text-foreground/60 data-[status=active]:text-foreground',
         /** The footer. `min-h-11` and `min-w-11` for the same touch target: "Home" alone is under 44px wide. */
         footer:
           'inline-flex min-h-11 min-w-11 items-center gap-1 text-body text-foreground/70 hover:text-foreground',

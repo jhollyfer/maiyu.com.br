@@ -1,6 +1,7 @@
 import app from '@adonisjs/core/services/app'
 import hash from '@adonisjs/core/services/hash'
 import testUtils from '@adonisjs/core/services/test_utils'
+import db from '@adonisjs/lucid/services/db'
 import { test } from '@japa/runner'
 
 import {
@@ -178,6 +179,52 @@ test.group('seeders > demo', (group) => {
       ACCOUNTS,
     )
     assert.lengthOf(await demoUsers(), ACCOUNTS - 1)
+  })
+
+  // DECISIONS.md #812: a column of the project the kit does not fill (a NOT NULL `users.role`)
+  // makes the insert fail; the seed runs on every deploy and must not fall over for one account.
+  test('an account that fails to insert is skipped with a warning and the seed goes on', async ({
+    assert,
+  }) => {
+    const rejected = `customer@${domain()}`
+    const constraint = 'demo_seed_rejects_one_account'
+    // DDL takes no bind parameter: the literal is quoted by hand.
+    await db.rawQuery(
+      `alter table users add constraint ${constraint} check (email <> '${rejected.replaceAll("'", "''")}')`,
+    )
+
+    try {
+      await seed(PASSWORD)
+    } finally {
+      await db.rawQuery(`alter table users drop constraint ${constraint}`)
+    }
+
+    assert.lengthOf(await User.query().where('email', rejected), 0)
+    assert.lengthOf(await demoUsers(), ACCOUNTS - 1)
+    assert.lengthOf(await demoTenants(), TENANTS)
+    assert.lengthOf(await TenantMembership.all(), MEMBERSHIPS)
+  })
+
+  // DECISIONS.md #812: only an integrity constraint is skipped; a failure of another kind is the
+  // deploy's problem and the seed rethrows it.
+  test('a failure that is not a constraint violation stops the seed', async ({
+    assert,
+  }) => {
+    // A trigger that raises (SQLSTATE `P0001`, outside class 23) stands for any failure that is
+    // not an integrity constraint: it is not the account's fault, so the seed does not hide it.
+    await db.rawQuery(
+      `create function demo_seed_boom() returns trigger language plpgsql as $$ begin raise exception 'boom'; end $$`,
+    )
+    await db.rawQuery(
+      'create trigger demo_seed_boom before insert on users for each row execute function demo_seed_boom()',
+    )
+
+    try {
+      await assert.rejects(() => seed(PASSWORD), '"db:seed" failed')
+    } finally {
+      await db.rawQuery('drop trigger demo_seed_boom on users')
+      await db.rawQuery('drop function demo_seed_boom()')
+    }
   })
 
   test('the end customer is an account with no membership', async ({

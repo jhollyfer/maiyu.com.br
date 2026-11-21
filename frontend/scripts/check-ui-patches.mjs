@@ -143,10 +143,14 @@ const lineOf = (source, offset) => source.slice(0, offset).split('\n').length
 const COMMENT_LINE = /^\s*(\/\/|\{?\/\*)/
 // A property whose value Prettier moved to the next line (`default:`, `'icon-xs':`).
 const KEY_LINE = /^\s*['"]?[\w-]+['"]?:\s*$/
+// The line that opens the call, array or object the literal sits in (`className={cn(`): Prettier
+// breaks `className={cn('a b', className)}` there and leaves the mark above the opener, not above
+// the literal. The mark still reads as the literal's, so `--fix` stays idempotent after Prettier.
+const OPENER_LINE = /[([{]\s*$/
 
 /**
  * The mark belongs to the literal: on its own line, or in the comment lines right above it (or above
- * the key it is the value of). A mark further up belongs to another literal and does not count.
+ * the key it is the value of, or the line that opens the call it sits in). A mark further up belongs to another literal and does not count.
  *
  * @param {string} source
  * @param {number} line 1-based
@@ -160,7 +164,7 @@ function hasCasaComment(source, line) {
       if (text.includes('casa:')) return true
       continue
     }
-    if (KEY_LINE.test(text)) continue
+    if (KEY_LINE.test(text) || OPENER_LINE.test(text)) continue
     return false
   }
   return false

@@ -8,7 +8,6 @@ import {
 } from '#/components/common/panel-shell/panel-shell'
 import { PanelShellHeader } from '#/components/common/panel-shell/panel-shell-header'
 import { PanelShellSidebar } from '#/components/common/panel-shell/panel-shell-sidebar'
-import { RoutePending } from '#/components/common/route-status/route-pending'
 import { Breadcrumbs } from '#/lib/breadcrumbs'
 import { PANEL_MENU } from '#/lib/panel'
 import { SessionGuard } from '#/lib/session-guard'
@@ -38,7 +37,10 @@ import { useSessionExpiryRedirect } from './-use-session-expiry-redirect'
  */
 export const Route = createFileRoute('/_private')({
   ssr: 'data-only',
-  pendingComponent: RoutePending,
+  // No `pendingComponent: Outlet` here (`frontend.md` §5, `DECISIONS.md` #814): with `ssr: 'data-only'`
+  // the server draws this pending, and an `Outlet` would send the child's HTML without the shell, which
+  // hydration then swaps for the real panel (focus lost, the screen jumps). The root fallback holds
+  // the first paint, and the skeleton is the child's, on the click inside the panel.
   beforeLoad: ({ context, location }) =>
     SessionGuard.require({ context, location }),
   // Um título por tela sem `head()` em toda rota: a trilha já sabe onde se está, e uma aba chamada

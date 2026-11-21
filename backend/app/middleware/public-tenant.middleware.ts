@@ -5,9 +5,16 @@ import type { NextFn } from '@adonisjs/core/types/http'
 import { z } from '@maiyu/shared'
 
 import { TenantConfig } from '#config/tenant'
+import {
+  PublicTenantVisibility,
+  type PublicViewer,
+} from '#core/public-tenant-visibility'
 import { TenantScope } from '#core/tenant-scope'
 import HTTPException from '#exceptions/http.exception'
-import { TenantRepository } from '#repositories/tenant/tenant.repository'
+import {
+  TenantRepository,
+  type PublicTenantTarget,
+} from '#repositories/tenant/tenant.repository'
 
 /** The segments a public route carries: the city always, the tenant when the product is per client. */
 const PublicParams = z.object({
@@ -51,6 +58,7 @@ export default class PublicTenantMiddleware {
   constructor(
     private readonly tenants: TenantRepository,
     private readonly config: TenantConfig,
+    private readonly visibility: PublicTenantVisibility,
   ) {}
 
   async handle(
@@ -62,7 +70,9 @@ export default class PublicTenantMiddleware {
       context.i18n.t('errors.not_found'),
       'RESOURCE_NOT_FOUND',
     )
-    const target = await this.resolve(context.params)
+    const resolved = await this.resolve(context.params)
+    if (!resolved) throw notFound
+    const target = await this.released(resolved, context.auth.user ?? null)
     if (!target) throw notFound
 
     const access = options.access ?? 'read'
@@ -87,6 +97,26 @@ export default class PublicTenantMiddleware {
     }
 
     await next()
+  }
+
+  /**
+   * What the project's `PublicTenantFilter` releases (DECISIONS.md #812), plus what the viewer
+   * may preview (`PublicTenantVisibility`: the account `silent-auth` checked): the city-wide read keeps only those tenants, and a URL
+   * that names a tenant the viewer may not reach is as good as unknown. Ids are asked once.
+   */
+  private async released(
+    target: PublicTenantTarget,
+    viewer: PublicViewer | null,
+  ): Promise<PublicTenantTarget | null> {
+    const named = [target.tenantId].filter((id) => id !== null)
+    const ids = [...new Set([...target.cityTenantIds, ...named])]
+    const visible = new Set(await this.visibility.of(viewer, ids))
+    if (target.tenantId && !visible.has(target.tenantId)) return null
+
+    return {
+      ...target,
+      cityTenantIds: target.cityTenantIds.filter((id) => visible.has(id)),
+    }
   }
 
   /**

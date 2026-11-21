@@ -64,7 +64,7 @@ export function Audience(): React.JSX.Element {
                   />
                 </ItemMedia>
                 <ItemContent>
-                  <ItemTitle className="line-clamp-none text-h3 font-semibold">
+                  <ItemTitle className="line-clamp-none font-display text-h3 font-medium">
                     {label()}
                   </ItemTitle>
                 </ItemContent>

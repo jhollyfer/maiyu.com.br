@@ -38,6 +38,13 @@ type Input = {
 
 const SECTION = 'backend.md §10'
 // `Dockerfile-production` too: `minio-outside-local` reads what the image is built from (tooling.md §8.4).
+const GIT_VARIABLES = [
+  'GIT_DIR',
+  'GIT_WORK_TREE',
+  'GIT_INDEX_FILE',
+  'GIT_PREFIX',
+  'GIT_COMMON_DIR',
+] as const
 const READ = /\.(ts|tsx|json)$|(^|\/)Dockerfile-production$/
 
 /**
@@ -87,7 +94,7 @@ export class PatternCheck {
           PatternCheck.meta(
             'backend/scripts/pattern-check.config.ts',
             'unknown-signup-validator',
-            `\`${name}\` in PUBLIC_SIGNUP_VALIDATORS is not a \`vine.create\` validator exported by the backend: fix the name or remove it`,
+            `\`${name}\` in PUBLIC_SIGNUP_VALIDATORS is not a \`vine.create\` (backend) or \`z.object\` (shared) validator: fix the name or remove it`,
           ),
         )
     }
@@ -138,22 +145,47 @@ export class PatternCheck {
     return { file, line: 1, rule, section: SECTION, message }
   }
 
-  /** The tracked files of the three packages, with paths relative to the repository root. */
-  static read(root: string): SourceFile[] {
+  /**
+   * The environment for a `git` child: git exports `GIT_DIR`, `GIT_WORK_TREE` and `GIT_INDEX_FILE`
+   * to a hook, and with them a `git` run from an app folder resolves the wrong repository or index
+   * and lists nothing. They are dropped so git finds the repository from `cwd` (DECISIONS.md #809).
+   */
+  static gitEnv(base: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+    const env: NodeJS.ProcessEnv = { ...base }
+    for (const key of GIT_VARIABLES) delete env[key]
+
+    return env
+  }
+
+  /**
+   * The tracked files of the three packages, with paths relative to the repository root. Reading
+   * zero files from a project that has `backend/app` is a failure, never a green run.
+   */
+  static read(
+    root: string,
+    env: NodeJS.ProcessEnv = process.env,
+  ): SourceFile[] {
     const tracked = execFileSync(
       'git',
-      ['ls-files', '--', 'backend', 'frontend', 'shared'],
-      { cwd: root, encoding: 'utf8' },
+      ['-C', root, 'ls-files', '--', 'backend', 'frontend', 'shared'],
+      { encoding: 'utf8', env: PatternCheck.gitEnv(env) },
     )
-    return tracked
+    const files = tracked
       .split('\n')
       .filter((path) => READ.test(path) && existsSync(join(root, path)))
       .map((path) => ({ path, text: readFileSync(join(root, path), 'utf8') }))
+    if (files.length === 0 && existsSync(join(root, 'backend/app')))
+      throw new Error(
+        `pattern:check: read 0 files from \`${root}\`, which has backend/app: git listed nothing (GIT_DIR, GIT_WORK_TREE or GIT_INDEX_FILE of a hook?). Zero files is never green.`,
+      )
+
+    return files
   }
 
   static async main(): Promise<void> {
     const root = execFileSync('git', ['rev-parse', '--show-toplevel'], {
       encoding: 'utf8',
+      env: PatternCheck.gitEnv(),
     }).trim()
     const config: unknown = await import(
       pathToFileURL(join(process.cwd(), 'scripts/pattern-check.config.ts')).href
