@@ -36,13 +36,7 @@ const CHANNELS: ReadonlyArray<Channel> = [
     icon: EnvelopeSimpleIcon,
     title: () => m.contact_page_email_title(),
     subtitle: () => m.contact_page_email_subtitle(),
-    lines: [
-      { text: CONTACT.email, href: 'mailto:'.concat(CONTACT.email) },
-      {
-        text: CONTACT.supportEmail,
-        href: 'mailto:'.concat(CONTACT.supportEmail),
-      },
-    ],
+    lines: [{ text: CONTACT.email, href: 'mailto:'.concat(CONTACT.email) }],
   },
   {
     icon: PhoneIcon,

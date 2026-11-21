@@ -1,6 +1,7 @@
-import { EnvelopeSimpleIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
+import { WhatsappLogoIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
+import { ContactLink } from '#/components/common/contact-link/contact-link'
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
 import { buttonVariants } from '#/components/ui/button'
 import { CALL_URL, CONTACT } from '#/lib/site'
@@ -20,13 +21,14 @@ export function ChannelsNotice(): React.JSX.Element {
       <AlertDescription className="mt-2 text-body">
         <p>{m.channels_notice_body()}</p>
         <div className="mt-6 flex flex-wrap gap-2">
-          <a
-            href={'mailto:'.concat(CONTACT.email)}
-            className={buttonVariants({ size: 'lg' })}
+          <ContactLink
+            kind="email"
+            value={CONTACT.email}
+            variant="default"
+            size="lg"
           >
-            <EnvelopeSimpleIcon aria-hidden="true" />
             {m.channels_notice_email()}
-          </a>
+          </ContactLink>
           <a
             href={CALL_URL}
             target="_blank"

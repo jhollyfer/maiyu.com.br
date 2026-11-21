@@ -3,6 +3,7 @@ import { Link } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { BrandMark } from '#/components/common/brand-mark/brand-mark'
+import { ContactLink } from '#/components/common/contact-link/contact-link'
 import { MaiyuCredit } from '#/components/common/maiyu-credit/maiyu-credit'
 import { Button } from '#/components/ui/button'
 import { CONTACT, SOCIALS } from '#/lib/site'
@@ -75,20 +76,18 @@ export function Footer(): React.JSX.Element {
               <li className="py-2">{CONTACT.street}</li>
               <li className="py-2">{CONTACT.district}</li>
               <li>
-                <a
-                  href={`mailto:${CONTACT.email}`}
+                <ContactLink
+                  kind="email"
+                  value={CONTACT.email}
                   className={navLinkVariants({ tone: 'footer' })}
-                >
-                  {CONTACT.email}
-                </a>
+                />
               </li>
               <li>
-                <a
-                  href={CONTACT.phoneHref}
+                <ContactLink
+                  kind="phone"
+                  value={CONTACT.phone}
                   className={navLinkVariants({ tone: 'footer' })}
-                >
-                  {CONTACT.phone}
-                </a>
+                />
               </li>
             </ul>
           </div>
