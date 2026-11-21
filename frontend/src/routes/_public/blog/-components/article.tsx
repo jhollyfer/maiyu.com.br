@@ -20,6 +20,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '#/components/ui/breadcrumb'
+import { buttonVariants } from '#/components/ui/button'
 import { articles } from '#/lib/articles'
 import { cn } from '#/lib/cn'
 import { localized } from '#/lib/i18n'
@@ -28,7 +29,6 @@ import { localizedDate } from '#/lib/site-i18n'
 import { m } from '#/paraglide/messages'
 
 import { Photo } from '../../-components/photo'
-import { PillButton } from '../../-components/pill-button'
 import { REVEAL } from '../../-components/reveal'
 
 const route = getRouteApi('/_public/blog/$slug')
@@ -115,10 +115,10 @@ export function Article(): React.JSX.Element {
             </BreadcrumbList>
           </Breadcrumb>
 
-          <h1 className="mt-10 text-h1 leading-[1.02] tracking-[-0.015em] text-balance">
+          <h1 className="mt-10 text-h1 leading-[1.02] text-balance">
             {localized(article.title)}
           </h1>
-          <p className="mt-8 max-w-[52ch] font-serif text-lead leading-snug text-foreground/80">
+          <p className="mt-8 max-w-[52ch] text-lead leading-snug text-foreground/80">
             {localized(article.excerpt)}
           </p>
           <div className="mt-10 flex flex-wrap items-center gap-x-4 gap-y-3 border-t border-border pt-6">
@@ -177,7 +177,7 @@ export function Article(): React.JSX.Element {
                   params={{ slug: other.slug }}
                   className="group flex items-center justify-between gap-6 py-6"
                 >
-                  <span className="font-serif text-h4 leading-snug text-balance underline-offset-4 group-hover:underline">
+                  <span className="text-h4 leading-snug text-balance underline-offset-4 group-hover:underline">
                     {localized(other.title)}
                   </span>
                   <ArrowRightIcon
@@ -198,14 +198,14 @@ export function Article(): React.JSX.Element {
             <h2 className="text-h1 text-balance">
               {m.blog_article_cta_title()}
             </h2>
-            <p className="mt-4 max-w-[40ch] font-serif text-lead text-foreground/80">
+            <p className="mt-4 max-w-[40ch] text-lead text-foreground/80">
               {m.blog_article_cta_description()}
             </p>
           </div>
-          <PillButton to="/contact">
+          <Link to="/contact" className={buttonVariants({ size: 'lg' })}>
             {m.nav_get_in_touch()}
             <ArrowUpRightIcon />
-          </PillButton>
+          </Link>
         </div>
       </section>
     </>

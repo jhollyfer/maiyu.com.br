@@ -21,6 +21,8 @@ import type { ConfirmHandle } from '#/lib/dialog-handle'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
 
+import { useRowActionsFinalFocus } from './row-actions-context'
+
 type RowActionsItemProps = Readonly<{
   /** The handle of the alert this item opens (`createConfirmHandle`). */
   handle: ConfirmHandle
@@ -98,9 +100,12 @@ export function RowActionsConfirm({
   destructive = false,
   children,
 }: RowActionsConfirmProps): React.JSX.Element {
+  const finalFocus = useRowActionsFinalFocus()
+
   return (
     <ConfirmDialog
       handle={handle}
+      finalFocus={finalFocus}
       destructive={destructive}
       onConfirm={onConfirm}
       isPending={isPending}
@@ -125,6 +130,12 @@ type RowActionsActionDialogProps = Readonly<{
   onAction: () => void | Promise<void>
   /** For a mutation the screen already owns (`isPending`); without it the dialog tracks the promise. */
   isPending?: boolean
+  /**
+   * The parts between the header and the footer. The strong confirmation is turned on here, by
+   * **presence**: `<ConfirmDialogWarning />` and `<ConfirmDialogChallenge />` make the confirm
+   * button wait for the answer (`frontend.md` §6.1).
+   */
+  children?: React.ReactNode
 }>
 
 /**
@@ -142,8 +153,10 @@ export function RowActionsActionDialog({
   destructive = false,
   onAction,
   isPending = false,
+  children,
 }: RowActionsActionDialogProps): React.JSX.Element {
   const [running, setRunning] = React.useState(false)
+  const finalFocus = useRowActionsFinalFocus()
 
   const run = async (close: () => void): Promise<void> => {
     setRunning(true)
@@ -160,6 +173,7 @@ export function RowActionsActionDialog({
   return (
     <ConfirmDialog
       handle={handle}
+      finalFocus={finalFocus}
       destructive={destructive}
       isPending={isPending || running}
       onConfirm={(close) => {
@@ -170,6 +184,7 @@ export function RowActionsActionDialog({
         <ConfirmDialogTitle>{title}</ConfirmDialogTitle>
         <ConfirmDialogDescription>{description}</ConfirmDialogDescription>
       </ConfirmDialogHeader>
+      {children}
       <ConfirmDialogFooter>
         <ConfirmDialogCancel />
         <ConfirmDialogConfirm>{confirmLabel}</ConfirmDialogConfirm>

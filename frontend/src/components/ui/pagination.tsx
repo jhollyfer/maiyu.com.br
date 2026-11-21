@@ -1,5 +1,7 @@
 import * as React from 'react'
 import { cn } from '#/lib/cn'
+// casa: translated labels, the registry ships English
+import { m } from '#/paraglide/messages'
 
 import { Button } from '#/components/ui/button.tsx'
 import {
@@ -12,7 +14,8 @@ function Pagination({ className, ...props }: React.ComponentProps<'nav'>) {
   return (
     <nav
       role="navigation"
-      aria-label="pagination"
+      // casa: translated label
+      aria-label={m.kit_ui_pagination_label()}
       data-slot="pagination"
       className={cn('mx-auto flex w-full justify-center', className)}
       {...props}
@@ -68,14 +71,16 @@ function PaginationLink({
 
 function PaginationPrevious({
   className,
-  text = 'Previous',
+  // casa: translated label
+  text = m.kit_ui_pagination_previous_text(),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to previous page"
+      // casa: translated label
+      aria-label={m.kit_ui_pagination_previous()}
       size="default"
-      className={cn('pl-2!', className)}
+      className={cn('pl-1.5!', className)}
       {...props}
     >
       <CaretLeftIcon data-icon="inline-start" />
@@ -86,14 +91,16 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
-  text = 'Next',
+  // casa: translated label
+  text = m.kit_ui_pagination_next_text(),
   ...props
 }: React.ComponentProps<typeof PaginationLink> & { text?: string }) {
   return (
     <PaginationLink
-      aria-label="Go to next page"
+      // casa: translated label
+      aria-label={m.kit_ui_pagination_next()}
       size="default"
-      className={cn('pr-2!', className)}
+      className={cn('pr-1.5!', className)}
       {...props}
     >
       <span className="hidden sm:block">{text}</span>
@@ -111,13 +118,14 @@ function PaginationEllipsis({
       aria-hidden
       data-slot="pagination-ellipsis"
       className={cn(
-        "flex size-7 items-center justify-center [&_svg:not([class*='size-'])]:size-3.5",
+        "flex size-8 items-center justify-center [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     >
       <DotsThreeIcon />
-      <span className="sr-only">More pages</span>
+      {/* casa: translated label */}
+      <span className="sr-only">{m.kit_ui_pagination_more()}</span>
     </span>
   )
 }

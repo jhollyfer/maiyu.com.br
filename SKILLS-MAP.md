@@ -79,6 +79,7 @@ tarefa").
 | antes de deploy (8) | `engineering:deploy-checklist` | migration testada, rollback e gatilho decididos antes |
 | fim da branch (8) | `superpowers:finishing-a-development-branch` | `resolving-merge-conflicts` em conflito |
 | prosa para humano (8) | `humanizer` | `docs-writer` para estrutura; regra de escrita do `CLAUDE.md` do projeto vence |
+| tela nova, LP ou mudança visual (1, 3, 4, 7) | **pipeline obrigatório** (`frontend.md` §10.11, `DECISIONS.md` #820): `hallmark` → `design-taste-frontend` (audit-first) → `frontend-design` + `ui-ux-pro-max` (`docs/DESIGN.md`) → `impeccable` → revisão (`web-design-guidelines` + `make-interfaces-feel-better` + `emil-design-eng`) → `stageshow` só em ilustração de vitrine | prints desktop e 375 px antes e depois e o relatório da revisão no PR; slop proibido em `frontend.md` §10.8 |
 | UI: criar, polir | `impeccable` | `design-taste-frontend` (direção visual), `ui-ux-pro-max` (catálogo de estilo, paleta e fonte, só para propor no `docs/DESIGN.md`), `hallmark` (página nova e vitrine, piso anti-genérico), `design:ux-copy` (microcopy de erro e botão) |
 | polir interação e microdetalhe de UI pronta (4) | `make-interfaces-feel-better` (checklist: superfície, tipografia, ícone, animação, performance) | apoio: `emil-design-eng` quando a dúvida é de movimento e de gesto (origem do popover, tempo de tooltip, `clip-path`); `impeccable` continua sendo quem cria e critica, estas só afinam; Base UI, Phosphor e `LazyMotion` strict valem sobre os exemplos |
 | peça visual estática avulsa: cartaz, arte de divulgação (1, 4) | `canvas-design` | só fora do código do produto; tela do produto é `impeccable`; saída fora do repositório; apoio: `algorithmic-art` (arte generativa em p5.js, fora do repositório salvo pedido; em página só como asset do tema) |
@@ -352,6 +353,14 @@ a régua vence (origem e commit na tabela do fim da página):
 | `stageshow` | `benjitaylor/skills` | ilustração de vitrine; MIT, com `NOTICE.md` e licenças de marca de terceiros |
 | `algorithmic-art` | `anthropics/skills` | apoio de `canvas-design`; `LICENSE.txt` Apache-2.0 |
 | `subagent-driven-development` | `obra/superpowers` | não copiada: vem do plugin, como `writing-plans` |
+
+Referências de critério, não instaladas (2026-11-21): **Anti UI Slop** (uizze.com) e **ThinkUI**
+(thinkui.xyz). Os dois domínios não resolveram da sessão (fora da rede liberada), então não se sabe se
+há skill instalável nem licença; nada foi vendorizado. A lista de slop da casa (`frontend.md` §10.8 e
+§10.11) é o critério; se o dono liberar os domínios, reavaliar e, havendo licença que permita, vendorizar
+aqui com origem e commit. A conferência de commit upstream de `taste-skill`, `emil`, `vercel-labs`,
+`anthropics/skills`, `hallmark`, `make-interfaces-feel-better`, `ui-ux-pro-max` e `stageshow` também
+não rodou (GitHub sem acesso na sessão); as cópias são de 2026-11-19 e seguem as da tabela acima.
 
 Avaliadas e recusadas:
 

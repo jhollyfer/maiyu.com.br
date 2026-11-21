@@ -75,9 +75,11 @@ beforeEach(() => {
 function Shell({
   badges,
   profilePending,
+  profileTo,
 }: Readonly<{
   badges?: Record<string, number>
   profilePending?: ReadonlyArray<string>
+  profileTo?: '/'
 }>): React.JSX.Element {
   return (
     <QueryClientProvider client={QUERY_CLIENT}>
@@ -88,6 +90,7 @@ function Shell({
             menu={MENU}
             badges={badges}
             profilePending={profilePending}
+            profileTo={profileTo}
           >
             <PanelShellSidebar />
             <PanelShellInset>
@@ -104,15 +107,21 @@ function Shell({
 function mount(
   badges?: Record<string, number>,
   profilePending?: ReadonlyArray<string>,
+  profileTo?: '/',
 ): () => string {
   return renderWithRouter(
     [
       {
         path: '/profile',
         component: () => (
-          <Shell badges={badges} profilePending={profilePending} />
+          <Shell
+            badges={badges}
+            profilePending={profilePending}
+            profileTo={profileTo}
+          />
         ),
       },
+      { path: '/', component: () => <p>dados</p> },
       { path: '/sign-in', component: () => <p>entrada</p> },
     ],
     '/profile',
@@ -180,6 +189,27 @@ describe('PanelShell', () => {
         .getAttribute('href'),
     ).toBe('/profile')
     expect(within(main).getByText('o conteúdo da tela')).toBeTruthy()
+  })
+
+  it('profileTo muda o destino do aviso e do menu de conta', async () => {
+    const user = userEvent.setup()
+    mount(undefined, ['campoSemRotulo'], '/')
+
+    const main = await screen.findByRole('main')
+    expect(
+      within(within(main).getByRole('alert'))
+        .getByRole('link', { name: m.kit_profile_incomplete_action() })
+        .getAttribute('href'),
+    ).toBe('/')
+
+    await user.click(
+      await screen.findByRole('button', { name: /Menu da conta/ }),
+    )
+    expect(
+      (
+        await screen.findByRole('menuitem', { name: m.kit_panel_my_profile() })
+      ).getAttribute('href'),
+    ).toBe('/')
   })
 
   it('perfil completo: nenhum aviso', async () => {

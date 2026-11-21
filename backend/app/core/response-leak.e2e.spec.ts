@@ -48,6 +48,7 @@ const FORBIDDEN_KEYS = [
   'sha256',
   'deletedat',
   'stack',
+  'demo',
 ]
 
 /**
@@ -58,6 +59,17 @@ const FORBIDDEN_KEYS = [
  * A timestamp is not a secret: the rule is about who reads, not about the name.
  */
 const SESSION_ONLY_KEYS = ['deletedat']
+
+/**
+ * The names that only the platform's own session may read (DECISIONS.md #812). `demo` is the mark
+ * of the demonstration data (`tenants.demo`, `users.demo`, DECISIONS.md #802, #807): a public
+ * response or a tenant member's tells a stranger which records are the showcase, so it stays out of
+ * both, and the platform owner, who manages the demo, may read it.
+ */
+const PLATFORM_ONLY_KEYS = ['demo']
+
+/** Who reads the response: nobody signed in, an account of a tenant, or the platform's own staff. */
+type Reader = 'anonymous' | 'session' | 'platform'
 
 /** What a stored password looks like, whatever the key it was left under. */
 const HASH_VALUE = /^\$(scrypt|argon2|2[aby]|pbkdf2)/i
@@ -120,12 +132,12 @@ type Finding = { path: string; reason: string }
 
 class ResponseWalk {
   /**
-   * Every forbidden key and every hash-looking value of `value`, with the path to it. `signedIn`
-   * is whether the read had a session: it lets `SESSION_ONLY_KEYS` through.
+   * Every forbidden key and every hash-looking value of `value`, with the path to it. `reader` is
+   * who read: a session lets `SESSION_ONLY_KEYS` through, and the platform's `PLATFORM_ONLY_KEYS` too.
    */
   static findings(
     value: unknown,
-    signedIn = false,
+    reader: Reader = 'anonymous',
     path = '$',
   ): Array<Finding> {
     if (typeof value === 'string' && HASH_VALUE.test(value))
@@ -136,7 +148,7 @@ class ResponseWalk {
 
     if (Array.isArray(value))
       return value.flatMap((item: unknown, index) =>
-        ResponseWalk.findings(item, signedIn, `${path}[${index}]`),
+        ResponseWalk.findings(item, reader, `${path}[${index}]`),
       )
 
     if (typeof value !== 'object' || value === null) return []
@@ -144,17 +156,16 @@ class ResponseWalk {
     return Object.entries(value).flatMap(([key, child]) => {
       const name = key.toLowerCase().replace(/[_-]/g, '')
       const own: Array<Finding> = []
-      const allowed = signedIn && SESSION_ONLY_KEYS.includes(name)
+      const allowed =
+        (reader !== 'anonymous' && SESSION_ONLY_KEYS.includes(name)) ||
+        (reader === 'platform' && PLATFORM_ONLY_KEYS.includes(name))
       if (FORBIDDEN_KEYS.includes(name) && !allowed)
         own.push({
           path: `${path}.${key}`,
           reason: 'a key that is not contract',
         })
 
-      return [
-        ...own,
-        ...ResponseWalk.findings(child, signedIn, `${path}.${key}`),
-      ]
+      return [...own, ...ResponseWalk.findings(child, reader, `${path}.${key}`)]
     })
   }
 
@@ -206,13 +217,13 @@ class ResponseWalk {
   static report(
     label: string,
     response: ApiResponse,
-    signedIn: boolean,
+    reader: Reader,
   ): Array<string> {
     const value = ResponseWalk.withoutFieldNames(response.body())
     const headers: Record<string, unknown> = response.headers()
 
     return [
-      ...ResponseWalk.findings(value, signedIn),
+      ...ResponseWalk.findings(value, reader),
       ...ResponseWalk.headerFindings(headers),
     ].map((finding) => `${label} ${finding.path}: ${finding.reason}`)
   }
@@ -268,15 +279,31 @@ test.group('response leak > walk', () => {
   }) => {
     const row = { items: [{ id: 'a', createdAt: 'x', deletedAt: null }] }
 
-    assert.deepEqual(ResponseWalk.findings(row, true), [])
+    assert.deepEqual(ResponseWalk.findings(row, 'session'), [])
     assert.deepEqual(
       ResponseWalk.findings(row).map((finding) => finding.path),
       ['$.items[0].deletedAt'],
     )
     // The session does not unlock the secrets: only the names of SESSION_ONLY_KEYS.
     assert.lengthOf(
-      ResponseWalk.findings({ deletedAt: null, token: 'x' }, true),
+      ResponseWalk.findings({ deletedAt: null, token: 'x' }, 'session'),
       1,
+    )
+  })
+
+  test('demo (the demonstration mark) is contract only for the platform', ({
+    assert,
+  }) => {
+    const row = { items: [{ id: 'a', demo: true }] }
+
+    assert.deepEqual(ResponseWalk.findings(row, 'platform'), [])
+    assert.deepEqual(
+      ResponseWalk.findings(row, 'session').map((finding) => finding.path),
+      ['$.items[0].demo'],
+    )
+    assert.deepEqual(
+      ResponseWalk.findings(row).map((finding) => finding.path),
+      ['$.items[0].demo'],
     )
   })
 
@@ -359,30 +386,37 @@ test.group('response leak > routes', (group) => {
     client,
     assert,
   }) => {
-    const sessions: Array<Session | null> = [
-      await authenticateAsPlatformOwner(client),
-      await authenticateAsAdministrator(client),
-      await authenticateAsCustomer(client),
-      null,
+    const sessions: Array<{ session: Session | null; reader: Reader }> = [
+      {
+        session: await authenticateAsPlatformOwner(client),
+        reader: 'platform',
+      },
+      {
+        session: await authenticateAsAdministrator(client),
+        reader: 'session',
+      },
+      { session: await authenticateAsCustomer(client), reader: 'session' },
+      { session: null, reader: 'anonymous' },
     ]
     // A project whose roles are all staff has no non-staff account to walk with.
     if (ROLE_FIXTURES.nonStaff !== null)
-      sessions.push(await authenticateAsNonStaff(client))
+      sessions.push({
+        session: await authenticateAsNonStaff(client),
+        reader: 'session',
+      })
     const leaks: Array<string> = []
     let walked = 0
     let errors = 0
 
     for (const url of ResponseWalk.routes()) {
-      for (const session of sessions) {
+      for (const { session, reader } of sessions) {
         const response = await client.get(url).cookies(session ?? {})
 
         // Error bodies are walked too: the handler is what writes them, not the presenter.
         if (response.status() === 200) walked += 1
         if (response.status() >= 400) errors += 1
 
-        leaks.push(
-          ...ResponseWalk.report(`GET ${url}`, response, session !== null),
-        )
+        leaks.push(...ResponseWalk.report(`GET ${url}`, response, reader))
       }
     }
 
@@ -401,7 +435,7 @@ test.group('response leak > routes', (group) => {
       const response = await probe.send(client)
 
       assert.isAtLeast(response.status(), 400, probe.name)
-      leaks.push(...ResponseWalk.report(probe.name, response, false))
+      leaks.push(...ResponseWalk.report(probe.name, response, 'anonymous'))
     }
 
     assert.deepEqual(leaks, [])

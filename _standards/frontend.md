@@ -120,6 +120,9 @@ export function getRouter() {
     context: { queryClient },
     defaultPreload: 'intent',
     defaultPreloadStaleTime: 0,
+    defaultPendingMs: 100,                     // esqueleto após 100 ms, sem os 1000 ms do padrão; 0 desmonta a listagem (§5, #814)
+    defaultPendingMinMs: 200,                  // sem o quadro que pisca; o padrão de 500 ms seguraria tela pronta
+    defaultPendingComponent: RoutePending,     // só o fallback raiz; a rota com `loader` declara o esqueleto
     scrollRestoration: true,
   })
 }
@@ -255,15 +258,112 @@ dado declara `meta.label`. `TableEmpty` trata como filtro qualquer chave da busc
 zera todas elas (`withoutFilters`). Os cartões do celular são lista (`ul`/`li`); com `onRowClick` o título é
 `Button` esticado sobre o cartão, nunca `div` clicável (§10.2).
 
+**Filtros da listagem: rascunho, URL e painel** *(opinião da casa, `DECISIONS.md` #811)*. O filtro
+aplicado mora na URL (§2); o que a pessoa edita antes de aplicar mora no **rascunho** do `ListShell`
+(`<ListShell filterKeys={[...]}>` + `useFilterDraft`, `hooks/use-filter-draft.ts`), acima da coluna e
+da `Sheet` para os dois mostrarem a mesma edição. O controle lê `useListShellFilters().values` e edita
+com `set`; `ListShellFilterActions` (rodapé de `ListShellFilters`) aplica ou limpa. `apply` e `clear`
+empurram uma entrada de histórico e voltam à página 1; `commit` (chip removido, toggle) escreve a
+chave na hora com `replace`, porque desfazer um estreitamento não é passo de volta. **A URL vence**: se
+a busca muda de fora (voltar, "limpar filtros", link), o rascunho volta a ela no render, sem
+`useEffect` (§2, "reset de estado no render"); voltar/avançar com rascunho sujo descarta a edição, por
+desenho, e o `commit` de uma chave preserva a edição suja das outras. Id que está na URL e que nenhuma página carregou
+continua no rascunho e sai de volta no `apply`; o rótulo é do `AsyncCombobox` (§2.1), nunca motivo para
+largar o valor. Valor de filtro é texto ou lista de texto (`FilterDraftValue`); a rota converte pelo
+`validateSearch`. **Painel**: coluna lateral a partir de `xl`, `Sheet` abaixo (a coluna ao lado da
+grade a espremia a uma faixa em tablet); os dois são CSS (`max-xl:hidden`/`xl:flex`), sem hook de
+largura, e a `Sheet` fecha ao aplicar ou limpar. **Celular**: abaixo de `sm` a grade vira cartões e
+`TableMobileSort` ("Ordenar por", um `Select`) ordena pelas colunas que declaram `meta.sortKey`, a
+mesma declaração do menu do cabeçalho (`meta.sortKey` vence; a prop `sortKey` do `TableColumnHeader` é
+só compatibilidade e sai num próximo ciclo, e coluna que só a declara por prop não aparece no
+"Ordenar por"); escreve `?sort`/`?direction` na URL como ele. **Colunas
+visíveis** (`ListShellColumnToggle`) ficam no layout da tabela (`localStorage` por `persistKey`), não
+na URL: é preferência de quem vê, não parte do resultado que o link compartilhado reproduz, e é estado
+cliente que cruza telas (§2). Os cartões leem as mesmas colunas visíveis. _doc-lib/tanstack-router.md#guide/navigation
+(`replace`, `search`: https://tanstack.com/router/latest/docs/guide/navigation),
+#guide/search-params; _doc-lib/tanstack-table.md#framework/react/guide/column-visibility
+(estado de preferência do usuário, https://tanstack.com/table/latest/docs/framework/react/guide/column-visibility),
+#framework/react/guide/sorting (ordem do servidor, `manualSorting`); _doc-lib/base-ui.md#react/components/dialog
+(a `Sheet` é `Dialog`, https://base-ui.com/react/components/dialog.md).
+
+**Tabela pesada: virtualização, grade por teclado e colunas ao quadro** *(opinião da casa, `DECISIONS.md`
+#813)*. Três peças opcionais do `TableGrid` (`components/common/table/`) que a tela liga e a `Table`
+raiz não conhece; nenhuma é flag (§6.1): cada uma é uma parte que se compõe, presente liga, ausente não muda nada. O estado de layout continua um só, o `tableLayoutStore`
+(largura, ordem, visibilidade e fixação, `localStorage` por `persistKey`, vazio no servidor, §2): não
+há segundo store de tabela.
+
+- **Virtualização** (`body={TableVirtualRows}` e `cards={TableVirtualCards}`, sempre as duas): para
+  lista inteira no cliente (planilha, log). Lista de servidor pagina e fica no `TableRows` (§9.9); sem
+  `cards` o celular desenha cada linha como cartão. O `useVirtualizer` mora **no filho**, para a
+  rolagem rerenderizar só ele e não o cabeçalho nem o dnd; o índice é `table.getRowModel().rows`; a
+  altura é medida (`measureElement` + `data-index`, o `estimateSize` é só o chute); `useFlushSync: false`
+  (o padrão dá o aviso do `flushSync` no React 19); o layout nativo da tabela fica, com duas linhas-espaço
+  para o que saiu do DOM; `aria-rowcount` e `aria-rowindex` valem para a lista inteira. No servidor o `initialRect` (uma tela de 800 px) já desenha as
+  primeiras linhas, que hidratam iguais; o que vem depois só aparece com o quadro medido. A regra
+  `react-hooks/incompatible-library` (o compilador pula esses componentes, o recuo documentado) fica
+  desligada só nesses dois arquivos, **na config do ESLint**, nunca com comentário no código.
+  _doc-lib/tanstack-virtual.md#framework/react/react-virtual
+  (https://tanstack.com/virtual/latest/docs/framework/react/react-virtual),
+  _doc-lib/tanstack-table.md#framework/react/guide/virtualization
+  (https://tanstack.com/table/latest/docs/framework/react/guide/virtualization, "Performance Tips" e
+  "Common Pitfalls").
+- **Grade por teclado** (`<TableKeyboardNavigation />` entre os filhos do `TableGrid`): presente, a tabela vira `role="grid"` e **uma**
+  célula é o tab stop (`tabindex` 0, as outras -1; o foco visível é o `focus-ring` do tema por dentro da
+  célula). Setas, `Home`/`End`, `Ctrl+Home`/`Ctrl+End` e `PageUp`/`PageDown` (10 linhas) movem o cursor
+  sem dar volta; `Enter` entra no controle da célula ou, sem controle, abre o registro; `Espaço` marca a
+  linha; `Esc` devolve o foco do controle à célula. O cursor mora **no `TableGrid`** (a parte só se registra nele), nunca na tela: na tela
+  ele rerenderizaria a cada seta, e uma tela com `actions` inline refaz as colunas a cada render e
+  remontaria o menu sob o foco. Na lista virtual, o cursor que sai da janela rola até a linha, que monta
+  já focada. Limites: o cabeçalho não entra nas setas; o controle dentro da célula (caixa de seleção,
+  menu) continua na ordem de Tab, em vez de sair dela como o APG sugere; e a tabela só vira grade depois
+  do mount (o servidor desenha a tabela comum). Rolar com a roda do mouse até a linha focada sair da
+  janela a desmonta e o foco cai no `body`; o tab stop continua no grid (a primeira linha da janela
+  assume), então `Tab` volta a ele.
+  https://www.w3.org/WAI/ARIA/apg/patterns/grid/ (o w3.org não abriu da sessão; lido no fonte da
+  página em `w3c/aria-practices`, `content/patterns/grid/grid-pattern.html`).
+- **Colunas ao quadro** (`<TableFitColumns table persistKey>` entre os filhos do `TableGrid`): na
+  **primeira visita** só ficam as colunas que cabem na largura do quadro (as fixadas entram primeiro, a
+  primeira de dado nunca sai); o resto fica no menu de colunas. Escolha de colunas já salva, a da pessoa
+  ou este ajuste, vence e o ajuste não roda de novo; escreve pelo mesmo `setColumnVisibility`. Abaixo
+  de `sm` o quadro está oculto e mede zero, então não ajusta nada.
+
 **Retry só para erro de servidor ou rede.** `defaultOptions.queries.retry` é uma função nomeada e
 testada (`shouldRetryQuery`, em `query-context.ts`) que repete 5xx/rede, devolve `false` para todo
 4xx e devolve `false` no servidor: retry no SSR segura a resposta da página (`DECISIONS.md` #352).
 _doc-lib/tanstack-query.md#guides/query-retries.
 
-**Combobox com busca no servidor**: um hook por entidade,
-`hooks/use-<entidade>-read-paginated-infinite.ts` (`useInfiniteQuery` + `keepPreviousData`),
-nunca `useInfiniteQuery` solto no combobox. O debounce é no valor que entra na chave, não na
-`queryFn` *(opinião da casa)*. _doc-lib/tanstack-query.md#guides/infinite-queries.
+**Busca de entidade em campo ou filtro: `AsyncCombobox` do kit, sempre** *(opinião da casa,
+`DECISIONS.md` #810)*. Todo campo de formulário e todo filtro de listagem que escolhe um registro
+por busca no servidor usa `components/common/async-combobox/`, pelos wrappers `FieldAsyncCombobox`
+(`field/`) e `FilterAsyncCombobox` (`filters/`); a receita não se copia por entidade, e
+`useInfiniteQuery` nunca fica solto no componente. O projeto só declara, em `queries/<entidade>.ts`
+e num objeto `AsyncComboboxQuery`: a `infiniteQueryOptions` da busca, a `queryOptions` de um
+registro por id (`fetchOne`) e `toOption` (`{ value: id, label }`). O que o kit resolve, e a
+tela não refaz:
+
+- **Debounce de 300 ms** no valor que entra na chave, não na `queryFn`; `placeholderData:
+  keepPreviousData` (a lista antiga fica enquanto a nova chega); a `queryFn` da lista **não
+  consome o `signal`**, para o "carregar mais" em voo terminar e ficar no cache em vez de ser
+  abortado e pedido de novo. _doc-lib/tanstack-query.md#guides/query-cancellation.
+- **Carregar mais** por `IntersectionObserver`, **uma vez por página** (desconecta no primeiro
+  acerto; `fetchNextPage` repetido cancela a página em voo), com botão de fallback e `role="status"`
+  no "carregando mais". _doc-lib/tanstack-query.md#guides/infinite-queries.
+- **Rótulo de id já escolhido** (id da URL, valor salvo no formulário de edição): cache das páginas
+  vistas preenchido **no render**, depois `useItemsById` (um `fetchOne` por id que falta), depois o
+  próprio id. O valor é a fonte da verdade e nunca perde um id; chip de id ainda sem rótulo é
+  esqueleto. _doc-lib/base-ui.md#react/components/combobox ("Async search": `items` são os
+  registros conhecidos, `filteredItems` a janela do resultado).
+- **Seleção única e múltipla** (chips com "+N" por `visibleChips`, remover por botão nomeado),
+  busca limpa depois de escolher, Enter não envia o formulário, `aria-live` no "carregando mais".
+- **Carregando é esqueleto de linhas**, nunca spinner (§10.1); vazio com texto; erro com texto.
+- **Abaixo de `md` a lista abre num `Sheet`** com a busca no topo (`useIsBelow`), sem overflow em 375 px.
+- **Filtro na URL**: `FilterAsyncCombobox` recebe os ids e devolve os novos por prop; a tela liga isso
+  ao rascunho do `ListShell` (`set`/`commit`, §2.1 "Filtros da listagem") ou, fora do `ListShell`, à
+  rota (`navigate` com `replace`).
+
+A lista do `AsyncCombobox` segue paginada pelo "carregar mais", sem virtualizar, mesmo com o
+`@tanstack/react-virtual` já no `kit.deps.json`: a lista do Base UI virtualizada não está coberta
+pela `_doc-lib/base-ui.md` ("não coberto"), e a página de cada vez já mantém o DOM pequeno.
 
 **Job assíncrono por WebSocket** (importação, migração): hook genérico
 `useJobSocket<TProgress, TCompleted, TError>` que conecta, entra na sala, ouve
@@ -323,6 +423,47 @@ chama (`useResourceForm`, §4) *(opinião da casa)*. _doc-lib/tanstack-query.md#
   invalidação no `onSettled`. Sem `!` no `old` (narrowing). `setQueryData` com a resposta só quando
   ela é o registro completo; senão invalida.
   _doc-lib/tanstack-query.md#guides/optimistic-updates, #guides/updates-from-mutation-responses.
+
+### 2.4 Retorno da ação: envio único, aviso, confirmação forte e foco *(`DECISIONS.md` #816)*
+
+O que o usuário vê depois de apertar um botão que escreve é uma coisa só em todo projeto. Cada
+ponto abaixo tem **uma** casa no kit; o que já existia (`applyMutationError`, `notifyError`,
+`ConfirmDialog`, `RowActions`) é estendido, não repetido.
+
+- **Um envio por vez.** `handleSubmit` valida de forma assíncrona antes do `mutate`: o segundo clique
+  de um duplo clique começa antes de o `isPending` renderizar, e a guarda sobre o valor renderizado
+  deixava passar o segundo POST. `useSingleFlightSubmit` (`hooks/`) fecha o portão por `ref`, na hora,
+  e solta quando o envio termina; `useMutationForm` já o usa no `onSubmit`, então formulário não escreve
+  guarda nenhuma. Fora de formulário, `useSingleFlight` (`use-open-on-request.ts`) faz o mesmo para
+  um botão. Mutação não tem retry por padrão porque repetir escrita pode duplicar o registro
+  (_doc-lib/tanstack-query.md#guides/mutations).
+- **Aviso de escrita fora de formulário**: `writeFeedback({ invalidate, success, errorId, retry?, onDone? })`
+  (`lib/mutation-feedback.ts`) devolve as `MutationProps` do hook do recurso. Invalida com `await`
+  (o `isPending` cobre o refetch, _doc-lib/tanstack-query.md#guides/invalidations-from-mutations),
+  avisa o sucesso e entrega o erro a `notifyError`, o **único** lugar que redige erro da API
+  (`lib/form-errors.ts`); formulário passa por `applyMutationError`, que cai no mesmo `notifyError`.
+  O texto é `m.kit_*` ou do projeto, nunca montado por substantivo concatenado (`i18n.md` §2).
+- **Foco depois de remover**: o alerta devolve o foco ao gatilho, mas o gatilho morava na linha que
+  saiu, e o foco caía no `<body>`. `neighbourRowActions(gatilho)`, lido **antes** da ação, e
+  `focusAfterRemoval(alvo)` (`lib/focus-after-removal.ts`) mandam o foco à linha vizinha, ou à lista
+  (`[data-slot="table"]`) se não sobrou nenhuma. O gatilho do `RowActions` carrega `data-row-actions`,
+  porque o `aria-label` muda com o idioma (WCAG 2.4.3).
+- **Confirmação forte é parte, não prop.** `ConfirmDialogWarning` (aviso vermelho com a contagem) e
+  `ConfirmDialogChallenge` (a conta a responder) entre o cabeçalho e o rodapé do `ConfirmDialog`: com a
+  parte presente, o `ConfirmDialogConfirm` espera a resposta; sem ela, é o alerta comum (§6.1). A pergunta
+  renova a cada abertura, e a aleatoriedade entra pela prop `random` (padrão `Math.random`), então o teste
+  fixa a sequência. A conta é trivial de propósito: impede o clique distraído, não é antirrobô.
+  `RowActionsActionDialog` aceita as partes em `children`. O diálogo de ação genérico e a lixeira
+  (arquivar, restaurar, excluir, alternar a lixeira) já são `RowActionsActionDialog`, `RowActions*` e o
+  alternador do `TableToolbar`; não há segundo.
+- **Motivo do botão desabilitado**: `DisabledReason` (`components/common/disabled-reason/`) faz do
+  próprio botão o gatilho: `aria-disabled` (não `disabled`, que o tira da tabulação), `aria-describedby`
+  para o motivo em texto `sr-only` e clique sem efeito; nenhum `role` extra em volta. O tooltip é só a
+  cópia visual para quem usa mouse ou teclado: a página do Base UI diz que ele não alcança toque nem
+  leitor de tela e não substitui a descrição (_doc-lib/base-ui.md#react/components/tooltip). Sem `reason`,
+  o controle sai como veio.
+
+Toast é do `sonner`, que a `_doc-lib` não cobre: não coberto, decidido pelo critério desta régua.
 
 ---
 
@@ -498,6 +639,33 @@ célula) é hook de permissão (`use<Recurso>Permission`), nunca `if` de papel e
   Param de rota: _doc-lib/tanstack-router.md#guide/path-params; loader:
   _doc-lib/tanstack-router.md#guide/data-loading.
 
+- **Vitrine global** (bloco `vitrine`, `DECISIONS.md` #823): produto de tenant por cliente cuja vitrine
+  junta todas as cidades (Toru, Simple Hub) não monta `$city`; a cidade é um filtro opcional da URL,
+  `?city=<slug>` (backend em `backend.md` §4.14, "Vitrine global"). O bloco `city` e este não convivem no
+  frontend (os dois dão rota ao primeiro segmento): projeto que migra troca de bloco.
+  - **O filtro na URL.** A rota declara `validateSearch: VitrineCity.validate` (`lib/vitrine-search.ts`, à
+    mão e só `import type`, como o `list-search.ts`: slug inválido vira `{ city: undefined }`, nunca erro) e
+    `loaderDeps` com `search.city`; `VitrineCity.pick(slug)` escreve por `navigate({ search })`, preserva o
+    resto e zera `page`. Trocar a cidade é `cause === 'stay'` (§5, #814): a lista não vira esqueleto. O
+    filtro por outra dimensão do projeto (povo, categoria) entra pelos filtros da listagem (§2.1, #811),
+    não por peça do kit.
+  - **`CityFilter`** (`components/common/city-filter/`) por partes, dados por prop (o catálogo de
+    `citiesQueryOptions()`): `CityFilterSelect` ("Todas as cidades" primeiro), `CityFilterLocate` e
+    `CityFilterNotice`. Sem `CityFilterLocate` não há geolocalização (§6.1: sem prop booleana). A 375 px o
+    `Select` toma a linha.
+  - **Geolocalização só por opt-in.** O pedido de permissão do navegador é de `getCurrentPosition`, que só
+    roda quando o visitante clica em "usar minha localização" (`useGeolocation().locate`,
+    `Geolocate.current`); **nunca no carregamento**. Escolhe a cidade de centro mais próximo
+    (`NearestCity`, `cities.latitude` e `longitude`); recusa, erro, tempo esgotado ou navegador sem
+    geolocalização deixam o filtro como estava e mostram a nota discreta (`role="status"`). A posição não
+    é guardada nem enviada. `Permissions-Policy` já traz `geolocation=(self)` (#805).
+  - **Links antigos.** `routes/$city.index.tsx` e `routes/$city.$.tsx` (`LegacyCityRedirect.enter`)
+    mandam `/<idioma>/<cidade>/...` para `/<idioma>/...?city=<cidade>`; cidade que não existe é o 404 comum.
+    Rota estática ganha de `$city`, e o splat não casa a cidade sozinha, daí o índice à parte.
+  Páginas: _doc-lib/tanstack-router.md#guide/search-params, #how-to/validate-search-params,
+  #guide/authenticated-routes (`throw redirect()` do `beforeLoad`); Geolocation API: não coberto na
+  `_doc-lib` (MDN, Using the Geolocation API, lida pelo fonte; ver a #823).
+
 ### 3.6 Perfil incompleto: o aviso e a página que completa *(`DECISIONS.md` #799)*
 
 O cadastro público pede só o mínimo e o resto se completa depois do login (`backend.md` §4.16), então
@@ -633,12 +801,77 @@ de novo" sem recarregar a página: um `try/catch` por componente não limpa o es
 boundary guardou. Rota declara `errorComponent` próprio só quando o erro pede tela diferente.
 _doc-lib/tanstack-query.md#guides/important-defaults; _doc-lib/tanstack-start.md#guide/error-boundaries.
 
-- **Carregamento**: rota de listagem declara `pendingComponent` com o `table-skeleton` do kit
-  (§8), do mesmo tamanho da tela final; nunca `<Loading />` genérico nem tela em branco
-  *(opinião da casa)*. `defaultPendingMs` fica no padrão até haver medida.
+- **Carregamento: esqueleto é a regra, spinner é a exceção** *(opinião da casa, `DECISIONS.md` #808, revê
+  a #87)*. Onde há conteúdo a carregar (rota, seção, lista, card, sheet ou dialog que busca dado,
+  paginação, troca de filtro) a tela mostra o **esqueleto no formato do conteúdo final**, e já na
+  navegação. Cada caso tem a peça:
+
+  | Onde | Esqueleto |
+  |---|---|
+  | rota com `loader` (declara `pendingComponent` no arquivo crítico, nunca no `.lazy.tsx`) | listagem: `TableSkeleton` com os mesmos `headers` da tabela; detalhe: `DetailSkeleton` (campos) ou `DetailRowsSkeleton` (leitura); criar/editar: `FormShellSkeleton` com o nº de campos; painel de métricas: `MetricCardSkeleton`, `ChartSkeleton`, `ActivitySkeleton`; outra forma: `routes/**/-components/<nome>-skeleton.tsx`, componente `<Nome>Skeleton` |
+  | layout sem tela própria com SSR (`$city`) | `pendingComponent: Outlet`: o esqueleto do filho aparece no lugar do spinner; o layout já carregado fica e só o filho mostra o esqueleto |
+  | layout com `ssr: 'data-only'` ou `false` (`_private`) | **sem** `pendingComponent`: o servidor desenha o pending, e `Outlet` mandaria o filho sem a casca, que a hidratação troca depois pelo painel (foco perdido, tela que pula). Vale o fallback raiz no primeiro quadro; dentro do painel a casca fica e o esqueleto é do filho (`DECISIONS.md` #814) |
+  | seção que carrega sozinha (`useQuery`) | esqueleto por `isPending`; com `useSuspenseQuery`, `<Suspense fallback={<…Skeleton />}>` próprio |
+  | lista paginada, troca de filtro | `keepPreviousData` (§2.1) mantém a lista; sem dado anterior, esqueleto das linhas. O `loader` da listagem abre com `if (cause === 'stay') return undefined` (só a busca, o filtro ou a página mudaram): a rota não pende e a tela, com o campo de busca, não é trocada pelo esqueleto |
+  | Sheet ou Dialog que busca dado | esqueleto do conteúdo dentro do painel, com `aria-busy`; o `lazy` do painel em si (`SheetOnDemand`) fica sem fallback, porque antes do gesto não há o que desenhar (§9.4) |
+  | peça pesada `lazy` (§9.4) | `<Suspense>` com esqueleto da mesma altura (`RichEditorSkeleton` no campo de texto rico) |
+
+  **No celular primeiro.** Muito acesso é por telefone: o esqueleto tem a forma do layout que o
+  aparelho vai receber (a listagem vira cards abaixo de `sm`, como o `TableGrid`), com largura e
+  quantidade de linhas responsivas, e nunca passa de 375px (`min-w-0`, `max-w-full`, nada de largura
+  fixa maior que a tela). Todo esqueleto leva `data-slot`, `aria-busy="true"` e um
+  `role="status"` com `m.kit_loading()`, desenha o que é decorativo com `aria-hidden`, tem as mesmas
+  medidas do conteúdo (a tela não pula na chegada) e para de pulsar com `motion-reduce` (o `Skeleton`
+  de `ui/` leva o patch `// casa:` de `scripts/ui-patches.json`).
+
+  **Spinner só onde não há o que desenhar**: ação curta (botão enviando, upload em progresso) e o
+  fallback raiz do router (`defaultPendingComponent: RoutePending`), e mesmo aí o esqueleto vence se
+  houver forma. Nunca `<Loading />` genérico nem tela em branco onde há conteúdo.
+  O lint do kit reprova rota (`src/routes/**`, fora do `.lazy.tsx`) com `loader:` que busca dado (chama algo além de `notFound()` e `redirect()`) sem `pendingComponent:`
+  e `pendingComponent: RoutePending`, em referência ou dentro de função, fora do `__root` (`eslint.config.js`, `ROUTE_PENDING`).
+
+  **Quando o esqueleto aparece**: `defaultPendingMs: 100` e `defaultPendingMinMs: 200` (§1.4). A doc
+  mostra o `pendingComponent` só depois de 1000 ms e o segura 500 ms depois de mostrado
+  (`pendingMs`, `pendingMinMs`); o padrão deixaria a tela anterior parada por um segundo, que no toque
+  parece travamento. **Não 0** (`DECISIONS.md` #814, revê a #808): `pendingMs` é um timer, e com 0 até
+  o loader que devolve na hora mostra o esqueleto pelo piso de 200 ms; na listagem isso trocava a tela
+  inteira, campo de busca incluso, a cada termo digitado. Com 100 a tela anterior fica um instante e o
+  loader que responde antes não desenha nada. **Custo do piso**: o esqueleto que aparece fica no mínimo
+  200 ms, mesmo que o dado chegue em 30. 100 e 200 são escolha da casa, medidos só na listagem do painel.
+  **Listagem**: o `loader` pré-carrega só na entrada (`cause !== 'stay'`); busca, filtro e página caem
+  em `stay`, e a tela lê por `useQuery` com `placeholderData: keepPreviousData` (§2.1), com o esqueleto
+  só nas linhas. **O guard é só de listagem, nunca de detalhe**: rota cujo `loader` usa `params` (`$id`)
+  cai em `stay` quando o `$id` muda, e devolver `undefined` deixaria o dado do id anterior. Detalhe com
+  lista paginada dentro (inscritos de um evento): o `loader` do detalhe carrega só o registro (sem o
+  `search` em `loaderDeps`) e a sub-lista lê por `useQuery` com `keepPreviousData`, com o esqueleto nas
+  linhas; se o loader precisar da sub-lista, guarde só quando o param não mudou
+  (`cause === 'stay' && params.id === <id anterior>`, guardado pela tela), e na dúvida prefira o
+  `useQuery`. Listagem por `$city` (ou outro param de escopo) também lê `params`, então o lint não a cobra:
+  o guard de `stay` ali só vale se a tela ler por `useQuery` com a chave inteira (cidade + busca); isso
+  fica para a revisão humana. O `ROUTE_PENDING` reprova rota com `validateSearch`, `loaderDeps` e `loader` que
+  busca sem olhar `cause` e sem usar `params`, e `pendingComponent: Outlet` em layout `ssr: 'data-only'` ou `false`
+  (`eslint.config.js`). _doc-lib/tanstack-router.md#guide/data-loading
+  (https://raw.githubusercontent.com/tanstack/router/main/docs/router/guide/data-loading.md,
+  "Showing a pending component", "Avoiding Pending Component Flash", `cause` nos parâmetros do `loader`);
+  `RouterOptionsType` (`defaultPendingMs`, `defaultPendingMinMs`); demais páginas na #808 e #814.
+
+```tsx
+// routes/_private/posts/index.tsx
+export const Route = createFileRoute('/_private/posts/')({
+  loader: ({ context }) =>
+    context.queryClient.query({ ...postsQueryOptions(), staleTime: 'static' }),
+  pendingComponent: () => (
+    <TableSkeleton headers={[m.posts_title(), m.posts_status(), m.posts_created()]} widths={['w-56', 'w-20', 'w-28']} />
+  ),
+})
+```
+
 - `useSuspenseQuery` só abaixo de uma boundary. A rota inteira é o `pendingComponent`; dentro da
   tela, seção que carrega sozinha tem `<Suspense>` próprio com esqueleto.
-  _doc-lib/tanstack-query.md#guides/suspense.
+  _doc-lib/tanstack-query.md#guides/suspense
+  (https://raw.githubusercontent.com/tanstack/query/main/docs/framework/react/guides/suspense.md,
+  aberta em 2026-11-20: "wrap your updates that change the QueryKey into startTransition" evita o
+  fallback voltar sobre conteúdo já na tela).
 - **Não encontrado**: o loader de detalhe passa por `loadOrNotFound` (`lib/load-or-not-found.ts`):
   404 da API vira `throw notFound()`, todo o resto relança. A rota declara `notFoundComponent`.
   5xx nunca vira 404, e "não encontrado" nunca responde 200 (soft 404).
@@ -696,12 +929,20 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   alterada marcada com `// casa:` e o motivo em inglês (`// casa: success variant for status
   badges`). A marca é o que permite reaplicar a mudança quando o componente vem de novo do
   registry.
-- **`ui/sonner.tsx` leva patch obrigatório**: o registry importa `useTheme` de `next-themes`, que a
-  casa não instala (tema por cookie, §6 "Tokens e tema"). O patch, com `// casa: theme comes from the
-  cookie, not from next-themes`, tira o import e deixa `theme` entrar como prop de `ToasterProps`;
-  quem passa é `common/theme/theme-provider-toaster.tsx` do kit, com o tema do `ThemeProvider`.
-  Sem o patch o `next-themes` volta ao `package.json` e o toast não segue o cookie. O `date-fns` do
-  `calendar` é transitivo do `react-day-picker` e o código da casa não o importa (`tooling.md` §0.1).
+- **Texto em inglês do registry e `sonner` são patch do `ui-patches.json`, não retoque à mão**
+  (`DECISIONS.md` #818). O registry traz frases em inglês (`sr-only` "Close" do `Dialog` e do `Sheet`,
+  `aria-label` do `Breadcrumb`, da `Pagination`, do `Spinner`, do `Toast`, do `Carousel`, da
+  `Sidebar`, do `CodeBlock` e do `MessageScroller`, o título do `Command`) e o `sonner` importa
+  `useTheme` de `next-themes`, que a casa não instala (tema por cookie, §6 "Tokens e tema"). O kit os
+  troca por entradas `from` + `to` do `scripts/ui-patches.json` (terceira forma do mecanismo, ao lado
+  da classe e do atributo): o `to` usa `m.kit_ui_*()` (as chaves moram em `messages/kit/`, nos três
+  idiomas) com a marca `// casa:` (ou `{/* casa: */}` em JSX), e o `import { m }` entra por entrada
+  própria. No `sonner` o patch tira o `next-themes` e deixa `theme` entrar como prop de
+  `ToasterProps`; quem passa é `common/theme/theme-provider-toaster.tsx`. O `check-ui-components --fix`
+  e o `check-ui-patches --fix` os reaplicam sozinhos (o segundo `--fix` não escreve) e o `test:unit`
+  reprova a falta; trecho do registry que mudou de forma vira erro, não silêncio. Chave nova do
+  kit entra em `messages/kit/{pt-BR,en,es}.json`; o `date-fns` do `calendar` é transitivo do
+  `react-day-picker` e o código da casa não o importa (`tooling.md` §0.1).
 - **Não pode**: hook do app, regra de negócio, fetch, componente que não veio do registry (vai
   para `common/`).
 - **Patch exigido é cobrado, não só escrito** (`DECISIONS.md` #772). A lista dos patches
@@ -723,7 +964,7 @@ editava; vale a doc (`DECISIONS.md` #113, C10):
   vencem. `scripts/ui-accessible-name.test.ts` prova com `renderToString`.
 - **O registry inteiro fica instalado** (`DECISIONS.md` #299, revoga "componente sem consumidor
   sai" da #146) e **cobrado** (#806). A lista do que o registry traz (os itens `registry:ui` do estilo
-  `base-mira` com arquivo, mais os hooks e a lib que ele instala junto) mora num lugar só, como dado:
+  `base-nova` com arquivo, mais os hooks e a lib que ele instala junto) mora num lugar só, como dado:
   `frontend/scripts/ui-components.json` do kit. `scripts/check-ui-components.test.ts` roda no `test:unit`
   (portanto no `check` e no `pre-commit`) e reprova o projeto sem algum `components/ui/<nome>.tsx`,
   nomeando o arquivo. `node scripts/check-ui-components.mjs --fix` roda `shadcn add <nomes que faltam>
@@ -781,13 +1022,13 @@ _doc-lib/shadcn.md#docs/theming, #docs/components-json.
   build do cliente e o do SSR geravam CSS com hash diferente, e o HTML pedia um `styles-<hash>.css`
   que não existe (página sem estilo em produção; relato do jhollyfer.com.br;
   _doc-lib/tailwindcss.md#detecting-classes-in-source-files). O `shadcn/tailwind.css` traz as custom variants (`data-horizontal`, `data-vertical`...)
-  que os componentes de `ui/` do registry base-mira usam; sem ele Tabs e afins quebram sem erro
+  que os componentes de `ui/` do registry base-nova usam; sem ele Tabs e afins quebram sem erro
   (relato do jhollyfer.com.br). `shadcn`, `tw-animate-css` e `class-variance-authority` estão no
   `kit.deps.json`. O tema define também os tokens que as peças do kit leem (`font-display`,
   `text-caption`, `text-error-code`, `min-h-page-state`, `min-h-stage-sm`, `max-w-popup-inset`, a
   escala `z-*` de `lib/cn.ts`); a lista fechada é o esqueleto `_templates/code/frontend/src/styles.css`
-  (ponto de extensão: nasce se faltar, valores de exemplo, nunca sobrescrito; o `logo-512.png` que o
-  `pageHead` lê está documentado no cabeçalho dele). `lib/theme-tokens.test.ts` compila cada classe que o
+  (ponto de extensão: nasce se faltar, valores de exemplo, nunca sobrescrito; a marca e os ícones do app, que o
+  `pageHead` lê de `public/`, estão em "A marca"). `lib/theme-tokens.test.ts` compila cada classe que o
   código escreve contra o `styles.css` (`@tailwindcss/node`) e reprova a que não gera CSS, porque classe de
   token ausente some sem erro. `prose` vem de `@plugin '@tailwindcss/typography'`. _doc-lib/shadcn.md#docs/theming.
 - **Todo valor de design é token no `@theme`**, pelo namespace dele (`--color-*`, `--text-*`,
@@ -813,6 +1054,32 @@ _doc-lib/shadcn.md#docs/theming, #docs/components-json.
   `transition`. _doc-lib/base-ui.md#react/handbook/animation.
 - Identidade visual (cor, família, raio, direção) é do projeto e mora em `docs/DESIGN.md` e no
   tema (`documentation.md`); esta régua só diz onde e como.
+
+### A marca *(DECISIONS.md #817)*
+
+A marca é a peça `BrandMark` do kit (`components/common/brand-mark/`), igual em todo projeto: um disco
+`bg-primary` com um ícone Phosphor `weight="fill"` em `text-primary-foreground` e o nome ao lado em
+`text-foreground`. Não é link; quem a usa decide para onde ela leva. É composta por partes
+(`BrandMarkSymbol`, `BrandMarkName`), o tamanho é a variante `size` (`sm`, `md`, `lg`) e o símbolo
+sozinho leva `label` (nome acessível; ao lado do nome ele é decorativo). Cor só por token do tema. O `fill` do símbolo é da marca, não ícone de interface: não fere o "um peso
+por tela" (`_doc-lib/phosphor.md#react#props`, https://github.com/phosphor-icons/react#props).
+
+- **O símbolo é escolha do projeto**, em `src/lib/brand.ts` (ponto de extensão, o sync cria o esqueleto e
+  nunca reescreve): `BRAND.icon`, um ícone Phosphor. O nome é `brand_name` de `messages/<l>.json`, que o
+  projeto já tem, sem repetir em `brand.ts`.
+- **Logo próprio substitui o símbolo** quando o dono fornecer o arquivo: `BRAND.logo`, um import de
+  `assets/brand/`. Sem ele, vale o símbolo.
+- **Os ícones do app saem da mesma marca**: `node scripts/generate-icons.mjs` (kit) escreve em `public/`
+  `favicon.svg`, `favicon.ico`, `apple-touch-icon.png`, `icon-192.png`, `icon-512.png`,
+  `icon-maskable-512.png` e `og-image.png`, a partir do símbolo e de `--primary`/`--primary-foreground`
+  do `styles.css`, pelo Chromium do E2E (sem dependência de imagem). Com logo próprio:
+  `--logo=src/assets/brand/<arquivo>.svg`. O manifesto (`name`, `lang`, `scope`) é do projeto e aponta
+  para esses arquivos; o `<head>` do `__root.tsx` liga o favicon e o `apple-touch-icon`, e o
+  `pageHead` usa `/og-image.png` e `/icon-512.png`.
+- **O sync não gera `public/*`.** Depois do sync, rode `node scripts/generate-icons.mjs` (precisa de
+  Chromium: o do Playwright ou `E2E_CHROMIUM_PATH`) e versione os arquivos gerados; sem eles a OG e o
+  JSON-LD dão 404 em `/og-image.png` e `/icon-512.png`.
+- Marca desenhada à mão numa rota, ou SVG de logo copiado para dentro de um componente, é desvio.
 
 ### Classe e variante
 
@@ -881,7 +1148,13 @@ Regras:
   (`components/common/index.ts`, `hooks/index.ts`, `lib/index.ts`): a doc do Vite manda evitar barrel
   porque ele obriga a carregar e transformar todo arquivo reexportado
   (_doc-lib/vitejs.md#performance, `DECISIONS.md` #319). A única exceção é o ponto de entrada do
-  pacote `shared/` (`architecture.md` §9), que é o contrato do pacote.
+  pacote `shared/` (`architecture.md` §9), que é o contrato do pacote. O kit não tem barrel em
+  pasta nenhuma e importa pelo caminho do arquivo (`#/components/common/page-shell/page-shell`, como o
+  `form-shell-content.tsx`): **o projeto não cria `index.ts` em pasta do kit**, nem para encurtar o
+  import da própria tela. O que o projeto importa de uma peça é o arquivo da peça, e o `index.ts` que
+  ele criasse seria reexport sem dono, que o sync não conhece e o próximo upgrade do kit quebra.
+  A pasta de rota (`routes/<rota>/index.tsx`) não é barrel: é a rota do TanStack Router
+  (`DECISIONS.md` #821).
 - **Toda parte leva `data-slot="<nome>-<parte>"`.** Layout que muda conforme a parte existe lê
   `has-data-[slot=<nome>-<parte>]:` no pai, nunca prop booleana. Slot nunca é detectado por
   `child.type`, `React.Children.map` ou `cloneElement`
@@ -926,7 +1199,8 @@ A forma única está nas skills `dialog-pattern` e `sheet-pattern`; o resumo que
 - Dialog aberto de menu é irmão do `DropdownMenu`, fora do `DropdownMenuContent`; um handle por
   Dialog, não por lugar que abre.
 - Dialog de formulário foca o primeiro campo (`initialFocus`); conteúdo montado só aberto (§4).
-- Sheet de filtro não guarda filtro: desenha os controles e navega search params (§2). Link de menu
+- Sheet de filtro não guarda o filtro aplicado: desenha os controles; o aplicado mora nos search
+  params e a edição pendente no rascunho do `ListShell` (§2.1, "Filtros da listagem"). Link de menu
   mobile vai em `<SheetClose nativeButton={false} render={<Link ... />} />`: `SheetClose` é
   `DialogClose`, que renderiza `<button>`; sem `nativeButton={false}` o Base UI acusa o elemento que
   não é botão no console e o teclado (Enter e Espaço) não fecha (`NativeButtonProps` em
@@ -1062,7 +1336,7 @@ onde a regra vale e o que ela acusa.
 
 - **Formulário.** O `<form>` existe em duas peças do kit, `FormShellContent` (tela de cadastro do painel)
   e `PlainForm` (entrada, perfil), cada uma com o `eslint-disable-next-line` e o motivo na linha. O
-  registry tem o item `form`, mas ele é vazio (a entrada do índice do registry `base-mira` não tem `files`), então
+  registry tem o item `form`, mas ele é vazio (a entrada do índice do registry `base-nova` não tem `files`), então
   não substitui nada. Tela nenhuma escreve `<form>`: usa `FormShell`/`PlainForm` e os `Field*` (§4).
 - **DOM de terceiro.** O que a biblioteca de terceiro renderiza por dentro (mapa Leaflet, editor,
   gráfico) fica isento, porque não é JSX nosso; os controles em volta dele (zoom, busca, filtro,
@@ -1143,7 +1417,7 @@ tempo. Uma linha é `TraceLine` com `TraceIcon` e `TraceTitle`; o detalhe abre p
 | Chaves | `queryKeys.<módulo>.<recurso>.<forma>` | `queryKeys.administrator.posts.detail(id)` |
 | `queryOptions` | plural para lista, singular para detalhe | `postsQueryOptions(search)`, `postQueryOptions(id)` |
 | Hook de mutation | `use<Recurso><Ação>Mutation` | `usePostArchiveMutation` |
-| Hook de combobox | `use-<entidade>-read-paginated-infinite.ts` | `use-team-read-paginated-infinite.ts` |
+| Query de combobox por entidade | `<entidade>sInfiniteQueryOptions(search)` e `<entidade>QueryOptions(id)` em `queries/<módulo>.ts`, ligadas num `AsyncComboboxQuery` (§2.1) | `teamsInfiniteQueryOptions`, `teamQueryOptions` |
 | Módulo de `lib/` | `<tema>.ts`, nome do domínio | `lib/list-search.ts`, `lib/page-head.ts` |
 | Teste Vitest | `<x>.test.ts(x)` ao lado | `lib/bulk.test.ts` |
 | Teste E2E | `e2e/<fluxo>.spec.ts` | `e2e/post-publish.spec.ts` |
@@ -1171,26 +1445,36 @@ A lista é fechada:
 
 | Onde | Peça | Para quê |
 |---|---|---|
-| `components/common/page-shell/` | casca de tela: título, ações, corpo, breadcrumb, esqueleto | toda tela do painel |
-| `components/common/list-shell/` | casca de listagem: cabeçalho, filtro, corpo, rodapé | toda lista do painel |
+| `components/common/page-shell/` | casca de tela: título, ações, corpo, breadcrumb, `DetailSkeleton` e `DetailRowsSkeleton` | toda tela do painel |
+| `components/common/list-shell/` | casca de listagem: cabeçalho, filtro (rascunho + aplicar/limpar), colunas visíveis, corpo, rodapé | toda lista do painel (§2.1, "Filtros da listagem") |
 | `components/common/form-shell/` | casca de formulário: título, corpo, ações; `FormShellContent` é `<form method="post">` com `HydratedFieldset` | submit travado por upload em voo (§4) |
 | `components/common/submit-button/` | botão de envio com estado de envio | sem duplo envio (§10.1) |
-| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, redimensionar, esqueleto, virtualização opcional (§9.9); o quadro que rola é `role="region"` com `tabIndex={0}`, `focus-ring` e nome (`label`, senão `kit_table_region`), §10.2 | toda listagem; layout persistido validado pelo schema de `shared/` |
-| `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção) e o `FiltersSheet` | filtro de lista igual em toda tela |
-| `components/common/row-actions/` | menu de ações por linha | ação de linha igual em toda tabela |
+| `components/common/table/` | data table: `useTable({ rows, columns, getRowId, persistKey, actions, selectable })`, busca (`TableSearch`), paginação, colunas visíveis, ordenar no celular (`TableMobileSort`), redimensionar, esqueleto, virtualização, grade por teclado e colunas ao quadro opcionais (§2.1 "Tabela pesada", §9.9); o quadro que rola é `role="region"` com `tabIndex={0}`, `focus-ring` e nome (`label`, senão `kit_table_region`), §10.2 | toda listagem; layout persistido validado pelo schema de `shared/` |
+| `components/common/filters/` | seções de filtro (toggle, segmentado, chips, data, multisseleção, `FilterAsyncCombobox` por busca de entidade) e o `FiltersSheet` | filtro de lista igual em toda tela |
+| `components/common/row-actions/` | menu de ações por linha; o alerta aberto por um item devolve o foco ao botão do menu (`row-actions-context.ts`) | ação de linha igual em toda tabela |
 | `components/common/bulk-archive/` | arquivar, restaurar, remover em massa | detalhe e lista não reescrevem o ciclo |
-| `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog), com `confirm-dialog-handle.ts` | §10.6 |
+| `components/common/confirm-dialog/` | confirmação de ação destrutiva (AlertDialog), com `confirm-dialog-handle.ts`; aviso e desafio como partes (`ConfirmDialogWarning`, `ConfirmDialogChallenge`) | §10.6, §2.4 |
+| `components/common/disabled-reason/` | motivo do botão desabilitado, ligado ao próprio botão por `aria-describedby` | §2.4 |
 | `components/common/empty-state/` | estado vazio por motivo, sobre `ui/empty` | §10.1; _doc-lib/shadcn.md#empty |
 | `components/common/rail/` | trilho de rolagem lateral: lista com nome (`label`, por `m.*()`), `tabIndex={0}` e anel de foco do tema; `list` `ordered`/`unordered`; o utilitário `rail` mora no `styles.css` | §10.2, §10.4; _doc-lib/tailwindcss.md#adding-custom-styles |
-| `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending`, `AccessDenied`, `QueryBoundary` | §5 |
-| `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox local e paginado |
+| `components/common/route-status/` | `NotFoundPage`, `RouteError`, `RoutePending` (fallback raiz), `AccessDenied`, `QueryBoundary` | §5 |
+| `components/common/card-skeleton/` | `MetricCardSkeleton`, `ChartSkeleton`, `ActivitySkeleton`: esqueleto do painel de métricas | §5 |
+| `components/common/option-combobox/` | combobox de opções (+ `toOptions`) | combobox de lista fechada |
+| `components/common/async-combobox/` | busca assíncrona com autocompletar, compound: `AsyncCombobox` (raiz, recebe a `source` de `useAsyncComboboxSource`), `AsyncComboboxInput` (um valor) ou `AsyncComboboxChips` (vários), `AsyncComboboxList` (+ `AsyncComboboxItem`, `AsyncComboboxLoadMore`, `AsyncComboboxPending`); I/O por prop (`AsyncComboboxQuery`) | todo campo e filtro que busca entidade no servidor (§2.1) |
 | `components/common/date-picker/` | data e intervalo, valor no formato da API (Luxon) | campo de data |
-| `components/common/field/` | campos do `AppField`: texto, área de texto, senha, número, seleção, combobox, data, switch, checkbox, imagem, arquivos, texto rico e máscara (`FieldMask`) | §4 |
+| `components/common/field/` | campos do `AppField`: texto, área de texto, senha, número, seleção, combobox, `FieldAsyncCombobox`, data, switch, checkbox, imagem, arquivos, texto rico e máscara (`FieldMask`) | §4 |
 | `components/common/hydrated-fieldset/` | trava os campos até a hidratação | formulário antes do JavaScript (§4) |
 | `components/common/input-password/` | senha com mostrar/ocultar | formulário de sessão |
+| `components/common/description-list/` | leitura rótulo/valor: `DescriptionList` (`<dl>`, `layout` `stacked`\|`rows`, `labelWidth` por `cva`) > `DescriptionItem` > `DescriptionTerm` + `DescriptionDetails`; o `DetailRowsSkeleton` desenha a própria lista | tela de detalhe só de leitura |
+| `components/common/stat-card/` | número do painel: `StatCard` > `StatCardLabel`, `StatCardContent` > `StatCardValue`, `StatCardDelta{value, goodWhen?}` (variação por dado: seta, sinal e palavra, a cor só diz se é bom); carregando é o `MetricCardSkeleton`, de mesma forma | painel de métricas (§10.8: sem caixa de ícone) |
+| `components/common/switch-card/` | configuração ligada ou desligada como cartão de escolha do `Field`: `SwitchCard` (o cartão é o `<label>` do switch) > `SwitchCardTitle`, `SwitchCardDescription` | configuração aplicada pela própria tela; campo de formulário é `FieldSwitch` |
+| `components/common/truncated-text/` | `TruncatedText{value, lines}`: corta por `line-clamp` (CSS); só o texto de fato cortado (`hooks/use-is-overflowing.ts`) ganha botão que mostra o inteiro no tooltip e o expande ao pressionar | célula e linha de texto longo |
+| `components/common/global-search/` | busca global `Ctrl`/`⌘` `K`, compound: `GlobalSearch` (atalho e handle) > `GlobalSearchTrigger`, `GlobalSearchPanel` (`Dialog` de `md` para cima, `Sheet` em tela cheia abaixo) > `GlobalSearchInput`, `GlobalSearchList` > `GlobalSearchSource{query, toResult}` (query do projeto, `keepPreviousData`) ou `GlobalSearchGroup` + `GlobalSearchItem` (lista que o projeto já tem, com `useGlobalSearchTerm`); o kit não traz fonte | cabeçalho do painel (`PanelShellHeader`) |
+| `components/common/export-csv-button/` | `ExportCsvButton{source, filename}`: as linhas vêm por prop, o código do CSV (`lib/csv-export.ts`) entra por `import()` no primeiro clique, um envio por vez, aviso por toast | exportar a lista |
 | `components/common/picture/` | imagem com dimensão, `alt` e carregamento por posição | §9.6 |
 | `components/common/maiyu-credit/` | crédito do rodapé: logo da Maiyu (`src/assets/maiyu.png`) + "Desenvolvido por Maiyu", com `Maiyu` em link para `https://maiyu.com.br` | abaixo |
-| `components/common/brand-mark/` | marca do projeto, pelo SVG de `assets/brand/` | cabeçalho e rodapé |
+| `components/common/contact-link/` | contato que abre o app do aparelho: `ContactLink{kind: 'email'\|'phone', value, children?, variant?, size?}`, `<a href>` com `buttonVariants` (link continua link, #440); o `tel:` sem máscara vem de `lib/contact-href.ts` (`ContactHref`) | e-mail e telefone da loja, do suporte, do rodapé |
+| `components/common/brand-mark/` | a marca: disco `bg-primary` com o símbolo Phosphor `fill` e o nome ao lado (`BrandMark` > `BrandMarkSymbol`, `BrandMarkName`); símbolo de `lib/brand.ts`, nome de `brand_name` | `size`: `sm`\|`md`\|`lg`; `label` no símbolo sozinho |
 | `components/common/panel-shell/` *(bloco `painel`)* | casca do painel autenticado, compound: `PanelShell` (provedor, link de pular, contexto de conta e menu), `PanelShellSidebar` (marca, grupos filtrados pela conta, contador por item), `PanelShellInset`, `PanelShellHeader` (trilha, idioma, tema), `PanelShellAccountMenu` (perfil, `TenantSwitcher`, sair), `PanelShellSignOutConfirm`, `PanelShellContent` (rola, limite de erro, `MaiyuCredit`) | `_private/layout.tsx` (§1.1); só depende da API pública do `ui/sidebar` do shadcn (`shadcn` de `kit.deps.json`) |
 | `components/common/auth-shell/` *(bloco `painel`)* | casca das telas de sessão: `AuthShell` (`<header>` com a marca, `<main>` com o cartão, `<footer>` com o crédito), `AuthShellHeader`, `AuthShellTitle` (o `h1`), `AuthShellDescription`, `AuthShellContent` | `_authentication/` (entrada do kit; cadastro e recuperação do projeto) |
 | `components/common/sign-in-form/` *(bloco `painel`)* | formulário de entrada: e-mail ou celular e senha, validator do `shared/`, mensagem do kit para `401 INVALID_CREDENTIALS` e `429`; depois de entrar só invalida o router, e a guarda inversa decide o destino | `/sign-in` |
@@ -1200,19 +1484,22 @@ A lista é fechada:
 | `components/common/plain-form/` *(bloco `painel`)* | o `<form method="post">` das telas que não são cadastro do painel (entrada, perfil); o outro `<form>` do kit é o do `FormShell` | formulário de sessão |
 | `components/common/theme/` | provider, contexto, alternador de tema e o toaster | §6 |
 | `components/common/locale-switcher/` | troca de idioma (nome único) | `i18n.md` §2 |
-| `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha; I/O por prop | registra no `uploading-context` |
+| `components/common/image-field/`, `multi-file-upload/` | campo que sobe o arquivo na escolha; I/O por prop; a fila é `hooks/use-upload-queue.ts` e arrastar, soltar e colar é `hooks/use-file-drop.ts` (percorre pasta, só realça arrasto de arquivo, e o seletor, o drop e o colar passam pelo mesmo `accept`, `lib/accept-files.ts`, e pelo mesmo limite) | registra no `uploading-context` |
 | `components/common/uploading-context/` | registro de upload em voo (`UploadingProvider`, `useRegisterUpload`, `useIsUploading`) | §4 |
-| `components/common/rich-editor/` | editor de texto rico, carregado sob demanda (§9.4); grava o JSON do Tiptap | _doc-lib/tiptap.md |
+| `components/common/rich-editor/` | editor de texto rico, carregado sob demanda (§9.4, `FieldRichText` o carrega por `lazy` com `RichEditorSkeleton`); grava o JSON do Tiptap | _doc-lib/tiptap.md |
 | `components/common/rich-text/` | leitura de conteúdo rico (JSON do editor ou Markdown de fora via `MarkdownManager.parse`) por `renderToReactElement` do `@tiptap/static-renderer`, sem editor e sem `innerHTML` | _doc-lib/tiptap.md#api/utilities/static-renderer |
 | `lib/cn.ts` | `cn()` | §6 |
 | `lib/labels.ts` | rótulo e variante visual de enum (do projeto, não do kit) | abaixo |
 | `lib/i18n.ts` | `localized()`, formatador de data (Luxon) e de número e moeda (`Intl`) | `i18n.md` §2, §3.5 |
 | `lib/form-errors.ts`, `lib/form-a11y.ts` | `applyHTTPErrorToForm`; `invalidProps`, `errorId` | §4, §10.3 |
-| `lib/list-search.ts`, `lib/redirect-search.ts` | fábrica de search de lista; `validateRedirectSearch` | §2.1, §3.5 |
+| `lib/list-search.ts`, `lib/redirect-search.ts`, `lib/filter-draft.ts` | fábrica de search de lista; `validateRedirectSearch`; leitura e comparação do rascunho de filtro | §2.1, §3.5 |
 | `lib/page-head.ts`, `lib/load-or-not-found.ts` | `pageHead()`; `loadOrNotFound` | §9.7, §5 |
 | `lib/local-store.ts` | `localStorage` versionado e validado | §2 |
 | `lib/bulk.ts` | ação em massa sem endpoint dedicado | abaixo |
+| `lib/mutation-feedback.ts`, `lib/focus-after-removal.ts`, `lib/confirm-challenge.ts` | `writeFeedback`; foco depois de remover; a conta do desafio | §2.4 |
 | `lib/chunking.ts`, `upload-transport.ts`, `upload-resume.ts` | upload em partes, retomável | arquivo grande sem refazer do zero |
+| `lib/csv-export.ts` | `csvCell`, `csvTable`, `csvBlob`, `downloadBlob`: CSV com fórmula neutralizada (`=`, `+`, `-`, `@`, TAB, CR viram texto; número de verdade não), CR escapado e BOM UTF-8 | só o `ExportCsvButton` o importa, por `import()` |
+| `lib/dropped-files.ts`, `lib/accept-files.ts` | arquivos de um drop (pasta, 100 por página, dotfile fora, teto); `accept` aplicado a drop e colar | `useFileDrop` |
 | `lib/mask.ts` | aliases de máscara do `FieldMask` | §4 |
 
 **Regra de import do kit** (`DECISIONS.md` #343): a peça importa só `#/components/ui/*`, outra peça
@@ -1361,7 +1648,7 @@ const RichEditor = lazy(async () => {
   return { default: module.RichEditor }
 })
 
-<Suspense fallback={<Skeleton className="h-64" />}>
+<Suspense fallback={<RichEditorSkeleton />}>
   <RichEditor name="body" />
 </Suspense>
 ```
@@ -1437,8 +1724,8 @@ _doc-lib/tanstack-start.md#guide/seo). O formato é da casa (`DECISIONS.md` #47)
   buscador leem;
 - **Open Graph**: `og:title`, `og:description`, `og:type`, `og:image`, `og:url`, `og:locale`, e o
   cartão `twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`. `pageHead` aceita
-  `image` (caminho ou URL absoluta; sem ela vale `assets/brand/logo-512.png`, que o tema entrega,
-  `KIT.md` §3.4) e `type` (`article` em notícia e post, `website` no resto) por página;
+  `image` (caminho ou URL absoluta; sem ela vale `public/og-image.png`, gerado pelo
+  `scripts/generate-icons.mjs`, "A marca") e `type` (`article` em notícia e post, `website` no resto) por página;
 - **JSON-LD** por `head().scripts` com `type: 'application/ld+json'`, com `<` escapado
   (`JSON.stringify(data).replaceAll('<', '\\u003c')`): `Organization` na raiz, `BreadcrumbList`
   em detalhe, e o tipo do domínio (`Product`, `Course`, `Event`, `NewsArticle`) a partir do
@@ -1489,7 +1776,8 @@ Mais:
 ### 9.9 Virtualização
 
 Paginação de servidor é o padrão. Virtualizar só lista longa onde a paginação não serve (planilha,
-combobox com milhares de opções, log), com `@tanstack/react-virtual`, nunca `react-window`. O
+combobox com milhares de opções, log), com `@tanstack/react-virtual`, nunca `react-window`. Na tabela
+do kit são as peças `TableVirtualRows` e `TableVirtualCards` (§2.1, "Tabela pesada"). O
 índice virtual indexa `table.getRowModel().rows`; lista virtualizada mantém rolagem por teclado e
 `aria-rowcount`/`aria-rowindex`. Lista estática longa da vitrine tenta `content-visibility: auto`
 com `contain-intrinsic-size` antes. _doc-lib/tanstack-table.md#framework/react/guide/virtualization.
@@ -1546,7 +1834,7 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
 ### 10.1 Estados de tela
 
 - Toda tela que lê dado tem **quatro estados**: carregando, vazio, erro, preenchido. Carregando é
-  esqueleto com a forma do conteúdo; spinner só no botão que enviou.
+  esqueleto com a forma do conteúdo (§5, onde estão as peças, o celular e a exceção do spinner).
 - **Vazio distingue o motivo**, pela peça `components/common/empty-state/` (compound sobre
   `ui/empty`, _doc-lib/shadcn.md#empty): primeiro uso (o que vai aparecer + ação de criar), busca
   ou filtro sem resultado ("limpar filtros"), sem permissão (por quê + como obter). Nunca "Nenhum
@@ -1599,44 +1887,43 @@ Meta: WCAG 2.1 AA *(página oficial não conferida; sem `_doc-lib` de WCAG)*. Te
   (Enter/Espaço) junto do `onClick`, e a área sem rótulo próprio entra na allowlist de
   `label-has-associated-control` (`jsx-a11y`, `tooling.md` §4.2) em vez de ganhar `<label>` cosmético
   (`DECISIONS.md` #48).
-- Alvo de toque ≥ 44×44 px, por área invisível se preciso *(opinião da casa: AA não exige)*; hover
-  nunca é o único caminho para uma função; gesto (arrastar, deslizar) tem alternativa de um
-  ponteiro.
-- **44 px no celular vem do kit, nunca caso a caso** *(opinião da casa, `DECISIONS.md` #267, forma
-  em #461)*: os controles de `components/ui/` mantêm o tamanho denso do shadcn (`h-7`, `h-8`...) sem
-  tocar no `h-*` original, e o patch `// casa:` só acrescenta `max-sm:min-h-11` (mais
-  `max-sm:min-w-11` nos tamanhos de ícone, `size-*`). `max-sm:` vale só abaixo de `sm`, então de `sm`
-  para cima nada muda; abaixo, o mínimo de 44 px vence a altura densa. Arquivos, âncoras e classes:
-  `frontend/scripts/ui-patches.json` do kit, cobrado no `test:unit` (§6, `DECISIONS.md` #772): `button`, `toggle`
-  (com `max-sm:min-w-11`, porque o `min-w-7` do registry deixa o toggle só de ícone com 28 px de largura),
-  `toggle-group` (o `ToggleGroupItem`), `input`, `native-select`, `select` (o `SelectTrigger`), `tabs` (o `TabsTrigger`) e `input-group`. O
-  `ToggleGroupItem` monta a classe com `toggleVariants`: o patch do `toggle` vai dentro do `cva`
-  (base e tamanhos), não no `className` do componente `Toggle`, senão o item do grupo fica de fora
-  e mede 40 px. No `input-group` o patch vai
-  em dois lugares: na raiz `InputGroup` (`max-sm:min-h-11`), senão o `InputGroupInput` herda o mínimo
-  do `Input` e transborda a borda do grupo, que fica no `h-8`; e no `InputGroupButton`, só o
-  `max-sm:min-w-11` dos tamanhos de ícone (`icon-xs`, `icon-sm`), porque ele consome o `size` e
-  repassa o default ao `Button`, que então não ganha a largura mínima (a altura mínima já vem do
-  `Button`). A tela não ajusta altura de controle. Campo de digitação (`input`,
-  `textarea`, o `select` nativo do `native-select` e o input do `input-group`) também leva
-  `max-sm:text-base` no mesmo patch: o registry deixa `text-sm`/`text-xs`, e abaixo de 16 px o Safari
-  do iOS dá zoom na página ao focar o campo (comportamento do navegador, sem entrada em `_doc-lib`:
-  não coberto). Link solto (fora de texto corrido, como "Ainda não tem
-  conta? Crie" das páginas de autenticação) é `Link` com `className={buttonVariants({ variant:
-  'link' })}` (nunca `Button render={<Link />}`, `DECISIONS.md` #440), que já herda o mínimo de
-  44 px do `buttonVariants`; só o link em linha dentro de frase fica isento, pela exceção de link em linha do
-  WCAG 2.5.8 (sem entrada em `_doc-lib`: não coberto). **Nunca `h-11 sm:h-7`**: o `tailwind-merge` 3.7 não junta classe
-  com e sem variante, e `twMerge('h-11 sm:h-7', 'h-12')` devolve `sm:h-7 h-12`, de modo que de `sm`
-  para cima todo `Button`, `Toggle` ou `Input` com altura própria (`h-12`, `size="lg"` + `h-11`)
-  cai para o denso. Com a forma nova, `twMerge('h-7 max-sm:min-h-11', 'h-12')` devolve
-  `max-sm:min-h-11 h-12`: a altura passada vence no desktop e o mínimo segue no celular. Altura que a
-  peça do kit passava só para compensar o patch antigo sai. O `touch-targets.spec` (§11.2) cobra 44 px
-  no projeto `mobile`. 24 px é o mínimo do WCAG 2.2 AA (2.5.8): vale só como degrau registrado no
-  `docs/DESIGN.md` do projeto (por exemplo, numa vitrine que ainda não migrou), nunca como padrão.
-  Variante `max-*` (e a armadilha de `sm:` não ser "só celular"): _doc-lib/tailwindcss.md#responsive-design
-  (https://tailwindcss.com/docs/responsive-design, aberta, "Targeting a breakpoint range"); piso de
-  altura: https://tailwindcss.com/docs/min-height (aberta; `min-h-*` sem entrada própria em
-  `_doc-lib`, vizinha de `#height`). O critério 2.5.8 do WCAG não tem entrada em `_doc-lib`: não coberto.
+- **Alvo de toque: o do shadcn** *(opinião da casa, `DECISIONS.md` #818, que desfaz #267 e #461)*. O
+  `components/ui/` é o do estilo `base-nova`, **sem patch de altura, de largura mínima, de raio nem de
+  tamanho de fonte**: `Button` 32 px (`sm` 28, `lg` 36), `Input`, `SelectTrigger`, `ComboboxInput`,
+  `InputGroup` e `NativeSelect` 32 px, tudo medido no navegador. O `ui-patches.json` do kit guarda só
+  o que o registry não faz: `motion-reduce` no `Skeleton`, o nome acessível de `Radio`, `Checkbox`,
+  `Switch` e `Label` no HTML do servidor, o `max-sm:text-base` do `NativeSelect` e, no `Button`, `transition-all` trocado pela lista de
+  propriedades que a variante muda mais `touch-manipulation` (`all` anima `height` e `width`, e sem
+  `touch-action` o toque espera o duplo toque de zoom; `_doc-lib/tailwindcss.md#transition-property`,
+  `DECISIONS.md` #821); a entrada de classe aceita `remove`, o token do registry que o `--fix` tira. O piso é o do WCAG 2.2 AA, 24 px (critério 2.5.8,
+  https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html, o `touch-targets.spec` do
+  §11.2 cobra 24 px no projeto `mobile`): o `size` do shadcn o cumpre, e o alvo menor só vale pela
+  exceção de link em linha ou de espaçamento do próprio critério. O `max-sm:min-h-11` e o
+  `h-11 sm:h-7` não existem mais, e o `max-sm:text-base` só volta no `NativeSelect`: o registry o
+  deixa em `text-sm` (14 px) e o iOS Safari dá zoom na página ao focar um campo abaixo de 16 px, então
+  o patch muda o tamanho da fonte no celular e nunca a altura (o `Input` do registry já é
+  `text-base` no celular e `md:text-sm`); projeto com eles apaga os patches ao
+  reinstalar o registry (`--fix`, "Reinstalar o registry", §6).
+- **Raio e altura: do shadcn, só o tema muda o raio** *(`DECISIONS.md` #818)*. O `--radius` do
+  `styles.css` é `0.25rem` (4 px) em todo projeto, e a escala sai dele como a documentação do shadcn
+  manda (`--radius-sm: calc(var(--radius) * 0.6)` até `--radius-4xl: * 2.6`, https://ui.shadcn.com/docs/theming,
+  "Radius Scale", aberta em 2026-11-21); o `theme-radius.test.ts` do kit reprova outro valor, outro
+  nome de raio ou escala diferente. Altura de controle vem do `size` da peça (`size="sm"`, `"lg"`,
+  `"icon-xs"`), nunca de `className`: a regra `CATALOG_SIZE` do `eslint.config.js` reprova `h-*`,
+  `min-h-*`, `max-h-*`, `size-*` e `rounded-*` no `className` de `Button`, `Input`, `Textarea`,
+  `NativeSelect`, `SelectTrigger`, `ComboboxInput`, `InputGroup`, `Badge`, `Tabs*` e `Toggle*`, e
+  `rounded-*` no de `Card`, `DialogContent`, `SheetContent`, `PopoverContent` e `DropdownMenuContent`,
+  nas peças de `components/common` e nas rotas (`h-auto` passa: botão de rótulo que quebra linha).
+  `rounded-full` fica para o que é círculo de verdade (avatar, indicador, ponto de cor), que não são
+  essas peças. O kit não tem token de raio próprio (`rounded-control` e `rounded-chip` saíram): peça
+  do kit usa `rounded-md`/`rounded-lg` do catálogo.
+- **`Card` é coluna e corta o que passa** *(`DECISIONS.md` #821)*. O `Card` do `base-nova` é
+  `flex flex-col overflow-hidden` com `gap` e `py` de `--card-spacing`
+  (https://ui.shadcn.com/docs/components/base/card): o que vai lado a lado dentro dele (imagem e
+  texto, ícone e número) leva `className="flex-row"` no próprio `Card`, e a direção não é patch no
+  `ui/card.tsx`. Um `Card` filho direto de coluna flex que rola (`PageShellContent`) não encolhe: a
+  peça já traz `*:shrink-0`, e quem monta um contêiner de rolagem próprio faz o mesmo, senão o
+  `overflow-hidden` do `Card` corta o conteúdo em vez de a área rolar.
 - Sessão que expira avisa e permite estender.
 
 ### 10.3 Formulário acessível
@@ -1765,6 +2052,14 @@ O `docs/DESIGN.md` do projeto diz o que usa no lugar, na identidade dele.
 | texto justificado | alinhado à esquerda, em medida de leitura (§10.4) |
 | entrada animada e escalonada | nenhuma; só transição curta de cor (§10.5) |
 | copy genérica ("Saiba mais", "Fique informado", "com sucesso") | verbo e objeto específicos (§10.7) |
+| texto de slogan ou frase de efeito no hero | o que a coisa é e faz, em voz factual (§10.11) |
+| serifada grande com itálico de efeito no título | sans neutra; hierarquia por tamanho e peso |
+| hero gigante com parágrafo à direita e botão | conteúdo real primeiro: o produto, o dado, a tela |
+| CTA escuro repetido a cada seção | um CTA por tela (linha acima) |
+| fio colorido decorativo, ícone em círculo ou quadrado, sombra de enfeite, emoji | nada; o ícone só quando carrega informação, Phosphor |
+| bloco de 3 colunas com ícone, título e texto | lista ou tabela do conteúdo real; destaque e demais |
+| contador, depoimento ou logo de cliente inventado | dado real ou `[dado do dono]` |
+| foto de banco de imagem; foto de pessoa sem consentimento | foto do dono, ilustração própria ou nenhuma |
 
 ### 10.9 Gráfico (Recharts pelo `chart` do shadcn)
 
@@ -1803,6 +2098,38 @@ O `docs/DESIGN.md` do projeto diz o que usa no lugar, na identidade dele.
   "mover" por clique (menu "Mover para cima/baixo" ou botões).
 
 ---
+
+### 10.11 Pipeline de design: tela nova, landing page ou mudança visual *(opinião da casa, `DECISIONS.md` #820)*
+
+Toda tela nova, LP ou mudança visual passa por estas etapas, nesta ordem, uma skill por etapa
+(`SKILLS-MAP.md`, "Por momento"). Pular etapa é desvio; o que a skill manda e a casa contradiz
+segue "Quando a skill contradiz a casa" (Base UI no lugar de Radix, Phosphor no lugar de lucide).
+
+1. **Verdade da marca e piso anti-genérico:** `hallmark`. Quem é, o que vende, o que o dono já tem
+   (nome, cor, foto, dado). Sem isso, não se desenha.
+2. **Direção:** `design-taste-frontend`, em modo audit-first (olha o que existe antes de propor).
+3. **Proposta e `docs/DESIGN.md` do projeto:** `frontend-design` e `ui-ux-pro-max` (estilo, paleta,
+   fonte). O resultado é o `docs/DESIGN.md`, não código.
+4. **Criar ou corrigir:** `impeccable`, sobre `components/ui/` e o kit (§6).
+5. **Revisão, as que se aplicam:** `web-design-guidelines` (achados em `arquivo:linha`),
+   `make-interfaces-feel-better` (superfície, tipografia, ícone), `emil-design-eng` (movimento e
+   gesto) e, se o projeto tiver o relatório, o filtro anti-slop (`hallmark`, `scripts/sloplint`).
+6. **Ilustração de vitrine:** `stageshow`, só vitrine pública, nunca tela do produto.
+
+**Conteúdo real primeiro.** Escreva o texto, o dado e as telas reais antes do layout; a página
+nasce do que existe. Voz factual (diz o que é e faz), sans neutra, hierarquia por tamanho e peso,
+um CTA por tela, e dado real ou o marcador `[dado do dono]`. O que sobra de espaço fica vazio,
+não preenchido por enfeite.
+
+**Slop proibido** (a tabela completa, com o que fazer no lugar, está em §10.8): texto de slogan ou
+frase de efeito; serifada grande com itálico de efeito; hero gigante com parágrafo à direita e
+botão; CTA escuro repetido; fio colorido decorativo; ícone em círculo ou quadrado; blocos de 3
+colunas com ícone; gradiente, brilho, sombra de enfeite, pílula, emoji; contador, depoimento ou
+logo inventado; foto de banco de imagem; foto de pessoa sem consentimento. O dono reprovou esse
+conjunto no maiyu.com.br.
+
+**Evidência no PR de UI:** prints em desktop e em 375 px, antes e depois, e o relatório das
+skills da etapa 5 no corpo do PR (`tooling.md` §10.1). PR de UI sem os dois não sai do rascunho.
 
 ## 11. Teste de UI
 

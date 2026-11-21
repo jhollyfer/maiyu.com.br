@@ -3,16 +3,10 @@
 @import 'shadcn/tailwind.css';
 
 /*
- * The three families, served from the bundle itself.
- *
- * Raleway is the brand's voice, headings and body. Michroma exists only for the MAIYU wordmark,
- * the logo's lettering; Geist Mono is for numbers and code.
- *
- * From the package and not from Google Fonts: the old site had already switched to the package
- * after seeing the page fall back to the reserve font when the Google domain did not answer. A
- * font that depends on a third party to arrive is a font that sometimes does not arrive.
+ * One neutral sans, the system's own (no webfont to download). Michroma exists only for the
+ * MAIYU wordmark, the logo's lettering; Geist Mono is for numbers and code. Hierarchy comes
+ * from size and weight, never from a second family or from italics.
  */
-@import '@fontsource-variable/raleway';
 @import '@fontsource/michroma';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
@@ -36,15 +30,14 @@
  *
  * Two layers, as in the siblings. The shadcn names (`--primary`, `--card`,
  * `--border`) are what the whole page reads and what switches between light and
- * dark. The brand colors (`--color-brand-*`) are fixed in both themes: they are
- * a signature, not a surface.
+ * dark. The brand colors (green, cyan...) are only in the logo file: the interface has one
+ * accent, `--highlight` (`docs/DESIGN.md` §2).
  *
- * The pastels (`--tint-*`) are the brand colors lightened to serve as a card
- * background. In dark they become night surfaces, and what gives the color back
- * is the thin ring at the end of this file.
+ * The `--tint-*` tokens are the same paper tone (the pastels left with the editorial direction):
+ * they stay because the kit's pieces read them.
  */
 :root {
-  --radius: 1rem;
+  --radius: 0.25rem;
   color-scheme: light;
 
   --background: #f6f2ea;
@@ -57,7 +50,7 @@
   --popover-foreground: #01111b;
 
   --primary: #01111b;
-  --primary-foreground: #88ff9a;
+  --primary-foreground: #f6f2ea;
 
   --secondary: #ede6d8;
   --secondary-foreground: #01111b;
@@ -70,7 +63,7 @@
   --muted: #ede6d8;
   --muted-foreground: #4a3f36;
 
-  --accent: #88ff9a;
+  --accent: #ece6d8;
   --accent-foreground: #01111b;
 
   --destructive: #d6336c;
@@ -87,26 +80,40 @@
   --warning-foreground: oklch(0.45 0.1 85);
   --overlay: rgba(1, 17, 27, 0.4);
 
+  /* The registry's `chart` and `sidebar` read these. */
+  --chart-1: #01111b;
+  --chart-2: #b5402a;
+  --chart-3: #4a3f36;
+  --chart-4: #8a7a68;
+  --chart-5: #d6336c;
+  --sidebar: #fffdf8;
+  --sidebar-foreground: #01111b;
+  --sidebar-primary: #01111b;
+  --sidebar-primary-foreground: #f6f2ea;
+  --sidebar-accent: #ede6d8;
+  --sidebar-accent-foreground: #01111b;
+  --sidebar-border: rgba(58, 40, 24, 0.12);
+  --sidebar-ring: #01111b;
+
   /*
    * The heading highlight. It is the brand cyan darkened: pure #31E1F7 over light
    * paper has no contrast for text.
    */
-  --highlight: #0bafc7;
-  --highlight-bar: #88ff9a;
+  --highlight: #b5402a;
+  --highlight-bar: #b5402a;
 
-  --tint-mint: #d3eee0;
-  --tint-peach: #f7d9c8;
-  --tint-mist: #ead6e6;
-  --tint-lime: #dcefc8;
-  --tint-green: #dcefc8;
-  --tint-peach-soft: #f3e8d2;
+  --tint-mint: #ede6d8;
+  --tint-peach: #ede6d8;
+  --tint-mist: #ede6d8;
+  --tint-lime: #ede6d8;
+  --tint-green: #ede6d8;
+  --tint-peach-soft: #f1ebde;
 
   --navy: #01111b;
   --navy-2: #0b1e2b;
   --on-navy: #e8f6ff;
 
   /* The forest: the green of the reach phrase and of the weave's diamonds. */
-  --forest-front: #2c7652;
 
   /*
    * The region's earth: the annatto of the body paint, the acai and the clay of the Solimões, which
@@ -114,18 +121,16 @@
    * Only for the weave and details, never a surface.
    */
   --urucum: #b5402a;
-  --acai: #4b1f45;
-  --terra: #a8643d;
 
   --shadow-tint: rgba(1, 17, 27, 0.18);
 
   --badge-neutral: #ede6d8;
   --badge-neutral-fg: #01111b;
-  --badge-info: #d3eee0;
+  --badge-info: #ede6d8;
   --badge-info-fg: #01111b;
-  --badge-success: #dcefc8;
+  --badge-success: #ede6d8;
   --badge-success-fg: #01111b;
-  --badge-warning: #f7d9c8;
+  --badge-warning: #ede6d8;
   --badge-warning-fg: #01111b;
 }
 
@@ -142,8 +147,8 @@
   --popover: #0e1a15;
   --popover-foreground: #e8f6ff;
 
-  --primary: #88ff9a;
-  --primary-foreground: #01111b;
+  --primary: #f1ece2;
+  --primary-foreground: #07120e;
 
   --secondary: #14241e;
   --secondary-foreground: #e8f6ff;
@@ -151,15 +156,15 @@
   --muted: #14241e;
   --muted-foreground: #a6b5aa;
 
-  --accent: #88ff9a;
-  --accent-foreground: #01111b;
+  --accent: #1b2a24;
+  --accent-foreground: #e8f6ff;
 
   --destructive: #fb80c1;
   --destructive-foreground: #01111b;
 
   --border: rgba(232, 246, 255, 0.1);
   --input: rgba(232, 246, 255, 0.16);
-  --ring: #88ff9a;
+  --ring: #e8f6ff;
 
   --success: oklch(0.7 0.15 150);
   --success-foreground: oklch(0.8 0.15 150);
@@ -167,42 +172,53 @@
   --warning-foreground: oklch(0.85 0.12 85);
   --overlay: rgba(0, 0, 0, 0.6);
 
-  --highlight: #31e1f7;
-  --highlight-bar: #88ff9a;
+  --chart-1: #f1ece2;
+  --chart-2: #e0704f;
+  --chart-3: #a6b5aa;
+  --chart-4: #6f8277;
+  --chart-5: #fb80c1;
+  --sidebar: #0e1a15;
+  --sidebar-foreground: #e8f6ff;
+  --sidebar-primary: #f1ece2;
+  --sidebar-primary-foreground: #07120e;
+  --sidebar-accent: #1b2a24;
+  --sidebar-accent-foreground: #e8f6ff;
+  --sidebar-border: rgba(232, 246, 255, 0.1);
+  --sidebar-ring: #e8f6ff;
 
-  --tint-mint: #0c211b;
-  --tint-peach: #24140f;
-  --tint-mist: #1e1220;
-  --tint-lime: #122214;
-  --tint-green: #122214;
-  --tint-peach-soft: #1d1a10;
-  --forest-front: #03100a;
+  --highlight: #e0704f;
+  --highlight-bar: #e0704f;
+
+  --tint-mint: #0e1a15;
+  --tint-peach: #0e1a15;
+  --tint-mist: #0e1a15;
+  --tint-lime: #0e1a15;
+  --tint-green: #0e1a15;
+  --tint-peach-soft: #101d17;
 
   --urucum: #e0704f;
-  --acai: #c58bc0;
-  --terra: #c08a5c;
 
   --shadow-tint: rgba(0, 0, 0, 0.5);
 
   --badge-neutral: #14241e;
   --badge-neutral-fg: #e8f6ff;
-  --badge-info: #0c211b;
+  --badge-info: #14241e;
   --badge-info-fg: #e8f6ff;
-  --badge-success: #122214;
+  --badge-success: #14241e;
   --badge-success-fg: #e8f6ff;
-  --badge-warning: #24140f;
+  --badge-warning: #14241e;
   --badge-warning-fg: #e8f6ff;
 }
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  /* The scale shadcn derives from `--radius` (https://ui.shadcn.com/docs/theming, "Radius Scale"). */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 10px);
-  /* `rounded-control`: filter buttons; `rounded-chip`: filter rows and toggles. */
-  --radius-control: calc(var(--radius) - 2px);
-  --radius-chip: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -232,6 +248,19 @@
   --color-line: var(--border);
   --color-link-hover: var(--accent);
   --color-overlay: var(--overlay);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
 
   --color-surface: var(--surface);
   --color-highlight: var(--highlight);
@@ -242,10 +271,7 @@
   --color-tint-lime: var(--tint-lime);
   --color-tint-green: var(--tint-green);
   --color-tint-peach-soft: var(--tint-peach-soft);
-  --color-forest: var(--forest-front);
   --color-urucum: var(--urucum);
-  --color-acai: var(--acai);
-  --color-terra: var(--terra);
   --color-navy: var(--navy);
   --color-navy-2: var(--navy-2);
   --color-on-navy: var(--on-navy);
@@ -259,20 +285,12 @@
   --color-badge-warning: var(--badge-warning);
   --color-badge-warning-foreground: var(--badge-warning-fg);
 
-  /* The brand colors, the same in both themes. */
-  --color-brand-green: #88ff9a;
-  --color-brand-blue: #77eed7;
-  --color-brand-cyan: #31e1f7;
-  --color-brand-azure: #3168f7;
-  --color-brand-purple: #a480f5;
-  --color-brand-pink: #fb80c1;
-  --color-brand-black: #272221;
-  --color-brand-dark: #403937;
-
-  --font-display: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-sans: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-serif: 'Raleway Variable', Raleway, system-ui, sans-serif;
-  --font-brand: Michroma, 'Raleway Variable', system-ui, sans-serif;
+  --font-sans:
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-display: var(--font-sans);
+  --font-serif: var(--font-sans);
+  --font-brand: Michroma, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   /*
@@ -406,8 +424,7 @@
   }
 
   /*
-   * Headings in the brand's Raleway, at the heavy weight from before the redesign: the owner
-   * preferred the brand's voice to the editorial serif (`docs/DECISIONS.md` #16).
+   * Headings in the same sans as the text, set apart by size and weight only.
    */
   h1,
   h2,
@@ -416,8 +433,8 @@
   h5,
   h6 {
     font-family: var(--font-display);
-    font-weight: 800;
-    letter-spacing: -0.012em;
+    font-weight: 600;
+    letter-spacing: -0.02em;
     text-wrap: balance;
     overflow-wrap: break-word;
   }
@@ -426,8 +443,8 @@
   h4,
   h5,
   h6 {
-    font-weight: 700;
-    letter-spacing: -0.005em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
   }
 
   p {
@@ -435,28 +452,8 @@
   }
 
   ::selection {
-    background: #88ff9a;
-    color: #01111b;
-  }
-
-  /*
-   * The grain, on a fixed layer above everything. Fixed and not on the surface that
-   * scrolls: a texture that scrolls along repaints the whole page on every frame.
-   */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 60;
-    opacity: 0.035;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.1' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-    mix-blend-mode: multiply;
-  }
-
-  .dark body::before {
-    opacity: 0.07;
-    mix-blend-mode: overlay;
+    background: #b5402a;
+    color: #f6f2ea;
   }
 }
 
@@ -488,35 +485,18 @@
   --tw-prose-quote-borders: var(--highlight-bar);
 }
 
-/* The short green bar under headings, taken from the promotional artwork. */
+/* The short rule under a heading: the single accent, thin, square. */
 @utility brand-bar {
   display: block;
-  height: 0.375rem;
-  width: 4.5rem;
-  border-radius: 9999px;
+  height: 2px;
+  width: 3rem;
   background: var(--highlight-bar);
 }
 
-/*
- * The weave: the basketry band that stitches one section to the next. Fiber diamonds
- * in annatto, earth and forest, drawn in SVG with the theme's colors, and not
- * the graphic pattern of a specific people: a graphic pattern has an owner, and only goes in here
- * with the authorization of whoever paints it.
- */
+/* The hairline that separates one section from the next: one pixel, no ornament. */
 @utility trancado {
-  height: 0.875rem;
-  background-color: var(--terra);
-  background-image:
-    linear-gradient(135deg, var(--urucum) 25%, transparent 25%),
-    linear-gradient(225deg, var(--urucum) 25%, transparent 25%),
-    linear-gradient(315deg, var(--forest-front) 25%, transparent 25%),
-    linear-gradient(45deg, var(--forest-front) 25%, transparent 25%);
-  background-size: 1.75rem 0.875rem;
-  background-position:
-    0 0,
-    0 0,
-    0.875rem 0,
-    0.875rem 0;
+  height: 1px;
+  background: var(--border);
 }
 
 /* The two vertical lines that frame the content like a ruled page. */
@@ -533,16 +513,6 @@
     min(calc(100% - 1rem), calc(50% + 40rem)) 0;
 }
 
-@utility marquee {
-  animation: marquee 40s linear infinite;
-}
-
-@utility vision-pulse {
-  animation: vision-pulse 2.4s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
-}
-
 /*
  * The stroke that draws itself, in the vision illustrations. The element declares
  * `pathLength="1"`, so a dash of one unit covers the whole stroke
@@ -553,34 +523,6 @@
   stroke-dasharray: 1;
   stroke-dashoffset: 1;
   animation: vision-draw 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-/*
- * At night the pastel becomes a dark surface, and the brand color comes back as a thin
- * ring: the same design as the personal portfolio's cards.
- */
-.dark .bg-tint-mint {
-  box-shadow: inset 0 0 0 1px rgba(119, 238, 215, 0.3);
-}
-
-.dark .bg-tint-lime,
-.dark .bg-tint-green,
-.dark .bg-tint-peach-soft {
-  box-shadow: inset 0 0 0 1px rgba(136, 255, 154, 0.3);
-}
-
-.dark .bg-tint-mist {
-  box-shadow: inset 0 0 0 1px rgba(164, 128, 245, 0.32);
-}
-
-.dark .bg-tint-peach {
-  box-shadow: inset 0 0 0 1px rgba(251, 128, 193, 0.3);
-}
-
-@keyframes marquee {
-  to {
-    transform: translate3d(-50%, 0, 0);
-  }
 }
 
 @keyframes vision-pulse {

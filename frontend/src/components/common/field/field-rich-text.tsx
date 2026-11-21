@@ -1,9 +1,6 @@
 import * as React from 'react'
-import type { RefCallBack } from 'react-hook-form'
 
-import { RichEditor } from '#/components/common/rich-editor/rich-editor'
-import { RichEditorContent } from '#/components/common/rich-editor/rich-editor-content'
-import { useRichEditorContext } from '#/components/common/rich-editor/rich-editor-context'
+import { RichEditorSkeleton } from '#/components/common/rich-editor/rich-editor-skeleton'
 import {
   Field,
   FieldDescription,
@@ -14,6 +11,11 @@ import { useFieldValidation } from '#/integrations/react-hook-form/use-field-val
 import type { RichTextDocument } from '@maiyu/shared'
 
 import { FieldRequiredMark } from './field-required-mark'
+
+// The Tiptap side loads on demand: the form's chunk keeps only the label, the description and the
+// error, and the skeleton holds the editor's place (`_standards/frontend.md` §9.4,
+// _doc-lib/tanstack-router.md#guide/code-splitting). A literal `import()`, at module level.
+const FieldRichTextEditor = React.lazy(() => import('./field-rich-text-editor'))
 
 type FieldRichTextProps = {
   readonly label: string
@@ -47,50 +49,23 @@ export function FieldRichText({
         {label}
         {required && <FieldRequiredMark />}
       </FieldLabel>
-      <RichEditor
-        value={field.value}
-        onValueChange={field.onChange}
-        placeholder={placeholder}
-        aria-invalid={isInvalid}
-        aria-describedby={describedBy}
-        aria-labelledby={labelId}
-      >
-        {children}
-        <RichEditorContent id={controlId} />
-        <FieldRichTextBinding focusRef={field.ref} onBlur={field.onBlur} />
-      </RichEditor>
+      <React.Suspense fallback={<RichEditorSkeleton />}>
+        <FieldRichTextEditor
+          value={field.value}
+          onValueChange={field.onChange}
+          placeholder={placeholder}
+          aria-invalid={isInvalid}
+          aria-describedby={describedBy}
+          aria-labelledby={labelId}
+          controlId={controlId}
+          focusRef={field.ref}
+          onBlur={field.onBlur}
+        >
+          {children}
+        </FieldRichTextEditor>
+      </React.Suspense>
       {description && <FieldDescription>{description}</FieldDescription>}
       {isInvalid && <FieldError id={errorId} errors={errors} />}
     </Field>
   )
-}
-
-type FieldRichTextBindingProps = {
-  readonly focusRef: RefCallBack
-  readonly onBlur: () => void
-}
-
-/**
- * Hands the Tiptap instance to the form: `focus` for the invalid submit and
- * `blur` for `isTouched`. The `Controller` ref accepts any object with
- * `focus()` (`_doc-lib/react-hook-form.md#docs/usecontroller/controller`,
- * https://react-hook-form.com/docs/usecontroller/controller), and the editor
- * only exists after hydration, inside `RichEditor`.
- */
-function FieldRichTextBinding({
-  focusRef,
-  onBlur,
-}: FieldRichTextBindingProps): null {
-  const { editor } = useRichEditorContext('FieldRichText')
-
-  React.useEffect(() => {
-    if (!editor) return
-    focusRef({ focus: () => editor.commands.focus() })
-    editor.on('blur', onBlur)
-    return () => {
-      editor.off('blur', onBlur)
-    }
-  }, [editor, focusRef, onBlur])
-
-  return null
 }

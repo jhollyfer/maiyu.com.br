@@ -37,9 +37,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'adacaibs',
     title: 'ADACAIBS',
     client: {
-      en: 'Ticuna association · Belém do Solimões',
-      'pt-BR': 'Associação Ticuna · Belém do Solimões',
-      es: 'Asociación Ticuna · Belém do Solimões',
+      en: 'Ticuna association, Belém do Solimões',
+      'pt-BR': 'Associação Ticuna, Belém do Solimões',
+      es: 'Asociación Ticuna, Belém do Solimões',
     },
     summary: {
       en: 'Association management platform for an indigenous community.',
@@ -64,9 +64,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'academy',
     title: 'Maiyu Academy',
     client: {
-      en: 'A Maiyu initiative · Free technology education',
-      'pt-BR': 'Iniciativa da Maiyu · Ensino gratuito de tecnologia',
-      es: 'Iniciativa de Maiyu · Enseñanza gratuita de tecnología',
+      en: 'A Maiyu initiative',
+      'pt-BR': 'Iniciativa da Maiyu',
+      es: 'Iniciativa de Maiyu',
     },
     summary: {
       en: 'Free technology courses, taught by people native to the Amazon.',
@@ -89,9 +89,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'aporta',
     title: 'Aporta',
     client: {
-      en: 'Housing and city guide · Benjamin Constant',
-      'pt-BR': 'Moradia e guia da cidade · Benjamin Constant',
-      es: 'Vivienda y guía de la ciudad · Benjamin Constant',
+      en: 'Housing and city guide, Benjamin Constant',
+      'pt-BR': 'Moradia e guia da cidade, Benjamin Constant',
+      es: 'Vivienda y guía de la ciudad, Benjamin Constant',
     },
     summary: {
       en: 'Find a place to live in Benjamin Constant, straight from the owner.',
@@ -114,9 +114,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'curupira',
     title: 'Curupira',
     client: {
-      en: 'Public service · Benjamin Constant',
-      'pt-BR': 'Serviço público · Benjamin Constant',
-      es: 'Servicio público · Benjamin Constant',
+      en: 'Public service, Benjamin Constant',
+      'pt-BR': 'Serviço público, Benjamin Constant',
+      es: 'Servicio público, Benjamin Constant',
     },
     summary: {
       en: 'Waste collection schedule and anonymous environmental reports.',
@@ -139,9 +139,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'interclasse',
     title: 'Jogos Estudantis',
     client: {
-      en: 'School games · CMEI Cosme Jean',
-      'pt-BR': 'Jogos escolares · CMEI Cosme Jean',
-      es: 'Juegos escolares · CMEI Cosme Jean',
+      en: 'School games, CMEI Cosme Jean',
+      'pt-BR': 'Jogos escolares, CMEI Cosme Jean',
+      es: 'Juegos escolares, CMEI Cosme Jean',
     },
     summary: {
       en: 'Athlete sign-up, draw, fixtures and live standings for the school games.',

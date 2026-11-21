@@ -1,4 +1,5 @@
 import { QueryErrorResetBoundary } from '@tanstack/react-query'
+import type { LinkProps } from '@tanstack/react-router'
 import * as React from 'react'
 import { ErrorBoundary } from 'react-error-boundary'
 
@@ -32,6 +33,8 @@ type PanelShellProps = Readonly<{
   profilePending?: ReadonlyArray<string>
   /** O rótulo do projeto por campo pendente; sem ele vale o `FIELD_LABELS` do `shared/`. */
   profileFieldLabels?: Readonly<Record<string, string>>
+  /** A rota do perfil da conta, para o aviso e para o menu de conta; padrão `/profile`. */
+  profileTo?: NonNullable<LinkProps['to']>
   /** `PanelShellSidebar` e `PanelShellInset`, na ordem em que aparecem. */
   children: React.ReactNode
 }>
@@ -57,6 +60,7 @@ export function PanelShell({
   badges = {},
   profilePending = [],
   profileFieldLabels,
+  profileTo = '/profile',
   children,
 }: PanelShellProps): React.JSX.Element {
   // Sem `useMemo`: o React Compiler memoiza o objeto pelo que ele lê.
@@ -66,6 +70,7 @@ export function PanelShell({
     badges,
     profilePending,
     profileFieldLabels,
+    profileTo,
   }
 
   return (
@@ -115,7 +120,7 @@ export function PanelShellContent({
   children,
   ...props
 }: React.ComponentProps<'div'>): React.JSX.Element {
-  const { profilePending, profileFieldLabels } =
+  const { profilePending, profileFieldLabels, profileTo } =
     usePanelShellContext('PanelShellContent')
 
   return (
@@ -130,6 +135,7 @@ export function PanelShellContent({
       <ProfileIncompleteNotice
         missing={profilePending}
         labels={profileFieldLabels}
+        to={profileTo}
       />
       <QueryErrorResetBoundary>
         {({ reset }) => (

@@ -38,11 +38,7 @@ export function TenantSwitcher(): React.JSX.Element | null {
         onValueChange={(tenantId: string) => select.mutate({ tenantId })}
       >
         {tenants.data.data.map((tenant) => (
-          <DropdownMenuRadioItem
-            key={tenant.id}
-            value={tenant.id}
-            className="min-h-11"
-          >
+          <DropdownMenuRadioItem key={tenant.id} value={tenant.id}>
             {tenant.name}
           </DropdownMenuRadioItem>
         ))}

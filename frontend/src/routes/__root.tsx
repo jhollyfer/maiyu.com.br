@@ -1,4 +1,4 @@
-import ralewayLatin from '@fontsource-variable/raleway/files/raleway-latin-wght-normal.woff2?url'
+import { IconContext } from '@phosphor-icons/react'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   HeadContent,
@@ -9,10 +9,10 @@ import {
 import { ThemeProvider } from '#/components/common/theme/theme-provider'
 import { ThemeProviderToaster } from '#/components/common/theme/theme-provider-toaster'
 import { TooltipProvider } from '#/components/ui/tooltip'
+import { env } from '#/env'
 import { AppDevtools } from '#/integrations/tanstack-query/devtools'
-import { jsonLd } from '#/lib/page-head'
+import { organizationJsonLd } from '#/lib/page-head'
 import { SITE_TITLE } from '#/lib/site'
-import { organizationJsonLd } from '#/lib/structured-data'
 import { THEME_CLASS, readTheme } from '#/lib/theme'
 import { m } from '#/paraglide/messages'
 import { getLocale } from '#/paraglide/runtime'
@@ -35,6 +35,13 @@ import appCss from '../styles.css?url'
 type RouterContext = {
   queryClient: QueryClient
 }
+
+/** The house's default icon: decorative, text-sized, regular stroke (`frontend.md` §10.2). */
+const ICON_DEFAULTS = {
+  size: '1em',
+  weight: 'regular',
+  'aria-hidden': true,
+} as const
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   // The theme comes from the cookie, read on the server: the first HTML already goes out with the
@@ -76,16 +83,16 @@ export const Route = createRootRouteWithContext<RouterContext>()({
        * does not falls back to the `.ico`, which declares the real 32px size. The
        * `apple-touch-icon` is the iOS shortcut. Official page not checked.
        */
-      { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
-      { rel: 'icon', href: '/maiyu-symbol.svg', type: 'image/svg+xml' },
-      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+      // The connection to the API opens together with the HTML (`frontend.md` §9.5).
       {
-        rel: 'preload',
-        as: 'font',
-        type: 'font/woff2',
-        href: ralewayLatin,
-        crossOrigin: 'anonymous',
+        rel: 'preconnect',
+        href: env.VITE_API_URL,
+        crossOrigin: 'use-credentials',
       },
+      // The app icons `scripts/generate-icons.mjs` writes to `public/` (`frontend.md` §6, "A marca").
+      { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' },
+      { rel: 'icon', href: '/favicon.ico', sizes: '48x48' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
       { rel: 'stylesheet', href: appCss },
     ],
     // The site's identity on every route, and not only on the home: whoever arrives through a
@@ -93,7 +100,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     scripts: [
       {
         type: 'application/ld+json',
-        children: jsonLd(organizationJsonLd(m.site_description())),
+        children: organizationJsonLd(),
       },
     ],
   }),
@@ -139,7 +146,9 @@ function RootDocument({
       </head>
       <body>
         <ThemeProvider theme={theme}>
-          <TooltipProvider delay={300}>{children}</TooltipProvider>
+          <IconContext.Provider value={ICON_DEFAULTS}>
+            <TooltipProvider delay={300}>{children}</TooltipProvider>
+          </IconContext.Provider>
           <ThemeProviderToaster />
         </ThemeProvider>
         <AppDevtools />

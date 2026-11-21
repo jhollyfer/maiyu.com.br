@@ -30,7 +30,7 @@ import { PanelShellSignOutConfirm } from './panel-shell-sign-out-confirm'
  * botões em 360 px (o `LocaleSwitcher` compacto existe para isto).
  */
 export function PanelShellAccountMenu(): React.JSX.Element {
-  const { account } = usePanelShellContext('PanelShellAccountMenu')
+  const { account, profileTo } = usePanelShellContext('PanelShellAccountMenu')
   const [signOutHandle] = React.useState(createConfirmHandle)
 
   return (
@@ -38,7 +38,7 @@ export function PanelShellAccountMenu(): React.JSX.Element {
       <DropdownMenu>
         <DropdownMenuTrigger
           data-slot="panel-shell-account-menu"
-          className="flex min-h-11 items-center gap-2 rounded-full py-1 pr-2 pl-1 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:bg-muted motion-reduce:transition-none"
+          className="flex items-center gap-2 rounded-lg py-1 pr-2 pl-1 transition-colors outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 data-popup-open:bg-muted motion-reduce:transition-none"
         >
           <Avatar className="size-8">
             {account.avatar && <AvatarImage src={account.avatar.url} alt="" />}
@@ -73,19 +73,15 @@ export function PanelShellAccountMenu(): React.JSX.Element {
           <DropdownMenuSeparator />
           <DropdownMenuItem
             render={
-              <Link to="/profile">
+              <Link to={profileTo}>
                 <UserCircleIcon />
                 {m.kit_panel_my_profile()}
               </Link>
             }
-            className="min-h-11"
           />
           <DropdownMenuSeparator />
           <TenantSwitcher />
-          <DropdownMenuItem
-            className="min-h-11"
-            onClick={() => signOutHandle.open(null)}
-          >
+          <DropdownMenuItem onClick={() => signOutHandle.open(null)}>
             <SignOutIcon />
             {m.kit_sign_out()}
           </DropdownMenuItem>

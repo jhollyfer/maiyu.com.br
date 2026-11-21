@@ -9,11 +9,13 @@ import { test } from '@japa/runner'
 
 import { ACTIVE_STATUS, BASE_LOCALE } from '@maiyu/shared'
 
+import { AllPublicTenantFilter } from '#core/all-public-tenant-filter'
 import {
   CredentialSecret,
   CredentialSource,
   type CredentialRecord,
 } from '#core/credential'
+import { PublicTenantFilter } from '#core/public-tenant-filter'
 import HTTPException from '#exceptions/http.exception'
 import CredentialTenantMiddleware from '#middleware/credential-tenant.middleware'
 import { SessionMemoryRepository } from '#repositories/session/session.memory.repository'
@@ -128,17 +130,21 @@ async function run(
     kind: 'code' | 'token'
     access?: 'read' | 'insert'
     attempts?: CredentialAttempts
+    filter?: PublicTenantFilter
   },
 ): Promise<Run> {
   const { tenants, codes, tokens } = world()
   const middleware = await makeWithMemory(CredentialTenantMiddleware, [
     [TenantRepository, tenants],
+    [PublicTenantFilter, options.filter ?? new AllPublicTenantFilter()],
   ])
   app.container.swap(CodeSource, () => codes)
   app.container.swap(TokenSource, () => tokens)
   const request = new RequestFactory().create()
   const context = new HttpContextFactory().merge({ request }).create()
   context.params = { credential: value }
+  // `silent-auth` is not in a unit test: nobody is signed in (the e2e spec signs in for real).
+  Object.assign(context, { auth: { user: undefined } })
   context.i18n = i18nManager.locale(BASE_LOCALE)
   context.containerResolver = app.container.createResolver()
   const kinds = {
@@ -322,12 +328,14 @@ test.group('middleware > credential-tenant (unit)', () => {
     const { tenants, codes } = world()
     const middleware = await makeWithMemory(CredentialTenantMiddleware, [
       [TenantRepository, tenants],
+      [PublicTenantFilter, new AllPublicTenantFilter()],
     ])
     app.container.swap(CodeSource, () => codes)
     const context = new HttpContextFactory()
       .merge({ request: new RequestFactory().create() })
       .create()
     context.params = {}
+    Object.assign(context, { auth: { user: undefined } })
     context.i18n = i18nManager.locale(BASE_LOCALE)
     context.containerResolver = app.container.createResolver()
 
@@ -469,5 +477,27 @@ test.group('middleware > credential-tenant (unit)', () => {
     } finally {
       CredentialSecret.matches = original
     }
+  })
+
+  // DECISIONS.md #812: the project's `PublicTenantFilter` also guards the credential route.
+  class NoneReleased extends PublicTenantFilter {
+    released() {
+      return Promise.resolve([])
+    }
+  }
+
+  test('a credential of a tenant the project does not release is the same 404 of a wrong one', async ({
+    assert,
+  }) => {
+    const wrong = await run('NOPE00', { kind: 'code' })
+    const unreleased = await run('AB12CD', {
+      kind: 'code',
+      filter: new NoneReleased(),
+    })
+
+    assert.equal(unreleased.status, 404)
+    assert.equal(unreleased.code, wrong.code)
+    assert.equal(unreleased.message, wrong.message)
+    assert.equal(unreleased.lookups, wrong.lookups)
   })
 })

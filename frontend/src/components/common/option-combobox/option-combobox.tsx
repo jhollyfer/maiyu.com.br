@@ -1,5 +1,5 @@
 import { XIcon } from '@phosphor-icons/react'
-import type * as React from 'react'
+import * as React from 'react'
 
 import {
   Combobox,
@@ -81,32 +81,63 @@ export function OptionCombobox({
 }
 
 /**
- * The search field. `showClear` is the catalog `ComboboxInput` variant: the
- * × that clears, on for the filter and off for the required field.
+ * The × that clears, as a part: the field turns the clear on by `<OptionComboboxClear />` being
+ * among the children of `OptionComboboxInput`, off for a required field by leaving it out, never by
+ * a boolean flag (_standards/frontend.md §6.1, KIT.md §1 item 6). It shows only while there is a
+ * value, and replaces the open button then, as `Combobox.Clear` does
+ * (_doc-lib/base-ui.md#react/components/combobox, https://base-ui.com/react/components/combobox.md,
+ * "Clear"). The input places it; the part draws the button.
+ */
+export function OptionComboboxClear(): React.JSX.Element | null {
+  const { selected, disabled, clear } = useOptionComboboxContext(
+    'OptionComboboxClear',
+  )
+  if (selected === null) return null
+
+  return (
+    <InputGroupButton
+      size="icon-xs"
+      variant="ghost"
+      aria-label={m.kit_combobox_clear()}
+      data-slot="combobox-clear"
+      disabled={disabled}
+      onClick={clear}
+    >
+      <XIcon className="pointer-events-none" />
+    </InputGroupButton>
+  )
+}
+
+/**
+ * The search field. The × that clears is the part `OptionComboboxClear` among the children: the
+ * catalog `ComboboxInput` variant `showClear` is not used.
  *
- * The open and clear buttons are drawn here, not by `ComboboxInput` (`showTrigger` and
- * `showClear` off there): the shadcn component hands `props` only to the input, and its
- * two icon buttons come out with no accessible name (axe `button-name`, critical). The
- * Base UI demo names them with `aria-label` on `Combobox.Trigger` and `Combobox.Clear`
+ * The open button is drawn here, not by `ComboboxInput` (`showTrigger` and `showClear` off
+ * there): the shadcn component hands `props` only to the input, and its two icon buttons come
+ * out with no accessible name (axe `button-name`, critical). The Base UI demo names them with
+ * `aria-label` on `Combobox.Trigger` and `Combobox.Clear`
  * (_doc-lib/base-ui.md#react/components/combobox, https://base-ui.com/react/components/combobox.md),
- * and `ui/combobox` exports no `ComboboxClear`, so the kit supplies the name and
- * `components/ui/` stays untouched. The clear is an `InputGroupButton` that empties the
- * value through the root, shown only while there is a value (as `Combobox.Clear` does).
+ * so the kit supplies the name and `components/ui/` stays untouched.
  */
 export function OptionComboboxInput({
   className,
   placeholder = m.kit_combobox_placeholder(),
-  showClear = false,
   children,
   ...props
 }: Merge<
-  Omit<React.ComponentProps<typeof ComboboxInput>, 'disabled' | 'showTrigger'>,
+  Omit<
+    React.ComponentProps<typeof ComboboxInput>,
+    'disabled' | 'showTrigger' | 'showClear'
+  >,
   { readonly placeholder?: string }
 >): React.JSX.Element {
-  const { selected, disabled, clear } = useOptionComboboxContext(
-    'OptionComboboxInput',
-  )
-  const clearable = showClear && selected !== null
+  const { selected, disabled } = useOptionComboboxContext('OptionComboboxInput')
+  const parts = React.Children.toArray(children)
+  const isClear = (part: React.ReactNode): boolean =>
+    React.isValidElement(part) && part.type === OptionComboboxClear
+  const clear = parts.find(isClear)
+  const rest = parts.filter((part) => !isClear(part))
+  const clearable = clear !== undefined && selected !== null
 
   return (
     <ComboboxInput
@@ -119,18 +150,7 @@ export function OptionComboboxInput({
       {...props}
     >
       <InputGroupAddon align="inline-end">
-        {clearable && (
-          <InputGroupButton
-            size="icon-xs"
-            variant="ghost"
-            aria-label={m.kit_combobox_clear()}
-            data-slot="combobox-clear"
-            disabled={disabled}
-            onClick={clear}
-          >
-            <XIcon className="pointer-events-none" />
-          </InputGroupButton>
-        )}
+        {clearable && clear}
         {!clearable && (
           <InputGroupButton
             size="icon-xs"
@@ -143,7 +163,7 @@ export function OptionComboboxInput({
           />
         )}
       </InputGroupAddon>
-      {children}
+      {rest}
     </ComboboxInput>
   )
 }

@@ -14,6 +14,8 @@ import { cn } from '#/lib/cn'
 import { m } from '#/paraglide/messages'
 import type { Merge } from '@maiyu/shared'
 
+import { RowActionsProvider } from './row-actions-context'
+
 type RowActionsProps = Readonly<
   Merge<
     React.ComponentProps<typeof DropdownMenuContent>,
@@ -36,9 +38,11 @@ type RowActionsProps = Readonly<
  * width varies, and that is why it is the only thing that still arrives from
  * outside.
  *
- * There is no context: the items read no state from the shell. The item that asks for
- * confirmation calls `handle.open(null)` on click, the menu closes on its own and the
- * alert, a sibling of the menu, opens through the same handle.
+ * The items read no state from the shell. The item that asks for confirmation calls
+ * `handle.open(null)` on click, the menu closes on its own and the alert, a sibling of the menu,
+ * opens through the same handle. The one thing the shell shares is where focus goes when the alert
+ * closes: the menu button (`row-actions-context.ts`), since an alert opened this way has no trigger
+ * to return to (`DECISIONS.md` #822).
  */
 export function RowActions({
   className,
@@ -46,15 +50,27 @@ export function RowActions({
   dialogs,
   ...rest
 }: RowActionsProps): React.JSX.Element {
+  const triggerRef = React.useRef<HTMLButtonElement>(null)
+
+  function finalFocus(): HTMLElement | true {
+    const trigger = triggerRef.current
+    // A row that left the DOM (it was removed, the page changed) has no button to return to.
+    if (trigger && trigger.isConnected) return trigger
+    return true
+  }
+
   return (
-    <React.Fragment>
+    <RowActionsProvider value={{ finalFocus }}>
       <DropdownMenu>
         <DropdownMenuTrigger
           render={
             <Button
+              ref={triggerRef}
               variant="ghost"
               size="icon"
               aria-label={m.kit_open_actions()}
+              // What `focusAfterRemoval` looks for in the neighbouring row; the name follows the locale.
+              data-row-actions=""
             >
               <DotsThreeIcon weight="bold" />
             </Button>
@@ -73,6 +89,6 @@ export function RowActions({
         </DropdownMenuContent>
       </DropdownMenu>
       {dialogs}
-    </React.Fragment>
+    </RowActionsProvider>
   )
 }

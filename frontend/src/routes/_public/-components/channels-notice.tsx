@@ -2,10 +2,9 @@ import { EnvelopeSimpleIcon, WhatsappLogoIcon } from '@phosphor-icons/react'
 import type * as React from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
+import { buttonVariants } from '#/components/ui/button'
 import { CALL_URL, CONTACT } from '#/lib/site'
 import { m } from '#/paraglide/messages'
-
-import { pillVariants } from './pill-button'
 
 /**
  * The notice in place of the contact and application forms: it says the form is offline and
@@ -23,7 +22,7 @@ export function ChannelsNotice(): React.JSX.Element {
         <div className="mt-6 flex flex-wrap gap-2">
           <a
             href={'mailto:'.concat(CONTACT.email)}
-            className={pillVariants({})}
+            className={buttonVariants({ size: 'lg' })}
           >
             <EnvelopeSimpleIcon aria-hidden="true" />
             {m.channels_notice_email()}
@@ -32,7 +31,7 @@ export function ChannelsNotice(): React.JSX.Element {
             href={CALL_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className={pillVariants({ tone: 'outline' })}
+            className={buttonVariants({ variant: 'outline', size: 'lg' })}
           >
             <WhatsappLogoIcon aria-hidden="true" />
             {m.channels_notice_whatsapp()}

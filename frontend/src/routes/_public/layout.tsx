@@ -30,7 +30,7 @@ function RouteComponent(): React.JSX.Element {
       */}
       <a
         href={'#'.concat(MAIN_ID)}
-        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[70] focus:rounded-full focus:bg-navy focus:px-4 focus:py-2 focus:text-brand-green"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[70] focus:rounded-none focus:bg-navy focus:px-4 focus:py-2 focus:text-on-navy"
       >
         {m.a11y_skip_to_content()}
       </a>

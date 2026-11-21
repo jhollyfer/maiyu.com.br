@@ -5,7 +5,7 @@
  * #366): a piece that is not installed is a piece the screen writes by hand. `shadcn add --all` is
  * the way to install the whole registry (https://ui.shadcn.com/docs/cli, `-a, --all`), but nothing
  * ran it, and projects kept 38 of 64. The list of what the registry ships is data, in
- * `ui-components.json` next to this script (the `registry:ui` items of the `base-mira` style that have
+ * `ui-components.json` next to this script (the `registry:ui` items of the `base-nova` style that have
  * a file, plus the hooks and the lib the registry installs with them), and the rule text points
  * there instead of repeating it. DECISIONS.md #806.
  *

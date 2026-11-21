@@ -1,3 +1,4 @@
+import { existsSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -9,6 +10,7 @@ import {
   describe as describeProblem,
   fixSource,
   loadPatches,
+  replaceState,
   stringLiterals,
 } from './check-ui-patches.mjs'
 
@@ -104,6 +106,47 @@ describe('check-ui-patches', () => {
     expect(problems.map(describeProblem)[0]).toMatch(
       /^ui-patch: button\.tsx:5: falta "max-sm:min-h-11"; falta a marca \/\/ casa:.*frontend\.md §6 e §10\.2.*ui-patches\.json.*--fix$/,
     )
+  })
+
+  it('a class entry with `remove` refuses the registry token and --fix drops it, once', () => {
+    const patch = {
+      file: 'button.tsx',
+      anchor: '^group/button$',
+      add: ['touch-manipulation', 'transition-[color,box-shadow]'],
+      remove: ['transition-all'],
+      reason: 'drop the registry transition',
+    }
+    const registry = `const v = cva(
+  'group/button inline-flex whitespace-nowrap transition-all outline-none',
+)
+`
+    expect(
+      checkSource(registry, 'button.tsx', [patch]).map((p) => [
+        p.missing,
+        p.extra,
+      ]),
+    ).toEqual([
+      [
+        ['touch-manipulation', 'transition-[color,box-shadow]'],
+        ['transition-all'],
+      ],
+    ])
+
+    const fixed = fixSource(registry, patch)
+    expect(fixed).toContain(
+      "'group/button touch-manipulation transition-[color,box-shadow] inline-flex whitespace-nowrap outline-none'",
+    )
+    expect(fixed).not.toContain('transition-all')
+    expect(fixed).toContain('// casa:')
+    expect(checkSource(fixed, 'button.tsx', [patch])).toEqual([])
+    expect(fixSource(fixed, patch)).toBe(fixed)
+    expect(
+      checkSource(
+        fixed.replace('transition-[color,box-shadow]', 'transition-all'),
+        'button.tsx',
+        [patch],
+      ).map((p) => p.extra),
+    ).toEqual([['transition-all']])
   })
 
   it('passes the patched file', () => {
@@ -278,6 +321,36 @@ describe('check-ui-patches', () => {
     expect(checkSource(fixed, 'radio-group.tsx', [NAME_PATCH])).toEqual([])
   })
 
+  it('--fix twice on a skeleton Prettier wrapped keeps one mark, and the check passes (DECISIONS.md #815)', () => {
+    const patch = {
+      file: 'skeleton.tsx',
+      anchor: '^animate-pulse$',
+      add: ['motion-reduce:animate-none'],
+      reason: 'stops pulsing for reduced motion',
+    }
+    const registry = `<div
+  data-slot="skeleton"
+  className={cn('animate-pulse rounded-md bg-muted', className)}
+/>
+`
+    // What Prettier makes of the first `--fix`: the line grew past 80 columns, the call broke and
+    // the mark stayed above `className=`, two lines away from the literal.
+    const wrapped = `<div
+  data-slot="skeleton"
+  // casa: stops pulsing for reduced motion
+  className={cn(
+    'animate-pulse motion-reduce:animate-none rounded-md bg-muted',
+    className,
+  )}
+/>
+`
+    expect(checkSource(wrapped, 'skeleton.tsx', [patch])).toEqual([])
+    expect(fixSource(wrapped, patch)).toBe(wrapped)
+    expect(
+      fixSource(fixSource(registry, patch), patch).match(/casa:/g),
+    ).toHaveLength(1)
+  })
+
   it('every entry of ui-patches.json is well formed', () => {
     for (const patch of loadPatches()) {
       expect(patch.file).toMatch(/^[a-z-]+\.tsx$/)
@@ -286,6 +359,10 @@ describe('check-ui-patches', () => {
         expect(patch.element.length).toBeGreaterThan(0)
         expect(patch.attribute).toMatch(/^[a-z-]+$/)
         expect(patch.value.length).toBeGreaterThan(0)
+      } else if ('from' in patch) {
+        expect(patch.from.length).toBeGreaterThan(0)
+        expect(patch.to).toContain('casa:')
+        expect(patch.to).not.toBe(patch.from)
       } else {
         expect(() => new RegExp(patch.anchor)).not.toThrow()
         expect(patch.add.length).toBeGreaterThan(0)
@@ -300,5 +377,124 @@ describe('check-ui-patches', () => {
       .map(describeProblem)
 
     expect(problems).toEqual([])
+  })
+})
+
+/**
+ * `from` + `to` entries (DECISIONS.md #818): the sentences in English the registry ships become
+ * `m.kit_ui_*()`, and the `sonner` loses the `next-themes` hook. A reinstall of the registry
+ * (`check-ui-components --fix`) puts them back by itself, so a project never redoes them by hand.
+ */
+describe('replace patches of ui-patches.json', () => {
+  const SONNER_REGISTRY = `import { useTheme } from 'next-themes'
+import { Toaster as Sonner, type ToasterProps } from 'sonner'
+
+const Toaster = ({ ...props }: ToasterProps) => {
+  const { theme = 'system' } = useTheme()
+
+  return (
+    <Sonner
+      theme={theme as ToasterProps['theme']}
+      {...props}
+    />
+  )
+}
+`
+  const DIALOG_REGISTRY = `import { cn } from '#/lib/cn'
+
+function Close() {
+  return (
+    <button>
+      <span className="sr-only">Close</span>
+    </button>
+  )
+}
+`
+  const patchesOf = (file: string) =>
+    loadPatches().filter((each) => each.file === file)
+  const fixAll = (source: string, file: string) =>
+    patchesOf(file).reduce(fixSource, source)
+
+  it('turns the registry sonner into one that takes the theme as a prop, with no next-themes', () => {
+    const fixed = fixAll(SONNER_REGISTRY, 'sonner.tsx')
+
+    expect(fixed).not.toContain("from 'next-themes'")
+    expect(fixed).not.toContain('useTheme()')
+    expect(fixed).toContain('// casa:')
+    expect(fixed).toContain('{...props}')
+    expect(checkSource(fixed, 'sonner.tsx', patchesOf('sonner.tsx'))).toEqual(
+      [],
+    )
+  })
+
+  it('translates the sr-only label of the Dialog and refuses the English one', () => {
+    const patches = patchesOf('dialog.tsx')
+
+    expect(checkSource(DIALOG_REGISTRY, 'dialog.tsx', patches)).toHaveLength(2)
+    const fixed = fixAll(DIALOG_REGISTRY, 'dialog.tsx')
+    expect(fixed).toContain('{m.kit_ui_close()}')
+    expect(fixed).toContain("import { m } from '#/paraglide/messages'")
+    expect(checkSource(fixed, 'dialog.tsx', patches)).toEqual([])
+  })
+
+  it('is idempotent: a second --fix writes nothing', () => {
+    for (const [file, source] of [
+      ['sonner.tsx', SONNER_REGISTRY],
+      ['dialog.tsx', DIALOG_REGISTRY],
+    ] as const) {
+      const once = fixAll(source, file)
+      expect(fixAll(once, file)).toBe(once)
+    }
+  })
+
+  it('accepts what Prettier lays out differently', () => {
+    const patch = patchesOf('dialog.tsx').find(
+      (each) => 'to' in each && each.to.includes('kit_ui_close'),
+    )
+    if (patch === undefined || !('to' in patch)) throw new Error('no patch')
+    const relaid = patch.to
+      .replace('\n<span', '\n      <span')
+      .replace('>{m', '>\n{m')
+
+    expect(replaceState(`  ${relaid}  `, patch)).toBe('done')
+  })
+
+  it('reports a registry that changed shape instead of passing in silence', () => {
+    const problems = checkSource(
+      'export const x = 1\n',
+      'dialog.tsx',
+      patchesOf('dialog.tsx'),
+    )
+
+    expect(problems.length).toBeGreaterThan(0)
+    expect(
+      problems.every((each) => each.reason.includes('não está mais')),
+    ).toBe(true)
+  })
+
+  it('every m.kit_ui_* a patch writes exists in the three kit locales', () => {
+    const used = new Set(
+      loadPatches()
+        .filter(
+          (each): each is Extract<typeof each, { to: string }> => 'to' in each,
+        )
+        .map((each) => each.to)
+        .flatMap((text) => text.match(/m\.(kit_[a-z_]+)\(/g) ?? [])
+        .map((each) => each.slice(2, -1)),
+    )
+
+    expect(used.size).toBeGreaterThan(10)
+    for (const locale of ['pt-BR', 'en', 'es']) {
+      // No upstream as mensagens do kit ficam em messages/kit/; no projeto o sync as funde em
+      // messages/<locale>.json e não copia a pasta kit/.
+      let file = new URL(`../messages/kit/${locale}.json`, import.meta.url)
+      if (!existsSync(file)) {
+        file = new URL(`../messages/${locale}.json`, import.meta.url)
+      }
+      const messages: unknown = JSON.parse(readFileSync(file, 'utf8'))
+      for (const key of used) {
+        expect(messages, `${locale}: ${key}`).toHaveProperty([key])
+      }
+    }
   })
 })

@@ -33,9 +33,8 @@ test.describe('painel', () => {
     await page.goto('/pt-br/profile')
     await expectHydrated(page.getByRole('heading', { level: 1 }))
 
-    await page
-      .getByLabel(ptBR.kit_locale_switcher_label, { exact: true })
-      .selectOption('en')
+    // The compact name starts with the visible code (`PT: Idioma`, WCAG 2.5.3), so no `exact`.
+    await page.getByLabel(ptBR.kit_locale_switcher_label).selectOption('en')
 
     await expect(page).toHaveURL(/\/en\/profile$/)
     await expect(page.getByRole('heading', { level: 1 })).toHaveText(

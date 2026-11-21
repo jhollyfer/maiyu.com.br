@@ -43,13 +43,14 @@ describe('LocaleSwitcher', () => {
     expect(setLocale).toHaveBeenCalledWith('es')
   })
 
-  it('when compact, the select keeps its name and the visible text is the short code', () => {
+  it('when compact, the visible code opens the accessible name (WCAG 2.5.3) and keeps the label', () => {
     const { container } = render(<LocaleSwitcher compact />)
 
-    expect(
-      screen.getByRole('combobox', { name: m.kit_locale_switcher_label() }),
-    ).toBeTruthy()
-    expect(container.querySelector('span[aria-hidden]')?.textContent).toBe('PT')
+    const visible = container.querySelector('span[aria-hidden]')?.textContent
+    expect(visible).toBe('PT')
+    const name = `PT: ${m.kit_locale_switcher_label()}`
+    expect(screen.getByRole('combobox', { name })).toBeTruthy()
+    expect(name.startsWith(visible ?? '?')).toBe(true)
   })
 
   it('when not compact, there is no short code beside the select', () => {

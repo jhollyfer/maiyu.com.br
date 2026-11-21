@@ -12,7 +12,9 @@ export default class StorefrontTenantListController {
     summary: 'Listar clientes da cidade',
     description:
       'Público, sem sessão. Os clientes ativos da cidade do segmento `:city`, por nome. Cidade ' +
-      'que não existe responde `404`, como qualquer endereço desconhecido.',
+      'que não existe responde `404`, como qualquer endereço desconhecido. Na vitrine global ' +
+      '(`GET /storefront/tenants`, sem segmento) são os de todas as cidades, e `?city=<slug>` ' +
+      'restringe a uma.',
   })
 
   constructor(private readonly useCase: StorefrontTenantListUseCase) {}

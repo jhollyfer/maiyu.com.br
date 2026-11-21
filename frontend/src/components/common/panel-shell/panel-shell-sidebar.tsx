@@ -87,9 +87,7 @@ export function PanelShellSidebar(): React.JSX.Element {
                     isActive={active === item.to}
                     tooltip={item.label}
                     render={<Link to={item.to} />}
-                    // A gaveta é superfície de celular: linha de 44 px lá, e o 32 px denso é o da
-                    // sidebar de desktop.
-                    className="max-md:h-11 max-md:text-base pointer-coarse:group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:justify-center"
+                    className="group-data-[collapsible=icon]:justify-center"
                     onClick={() => setOpenMobile(false)}
                   >
                     <item.icon />

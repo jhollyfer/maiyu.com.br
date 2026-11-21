@@ -1275,6 +1275,31 @@ repete o grupo com `middleware.auth()` antes. Produto com tenant por cliente con
 `middleware.publicTenant()`; os dois não se misturam numa mesma tabela. O papel que modera itens de
 todas as cidades (o moderador do aporta) é papel global do projeto, sem escopo de cidade no kit.
 
+#### Vitrine global *(DECISIONS.md #823)*
+
+O produto de tenant por cliente cuja vitrine pública junta **todas as cidades** (Toru, Simple Hub) não
+tem `:city` na URL: o filtro de cidade é opcional, `?city=<slug>`. É o escopo `public` sem tenant que o
+`TenantScope.ofPublic(null, ids)` já tinha, e o `public-tenant.middleware.ts` o liga por
+`middleware.publicTenant({ scope: 'global' })` (`TenantRepository.resolveGlobal`, núcleo), sem segundo
+caminho: a lista de ids sai dos tenants **ativos e não demo**, e passa pelo **mesmo** `PublicTenantFilter`
+e pela mesma prévia de membro e equipe (§4.16, #812) de qualquer rota pública, então tenant não
+liberado não vaza e quem tem prévia o vê.
+
+- **`?city=`** é o slug de `Rule.slug()`; vazio é ausente. Malformado, repetido ou de cidade que não existe
+  é `404 RESOURCE_NOT_FOUND`, igual ao `:city` desconhecido: nunca vira leitura sem filtro.
+- **Só leitura**, por tipo: `scope: 'global'` não se combina com `access: 'insert' | 'customer'`, que pedem o
+  tenant que a URL nomeia. Os parâmetros de rota são ignorados.
+- **Cliente único** (`TENANT_PROJECT.singleSlug`, #399): vence o global. A rota global devolve o único tenant
+  configurado, sem ler `?city=`, como toda rota pública nesse modo.
+- **A listagem do projeto** (produtos, lojas) lê pelo `TenantScoped` como em qualquer rota pública e herda o
+  escopo; nenhum caso de uso escreve `where tenant_id` nem `where city_id` à mão. A cidade do filtro não
+  é coluna do item: é a cidade do tenant, já resolvida em `cityTenantIds`.
+- **O bloco `vitrine`** (`--com=vitrine`, `OPTIONAL_CODE`) traz a rota `GET /storefront/tenants` (região
+  `vitrine` de `start/routes.ts`, a lista de clientes global, mesmo controller da lista por cidade) e o
+  spec A×B; o resto do modo global é do núcleo, e o frontend está em `frontend.md` §3.5. Rota global nova
+  entra no `authz-baseline.json` como as outras públicas. **Custo:** a lista de ids cresce com o número
+  de tenants e a leitura dos itens vira `tenant_id IN (...)`; o cache do filtro é do projeto (#812).
+
 ### 4.15 Perfil da conta: foto e troca do próprio e-mail *(DECISIONS.md #442)*
 
 - **Foto.** `PUT /account/profile` aceita `avatarId`, o id de um arquivo `UPLOADED` e vivo que a
@@ -1350,10 +1375,21 @@ duas peças, sem regra de produto:
   `409` e não `422`: a requisição é válida, é o estado da conta que ainda não permite, e a mesma
   requisição passa quando o dado é preenchido. O `code` é literal na recusa, como o das outras.
 
+**"Some da vitrine" é contrato** (`DECISIONS.md` #812): o kit pergunta ao `PublicTenantFilter`
+(`abstract class` em `app/core/public-tenant-filter.ts`, porque a resposta do projeto lê banco) quais
+tenants o público vê; o kit liga `AllPublicTenantFilter` (libera todos) em `providers/repository.provider.ts`,
+e o projeto que trava por perfil escreve a implementação (o subconjunto de `ids` que o
+`ProfileGate.missing` deixa passar) e troca a ligação. É perguntado onde a requisição pública ganha escopo:
+`public-tenant.middleware.ts` (toda leitura de vitrine, lista e busca incluídas, só alcança tenant liberado;
+a URL de um não liberado é 404) e `credential-tenant.middleware.ts` (credencial de tenant não liberado é o
+mesmo 404 de uma errada). Quem é da plataforma (staff) ou membro daquele tenant o alcança, para ver a própria página
+antes de liberada (lido de `ctx.auth.user`, o que o `silent-auth` já checou; uma consulta de vínculo, só quando há conta e tenant não liberado); visitante e conta de outro tenant, não. A leitura da plataforma (`overview`, CRUD) não
+pergunta. Custo: uma chamada por requisição pública; cache é do projeto, dentro da implementação.
+
 **Cobrança** (`pattern:check`, regra `public-signup-minimum`): o projeto lista os validators dos seus
 cadastros públicos em `PUBLIC_SIGNUP_VALIDATORS` (`scripts/pattern-check.config.ts`, ponto de
 extensão), pelo nome exportado (`AuthenticationSignUpValidator`). O check não adivinha qual rota é
-cadastro: lê o `vine.create` de cada nome listado e reprova campo cujo nome tem uma das palavras de
+cadastro: lê o `vine.create` (backend) ou o `z.object` (`shared/src/validators`, `DECISIONS.md` #809) de cada nome listado e reprova campo cujo nome tem uma das palavras de
 `PatternRules.SENSITIVE_SIGNUP_WORDS` (cpf, cnpj, document, tax, phone, whatsapp, pix, bank, address,
 birth, mother, father, photo...), em qualquer profundidade do schema. O nome é lido por palavras
 (`pixKey` é `pix` + `key`, `emailAddress` é `email` + `address`), e um campo legítimo que a lista
@@ -2019,6 +2055,13 @@ o seed grava `users.demo = true` (migration aditiva `1700000000080`) e o purge s
 `SET NULL` não perdem a referência; o seed também não adota conta sob um e-mail de demo que não tenha `demo = true`: é pulada com log, sem exceção. Tabela do projeto que aponta para `tenants` ou `storages` sem
 cascade se esvazia no `DemoProject.purge`.
 
+**Violação de constraint não derruba o seed** (`DECISIONS.md` #812): o insert de cada conta e de cada vínculo
+é capturado só quando o erro é violação de constraint (SQLSTATE classe 23, como a coluna NOT NULL do projeto
+que o kit não preenche, `users.role`): vira `logger.warn` com o motivo e o seed segue; qualquer outro erro é
+relançado. **O campo `demo` não sai em resposta pública**: o presenter
+escolhe cada campo (allowlist) e o `response-leak.e2e.spec.ts` reprova `demo` na resposta de quem não é a
+plataforma; só a rota da plataforma pode emiti-lo.
+
 **Imagem que falha não derruba o seed** (`DECISIONS.md` #807): `DemoImage.of` devolve `Storage | null`; bucket
 fora do ar vira `logger.warn` e `null`, e o `DemoProject.seed` cria o registro sem imagem (o campo aceita
 ausente na demo). O `db:seed` roda a cada deploy e nunca cai por foto. **Pré-condição do projeto:**
@@ -2095,7 +2138,7 @@ O spec de papel pede a sessão com
 
 **O que o E2E cria, o E2E apaga** (`node ace e2e:cleanup`, `commands/e2e-cleanup.command.ts`, `DECISIONS.md` #713). O
 `teardown` do projeto `setup` do Playwright (`e2e/cleanup.teardown.ts`, projeto `cleanup`) chama o comando, que apaga
-as contas que o `e2e:accounts` criou (e-mail `e2e-<papel>-<8 hex>@example.com` **e** nome `E2E <papel>`, os dois) e,
+as contas de e-mail ou telefone de E2E (`e2e-<rótulo>-<8 hex>@example.com` ou `+55<DDD>90000<4 dígitos>`, só o contato: o nome não é marcador, porque o sign-up copia o nome do formulário; as do `e2e:accounts` e as que um spec cria por `E2eFreshAccount`, `DECISIONS.md` #819), os tenants cujo `name` começa com `E2E-` (tabela do esqueleto, que `markers` não pode citar; o comando a trata sozinho se existir, com `charges` e `storages` deles) e os dados ligados às contas por `ON DELETE CASCADE` (tabela do projeto que aponta para `users` tem a chave em cascata, ou entra em `markers` antes) e,
 nas tabelas do projeto, as linhas cuja coluna de marcador começa com `E2E-`, com o hífen (`E2eEnv.marker`; título real que só começa com as letras `E2E` não é marcador): o spec escreve `E2eEnv.marker` no começo
 do título ou do nome do que cria, e o projeto declara tabela e coluna em `tests/e2e-project-cleanup.ts`
 (`ProjectE2eCleanup.markers`, ponto de extensão que o sync cria vazio e nunca reescreve; filhos antes dos pais quando
@@ -2207,7 +2250,8 @@ HTTP.
 | `core/openapi/openapi.e2e.spec.ts` | rota fora do documento, operação sem resposta, id duplicado |
 | `middleware/<nome>.middleware.e2e.spec.ts` | matriz de papéis, cookie, CORS, origem (CSRF), idioma |
 | `middleware/role.middleware.unit.spec.ts` (kit) | papel fora da lista, papel não staff num grupo staff e conta sem tenant ativo que não recebem `403 ACCESS_DENIED` ou chegam ao handler; a matriz de qual grupo admite qual papel continua no `role.middleware.e2e.spec.ts` do projeto, porque as rotas são dele (`DECISIONS.md` #770) |
-| `core/response-leak.e2e.spec.ts` | resposta de `GET` (de qualquer status, a de erro incluída) e resposta de erro de sondas fixas (rota inexistente, corpo recusado, senha errada, refresh sem cookie e com lixo) que contém chave proibida (`password`, hash de token, `stack`), valor com cara de hash ou de stack trace, em qualquer nível da árvore, cabeçalho `X-Powered-By` ou `Set-Cookie` que emite cookie de sessão fora do sign-in e do refresh (limpar o cookie não conta), para cada papel e sem sessão; as chaves do mapa `errors` da validação são nomes de campo e não contam (`DECISIONS.md` #770) |
+| `core/response-leak.e2e.spec.ts` | resposta de `GET` (de qualquer status, a de erro incluída) e resposta de erro de sondas fixas (rota inexistente, corpo recusado, senha errada, refresh sem cookie e com lixo) que contém chave proibida (`password`, hash de token, `stack`), valor com cara de hash ou de stack trace, em qualquer nível da árvore, cabeçalho `X-Powered-By`, `Set-Cookie` que emite cookie de sessão fora do sign-in e do refresh (limpar o cookie não conta) ou a chave `demo` fora da sessão da plataforma (#812), para cada papel e sem sessão; as chaves do mapa `errors` da validação são nomes de campo e não contam (`DECISIONS.md` #770) |
+| `tests/suite-globs.unit.spec.ts` | spec que nenhuma suíte do `adonisrc.ts` alcança (teste que nunca roda e nunca falha); spec de seeder mora em `tests/seeders/`, nunca em `database/` (#380, #812) |
 | coluna qualificada | join com coluna ambígua |
 | SDK só no adaptador | import de SDK de fornecedor fora de `services/<nome>/<nome>.service.ts` |
 | vitrine só leitura | rota pública que não é `GET` sem estar na lista declarada |

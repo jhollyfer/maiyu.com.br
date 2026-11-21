@@ -69,8 +69,9 @@ export function FilterMore({
   return (
     <Button
       variant="ghost"
+      size="sm"
       onClick={onExpand}
-      className="focus-ring h-8 justify-start gap-1 px-2 text-xs font-medium text-muted-foreground"
+      className="focus-ring justify-start gap-1 px-2 text-xs font-medium text-muted-foreground"
     >
       {m.kit_filters_show_more({ count: hidden })}
       <CaretDownIcon className="size-3" />

@@ -57,7 +57,7 @@ export function FilterSection({
         onOpenChange={setOpen}
         render={<div {...rest} />}
       >
-        <CollapsibleTrigger className="focus-ring group flex w-full items-center justify-between rounded-chip py-2 text-left">
+        <CollapsibleTrigger className="focus-ring group flex w-full items-center justify-between rounded-md py-2 text-left">
           <span className="section-title">{title}</span>
           <CaretDownIcon className="size-4 shrink-0 text-muted-foreground transition-transform duration-150 ease-out group-data-[panel-open]:rotate-180 motion-reduce:transition-none" />
         </CollapsibleTrigger>

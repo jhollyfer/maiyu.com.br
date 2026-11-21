@@ -1,5 +1,9 @@
+'use client'
+
 import * as React from 'react'
 import { cn } from '#/lib/cn'
+// casa: translated labels, the registry ships English
+import { m } from '#/paraglide/messages'
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
 } from 'embla-carousel-react'
@@ -194,7 +198,8 @@ function CarouselPrevious({
       {...props}
     >
       <CaretLeftIcon />
-      <span className="sr-only">Previous slide</span>
+      {/* casa: translated label */}
+      <span className="sr-only">{m.kit_ui_carousel_previous()}</span>
     </Button>
   )
 }
@@ -224,7 +229,8 @@ function CarouselNext({
       {...props}
     >
       <CaretRightIcon />
-      <span className="sr-only">Next slide</span>
+      {/* casa: translated label */}
+      <span className="sr-only">{m.kit_ui_carousel_next()}</span>
     </Button>
   )
 }

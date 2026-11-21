@@ -17,9 +17,12 @@ export type TenantMemberRead = PlatformMemberResponse
 /** A tenant as the public city list shows it. */
 export type TenantPublicRead = CityTenantsResponse[number]
 
-/** What a public URL resolves to: the city, and the tenant when the URL names one. */
+/**
+ * What a public URL resolves to: the city, and the tenant when the URL names one. `cityId` is `null`
+ * only on the global storefront (`resolveGlobal`, DECISIONS.md #823) with no city filter.
+ */
 export type PublicTenantTarget = {
-  readonly cityId: string
+  readonly cityId: string | null
   readonly tenantId: string | null
   readonly cityTenantIds: ReadonlyArray<string>
 }
@@ -49,6 +52,14 @@ export abstract class TenantRepository {
   abstract resolvePublic(
     citySlug: string,
     tenantSlug: string | null,
+  ): Promise<PublicTenantTarget | null>
+  /**
+   * The global storefront (DECISIONS.md #823): every active, non-demo tenant of every city, or only
+   * those of the city `citySlug` names (the optional `?city=` filter). `null` when the slug names no
+   * city. The URL names no tenant, so `tenantId` is `null`; the demo tenant is never among them.
+   */
+  abstract resolveGlobal(
+    citySlug: string | null,
   ): Promise<PublicTenantTarget | null>
   /**
    * The active tenant with this slug, for the single-client mode (DECISIONS.md #399): no city

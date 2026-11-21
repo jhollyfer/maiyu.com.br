@@ -13,6 +13,8 @@ import {
 } from '@maiyu/shared'
 
 import { TenantConfig } from '#config/tenant'
+import { AllPublicTenantFilter } from '#core/all-public-tenant-filter'
+import { PublicTenantFilter } from '#core/public-tenant-filter'
 import { TenantScope } from '#core/tenant-scope'
 import HTTPException from '#exceptions/http.exception'
 import PublicTenantMiddleware from '#middleware/public-tenant.middleware'
@@ -45,14 +47,24 @@ async function run(
   singleSlug: string | null,
   options: Parameters<PublicTenantMiddleware['handle']>[2] = {},
   tenant: Actor['tenant'] = null,
+  filter: PublicTenantFilter = new AllPublicTenantFilter(),
+  query: Record<string, string | ReadonlyArray<string>> = {},
 ) {
   const middleware = await makeWithMemory(PublicTenantMiddleware, [
     [TenantRepository, repository()],
     [TenantConfig, new TenantConfig(singleSlug)],
+    [PublicTenantFilter, filter],
   ])
-  const request = new RequestFactory().create()
+  const search = new URLSearchParams()
+  for (const [key, value] of Object.entries(query))
+    for (const each of [value].flat()) search.append(key, each)
+  const request = new RequestFactory()
+    .merge({ url: `/storefront/tenants?${search.toString()}` })
+    .create()
   const context = new HttpContextFactory().merge({ request }).create()
   context.params = params
+  // `silent-auth` is not in a unit test: nobody is signed in (the e2e spec signs in for real).
+  Object.assign(context, { auth: { user: undefined } })
   context.i18n = i18nManager.locale(BASE_LOCALE)
   context.actor = {
     id: 'customer-1',
@@ -176,5 +188,114 @@ test.group('middleware > public-tenant (unit)', () => {
     )
 
     assert.equal(result.status, 403)
+  })
+
+  // DECISIONS.md #812: the project releases a tenant for the public (e.g. a complete profile).
+  class OnlyT1 extends PublicTenantFilter {
+    released(ids: ReadonlyArray<string>) {
+      return Promise.resolve(ids.filter((id) => id === 't1'))
+    }
+  }
+  const byUrl = { city: 'tabatinga', tenant: 'bia' }
+
+  test('the project filter keeps an unreleased tenant out of the city-wide read of a visitor', async ({
+    assert,
+  }) => {
+    const result = await run(
+      { city: 'tabatinga' },
+      null,
+      {},
+      null,
+      new OnlyT1(),
+    )
+
+    assert.equal(result.status, 200)
+    assert.deepEqual([...(result.scope?.tenantIds() ?? [])], ['t1'])
+  })
+
+  test('the URL of an unreleased tenant is 404 for a visitor', async ({
+    assert,
+  }) => {
+    assert.equal((await run(byUrl, null, {}, null, new OnlyT1())).status, 404)
+    assert.equal((await run(byUrl, null)).status, 200)
+  })
+})
+
+// DECISIONS.md #823: the global storefront, no segment, `?city=` the only filter.
+test.group('middleware > public-tenant (unit) > global storefront', () => {
+  const GLOBAL = { scope: 'global' } as const
+  const ALL = new AllPublicTenantFilter()
+  const globalRun = (query: Record<string, string | ReadonlyArray<string>>) =>
+    run({}, null, GLOBAL, null, ALL, query)
+
+  test('with no city it reads every active tenant of every city, and no inactive one', async ({
+    assert,
+  }) => {
+    const result = await globalRun({})
+
+    assert.equal(result.status, 200)
+    assert.sameMembers(
+      [...(result.scope?.tenantIds() ?? [])],
+      ['t1', 't2', 't4'],
+    )
+    assert.isFalse(result.scope?.canWrite('t1'))
+  })
+
+  test('`?city=` narrows to that city; an empty value is none', async ({
+    assert,
+  }) => {
+    const here = await globalRun({ city: 'tabatinga' })
+    const there = await globalRun({ city: 'atalaia-do-norte' })
+    const empty = await globalRun({ city: '' })
+
+    assert.sameMembers([...(here.scope?.tenantIds() ?? [])], ['t1', 't2'])
+    assert.sameMembers([...(there.scope?.tenantIds() ?? [])], ['t4'])
+    assert.sameMembers(
+      [...(empty.scope?.tenantIds() ?? [])],
+      ['t1', 't2', 't4'],
+    )
+  })
+
+  test('an unknown, malformed or repeated city is 404, never an unfiltered read', async ({
+    assert,
+  }) => {
+    assert.equal((await globalRun({ city: 'nowhere' })).status, 404)
+    assert.equal((await globalRun({ city: 'Tabatinga!' })).status, 404)
+    assert.equal((await globalRun({ city: ['tabatinga', 'x'] })).status, 404)
+  })
+
+  test('the project filter still narrows the global read', async ({
+    assert,
+  }) => {
+    const only = new (class extends PublicTenantFilter {
+      released(ids: ReadonlyArray<string>) {
+        return Promise.resolve(ids.filter((id) => id === 't2'))
+      }
+    })()
+    const result = await run({}, null, GLOBAL, null, only, {})
+
+    assert.deepEqual([...(result.scope?.tenantIds() ?? [])], ['t2'])
+  })
+
+  test('single-client mode wins over the global scope: the one configured tenant', async ({
+    assert,
+  }) => {
+    const result = await run({}, 'ana', GLOBAL, null, ALL, {
+      city: 'atalaia-do-norte',
+    })
+
+    assert.deepEqual([...(result.scope?.tenantIds() ?? [])], ['t1'])
+  })
+
+  test('the route params are ignored: the global route has no city segment', async ({
+    assert,
+  }) => {
+    const result = await run({ city: 'nowhere' }, null, GLOBAL, null, ALL, {})
+
+    assert.equal(result.status, 200)
+    assert.sameMembers(
+      [...(result.scope?.tenantIds() ?? [])],
+      ['t1', 't2', 't4'],
+    )
   })
 })

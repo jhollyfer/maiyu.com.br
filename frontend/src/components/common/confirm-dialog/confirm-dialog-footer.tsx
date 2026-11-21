@@ -53,15 +53,15 @@ export function ConfirmDialogCancel({
 
 /**
  * The primary action. The label is the children: "Excluir", "Restaurar", "Sair" --
- * never "Confirmar" when there is a better verb.
+ * never "Confirmar" when there is a better verb. Held while a `ConfirmDialogChallenge`
+ * in the same alert is unanswered.
  */
 export function ConfirmDialogConfirm({
   children,
   ...rest
 }: React.ComponentProps<typeof AlertDialogAction>): React.JSX.Element {
-  const { confirm, destructive, isPending } = useConfirmDialogContext(
-    'ConfirmDialogConfirm',
-  )
+  const { confirm, destructive, isPending, challenge } =
+    useConfirmDialogContext('ConfirmDialogConfirm')
 
   let variant: 'destructive' | 'default' = 'default'
   if (destructive) variant = 'destructive'
@@ -71,7 +71,7 @@ export function ConfirmDialogConfirm({
       data-slot="confirm-dialog-confirm"
       type="button"
       variant={variant}
-      disabled={isPending}
+      disabled={isPending || challenge === 'pending'}
       onClick={confirm}
       {...rest}
     >

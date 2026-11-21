@@ -1,4 +1,5 @@
 import { Link } from '@tanstack/react-router'
+import type { LinkProps } from '@tanstack/react-router'
 import type * as React from 'react'
 
 import { Alert, AlertDescription, AlertTitle } from '#/components/ui/alert'
@@ -11,11 +12,13 @@ type ProfileIncompleteNoticeProps = Readonly<{
   missing: ReadonlyArray<string>
   /** O rótulo do projeto por campo; sem ele vale o `FIELD_LABELS` do `shared/`. */
   labels?: Readonly<Record<string, string>>
+  /** A rota do perfil do projeto, dado e não literal: o painel do projeto pode ter o perfil em outro caminho. */
+  to?: NonNullable<LinkProps['to']>
 }>
 
 /**
  * O aviso de perfil incompleto (DECISIONS.md #799): a conta entra e usa o painel, e este aviso pede
- * que ela complete o perfil, com o link para a página dele (`/profile`). Só a função que depende do
+ * que ela complete o perfil, com o link para a página dele (`to`, padrão `/profile`). Só a função que depende do
  * dado fica travada; o que falta chega por `missing`, lido pelo projeto do recurso que o exige (o
  * restaurante sem Pix, `<recurso>MeQueryOptions`), nunca de campo novo no `AccountProfileShowResponse`.
  * Sem pendência, nada aparece. O `PanelShell` o mostra no topo do conteúdo quando recebe
@@ -28,6 +31,7 @@ type ProfileIncompleteNoticeProps = Readonly<{
 export function ProfileIncompleteNotice({
   missing,
   labels,
+  to = '/profile',
 }: ProfileIncompleteNoticeProps): React.JSX.Element | null {
   if (missing.length === 0) return null
 
@@ -40,7 +44,7 @@ export function ProfileIncompleteNotice({
         })}
       </AlertDescription>
       <Link
-        to="/profile"
+        to={to}
         className={buttonVariants({
           variant: 'outline',
           size: 'sm',

@@ -16,4 +16,13 @@ export const PROJECT_VITE: Readonly<{
   start: NonNullable<Parameters<typeof tanstackStart>[0]>
   /** Extra Vite plugins, applied after the kit's. */
   plugins: ReadonlyArray<PluginOption>
-}> = { nitro: {}, start: {}, plugins: [] }
+}> = {
+  // The Lighthouse mobile run measured 311 KB of CSS and 292 KB of JS going out raw: the Nitro node
+  // server does not compress what it serves, and the 319 KB stylesheet blocks the first paint.
+  // `compressPublicAssets` writes the gzip and brotli files at build time and serves them
+  // (https://nitro.build/config/assets, type `compressPublicAssets: boolean | CompressOptions` in the
+  // installed `nitro`), with no cost per request.
+  nitro: { compressPublicAssets: { gzip: true, brotli: true } },
+  start: {},
+  plugins: [],
+}

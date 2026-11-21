@@ -80,4 +80,26 @@ describe('EmptyState', () => {
         .getAttribute('data-slot'),
     ).toBe('empty-state-action')
   })
+
+  it('the title is a heading (the registry draws a div), level 2 unless the screen says otherwise', () => {
+    render(
+      <EmptyState reason="first-use">
+        <EmptyStateHeader>
+          <EmptyStateTitle>Nada por aqui</EmptyStateTitle>
+          <EmptyStateTitle aria-level={3}>Subtítulo</EmptyStateTitle>
+        </EmptyStateHeader>
+      </EmptyState>,
+    )
+
+    expect(
+      screen
+        .getByRole('heading', { name: 'Nada por aqui' })
+        .getAttribute('aria-level'),
+    ).toBe('2')
+    expect(
+      screen
+        .getByRole('heading', { name: 'Subtítulo' })
+        .getAttribute('aria-level'),
+    ).toBe('3')
+  })
 })

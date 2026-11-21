@@ -271,7 +271,7 @@ export class PatternRules {
       .replace(/\/\*[\s\S]*?\*\//g, blank)
       .replace(/\/\/[^\n]*/g, blank)
     const declaration = new RegExp(
-      `export\\s+const\\s+${name}\\s*=\\s*vine\\s*\\.\\s*create\\s*\\(`,
+      `export\\s+const\\s+${name}\\s*=\\s*(?:vine\\s*\\.\\s*create|z\\s*\\.\\s*(?:strict)?[oO]bject)\\s*\\(`,
     ).exec(code)
     if (!declaration) return null
     const start = declaration.index + declaration[0].length
@@ -287,7 +287,7 @@ export class PatternRules {
     }
   }
 
-  /** Whether `text` declares the validator `name`. */
+  /** Whether `text` declares the validator `name`: `vine.create` (backend) or `z.object` (shared, Zod). */
   static declaresValidator(text: string, name: string): boolean {
     return PatternRules.validatorBody(text, name) !== null
   }
@@ -341,7 +341,8 @@ export class PatternRules {
         section: 'backend.md §4.16 (DECISIONS.md #799)',
         message:
           'a public sign-up asks only for the minimum (name, e-mail, password, consents, and the business name and city when it creates a business): document, address, Pix key, bank and birth data are completed after the login, on the profile page; the phone is allowed only as the `phone` login identifier, alone or with the e-mail',
-        scope: /^backend\/app\/validators\/.+\.validator\.ts$/,
+        scope:
+          /^(backend\/app\/validators|shared\/src\/validators)\/.+\.validator\.ts$/,
         exclude: SPEC,
         lines: (file) =>
           PatternRules.sensitiveSignupHits(file.text, validators).map(

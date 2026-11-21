@@ -99,6 +99,10 @@ export const test = base.extend<Fixtures>({
 
   expectNoBlockingViolations: async ({ page }, provide) => {
     await provide(async () => {
+      // `reducedMotion: 'reduce'` antes de medir: em tema escuro a troca de cor ainda em transição
+      // mistura o texto com o fundo e o axe acusa `color-contrast` que some na rodada seguinte (flake).
+      // Só a mídia muda; o `colorScheme` que o teste emulou fica (_doc-lib/playwright.md#docs/emulation).
+      await page.emulateMedia({ reducedMotion: 'reduce' })
       // Animação finita ainda rodando mistura o texto com o fundo e simula uma
       // falha de `color-contrast`: mede só depois que elas terminam.
       await new ResponsiveAudit(page).settle()

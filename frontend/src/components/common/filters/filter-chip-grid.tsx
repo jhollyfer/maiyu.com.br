@@ -164,10 +164,7 @@ function FilterChip({
       value={item.key}
       variant="outline"
       className={cn(
-        // 44px de alvo no toque e 36 no ponteiro, pelo mesmo motivo escrito em
-        // `product-listing/results-toolbar-chips.tsx`. O corte é `lg:` porque é exatamente ali
-        // que o painel deixa de ser o Sheet do dedo e vira a coluna do mouse.
-        'focus-ring min-h-11 w-full justify-between gap-1.5 rounded-control border-line px-2.5 py-1.5 text-left text-sm text-muted-foreground lg:min-h-9',
+        'focus-ring w-full justify-between gap-1.5 border-line px-2.5 py-1.5 text-left text-sm text-muted-foreground',
         'transition-colors duration-150 ease-out motion-reduce:transition-none',
         'hover:border-primary/40 hover:bg-link-hover',
         // O par `aria-pressed:hover:` também: sem ele o fundo do chip ligado

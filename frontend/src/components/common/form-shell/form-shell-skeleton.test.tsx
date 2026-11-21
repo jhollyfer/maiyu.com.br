@@ -1,6 +1,8 @@
 // @vitest-environment jsdom
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+
+import { m } from '#/paraglide/messages'
 
 import { FormShellSkeleton } from './form-shell-skeleton'
 
@@ -16,5 +18,16 @@ describe('FormShellSkeleton', () => {
         .querySelector('[data-slot="form-shell-skeleton"]')
         ?.getAttribute('aria-busy'),
     ).toBe('true')
+  })
+
+  it('announces the wait in the locale and hides the drawing from the reader', () => {
+    const { container } = render(<FormShellSkeleton />)
+
+    expect(screen.getByRole('status').textContent).toBe(m.kit_loading())
+    expect(
+      container
+        .querySelector('[data-slot="form-shell-skeleton-field"]')
+        ?.closest('[aria-hidden="true"]'),
+    ).toBeTruthy()
   })
 })
