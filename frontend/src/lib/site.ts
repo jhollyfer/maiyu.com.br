@@ -45,7 +45,6 @@ export const CALL_URL = `https://wa.me/${WHATSAPP_NUMBER}`
 
 export const CONTACT = {
   email: 'contato@maiyu.com.br',
-  supportEmail: 'suporte@maiyu.com.br',
   phone: '+55 (97) 9 8431-7149',
   phoneHref: 'tel:+5597984317149',
   secondPhone: '+55 (97) 9 8414-5765',
