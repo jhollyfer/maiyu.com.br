@@ -9,17 +9,17 @@
 
 ## 1. Visão geral
 
-**Direção: sóbria e editorial** (decisão do dono, 2026-11-20; substitui a #12 "Editorial ribeirinho" e a #16 do
-Raleway pesado, `DECISIONS.md` #18). A vitrine se lê como uma publicação séria da região e como trabalho de estúdio de design,
-não como um template: tipografia forte com escala clara, muito respiro, **uma cor de acento só** e fotografia
-real do lugar. Transmite uma empresa de tecnologia profissional, feita por indígenas e originários do Alto
-Solimões, para organizações de qualquer setor e para povos e organizações indígenas de qualquer país.
+**Direção: conteúdo primeiro, voz factual** (decisão do dono, 2026-11-21; substitui a #18 "sóbria e editorial",
+`DECISIONS.md` #19). A home abre direto na lista do que a Maiyu fez (nome, o que resolve, cliente ou cidade,
+ano, link), depois um "quem somos" curto, depois o contato. Voz de primeira pessoa do plural, frases curtas e
+concretas, nome e número reais; dado que falta aparece como `[dado do dono]`, nunca inventado.
 
-- **Regra (vale para qualquer projeto):** uma família display e uma de texto; papel e tinta mais **um**
-  acento; formas retas e planas; hierarquia pela tipografia e pelo espaço, nunca por efeito; foto real do
-  lugar ou placeholder marcado "foto a definir", nunca banco de imagem genérico. O que o tema não faz
-  está em §11.
-- **Valores do Maiyu:** Newsreader + Instrument Sans, urucum como acento, raio de 4 px, a foto da cidade no hero.
+- **Regra (vale para qualquer projeto):** uma família sans neutra (a do sistema), hierarquia só por tamanho e
+  peso, sem serifa nem itálico de efeito; uma ação de contato discreta no topo (o cabeçalho) e uma no fim;
+  sem slogan, sem hero de imagem, sem coluna simétrica de três, sem seção de "valores", sem fio decorativo,
+  sem ícone em quadrado ou círculo, sem botão repetido. O que o tema não faz está em §11.
+- **Valores do Maiyu:** fonte do sistema, urucum como acento, raio de 4 px; a lista de apps em linhas com fio de
+  1 px (estrutura, não ornamento).
 - Modo dominante: Convencer (home), Experiência (portfólio), Ler (diário). Não há tela de operação.
 - Tema: claro e escuro. O `next-themes` escreve a classe `dark` no `<html>` antes da hidratação, com
   `defaultTheme="system"`.
@@ -51,14 +51,12 @@ Contraste mínimo de 4.5:1 no texto corrido e de 3:1 nos controles, nos dois tem
 
 ## 3. Tipografia
 
-**Regra:** uma família display (títulos e texto de abertura) e uma de texto (corpo, controles, rótulos),
-mais a mono para número e código. Peso calmo nos títulos (500), tracking levemente negativo, `text-balance`
-nos títulos, itálico só para um verso de destaque. Escala fluida em `clamp`, com nomes próprios (`--text-*`)
-para não alterar o tamanho dos componentes do `ui/`.
+**Regra:** uma família sans neutra para tudo (título, texto, controle), mais a mono para número e código.
+Hierarquia por tamanho e peso (600 nos títulos), sem itálico de efeito e sem segunda família. Escala fluida em
+`clamp`, com nomes próprios (`--text-*`) para não alterar o tamanho dos componentes do `ui/`.
 
-**Valores do Maiyu:** Newsreader Variable (display e `font-serif`, com itálico), Instrument Sans Variable
-(texto), Michroma (só o wordmark MAIYU) e Geist Mono. Servidas do bundle (`@fontsource`), para não depender
-de domínio de terceiro; a Newsreader e a Instrument Sans têm preload no `__root.tsx`.
+**Valores do Maiyu:** pilha do sistema (`system-ui`, sem webfont, nada para baixar), Michroma só no wordmark
+MAIYU e Geist Mono. `--font-display` e `--font-serif` apontam para a mesma sans.
 
 | Papel | Token | Tamanho | Onde |
 |---|---|---|---|
@@ -217,16 +215,17 @@ que for detectável vira regra de lint no kit.
 
 | Fazer | Não fazer |
 |---|---|
-| Uma família display e uma de texto; hierarquia por escala, peso 500 e espaço | Título em peso 800 em tudo, ou várias famílias |
-| Um acento só (urucum), em fio, número e estado | Mais de um acento, neon, gradiente, pastel, vidro (`backdrop-blur`) |
-| Botão de tinta e link de texto com seta; um primário por área | CTA neon com brilho, botão em pílula, sombra exagerada |
-| Estado do projeto e tecnologia como texto | Chip arredondado para tudo, ícone dentro de círculo ou quadrado colorido |
-| Divisória de 1 px e muito respiro | Faixa de ornamento repetida, grão, silhueta gigante de fundo |
-| Lista editorial numerada ou com fio, com tamanhos diferentes | Grade de três cartões iguais com ícone ("features") |
-| Foto real do lugar com crédito, ou placeholder "foto a definir" | Banco de imagem genérico, emoji, bandeira ou ilustração de template |
-| Texto lido de verdade e verso de destaque em itálico | Texto de marketing vazio, "revolucione", "soluções de ponta" |
-| Representar a Amazônia por foto, rio e mata do lugar | Usar grafismo indígena como enfeite sem autoria e sem consentimento de quem o criou |
-| Pôr a equipe pelo ofício | Pôr foto de pessoa sem autorização (as fotos do time estão ocultas) |
+| Abrir pelo conteúdo real: a lista do que foi feito | Slogan, hero de imagem, título gigante com parágrafo e botão |
+| Uma sans só; hierarquia por tamanho e peso | Serifa com itálico de efeito, várias famílias |
+| Frases curtas, primeira pessoa do plural, nome e número reais | Texto de marketing vazio, "revolucione", "soluções de ponta" |
+| Um contato discreto no topo e um no fim | Botão escuro repetido a cada seção |
+| Linha com fio de 1 px que organiza a lista | Fio decorativo, faixa de ornamento, grão |
+| Dado ausente como `[dado do dono]` | Contador, depoimento, logo ou cliente inventado |
+| Lista e texto em coluna única, linhas diferentes | Três colunas simétricas com ícone, seção de "valores" |
+| Estado e tecnologia como texto | Chip, pílula, ícone em círculo ou quadrado, emoji |
+| Cor chapada, sem sombra | Gradiente, brilho, vidro (`backdrop-blur`), sombra |
+| Foto real com crédito, ou nenhuma | Banco de imagem, foto de pessoa sem consentimento |
+| Grafismo indígena só com autoria e consentimento | Grafismo indígena como enfeite |
 
 ## 12. Referências
 

@@ -64,9 +64,9 @@ export const projects: readonly [Project, ...Project[]] = [
     slug: 'academy',
     title: 'Maiyu Academy',
     client: {
-      en: 'A Maiyu initiative · Free technology education',
-      'pt-BR': 'Iniciativa da Maiyu · Ensino gratuito de tecnologia',
-      es: 'Iniciativa de Maiyu · Enseñanza gratuita de tecnología',
+      en: 'A Maiyu initiative',
+      'pt-BR': 'Iniciativa da Maiyu',
+      es: 'Iniciativa de Maiyu',
     },
     summary: {
       en: 'Free technology courses, taught by people native to the Amazon.',

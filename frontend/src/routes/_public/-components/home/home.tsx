@@ -1,40 +1,129 @@
 import type * as React from 'react'
 
-import { Audience } from './audience'
-import { Capabilities } from './capabilities'
-import { ClosingCta } from './closing-cta'
-import { Hero } from './hero'
-import { NavyBand } from './navy-band'
-import { Process } from './process'
-import { Roots } from './roots'
-import { Vision } from './vision'
-import { Work } from './work'
+import { buttonVariants } from '#/components/ui/button'
+import { localized } from '#/lib/i18n'
+import { MISSING, pendingApps } from '#/lib/pending-apps'
+import { projects } from '#/lib/projects'
+import { CALL_URL } from '#/lib/site'
+import { m } from '#/paraglide/messages'
+import type { ProjectStatus } from '@maiyu/shared'
+
+/** The state of each project in words, by lookup (no ternary). */
+const STATUS_LABEL = {
+  production: () => m.home_status_production(),
+  validation: () => m.home_status_validation(),
+} satisfies Record<ProjectStatus, () => string>
+
+type Row = {
+  slug: string
+  title: string
+  url?: string
+  summary: string
+  client: string
+  year: string
+  status: string
+}
+
+/** Every app of the house in one list: the ones with data first, the ones waiting for it after. */
+function rows(): Row[] {
+  const live = projects.map((project) => ({
+    slug: project.slug,
+    title: project.title,
+    url: project.url,
+    summary: localized(project.summary),
+    client: localized(project.client).replaceAll(' · ', ', '),
+    year: project.year,
+    status: STATUS_LABEL[project.status](),
+  }))
+  const waiting = pendingApps.map((app) => ({
+    slug: app.slug,
+    title: app.title,
+    url: app.url,
+    summary: localized(app.summary),
+    client: MISSING,
+    year: MISSING,
+    status: '',
+  }))
+
+  return [...live, ...waiting]
+}
+
+/** The name, a link when the app has an address. */
+function AppName({ row }: { row: Row }): React.JSX.Element {
+  if (!row.url) return <>{row.title}</>
+
+  return (
+    <a
+      href={row.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="underline underline-offset-4 hover:text-primary"
+    >
+      {row.title}
+    </a>
+  )
+}
+
+/** One app: name as the link, what it solves, for whom and where, year and state. */
+function App({ row }: { row: Row }): React.JSX.Element {
+  return (
+    <li
+      data-slot="home-app"
+      className="grid gap-1 border-t border-border py-5 md:grid-cols-12 md:gap-x-8"
+    >
+      <h3 className="text-lg md:col-span-3">
+        <AppName row={row} />
+      </h3>
+      <p className="text-foreground md:col-span-4">{row.summary}</p>
+      <p className="text-muted-foreground md:col-span-3">{row.client}</p>
+      <p className="text-muted-foreground md:col-span-2">{row.year}</p>
+      {row.status && (
+        <p className="text-sm text-muted-foreground md:col-span-4 md:col-start-4">
+          {row.status}
+        </p>
+      )}
+    </li>
+  )
+}
 
 /**
- * The home, assembled.
- *
- * Composition only, as in academy: the order here is the order on screen. First
- * what Maiyu is (hero) and the proof that it delivers (live projects); right after,
- * where it comes from (Indigenous, from the triple border), which is the differentiator; then
- * the thesis (the vision), the method (how we work), what it does (services) and
- * for whom (the audiences); finally who does it (the team and the journal, in the navy band)
- * and the invitation.
- *
- * No section reads an API: the content lives in `lib/`, and so there is no
- * `useQuery` or missing-data guard here.
+ * The home, content first: the list of what we built, then who we are, then one way to talk to
+ * us. No slogan, no hero image, no cards. The only action is the link at the end (the header has
+ * the same one), as `docs/DESIGN.md` defines.
  */
 export function Home(): React.JSX.Element {
   return (
-    <>
-      <Hero />
-      <Work />
-      <Roots />
-      <Vision />
-      <Process />
-      <Capabilities />
-      <Audience />
-      <NavyBand />
-      <ClosingCta />
-    </>
+    <main className="mx-auto max-w-5xl px-4 pt-28 pb-24 md:px-8 md:pt-36">
+      <section data-slot="home-apps">
+        <h1 className="text-3xl md:text-4xl">{m.home_apps_title()}</h1>
+        <p className="mt-3 max-w-[60ch] text-muted-foreground">
+          {m.home_apps_intro()}
+        </p>
+        <ul className="mt-10">
+          {rows().map((row) => (
+            <App key={row.slug} row={row} />
+          ))}
+        </ul>
+      </section>
+
+      <section data-slot="home-about" className="mt-24 max-w-[60ch]">
+        <h2 className="text-2xl">{m.home_about_title()}</h2>
+        <p className="mt-4">{m.home_about_p1()}</p>
+        <p className="mt-3">{m.home_about_p2()}</p>
+      </section>
+
+      <section data-slot="home-contact" className="mt-24 max-w-[60ch]">
+        <h2 className="text-2xl">{m.home_contact_title()}</h2>
+        <p className="mt-4">{m.home_contact_text()}</p>
+        <a
+          href={CALL_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={buttonVariants({ variant: 'outline' }) + ' mt-6'}
+        >
+          {m.nav_get_in_touch()}
+        </a>
+      </section>
+    </main>
   )
 }

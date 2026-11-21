@@ -3,19 +3,10 @@
 @import 'shadcn/tailwind.css';
 
 /*
- * The three families, served from the bundle itself.
- *
- * Newsreader is the display family (headings and the lead text, an editorial serif) and Instrument
- * Sans the text family. Michroma exists only for the MAIYU wordmark, the logo's lettering; Geist
- * Mono is for numbers and code.
- *
- * From the package and not from Google Fonts: the old site had already switched to the package
- * after seeing the page fall back to the reserve font when the Google domain did not answer. A
- * font that depends on a third party to arrive is a font that sometimes does not arrive.
+ * One neutral sans, the system's own (no webfont to download). Michroma exists only for the
+ * MAIYU wordmark, the logo's lettering; Geist Mono is for numbers and code. Hierarchy comes
+ * from size and weight, never from a second family or from italics.
  */
-@import '@fontsource-variable/newsreader';
-@import '@fontsource-variable/newsreader/wght-italic.css';
-@import '@fontsource-variable/instrument-sans';
 @import '@fontsource/michroma';
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
@@ -252,11 +243,12 @@
   --color-badge-warning: var(--badge-warning);
   --color-badge-warning-foreground: var(--badge-warning-fg);
 
-  --font-display: 'Newsreader Variable', Newsreader, Georgia, serif;
   --font-sans:
-    'Instrument Sans Variable', 'Instrument Sans', system-ui, sans-serif;
-  --font-serif: 'Newsreader Variable', Newsreader, Georgia, serif;
-  --font-brand: Michroma, 'Instrument Sans Variable', system-ui, sans-serif;
+    system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial,
+    sans-serif;
+  --font-display: var(--font-sans);
+  --font-serif: var(--font-sans);
+  --font-brand: Michroma, system-ui, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
 
   /*
@@ -390,8 +382,7 @@
   }
 
   /*
-   * Headings in the display serif (Newsreader), at a calm weight: the editorial direction of
-   * `docs/DESIGN.md`, which replaces the heavy sans of `docs/DECISIONS.md` #16.
+   * Headings in the same sans as the text, set apart by size and weight only.
    */
   h1,
   h2,
@@ -400,7 +391,7 @@
   h5,
   h6 {
     font-family: var(--font-display);
-    font-weight: 500;
+    font-weight: 600;
     letter-spacing: -0.02em;
     text-wrap: balance;
     overflow-wrap: break-word;

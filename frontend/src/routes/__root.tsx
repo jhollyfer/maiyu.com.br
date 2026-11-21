@@ -1,5 +1,3 @@
-import instrumentSansLatin from '@fontsource-variable/instrument-sans/files/instrument-sans-latin-wght-normal.woff2?url'
-import newsreaderLatin from '@fontsource-variable/newsreader/files/newsreader-latin-wght-normal.woff2?url'
 import type { QueryClient } from '@tanstack/react-query'
 import {
   HeadContent,
@@ -80,20 +78,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { rel: 'icon', href: '/favicon.ico', sizes: '32x32' },
       { rel: 'icon', href: '/maiyu-symbol.svg', type: 'image/svg+xml' },
       { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
-      {
-        rel: 'preload',
-        as: 'font',
-        type: 'font/woff2',
-        href: newsreaderLatin,
-        crossOrigin: 'anonymous',
-      },
-      {
-        rel: 'preload',
-        as: 'font',
-        type: 'font/woff2',
-        href: instrumentSansLatin,
-        crossOrigin: 'anonymous',
-      },
       { rel: 'stylesheet', href: appCss },
     ],
     // The site's identity on every route, and not only on the home: whoever arrives through a
